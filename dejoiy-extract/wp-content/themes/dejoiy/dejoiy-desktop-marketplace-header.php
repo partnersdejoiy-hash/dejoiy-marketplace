@@ -710,6 +710,15 @@ function dejoiy_desktop_marketplace_header_assets() {
 			$ver . '.' . (string) filemtime( $css )
 		);
 	}
+	$desktop_website = $dir . '/dejoiy-desktop-website.css';
+	if ( is_readable( $desktop_website ) ) {
+		wp_enqueue_style(
+			'dejoiy-desktop-website',
+			$uri . '/dejoiy-desktop-website.css',
+			array( 'dejoiy-desktop-marketplace-header' ),
+			$ver . '.' . (string) filemtime( $desktop_website )
+		);
+	}
 
 	if ( is_readable( $js ) ) {
 		wp_enqueue_script(

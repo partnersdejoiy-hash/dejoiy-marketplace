@@ -773,6 +773,16 @@ function dejoiy_mobile_os_assets() {
 			'screen and (max-width: 1024px)'
 		);
 	}
+	$mobile_app = $dir . '/dejoiy-mobile-app.css';
+	if ( is_readable( $mobile_app ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-app',
+			$uri . '/dejoiy-mobile-app.css',
+			array( 'dejoiy-mobile-os' ),
+			(string) filemtime( $mobile_app ),
+			'screen and (max-width: 1024px)'
+		);
+	}
 	$suppress = $dir . '/dejoiy-mobile-os-suppress-desktop.css';
 	if ( is_readable( $suppress ) ) {
 		wp_enqueue_style(
