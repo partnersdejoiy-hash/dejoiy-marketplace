@@ -1,0 +1,105 @@
+/**
+ * DEJOIY mobile single product — product → description/reviews → suggestions last.
+ */
+(function () {
+	'use strict';
+
+	var isProduct = document.body.classList.contains('dejoiy-mobile-product-view');
+	var isCheckout = document.body.classList.contains('dejoiy-mobile-checkout-view');
+
+	if (!isProduct && !isCheckout) {
+		return;
+	}
+
+	function paintBrandButtons() {
+		var gradient = 'linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%)';
+		var nodes = document.querySelectorAll(
+			'.single_add_to_cart_button, .et-single-buy-now, .buy_now_button, .button.buy-now, .etheme_custom_add_to_cart_toggle, #place_order'
+		);
+		nodes.forEach(function (btn) {
+			btn.style.setProperty('background', gradient, 'important');
+			btn.style.setProperty('background-color', 'transparent', 'important');
+			btn.style.setProperty('background-image', gradient, 'important');
+			btn.style.setProperty('color', '#fff', 'important');
+			btn.style.setProperty('border', 'none', 'important');
+		});
+	}
+
+	/**
+	 * Move "You may also like" after description, reviews, and all product sections.
+	 */
+	function placeSections() {
+		if (!isProduct) {
+			return;
+		}
+
+		var reco = document.querySelector('.dejoiy-mobile-product-reco');
+		if (!reco) {
+			return;
+		}
+
+		var insertBefore =
+			document.querySelector('.et-mobile-panel-wrapper') ||
+			document.querySelector('.et-footers-wrapper') ||
+			document.querySelector('footer.site-footer') ||
+			document.querySelector('.elementor-location-footer') ||
+			document.querySelector('.prefooter');
+
+		if (insertBefore && insertBefore.parentNode) {
+			insertBefore.parentNode.insertBefore(reco, insertBefore);
+		} else {
+			var tabs = document.querySelector(
+				'.woocommerce-tabs.wc-tabs-wrapper, .woocommerce-tabs.et-clearfix'
+			);
+			var anchor = tabs;
+			if (tabs) {
+				var section = tabs.closest('section.elementor-top-section');
+				if (section) {
+					anchor = section;
+				}
+			} else {
+				anchor = document.querySelector('.elementor-location-single');
+			}
+
+			if (anchor) {
+				var parent = anchor.parentElement;
+				if (parent && reco.parentElement !== parent) {
+					parent.appendChild(reco);
+				} else if (anchor.nextElementSibling !== reco) {
+					anchor.insertAdjacentElement('afterend', reco);
+					var node = reco.nextElementSibling;
+					while (node) {
+						var next = node.nextElementSibling;
+						if (
+							node.classList &&
+							(node.classList.contains('elementor-top-section') ||
+								node.classList.contains('woocommerce-tabs') ||
+								node.matches('section.elementor-section'))
+						) {
+							reco.insertAdjacentElement('afterend', node);
+						}
+						node = next;
+					}
+				}
+			}
+		}
+
+		reco.classList.add('is-placed');
+	}
+
+	function run() {
+		placeSections();
+		paintBrandButtons();
+		setTimeout(placeSections, 350);
+		setTimeout(placeSections, 1200);
+		setTimeout(paintBrandButtons, 100);
+		setTimeout(paintBrandButtons, 600);
+		setTimeout(paintBrandButtons, 1500);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', run);
+	} else {
+		run();
+	}
+})();

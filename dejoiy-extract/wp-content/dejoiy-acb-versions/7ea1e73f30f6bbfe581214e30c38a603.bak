@@ -1,0 +1,287 @@
+/**
+ * DEJOIY Desktop Marketplace Header — sticky, search, dropdowns, mega menu.
+ */
+(function () {
+	'use strict';
+
+	var mq = window.matchMedia('(min-width: 1025px)');
+	var cfg = window.dejoiyDmHeader || {};
+	var header = document.getElementById('dejoiy-marketplace-header');
+
+	if (!header) {
+		return;
+	}
+
+	if (!mq.matches) {
+		return;
+	}
+
+	header.removeAttribute('hidden');
+	header.setAttribute('aria-hidden', 'false');
+
+	var sticky = header.querySelector('.dmh__sticky');
+	var searchInput = header.querySelector('[data-dmh-search-input]');
+	var searchResults = document.getElementById('dmh-search-results');
+	var catInput = header.querySelector('[data-dmh-cat-input]');
+	var catLabel = header.querySelector('[data-dmh-cat-label]');
+	var searchTimer = null;
+	var currentScope = 'all';
+
+	/* Sticky shadow */
+	if (sticky) {
+		var onScroll = function () {
+			sticky.classList.toggle('is-scrolled', window.scrollY > 4);
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		onScroll();
+	}
+
+	function closeAllDropdowns(except) {
+		header.querySelectorAll('[data-dmh-cat-menu],[data-dmh-lang-menu],[data-dmh-account-menu]').forEach(function (el) {
+			if (el !== except) {
+				el.hidden = true;
+			}
+		});
+		header.querySelectorAll('[data-dmh-cat-toggle],[data-dmh-lang-toggle],[data-dmh-account-toggle]').forEach(function (btn) {
+			if (!except || !except.contains(btn)) {
+				btn.setAttribute('aria-expanded', 'false');
+			}
+		});
+		if (searchResults && (!except || !except.contains(searchInput))) {
+			searchResults.hidden = true;
+		}
+	}
+
+	/* Category dropdown in search */
+	var catToggle = header.querySelector('[data-dmh-cat-toggle]');
+	var catMenu = header.querySelector('[data-dmh-cat-menu]');
+	if (catToggle && catMenu) {
+		catToggle.addEventListener('click', function (e) {
+			e.stopPropagation();
+			var open = catMenu.hidden;
+			closeAllDropdowns(open ? catMenu : null);
+			catMenu.hidden = !open;
+			catToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+		catMenu.querySelectorAll('[data-cat-slug]').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var slug = btn.getAttribute('data-cat-slug');
+				var label = btn.getAttribute('data-cat-label') || slug;
+				if (catLabel) {
+					catLabel.textContent = slug === 'all' ? 'All' : label;
+				}
+				if (catInput) {
+					if (slug === 'all' || !slug) {
+						catInput.value = '';
+						catInput.disabled = true;
+					} else {
+						catInput.disabled = false;
+						catInput.name = 'product_cat';
+						catInput.value = slug;
+					}
+				}
+				catMenu.querySelectorAll('.dmh-search__cat-item').forEach(function (i) {
+					i.classList.remove('is-active');
+				});
+				btn.classList.add('is-active');
+				catMenu.hidden = true;
+				catToggle.setAttribute('aria-expanded', 'false');
+			});
+		});
+	}
+
+	/* Language dropdown */
+	var langToggle = header.querySelector('[data-dmh-lang-toggle]');
+	var langMenu = header.querySelector('[data-dmh-lang-menu]');
+	if (langToggle && langMenu) {
+		langToggle.addEventListener('click', function (e) {
+			e.stopPropagation();
+			var open = langMenu.hidden;
+			closeAllDropdowns(open ? langMenu : null);
+			langMenu.hidden = !open;
+			langToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+		langMenu.querySelectorAll('[data-lang]').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				try {
+					localStorage.setItem('dejoiy_dm_lang', btn.getAttribute('data-lang') || 'en');
+				} catch (err) {
+					/* ignore */
+				}
+				var label = btn.textContent.trim();
+				var span = langToggle.querySelector('span');
+				if (span) {
+					span.textContent = label;
+				}
+				langMenu.hidden = true;
+				langToggle.setAttribute('aria-expanded', 'false');
+			});
+		});
+	}
+
+	/* Account dropdown */
+	var accountToggle = header.querySelector('[data-dmh-account-toggle]');
+	var accountMenu = header.querySelector('[data-dmh-account-menu]');
+	if (accountToggle && accountMenu) {
+		accountToggle.addEventListener('click', function (e) {
+			e.stopPropagation();
+			var open = accountMenu.hidden;
+			closeAllDropdowns(open ? accountMenu : null);
+			accountMenu.hidden = !open;
+			accountToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+	}
+
+	/* Mega menu */
+	var megaPanel = document.getElementById('dmh-mega-panel');
+	var megaToggle = header.querySelector('[data-dmh-mega-toggle]');
+	function closeMega() {
+		if (!megaPanel) {
+			return;
+		}
+		megaPanel.hidden = true;
+		if (megaToggle) {
+			megaToggle.setAttribute('aria-expanded', 'false');
+		}
+		document.body.classList.remove('dmh-mega-open');
+	}
+	function openMega() {
+		if (!megaPanel) {
+			return;
+		}
+		closeAllDropdowns();
+		megaPanel.hidden = false;
+		if (megaToggle) {
+			megaToggle.setAttribute('aria-expanded', 'true');
+		}
+		document.body.classList.add('dmh-mega-open');
+	}
+	if (megaToggle && megaPanel) {
+		megaToggle.addEventListener('click', function () {
+			if (megaPanel.hidden) {
+				openMega();
+			} else {
+				closeMega();
+			}
+		});
+		megaPanel.querySelectorAll('[data-dmh-mega-close]').forEach(function (el) {
+			el.addEventListener('click', closeMega);
+		});
+	}
+
+	/* Search autocomplete via JOI */
+	function renderResults(items) {
+		if (!searchResults) {
+			return;
+		}
+		if (!items || !items.length) {
+			searchResults.innerHTML =
+				'<p class="dmh-search__empty">' + (cfg.i18n && cfg.i18n.noResults ? cfg.i18n.noResults : 'No results') + '</p>';
+			searchResults.hidden = false;
+			return;
+		}
+		searchResults.innerHTML = items
+			.map(function (item) {
+				var thumb = item.thumb
+					? '<img src="' + item.thumb + '" alt="" width="40" height="40" />'
+					: '<span style="width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:8px">📦</span>';
+				return (
+					'<a class="dmh-search__result" href="' +
+					item.url +
+					'">' +
+					thumb +
+					'<div><span class="dmh-search__result-badge">' +
+					(item.badge || item.eco || 'Product') +
+					'</span><br><strong>' +
+					item.title +
+					'</strong>' +
+					(item.price ? '<br><small>' + item.price + '</small>' : '') +
+					'</div></a>'
+				);
+			})
+			.join('');
+		searchResults.hidden = false;
+	}
+
+	function runSearch(q) {
+		if (!cfg.ajaxUrl || q.length < 2) {
+			return;
+		}
+		var fd = new FormData();
+		fd.append('action', 'dejoiy_joi_search');
+		fd.append('nonce', cfg.nonce || '');
+		fd.append('q', q);
+		fd.append('scope', currentScope === 'all' ? 'products' : currentScope);
+		fetch(cfg.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+			.then(function (r) {
+				return r.json();
+			})
+			.then(function (data) {
+				renderResults((data && data.results) || []);
+			})
+			.catch(function () {
+				if (searchResults) {
+					searchResults.hidden = true;
+				}
+			});
+	}
+
+	if (searchInput) {
+		searchInput.addEventListener('input', function () {
+			var q = searchInput.value.trim();
+			clearTimeout(searchTimer);
+			if (q.length < 2) {
+				if (searchResults) {
+					searchResults.hidden = true;
+				}
+				return;
+			}
+			searchTimer = setTimeout(function () {
+				runSearch(q);
+			}, 280);
+		});
+		searchInput.addEventListener('focus', function () {
+			var q = searchInput.value.trim();
+			if (q.length >= 2) {
+				runSearch(q);
+			}
+		});
+	}
+
+	/* Cart badge sync */
+	function syncCartBadge() {
+		var badge = header.querySelector('[data-dmh-cart-badge]');
+		if (!badge) {
+			return;
+		}
+		var count = parseInt(cfg.cartCount, 10) || 0;
+		if (count < 1) {
+			badge.hidden = true;
+			return;
+		}
+		badge.hidden = false;
+		badge.textContent = count > 99 ? '99+' : String(count);
+	}
+	syncCartBadge();
+	document.addEventListener('added_to_cart', syncCartBadge);
+	document.addEventListener('removed_from_cart', syncCartBadge);
+
+	/* Global dismiss + keyboard */
+	document.addEventListener('click', function (e) {
+		if (!header.contains(e.target)) {
+			closeAllDropdowns();
+		}
+	});
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape') {
+			closeAllDropdowns();
+			closeMega();
+		}
+	});
+
+	mq.addEventListener('change', function (ev) {
+		if (!ev.matches) {
+			closeMega();
+		}
+	});
+})();

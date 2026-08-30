@@ -1,0 +1,73 @@
+(function () {
+	'use strict';
+
+	var root = document.getElementById('dlms');
+	if (!root) {
+		return;
+	}
+
+	var canvas = document.getElementById('dlms-galaxy');
+	if (canvas && canvas.getContext) {
+		var ctx = canvas.getContext('2d');
+		var stars = [];
+		var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		function resize() {
+			var rect = canvas.getBoundingClientRect();
+			var ratio = Math.min(window.devicePixelRatio || 1, 2);
+			canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+			canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+			ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+			stars = Array.from({ length: Math.min(120, Math.floor(rect.width / 6)) }, function () {
+				return {
+					x: Math.random() * rect.width,
+					y: Math.random() * rect.height,
+					r: Math.random() * 1.8 + 0.3,
+					a: Math.random() * 0.8 + 0.2,
+					v: Math.random() * 0.25 + 0.04
+				};
+			});
+		}
+
+		function draw() {
+			var rect = canvas.getBoundingClientRect();
+			ctx.clearRect(0, 0, rect.width, rect.height);
+			stars.forEach(function (star) {
+				ctx.beginPath();
+				ctx.fillStyle = 'rgba(255,255,255,' + star.a + ')';
+				ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+				ctx.fill();
+				if (!reduceMotion) {
+					star.y += star.v;
+					if (star.y > rect.height + 4) {
+						star.y = -4;
+						star.x = Math.random() * rect.width;
+					}
+				}
+			});
+			if (!reduceMotion) {
+				window.requestAnimationFrame(draw);
+			}
+		}
+
+		resize();
+		draw();
+		window.addEventListener('resize', resize, { passive: true });
+	}
+
+	if ('IntersectionObserver' in window) {
+		var observer = new IntersectionObserver(function (entries) {
+			entries.forEach(function (entry) {
+				if (entry.isIntersecting) {
+					entry.target.classList.add('dlms-visible');
+					observer.unobserve(entry.target);
+				}
+			});
+		}, { threshold: 0.18 });
+
+		root.querySelectorAll('[data-dlms-reveal]').forEach(function (el) {
+			el.classList.add('dlms-reveal');
+			observer.observe(el);
+		});
+	}
+}());

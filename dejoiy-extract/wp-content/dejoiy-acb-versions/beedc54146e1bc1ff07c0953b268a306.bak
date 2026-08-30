@@ -1,0 +1,144 @@
+<?php
+/**
+ * Restore Elementor site header & footer on DEJOIY Universe home.
+ *
+ * Universe / Angie layouts skip Theme Builder locations; we inject templates 4228/4225
+ * into the final HTML after Elementor has booted.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_site_chrome_should_restore() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( ! is_front_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_universe_home_is_active' ) && ! dejoiy_universe_home_is_active() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @param string $location header|footer.
+ * @return int[]
+ */
+function dejoiy_site_chrome_template_ids( $location ) {
+	$defaults = array(
+		'header' => array( 4228 ),
+		'footer' => array( 4225 ),
+	);
+	$ids      = isset( $defaults[ $location ] ) ? $defaults[ $location ] : array();
+
+	/** @param int[] $ids @param string $location */
+	return array_filter( array_map( 'intval', (array) apply_filters( 'dejoiy_site_chrome_elementor_template_ids', $ids, $location ) ) );
+}
+
+/**
+ * @param string $location header|footer.
+ * @return string
+ */
+function dejoiy_site_chrome_elementor_html( $location ) {
+	if ( ! class_exists( '\Elementor\Plugin' ) ) {
+		return '';
+	}
+
+	$frontend = \Elementor\Plugin::$instance->frontend;
+	$html     = '';
+
+	foreach ( dejoiy_site_chrome_template_ids( $location ) as $template_id ) {
+		if ( $template_id <= 0 ) {
+			continue;
+		}
+		$status = get_post_status( $template_id );
+		if ( ! $status || 'publish' !== $status ) {
+			continue;
+		}
+		$chunk = $frontend->get_builder_content_for_display( $template_id, true );
+		if ( is_string( $chunk ) && strlen( trim( $chunk ) ) > 0 ) {
+			$html .= $chunk;
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * Start full-page buffer on Universe home.
+ */
+function dejoiy_site_chrome_buffer_start() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+	ob_start( 'dejoiy_site_chrome_buffer_filter' );
+}
+add_action( 'template_redirect', 'dejoiy_site_chrome_buffer_start', 0 );
+
+/**
+ * Inject Elementor header after page-wrapper and footer into chrome slot.
+ *
+ * @param string $html Full page HTML.
+ * @return string
+ */
+function dejoiy_site_chrome_buffer_filter( $html ) {
+	if ( ! is_string( $html ) || '' === $html ) {
+		return $html;
+	}
+
+	$header_inner = dejoiy_site_chrome_elementor_html( 'header' );
+	if ( strlen( $header_inner ) > 20 ) {
+		$header_block = '<div class="dejoiy-site-chrome-header">' . $header_inner . '</div>';
+		$replaced     = preg_replace(
+			'/(<div class="page-wrapper">\s*)/',
+			'$1' . $header_block,
+			$html,
+			1,
+			$count
+		);
+		if ( $count > 0 && is_string( $replaced ) ) {
+			$html = $replaced;
+		}
+	}
+
+	$footer_inner = dejoiy_site_chrome_elementor_html( 'footer' );
+	if ( strlen( $footer_inner ) > 20 ) {
+		$footer_block = '<div class="et-footers-wrapper dejoiy-site-chrome-footer">' . $footer_inner . '</div>';
+		$replaced     = preg_replace(
+			'/<div class="et-footers-wrapper dejoiy-site-chrome-footer">\s*<\/div>/',
+			$footer_block,
+			$html,
+			1,
+			$count
+		);
+		if ( $count > 0 && is_string( $replaced ) ) {
+			$html = $replaced;
+		} else {
+			$html = str_replace( '</body>', $footer_block . '</body>', $html );
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * Body class — hides duplicate Universe mini-footer when real footer is shown.
+ *
+ * @param array<int, string> $classes Classes.
+ * @return array<int, string>
+ */
+function dejoiy_site_chrome_body_class( $classes ) {
+	if ( dejoiy_site_chrome_should_restore() ) {
+		$classes[] = 'dejoiy-site-chrome-on';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_site_chrome_body_class', 25 );

@@ -1,0 +1,617 @@
+<?php
+/**
+ * DEJOIY QuickMart — Blinkit / Zepto style quick commerce (isolated module).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require_once get_stylesheet_directory() . '/library-quickmart-cart-isolation.php';
+
+/**
+ * @return bool
+ */
+function dejoiy_quickmart_is_app_page() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( is_page( 'dejoiy-quick-mart' ) ) {
+		return true;
+	}
+	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+	if ( false !== strpos( $uri, 'dejoiy-quick-mart' ) ) {
+		return true;
+	}
+	if ( function_exists( 'is_product' ) && is_product() ) {
+		$pid = get_queried_object_id();
+		return $pid && dejoiy_quickmart_is_product( $pid );
+	}
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		$term = get_queried_object();
+		if ( $term && isset( $term->slug ) && 'quick-products' === $term->slug ) {
+			return true;
+		}
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_GET['dejoiy_ecosystem'] ) && 'quickmart' === sanitize_key( wp_unslash( $_GET['dejoiy_ecosystem'] ) ) ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @return array<int, string>
+ */
+function dejoiy_quickmart_serviceable_pincodes() {
+	$pins = get_option(
+		'dejoiy_quickmart_pincodes',
+		array( '110001', '110016', '110017', '110019', '110020', '110024', '110025', '400001', '400050', '560001', '560034', '500001', '600001', '700001', '411001' )
+	);
+	if ( ! is_array( $pins ) ) {
+		$pins = array();
+	}
+	return array_values(
+		array_filter(
+			array_map(
+				static function ( $p ) {
+					return preg_match( '/^\d{6}$/', (string) $p ) ? (string) $p : '';
+				},
+				$pins
+			)
+		)
+	);
+}
+
+/**
+ * @param string $pincode Pincode.
+ * @return bool
+ */
+function dejoiy_quickmart_pincode_is_serviceable( $pincode ) {
+	$pincode = preg_replace( '/\D/', '', (string) $pincode );
+	if ( 6 !== strlen( $pincode ) ) {
+		return false;
+	}
+	return in_array( $pincode, dejoiy_quickmart_serviceable_pincodes(), true );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_get_pincode() {
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		$pin = (string) WC()->session->get( 'dejoiy_quickmart_pincode' );
+		if ( $pin ) {
+			return $pin;
+		}
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_COOKIE['dejoiy_qm_pincode'] ) ) {
+		return preg_replace( '/\D/', '', (string) wp_unslash( $_COOKIE['dejoiy_qm_pincode'] ) );
+	}
+	return '';
+}
+
+/**
+ * @param string $pincode Pincode.
+ * @param string $label   Display label.
+ */
+function dejoiy_quickmart_save_pincode( $pincode, $label = '' ) {
+	$pincode = preg_replace( '/\D/', '', (string) $pincode );
+	if ( 6 !== strlen( $pincode ) ) {
+		return;
+	}
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		WC()->session->set( 'dejoiy_quickmart_pincode', $pincode );
+		WC()->session->set( 'dejoiy_quickmart_location', $label ? $label : dejoiy_quickmart_pincode_label( $pincode ) );
+	}
+	if ( ! headers_sent() ) {
+		setcookie( 'dejoiy_qm_pincode', $pincode, time() + MONTH_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+	}
+}
+
+/**
+ * @param string $pincode Pincode.
+ * @return string
+ */
+function dejoiy_quickmart_pincode_label( $pincode ) {
+	$map = array(
+		'110001' => 'Connaught Place, New Delhi',
+		'110016' => 'Hauz Khas, New Delhi',
+		'400001' => 'Fort, Mumbai',
+		'560001' => 'MG Road, Bengaluru',
+		'500001' => 'Abids, Hyderabad',
+		'600001' => 'Parrys, Chennai',
+		'700001' => 'BBD Bagh, Kolkata',
+	);
+	return isset( $map[ $pincode ] ) ? $map[ $pincode ] : sprintf( /* translators: %s pincode */ __( 'Pincode %s', 'dejoiy' ), $pincode );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_get_location_label() {
+	if ( function_exists( 'WC' ) && WC()->session ) {
+		$loc = (string) WC()->session->get( 'dejoiy_quickmart_location' );
+		if ( $loc ) {
+			return $loc;
+		}
+	}
+	$pin = dejoiy_quickmart_get_pincode();
+	return $pin ? dejoiy_quickmart_pincode_label( $pin ) : __( 'Set delivery location', 'dejoiy' );
+}
+
+/**
+ * AJAX: save pincode.
+ */
+function dejoiy_quickmart_ajax_save_pincode() {
+	check_ajax_referer( 'dejoiy_quickmart', 'nonce' );
+	$pin = isset( $_POST['pincode'] ) ? preg_replace( '/\D/', '', (string) wp_unslash( $_POST['pincode'] ) ) : '';
+	if ( ! dejoiy_quickmart_pincode_is_serviceable( $pin ) ) {
+		wp_send_json_error( array( 'message' => __( 'QuickMart is not available in this area yet. Try another pincode.', 'dejoiy' ) ) );
+	}
+	$label = dejoiy_quickmart_pincode_label( $pin );
+	dejoiy_quickmart_save_pincode( $pin, $label );
+	wp_send_json_success(
+		array(
+			'pincode' => $pin,
+			'label'   => $label,
+			'eta'     => dejoiy_quickmart_eta_label(),
+		)
+	);
+}
+add_action( 'wp_ajax_dejoiy_quickmart_pincode', 'dejoiy_quickmart_ajax_save_pincode' );
+add_action( 'wp_ajax_nopriv_dejoiy_quickmart_pincode', 'dejoiy_quickmart_ajax_save_pincode' );
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_eta_label() {
+	return __( '10–20 mins', 'dejoiy' );
+}
+
+/**
+ * @param array $args Query args.
+ * @return WP_Query
+ */
+function dejoiy_quickmart_query_products( $args = array() ) {
+	$defaults = array(
+		'post_type'      => 'product',
+		'post_status'    => 'publish',
+		'posts_per_page' => 12,
+		'no_found_rows'  => true,
+	);
+	$args = wp_parse_args( $args, $defaults );
+	if ( empty( $args['tax_query'] ) ) {
+		$args['tax_query'] = array(
+			array(
+				'taxonomy' => 'product_cat',
+				'field'    => 'slug',
+				'terms'    => array( 'quick-products' ),
+			),
+		);
+	}
+	return new WP_Query( $args );
+}
+
+/**
+ * @param WC_Product|null $product Product.
+ * @return string
+ */
+function dejoiy_quickmart_render_product_card( $product ) {
+	if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+		return '';
+	}
+	$id    = $product->get_id();
+	$url   = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $id, 'quickmart' ) : get_permalink( $id );
+	$img   = $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'qm-card__img', 'loading' => 'lazy' ) );
+	$price = $product->get_price_html();
+	$reg   = $product->get_regular_price();
+	$sale  = $product->get_sale_price();
+	$badge = '';
+	if ( $sale && $reg && (float) $reg > (float) $sale ) {
+		$pct = round( ( ( (float) $reg - (float) $sale ) / (float) $reg ) * 100 );
+		$badge = '<span class="qm-card__off">' . esc_html( (string) $pct ) . '% off</span>';
+	}
+	$weight = $product->get_weight() ? $product->get_weight() . ' ' . get_option( 'woocommerce_weight_unit', 'kg' ) : '';
+
+	ob_start();
+	?>
+	<article class="qm-card" data-product-id="<?php echo esc_attr( (string) $id ); ?>">
+		<a class="qm-card__link" href="<?php echo esc_url( $url ); ?>">
+			<span class="qm-card__eta"><?php echo esc_html( dejoiy_quickmart_eta_label() ); ?></span>
+			<?php echo $badge; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<div class="qm-card__media"><?php echo $img; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+			<h3 class="qm-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+			<?php if ( $weight ) : ?>
+				<p class="qm-card__weight"><?php echo esc_html( $weight ); ?></p>
+			<?php endif; ?>
+			<div class="qm-card__price"><?php echo $price; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></div>
+		</a>
+		<?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
+			<a href="<?php echo esc_url( $product->add_to_cart_url() ); ?>" class="qm-card__add add_to_cart_button ajax_add_to_cart" data-product_id="<?php echo esc_attr( (string) $id ); ?>" data-quantity="1"><?php esc_html_e( 'ADD', 'dejoiy' ); ?></a>
+		<?php else : ?>
+			<span class="qm-card__add qm-card__add--disabled"><?php esc_html_e( 'Sold out', 'dejoiy' ); ?></span>
+		<?php endif; ?>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_quickmart_categories() {
+	$shop = home_url( '/dejoiy-quick-mart/' );
+	return array(
+		array( 'slug' => 'fruits', 'label' => __( 'Fruits', 'dejoiy' ), 'icon' => '🍎', 'color' => '#FF6B6B' ),
+		array( 'slug' => 'vegetables', 'label' => __( 'Vegetables', 'dejoiy' ), 'icon' => '🥬', 'color' => '#22C55E' ),
+		array( 'slug' => 'dairy', 'label' => __( 'Dairy', 'dejoiy' ), 'icon' => '🥛', 'color' => '#38BDF8' ),
+		array( 'slug' => 'snacks', 'label' => __( 'Snacks', 'dejoiy' ), 'icon' => '🍿', 'color' => '#FACC15' ),
+		array( 'slug' => 'beverages', 'label' => __( 'Beverages', 'dejoiy' ), 'icon' => '🥤', 'color' => '#A78BFA' ),
+		array( 'slug' => 'bakery', 'label' => __( 'Bakery', 'dejoiy' ), 'icon' => '🥐', 'color' => '#FB923C' ),
+		array( 'slug' => 'personal-care', 'label' => __( 'Personal Care', 'dejoiy' ), 'icon' => '🧴', 'color' => '#EC4899' ),
+		array( 'slug' => 'home-essentials', 'label' => __( 'Home Essentials', 'dejoiy' ), 'icon' => '🏠', 'color' => '#64748B' ),
+		array( 'slug' => 'electronics', 'label' => __( 'Electronics', 'dejoiy' ), 'icon' => '📱', 'color' => '#0F172A' ),
+	);
+}
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_home_html() {
+	$pin     = dejoiy_quickmart_get_pincode();
+	$loc     = dejoiy_quickmart_get_location_label();
+	$eta     = dejoiy_quickmart_eta_label();
+	$shop    = add_query_arg( array( 'post_type' => 'product', 'product_cat' => 'quick-products' ), home_url( '/' ) );
+	$cats    = dejoiy_quickmart_categories();
+	$trending = dejoiy_quickmart_query_products( array( 'posts_per_page' => 10, 'orderby' => 'date' ) );
+	$deals   = dejoiy_quickmart_query_products( array( 'posts_per_page' => 8, 'meta_key' => '_sale_price', 'meta_compare' => 'EXISTS' ) );
+
+	ob_start();
+	?>
+	<div id="dejoiy-quickmart-app" class="dejoiy-quickmart-app">
+		<section class="qm-hero">
+			<div class="qm-hero__inner">
+				<p class="qm-hero__eta"><?php echo esc_html( sprintf( /* translators: %s ETA */ __( 'Delivering in %s', 'dejoiy' ), $eta ) ); ?></p>
+				<h1 class="qm-hero__title"><?php esc_html_e( 'Groceries & essentials at your door', 'dejoiy' ); ?></h1>
+				<?php if ( $pin ) : ?>
+					<p class="qm-hero__loc">📍 <?php echo esc_html( $loc ); ?></p>
+				<?php else : ?>
+					<button type="button" class="qm-hero__cta" data-qm-open-pin><?php esc_html_e( 'Enter delivery pincode', 'dejoiy' ); ?></button>
+				<?php endif; ?>
+			</div>
+		</section>
+
+		<section class="qm-cats" aria-label="<?php esc_attr_e( 'Categories', 'dejoiy' ); ?>">
+			<div class="qm-cats__grid">
+				<?php foreach ( $cats as $cat ) : ?>
+					<a class="qm-cats__card" href="<?php echo esc_url( add_query_arg( 'qm_cat', $cat['slug'], home_url( '/dejoiy-quick-mart/' ) ) ); ?>" style="--qm-cat:<?php echo esc_attr( $cat['color'] ); ?>">
+						<span class="qm-cats__icon" aria-hidden="true"><?php echo esc_html( $cat['icon'] ); ?></span>
+						<span class="qm-cats__label"><?php echo esc_html( $cat['label'] ); ?></span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<section class="qm-shelf">
+			<div class="qm-shelf__head">
+				<h2><?php esc_html_e( 'Trending now', 'dejoiy' ); ?></h2>
+				<a href="<?php echo esc_url( $shop ); ?>"><?php esc_html_e( 'See all', 'dejoiy' ); ?></a>
+			</div>
+			<div class="qm-shelf__track">
+				<?php
+				while ( $trending->have_posts() ) {
+					$trending->the_post();
+					$p = wc_get_product( get_the_ID() );
+					if ( $p ) {
+						echo dejoiy_quickmart_render_product_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+				}
+				wp_reset_postdata();
+				?>
+			</div>
+		</section>
+
+		<section class="qm-flash">
+			<div class="qm-shelf__head">
+				<h2><?php esc_html_e( 'Flash deals', 'dejoiy' ); ?></h2>
+				<span class="qm-flash__timer" data-qm-flash-timer>02:59:59</span>
+			</div>
+			<div class="qm-shelf__track">
+				<?php
+				if ( $deals->have_posts() ) {
+					while ( $deals->have_posts() ) {
+						$deals->the_post();
+						$p = wc_get_product( get_the_ID() );
+						if ( $p ) {
+							echo dejoiy_quickmart_render_product_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+					}
+					wp_reset_postdata();
+				} else {
+					while ( $trending->have_posts() ) {
+						$trending->the_post();
+						$p = wc_get_product( get_the_ID() );
+						if ( $p ) {
+							echo dejoiy_quickmart_render_product_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+					}
+					wp_reset_postdata();
+				}
+				?>
+			</div>
+		</section>
+
+		<section class="qm-shelf">
+			<div class="qm-shelf__head">
+				<h2><?php esc_html_e( 'Daily essentials', 'dejoiy' ); ?></h2>
+			</div>
+			<div class="qm-shelf__grid">
+				<?php
+				$daily = dejoiy_quickmart_query_products( array( 'posts_per_page' => 8, 'offset' => 2 ) );
+				while ( $daily->have_posts() ) {
+					$daily->the_post();
+					$p = wc_get_product( get_the_ID() );
+					if ( $p ) {
+						echo dejoiy_quickmart_render_product_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+				}
+				wp_reset_postdata();
+				?>
+			</div>
+		</section>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Replace QuickMart page body.
+ *
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_quickmart_replace_page_content( $content ) {
+	if ( ! is_page( 'dejoiy-quick-mart' ) ) {
+		return $content;
+	}
+	static $done = false;
+	if ( $done ) {
+		return $content;
+	}
+	$done = true;
+	return dejoiy_quickmart_home_html();
+}
+add_filter( 'the_content', 'dejoiy_quickmart_replace_page_content', 9999 );
+
+/**
+ * Print QuickMart chrome (header, pin modal, cart drawer, footer).
+ */
+function dejoiy_quickmart_print_chrome() {
+	if ( ! dejoiy_quickmart_is_app_page() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	$home    = home_url( '/dejoiy-quick-mart/' );
+	$cart    = dejoiy_quickmart_get_cart_url();
+	$account = home_url( '/my-account/' );
+	$orders  = function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : $account;
+	$pin     = dejoiy_quickmart_get_pincode();
+	$loc     = dejoiy_quickmart_get_location_label();
+	$count   = dejoiy_quickmart_get_cart_count();
+	$cats    = dejoiy_quickmart_categories();
+
+	?>
+	<div id="dejoiy-quickmart-chrome" class="dejoiy-quickmart-chrome">
+		<header class="qm-header" role="banner">
+			<div class="qm-header__row1">
+				<a class="qm-header__logo" href="<?php echo esc_url( $home ); ?>">
+					<span class="qm-header__logo-mark">⚡</span>
+					<span class="qm-header__logo-text">QuickMart</span>
+				</a>
+				<button type="button" class="qm-header__loc" data-qm-open-pin aria-label="<?php esc_attr_e( 'Change delivery location', 'dejoiy' ); ?>">
+					<span class="qm-header__loc-pin">📍</span>
+					<span class="qm-header__loc-lines">
+						<span class="qm-header__loc-kicker"><?php echo $pin ? esc_html__( 'Delivering to', 'dejoiy' ) : esc_html__( 'Enter pincode', 'dejoiy' ); ?></span>
+						<span class="qm-header__loc-value"><?php echo esc_html( $pin ? $pin . ' · ' . $loc : $loc ); ?></span>
+					</span>
+				</button>
+				<nav class="qm-header__actions" aria-label="<?php esc_attr_e( 'Account', 'dejoiy' ); ?>">
+					<a href="<?php echo esc_url( $account ); ?>"><?php esc_html_e( 'Login', 'dejoiy' ); ?></a>
+					<a href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Orders', 'dejoiy' ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/my-account/?et-wishlist-page' ) ); ?>"><?php esc_html_e( 'Wishlist', 'dejoiy' ); ?></a>
+					<button type="button" class="qm-header__cart" data-qm-open-cart aria-label="<?php esc_attr_e( 'QuickMart cart', 'dejoiy' ); ?>">
+						🛒
+						<?php if ( $count > 0 ) : ?>
+							<span class="qm-header__cart-badge"><?php echo esc_html( (string) ( $count > 9 ? '9+' : $count ) ); ?></span>
+						<?php endif; ?>
+					</button>
+				</nav>
+			</div>
+			<div class="qm-header__row2">
+				<form class="qm-header__search" action="<?php echo esc_url( home_url( '/' ) ); ?>" method="get" role="search">
+					<input type="hidden" name="post_type" value="product" />
+					<input type="hidden" name="product_cat" value="quick-products" />
+					<label class="screen-reader-text" for="qm-search"><?php esc_html_e( 'Search QuickMart', 'dejoiy' ); ?></label>
+					<input id="qm-search" class="qm-header__search-input" type="search" name="s" placeholder="<?php esc_attr_e( 'Search groceries, snacks, vegetables, fruits, electronics, essentials…', 'dejoiy' ); ?>" autocomplete="off" />
+				</form>
+			</div>
+			<nav class="qm-header__cats" aria-label="<?php esc_attr_e( 'Quick categories', 'dejoiy' ); ?>">
+				<?php foreach ( $cats as $cat ) : ?>
+					<a class="qm-header__cat" href="<?php echo esc_url( add_query_arg( 'qm_cat', $cat['slug'], $home ) ); ?>"><?php echo esc_html( $cat['icon'] . ' ' . $cat['label'] ); ?></a>
+				<?php endforeach; ?>
+			</nav>
+		</header>
+	</div>
+
+	<div id="qm-pin-modal" class="qm-modal" hidden>
+		<div class="qm-modal__backdrop" data-qm-close-pin></div>
+		<div class="qm-modal__panel" role="dialog" aria-labelledby="qm-pin-title">
+			<h2 id="qm-pin-title"><?php esc_html_e( 'Enter delivery pincode', 'dejoiy' ); ?></h2>
+			<p><?php esc_html_e( 'We deliver groceries & essentials in minutes.', 'dejoiy' ); ?></p>
+			<input type="text" class="qm-modal__input" id="qm-pin-input" inputmode="numeric" maxlength="6" placeholder="110001" />
+			<p class="qm-modal__error" id="qm-pin-error" hidden></p>
+			<button type="button" class="qm-modal__btn" id="qm-pin-submit"><?php esc_html_e( 'Check availability', 'dejoiy' ); ?></button>
+		</div>
+	</div>
+
+	<aside id="qm-cart-drawer" class="qm-drawer" hidden aria-hidden="true">
+		<div class="qm-drawer__backdrop" data-qm-close-cart></div>
+		<div class="qm-drawer__panel">
+			<header class="qm-drawer__head">
+				<h2><?php esc_html_e( 'QuickMart Cart', 'dejoiy' ); ?></h2>
+				<button type="button" data-qm-close-cart aria-label="<?php esc_attr_e( 'Close', 'dejoiy' ); ?>">&times;</button>
+			</header>
+			<div class="qm-drawer__body" id="qm-cart-drawer-body">
+				<p class="qm-drawer__empty"><?php esc_html_e( 'Your quick cart is empty.', 'dejoiy' ); ?></p>
+			</div>
+			<footer class="qm-drawer__foot">
+				<a class="qm-drawer__checkout" href="<?php echo esc_url( $cart ); ?>"><?php esc_html_e( 'View cart & checkout', 'dejoiy' ); ?></a>
+			</footer>
+		</div>
+	</aside>
+	<?php
+}
+
+/**
+ * Site footer — after main content (desktop/laptop only via CSS).
+ */
+function dejoiy_quickmart_print_footer() {
+	if ( ! dejoiy_quickmart_is_app_page() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	$home = home_url( '/dejoiy-quick-mart/' );
+	$cats = dejoiy_quickmart_categories();
+
+	?>
+	<footer class="qm-footer" role="contentinfo">
+		<div class="qm-footer__grid">
+			<div>
+				<strong>QuickMart</strong>
+				<p><?php esc_html_e( 'Quick commerce by DEJOIY', 'dejoiy' ); ?></p>
+			</div>
+			<div>
+				<strong><?php esc_html_e( 'Categories', 'dejoiy' ); ?></strong>
+				<ul>
+					<?php foreach ( array_slice( $cats, 0, 5 ) as $cat ) : ?>
+						<li><a href="<?php echo esc_url( add_query_arg( 'qm_cat', $cat['slug'], $home ) ); ?>"><?php echo esc_html( $cat['label'] ); ?></a></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+			<div>
+				<strong><?php esc_html_e( 'Support', 'dejoiy' ); ?></strong>
+				<ul>
+					<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php esc_html_e( 'Contact', 'dejoiy' ); ?></a></li>
+					<li><a href="<?php echo esc_url( home_url( '/faq/' ) ); ?>"><?php esc_html_e( 'FAQs', 'dejoiy' ); ?></a></li>
+				</ul>
+			</div>
+		</div>
+		<p class="qm-footer__copy">&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> DEJOIY QuickMart</p>
+	</footer>
+	<?php
+}
+add_action( 'wp_body_open', 'dejoiy_quickmart_print_chrome', 3 );
+add_action( 'etheme_after_body_open', 'dejoiy_quickmart_print_chrome', 3 );
+add_action( 'wp_footer', 'dejoiy_quickmart_print_footer', 5 );
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_quickmart_body_class( $classes ) {
+	if ( dejoiy_quickmart_is_app_page() ) {
+		$classes[] = 'dejoiy-quickmart-app';
+		$classes[] = 'dejoiy-mobile-os-off';
+	}
+	if ( dejoiy_quickmart_is_cart_context() ) {
+		$classes[] = 'dejoiy-quickmart-checkout-flow';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_quickmart_body_class', 24 );
+
+/**
+ * Enqueue QuickMart assets.
+ */
+function dejoiy_quickmart_assets() {
+	if ( ! dejoiy_quickmart_is_app_page() && ! dejoiy_quickmart_is_cart_context() ) {
+		return;
+	}
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
+	$css = $dir . '/dejoiy-quickmart.css';
+	$js  = $dir . '/dejoiy-quickmart.js';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style( 'dejoiy-quickmart', $uri . '/dejoiy-quickmart.css', array(), (string) filemtime( $css ) );
+	}
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script( 'dejoiy-quickmart', $uri . '/dejoiy-quickmart.js', array( 'jquery' ), (string) filemtime( $js ), true );
+		wp_localize_script(
+			'dejoiy-quickmart',
+			'dejoiyQuickmart',
+			array(
+				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+				'nonce'     => wp_create_nonce( 'dejoiy_quickmart' ),
+				'cartUrl'   => dejoiy_quickmart_get_cart_url(),
+				'checkoutUrl' => dejoiy_quickmart_get_checkout_url(),
+				'homeUrl'   => home_url( '/dejoiy-quick-mart/' ),
+				'pincode'   => dejoiy_quickmart_get_pincode(),
+				'cartCount' => dejoiy_quickmart_get_cart_count(),
+				'hasPin'    => dejoiy_quickmart_get_pincode() ? 1 : 0,
+			)
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_quickmart_assets', 10070 );
+
+/**
+ * Add flow flag to add-to-cart redirect on QuickMart.
+ *
+ * @param string $url URL.
+ * @return string
+ */
+function dejoiy_quickmart_add_to_cart_redirect( $url ) {
+	if ( dejoiy_quickmart_is_app_page() || dejoiy_quickmart_is_add_request() ) {
+		return dejoiy_quickmart_get_cart_url();
+	}
+	return $url;
+}
+add_filter( 'woocommerce_add_to_cart_redirect', 'dejoiy_quickmart_add_to_cart_redirect', 15 );
+
+
+/**
+ * @param string     $url     Add to cart URL.
+ * @param WC_Product $product Product.
+ * @return string
+ */
+function dejoiy_quickmart_product_add_to_cart_url( $url, $product ) {
+	if ( dejoiy_quickmart_is_app_page() && $product && dejoiy_quickmart_is_product( $product->get_id() ) ) {
+		return add_query_arg( DEJOIY_QUICKMART_FLOW, '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_product_add_to_cart_url', 'dejoiy_quickmart_product_add_to_cart_url', 15, 2 );
+
+/**
+ * @param array<string, string> $fragments Fragments.
+ * @return array<string, string>
+ */
+function dejoiy_quickmart_cart_fragments( $fragments ) {
+	$fragments['qm_cart_count'] = (string) dejoiy_quickmart_get_cart_count();
+	return $fragments;
+}
+add_filter( 'woocommerce_add_to_cart_fragments', 'dejoiy_quickmart_cart_fragments' );

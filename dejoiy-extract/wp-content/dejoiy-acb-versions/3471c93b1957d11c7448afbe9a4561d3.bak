@@ -1,0 +1,31 @@
+<?php
+/**
+ * Studio checkout template.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_studio_maybe_set_cookie();
+
+get_header( 'shop' );
+?>
+<div class="dsu-wc-wrap">
+	<?php require get_stylesheet_directory() . '/studio-header.php'; ?>
+	<main class="dsu-wc-main dsu-checkout">
+		<div class="dsu-wc-breadcrumb">
+			<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>">← Custom Studio</a>
+		</div>
+		<h1 class="dsu-checkout-title">Studio Checkout</h1>
+		<p class="dsu-checkout-sub">Complete your custom creation order in the DEJOIY universe.</p>
+		<div class="dsu-checkout-shell">
+			<?php echo do_shortcode( '[woocommerce_checkout]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+		</div>
+	</main>
+	<?php require get_stylesheet_directory() . '/studio-footer.php'; ?>
+</div>
+<?php
+get_footer( 'shop' );

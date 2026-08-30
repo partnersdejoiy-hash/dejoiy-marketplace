@@ -1,0 +1,100 @@
+/**
+ * DEJOIY — remove mobile header loading / shimmer lines on refresh.
+ */
+
+/* XStore Ajaxify: show Elementor header widgets immediately (no horizontal loader lines). */
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-et-"] > .elementor-widget-container,
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-etheme"] > .elementor-widget-container,
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-woocommerce-etheme"] > .elementor-widget-container,
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-woocommerce-product-etheme"] > .elementor-widget-container,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-et-"] > .elementor-widget-container,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-etheme"] > .elementor-widget-container,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-woocommerce-etheme"] > .elementor-widget-container,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-woocommerce-product-etheme"] > .elementor-widget-container {
+	opacity: 1 !important;
+	visibility: visible !important;
+}
+
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-et-"]:before,
+body.elementor-default:not([data-elementor-device-mode]) [class*="elementor-widget-etheme"]:before,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-et-"]:before,
+body.elementor-page:not([data-elementor-device-mode]) [class*="elementor-widget-etheme"]:before {
+	display: none !important;
+	content: none !important;
+	animation: none !important;
+}
+
+body:not([data-elementor-device-mode]) {
+	--etheme-element-loader-display: none;
+	--etheme-element-loading-opacity: 1;
+	--etheme-element-loading-visibility: visible;
+}
+
+@media (max-width: 1024px) {
+	/* Elementor mobile sticky header — no skeleton / ajaxify bars across logo & icons */
+	.etheme-elementor-header-sticky .skeleton-body:before,
+	.etheme-elementor-header-sticky [class*="elementor-widget-et-"]:before,
+	.etheme-elementor-header-sticky [class*="elementor-widget-etheme"]:before,
+	.elementor-location-header .skeleton-body:before,
+	.elementor-location-header [class*="elementor-widget-et-"]:before,
+	.elementor-location-header [class*="elementor-widget-etheme"]:before {
+		display: none !important;
+		content: none !important;
+		animation: none !important;
+		background: none !important;
+	}
+
+	.etheme-elementor-header-sticky.skeleton-body,
+	.elementor-location-header .skeleton-body {
+		animation: none !important;
+	}
+
+	.etheme-elementor-header-sticky .elementor-widget-container,
+	.elementor-location-header .elementor-widget-container {
+		opacity: 1 !important;
+		visibility: visible !important;
+	}
+
+	/* Theme preloaders */
+	#et-loader,
+	.et-loader,
+	.page-loader,
+	.preloader {
+		display: none !important;
+		visibility: hidden !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+
+	/* Nav card full-screen overlay (Elementor HTML widget) — never show on refresh */
+	#djOverlay,
+	.dj-overlay {
+		display: none !important;
+		visibility: hidden !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+
+	/* Studio mobile overlay if present */
+	#djOverlay.dcs-nav-overlay,
+	#dcs-nav-overlay {
+		display: none !important;
+	}
+}
+
+/* Nexus / library pages — keep prior preloader suppression */
+@media (max-width: 1023px) {
+	body.dejoiy-nexus-active #et-loader,
+	body.dejoiy-library-active #et-loader,
+	body.dejoiy-nexus-active .et-loader,
+	body.dejoiy-library-active .et-loader,
+	body.dejoiy-nexus-active .page-loader,
+	body.dejoiy-library-active .page-loader,
+	body.dejoiy-nexus-active .preloader,
+	body.dejoiy-library-active .preloader {
+		display: none !important;
+		visibility: hidden !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+}

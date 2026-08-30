@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "dejoiy-wordpress": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-fetch"
+      ],
+      "env": {
+        "DEJOIY_API_BASE": "YOUR_SITE_URL/wp-json/dejoiy-ai/v1",
+        "DEJOIY_API_KEY": "YOUR_API_KEY",
+        "DEJOIY_MCP_MANIFEST": "YOUR_SITE_URL/wp-json/dejoiy-ai/v1/mcp/manifest",
+        "DEJOIY_MCP_TOOLS": "YOUR_SITE_URL/wp-json/dejoiy-ai/v1/mcp/tools",
+        "DEJOIY_MCP_EXECUTE": "YOUR_SITE_URL/wp-json/dejoiy-ai/v1/mcp/execute"
+      }
+    }
+  },
+  "dejoiy": {
+    "discovery": {
+      "manifest": "/wp-json/dejoiy-ai/v1/mcp/manifest",
+      "tools": "/wp-json/dejoiy-ai/v1/mcp/tools",
+      "openapi": "/wp-json/dejoiy-ai/v1/openapi",
+      "structure": "/wp-json/dejoiy-ai/v1/structure"
+    },
+    "authentication": {
+      "apiKeyHeader": "X-Dejoiy-API-Key",
+      "jwtEndpoint": "/wp-json/dejoiy-ai/v1/auth/token"
+    },
+    "instructions": "Replace YOUR_SITE_URL with your WordPress site URL (no trailing slash) and YOUR_API_KEY with a dacb_* key from AI Control Center → Connected Agents."
+  }
+}

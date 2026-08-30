@@ -1,0 +1,45 @@
+<?php
+/**
+ * DEJOIY Universal layer — checkout, marketplace cart labels, shop card styling.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Load universal modules once WooCommerce is available.
+ */
+function dejoiy_universal_init() {
+	static $done = false;
+	if ( $done || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	$done = true;
+
+	$dir = get_stylesheet_directory();
+	$files = array(
+		'dejoiy-universal-checkout.php',
+		'dejoiy-universal-cart.php',
+		'dejoiy-universal-shop.php',
+	);
+
+	foreach ( $files as $file ) {
+		$path = $dir . '/' . $file;
+		if ( is_readable( $path ) ) {
+			require_once $path;
+		}
+	}
+
+	if ( function_exists( 'dejoiy_universal_checkout_init' ) ) {
+		dejoiy_universal_checkout_init();
+	}
+	if ( function_exists( 'dejoiy_universal_cart_init' ) ) {
+		dejoiy_universal_cart_init();
+	}
+	if ( function_exists( 'dejoiy_universal_shop_init' ) ) {
+		dejoiy_universal_shop_init();
+	}
+}

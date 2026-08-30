@@ -1,0 +1,936 @@
+<?php
+/**
+ * DEJOIY Nexus — book language taxonomy (meta) + Hindi seed import.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Supported Nexus book languages.
+ *
+ * @return array<string, array{label: string, native: string}>
+ */
+function dejoiy_library_get_languages() {
+	return array(
+		'en' => array(
+			'label'  => __( 'English', 'dejoiy' ),
+			'native' => 'English',
+		),
+		'hi' => array(
+			'label'  => __( 'Hindi', 'dejoiy' ),
+			'native' => 'हिन्दी',
+		),
+		'bn' => array(
+			'label'  => __( 'Bengali', 'dejoiy' ),
+			'native' => 'বাংলা',
+		),
+		'ta' => array(
+			'label'  => __( 'Tamil', 'dejoiy' ),
+			'native' => 'தமிழ்',
+		),
+		'te' => array(
+			'label'  => __( 'Telugu', 'dejoiy' ),
+			'native' => 'తెలుగు',
+		),
+		'mr' => array(
+			'label'  => __( 'Marathi', 'dejoiy' ),
+			'native' => 'मराठी',
+		),
+		'gu' => array(
+			'label'  => __( 'Gujarati', 'dejoiy' ),
+			'native' => 'ગુજરાતી',
+		),
+		'kn' => array(
+			'label'  => __( 'Kannada', 'dejoiy' ),
+			'native' => 'ಕನ್ನಡ',
+		),
+		'ml' => array(
+			'label'  => __( 'Malayalam', 'dejoiy' ),
+			'native' => 'മലയാളം',
+		),
+		'pa' => array(
+			'label'  => __( 'Punjabi', 'dejoiy' ),
+			'native' => 'ਪੰਜਾਬੀ',
+		),
+		'ur' => array(
+			'label'  => __( 'Urdu', 'dejoiy' ),
+			'native' => 'اردو',
+		),
+	);
+}
+
+/**
+ * @param string $code Language code.
+ * @return bool
+ */
+function dejoiy_library_is_valid_language( $code ) {
+	$code = sanitize_key( (string) $code );
+	return '' !== $code && isset( dejoiy_library_get_languages()[ $code ] );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string Language code.
+ */
+function dejoiy_library_get_book_language( $product_id ) {
+	$lang = sanitize_key( (string) get_post_meta( (int) $product_id, '_dejoiy_book_language', true ) );
+	if ( dejoiy_library_is_valid_language( $lang ) ) {
+		return $lang;
+	}
+	return 'en';
+}
+
+/**
+ * @param int    $product_id Product ID.
+ * @param string $code       Language code.
+ */
+function dejoiy_library_set_book_language( $product_id, $code ) {
+	$code = sanitize_key( (string) $code );
+	if ( ! dejoiy_library_is_valid_language( $code ) ) {
+		$code = 'en';
+	}
+	update_post_meta( (int) $product_id, '_dejoiy_book_language', $code );
+}
+
+/**
+ * Meta query clause for a language (English includes legacy books with no meta).
+ *
+ * @param string $code Language code.
+ * @return array<int, array<string, mixed>>
+ */
+function dejoiy_library_language_meta_query( $code ) {
+	$code = sanitize_key( (string) $code );
+	if ( 'en' === $code ) {
+		return array(
+			'relation' => 'OR',
+			array(
+				'key'     => '_dejoiy_book_language',
+				'compare' => 'NOT EXISTS',
+			),
+			array(
+				'key'     => '_dejoiy_book_language',
+				'value'   => 'en',
+				'compare' => '=',
+			),
+			array(
+				'key'     => '_dejoiy_book_language',
+				'value'   => '',
+				'compare' => '=',
+			),
+		);
+	}
+	return array(
+		array(
+			'key'     => '_dejoiy_book_language',
+			'value'   => $code,
+			'compare' => '=',
+		),
+	);
+}
+
+/**
+ * @param string $code Language code.
+ * @return int
+ */
+function dejoiy_library_count_books_in_language( $code ) {
+	if ( ! function_exists( 'dejoiy_library_query_books' ) ) {
+		return 0;
+	}
+	$q = dejoiy_library_query_books(
+		array(
+			'language'       => $code,
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+		)
+	);
+	return (int) $q->found_posts;
+}
+
+/**
+ * Empty-shelf message when a language has no titles yet.
+ *
+ * @param string $code Language code.
+ * @return string
+ */
+function dejoiy_library_language_collecting_message( $code ) {
+	$langs = dejoiy_library_get_languages();
+	$code  = sanitize_key( (string) $code );
+	$name  = isset( $langs[ $code ]['label'] ) ? $langs[ $code ]['label'] : $code;
+	return sprintf(
+		/* translators: %s: language name */
+		__( 'We are collecting books in %s. DEJOIY creators are adding editions every week — check back soon, or browse English and Hindi shelves today.', 'dejoiy' ),
+		$name
+	);
+}
+
+/**
+ * Merge language filter into query args.
+ *
+ * @param array $args WP_Query args.
+ * @return array
+ */
+function dejoiy_library_apply_language_to_query_args( $args ) {
+	if ( empty( $args['language'] ) ) {
+		return $args;
+	}
+	$code = sanitize_key( (string) $args['language'] );
+	unset( $args['language'] );
+	if ( ! dejoiy_library_is_valid_language( $code ) ) {
+		return $args;
+	}
+	$lang_clause = dejoiy_library_language_meta_query( $code );
+	$existing    = isset( $args['meta_query'] ) && is_array( $args['meta_query'] ) ? $args['meta_query'] : array();
+	if ( empty( $existing ) ) {
+		$args['meta_query'] = $lang_clause; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+	} else {
+		$args['meta_query'] = array_merge( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			array( 'relation' => 'AND' ),
+			array( $existing ),
+			array( $lang_clause )
+		);
+	}
+	return $args;
+}
+
+/**
+ * Pick primary language from Gutendex languages list.
+ *
+ * @param array<int, string> $languages ISO codes from API.
+ * @return string
+ */
+function dejoiy_library_gutendex_primary_language( $languages ) {
+	if ( empty( $languages ) || ! is_array( $languages ) ) {
+		return 'en';
+	}
+	foreach ( $languages as $raw ) {
+		$code = sanitize_key( (string) $raw );
+		if ( dejoiy_library_is_valid_language( $code ) ) {
+			return $code;
+		}
+	}
+	return 'en';
+}
+
+/**
+ * Import a batch of Hindi public-domain books from Gutendex.
+ *
+ * @param int $batch_size Books per run.
+ * @return int Imported count this run.
+ */
+/**
+ * Gutendex query strategies for Indic / Hindi catalog (hi is not a valid 2-letter Gutendex code).
+ *
+ * @return array<int, array<string, string|int>>
+ */
+function dejoiy_library_get_hindi_gutenberg_strategies() {
+	return array(
+		array( 'languages' => 'sa', 'page' => 1 ),
+		array( 'search' => 'hindi', 'page' => 1 ),
+		array( 'search' => 'sanskrit', 'page' => 1 ),
+		array( 'topic' => 'India', 'page' => 1 ),
+		array( 'search' => 'Ramayana', 'page' => 1 ),
+		array( 'search' => 'Mahabharata', 'page' => 1 ),
+	);
+}
+
+/**
+ * Whether a Gutendex record should appear in the Hindi Nexus shelf.
+ *
+ * @param array<string, mixed> $book Gutendex book.
+ * @return bool
+ */
+function dejoiy_library_gutendex_counts_as_hindi( $book ) {
+	$langs = isset( $book['languages'] ) && is_array( $book['languages'] ) ? $book['languages'] : array();
+	foreach ( $langs as $raw ) {
+		$code = sanitize_key( (string) $raw );
+		if ( in_array( $code, array( 'hi', 'sa', 'ur', 'mr', 'bn', 'pa', 'gu' ), true ) ) {
+			return true;
+		}
+	}
+	$hay = strtolower( wp_json_encode( array( $book['title'] ?? '', $book['subjects'] ?? array(), $book['bookshelves'] ?? array() ) ) );
+	return (bool) preg_match( '/\b(hindi|sanskrit|devanagari|india|ramayana|mahabharata|veda|bhagavad)\b/i', $hay );
+}
+
+/**
+ * Curated free Hindi editions for Nexus (public-domain samples; DEJOIY hosted).
+ *
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_library_get_hindi_seed_catalog() {
+	return array(
+		array(
+			'sku'    => 'dlu-hi-001',
+			'title'  => 'गीता — प्रारंभिक श्लोक',
+			'author' => 'व्यास',
+			'blurb'  => 'भगवद गीता के प्रसिद्ध श्लोक — DEJOIY Nexus मुफ्त पाठ।',
+			'slug'   => 'literature',
+			'text'   => "धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः।\nमामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय॥\n\nDEJOIY Nexus पर यह संस्करण मुफ्त है। पूरा पाठ जल्द उपलब्ध होगा।",
+		),
+		array(
+			'sku'    => 'dlu-hi-002',
+			'title'  => 'पंचतंत्र — गीदड़ और कौवा',
+			'author' => 'विष्णु शर्मा',
+			'blurb'  => 'प्राचीन हिंदी कथा साहित्य — नैतिक शिक्षा।',
+			'slug'   => 'literature',
+			'text'   => "एक समय की बात है, जंगल में एक गीदड़ और एक कौवा रहते थे। कौवे के पास रोटी का एक टुकड़ा था। गीदड़ ने कहा, \"मित्र, आकाश का रंग कैसा है?\" जब कौवा ऊपर देखने लगा, गीदड़ ने रोटी उठा ली।\n\nयह कहानी पंचतंत्र की लोकप्रिय शिक्षा पर आधारित है।",
+		),
+		array(
+			'sku'    => 'dlu-hi-003',
+			'title'  => 'रामायण — सार',
+			'author' => 'वाल्मीकि',
+			'blurb'  => 'श्री राम की अमर कथा — संक्षिप्त परिचय।',
+			'slug'   => 'literature',
+			'text'   => "अयोध्या नरेश दशरथ के पुत्र श्री राम, सीता और लक्ष्मण वनवास पर गए। रावण ने सीताजी का हरण किया। हनुमान और वानर सेना की सहायता से राम ने रावण का वध कर धर्म की विजय की।",
+		),
+		array(
+			'sku'    => 'dlu-hi-004',
+			'title'  => 'महाभारत — युद्ध का कारण',
+			'author' => 'व्यास',
+			'blurb'  => 'कुरुक्षेत्र — धर्म और कर्तव्य की महाकाव्य कथा।',
+			'slug'   => 'literature',
+			'text'   => "पांडव और कौरवों के बीच राज्य के लिए मतभेद बढ़ते गए। युधिष्ठिर के राजसूय यज्ञ के बाद द्रौपदी का अपमान हुआ। अंत में कुरुक्षेत्र के युद्ध में अर्जुन के रथ पर श्रीकृष्ण ने गीता का उपदेश दिया।",
+		),
+		array(
+			'sku'    => 'dlu-hi-005',
+			'title'  => 'कबीर के दोहे',
+			'author' => 'कबीर',
+			'blurb'  => 'भक्ति काव्य — सरल और गहरे दोहे।',
+			'slug'   => 'literature',
+			'text'   => "बुरा जो देखन मैं चला, बुरा न मिलिया कोय।\nजो दिल खोजा आपना, मुझसे बुरा न कोय।\n\nसाईं इतना दीजिये, जा में कुटुंब समाय।\nमैं भूखा न रहूँ, साधु न भूखा जाय।",
+		),
+		array(
+			'sku'    => 'dlu-hi-006',
+			'title'  => 'तुलसीदास — रामचरितमानस (चौपाई)',
+			'author' => 'गोस्वामी तुलसीदास',
+			'blurb'  => 'अवधी हिंदी में रामकथा का अमर ग्रंथ।',
+			'slug'   => 'literature',
+			'text'   => "श्रीगुरु चरन सरोज रज, निज मन मुकुर सुधारि।\nबरनउँ रघुबर बिमल जसु, जो दायक फल चारि॥\n\nबुद्धिहीन तनु जानिके, सुमिरौं पवन-कुमार।\nबल बुद्धि विद्या देहु मोहिं, हरहु कलेश विकार॥",
+		),
+		array(
+			'sku'    => 'dlu-hi-007',
+			'title'  => 'प्रेमचंद — ईमानदारी (संक्षिप्त)',
+			'author' => 'प्रेमचंद',
+			'blurb'  => 'आधुनिक हिंदी कथा — नैतिकता पर आधारित।',
+			'slug'   => 'literature',
+			'text'   => "गाँव के मेल में लड़के ने गलती से अधिक मिठाई उठा ली। रात को उसने माँ से कहा, \"मैं कल विक्रेता के पास जाकर पैसे दूँगा।\" ईमानदारी छोटे कामों में भी दिखती है।",
+		),
+		array(
+			'sku'    => 'dlu-hi-008',
+			'title'  => 'सुभाषित — ज्ञान की बातें',
+			'author' => 'DEJOIY Curated',
+			'blurb'  => 'संस्कृत-हिंदी सुभाषित संग्रह।',
+			'slug'   => 'literature',
+			'text'   => "उद्यमेन हि सिध्यन्ति कार्याणि न मनोरथैः।\nन हि सुप्तस्य सिंहस्य प्रविशन्ति मुखे मृगाः॥\n\nअर्थ: परिश्रम से ही कार्य सिद्ध होते हैं, केवल इच्छा से नहीं।",
+		),
+		array(
+			'sku'    => 'dlu-hi-009',
+			'title'  => 'हिंदी व्याकरण — संज्ञा',
+			'author' => 'DEJOIY Learning',
+			'blurb'  => 'स्कूली हिंदी व्याकरण — आसान परिचय।',
+			'slug'   => 'business',
+			'text'   => "संज्ञा शब्दों के वह रूप हैं जो किसी व्यक्ति, वस्तु, स्थान या भाव का नाम बताते हैं। उदाहरण: राम, दिल्ली, ममता। संज्ञा के प्रकार: व्यक्तिवाचक, जातिवाचक, भाववाचक, समूहवाचक।",
+		),
+		array(
+			'sku'    => 'dlu-hi-010',
+			'title'  => 'भारत के स्वतंत्रता सेनानी',
+			'author' => 'DEJOIY History',
+			'blurb'  => 'बच्चों के लिए संक्षिप्त इतिहास।',
+			'slug'   => 'business',
+			'text'   => "महात्मा गांधी ने अहिंसा के मार्ग पर चलकर स्वतंत्रता आंदोलन को दिशा दी। सुभाष चंद्र बोस ने आज़ाद हिंद फौज का नेतृत्व किया। भारत 15 अगस्त 1947 को स्वतंत्र हुआ।",
+		),
+		array(
+			'sku'    => 'dlu-hi-011',
+			'title'  => 'विज्ञान — सौर मंडल',
+			'author' => 'DEJOIY Learning',
+			'blurb'  => 'हिंदी में विज्ञान — ग्रह परिचय।',
+			'slug'   => 'design',
+			'text'   => "सौर मंडल में सूर्य के चारों ओर आठ ग्रह घूमते हैं: बुध, शुक्र, पृथ्वी, मंगल, बृहस्पति, शनि, अरुण, वरुण। पृथ्वी पर जीवन संभव है क्योंकि यह सूर्य से सही दूरी पर है।",
+		),
+		array(
+			'sku'    => 'dlu-hi-012',
+			'title'  => 'लोकोक्तियाँ — हिंदी',
+			'author' => 'DEJOIY Curated',
+			'blurb'  => 'दैनिक बोलचाल की प्रसिद्ध कहावतें।',
+			'slug'   => 'literature',
+			'text'   => "जैसा करोगे वैसा भरोगे।\nअंधों में काना राजा।\nबंदर क्या जाने अदरक का स्वाद।\n\nये लोकोक्तियाँ जीवन के अनुभव को संक्षेप में सिखाती हैं।",
+		),
+		array(
+			'sku'    => 'dlu-hi-013',
+			'title'  => 'छोटी कविता — बारिश',
+			'author' => 'DEJOIY Junior',
+			'blurb'  => 'बच्चों की हिंदी कविता।',
+			'slug'   => 'literature',
+			'text'   => "छम छम छम, बरसा बादल,\nधरती पर नाचे फुहार।\nपंछी छिपे पत्तों में,\nखिले फूलों का संसार।",
+		),
+		array(
+			'sku'    => 'dlu-hi-014',
+			'title'  => 'आत्मकथा — मेरी पहली किताब',
+			'author' => 'DEJOIY Creators',
+			'blurb'  => 'नए लेखकों के लिए प्रेरणादायक संक्षिप्त आत्मकथा।',
+			'slug'   => 'marketing',
+			'text'   => "मैंने स्कूल में पहली बार कहानी लिखी। अध्यापक ने कहा, \"तुम लेखक बन सकते हो।\" आज DEJOIY Nexus पर मैं अपनी किताब साझा करता हूँ — यह मेरी पहचान है।",
+		),
+		array(
+			'sku'    => 'dlu-hi-015',
+			'title'  => 'योग — सूर्य नमस्कार',
+			'author' => 'DEJOIY Wellness',
+			'blurb'  => 'स्वास्थ्य — सरल योग परिचय हिंदी में।',
+			'slug'   => 'design',
+			'text'   => "सूर्य नमस्कार बारह आसनों की श्रृंखला है। प्राणायाम से ऊर्जा मिलती है। नियमित अभ्यास से शरीर लचीला और मन शांत रहता है।",
+		),
+	);
+}
+
+/**
+ * Create or update one curated Hindi Nexus book.
+ *
+ * @param array<string, string> $entry Seed row.
+ * @return int Product ID.
+ */
+function dejoiy_library_upsert_hindi_nexus_book( $entry ) {
+	if ( empty( $entry['sku'] ) || empty( $entry['title'] ) || ! class_exists( 'WooCommerce' ) ) {
+		return 0;
+	}
+
+	$sku = sanitize_key( (string) $entry['sku'] );
+	$product_id = function_exists( 'wc_get_product_id_by_sku' ) ? (int) wc_get_product_id_by_sku( $sku ) : 0;
+	$product    = $product_id ? wc_get_product( $product_id ) : new WC_Product_Simple();
+	if ( ! $product ) {
+		return 0;
+	}
+
+	if ( $product_id && 'woocommerce' === (string) get_post_meta( $product_id, '_dejoiy_library_source', true ) ) {
+		return $product_id;
+	}
+
+	$product->set_name( (string) $entry['title'] );
+	$product->set_status( 'publish' );
+	$product->set_catalog_visibility( 'hidden' );
+	$product->set_sku( $sku );
+	$product->set_regular_price( '0' );
+	$product->set_sale_price( '' );
+	$product->set_short_description( ! empty( $entry['blurb'] ) ? (string) $entry['blurb'] : __( 'मुफ्त हिंदी संस्करण — DEJOIY Nexus।', 'dejoiy' ) );
+
+	$product_id = (int) $product->save();
+	if ( $product_id < 1 ) {
+		return 0;
+	}
+
+	$slug = ! empty( $entry['slug'] ) ? sanitize_key( (string) $entry['slug'] ) : 'literature';
+	$parent = term_exists( 'dejoiy-library', 'product_cat' );
+	$parent_id = is_array( $parent ) ? (int) $parent['term_id'] : (int) $parent;
+	$term = term_exists( $slug, 'product_cat' );
+	$term_id = $term ? (int) ( is_array( $term ) ? $term['term_id'] : $term ) : $parent_id;
+	wp_set_object_terms( $product_id, array( $parent_id, $term_id ), 'product_cat' );
+
+	update_post_meta( $product_id, '_dejoiy_library_book', '1' );
+	update_post_meta( $product_id, '_dejoiy_library_source', 'dejoiy-curated' );
+	update_post_meta( $product_id, '_dejoiy_library_category', $slug );
+	update_post_meta( $product_id, '_dejoiy_library_author', ! empty( $entry['author'] ) ? (string) $entry['author'] : 'DEJOIY' );
+	if ( ! empty( $entry['text'] ) ) {
+		update_post_meta( $product_id, '_dejoiy_library_text', (string) $entry['text'] );
+	}
+	$title = (string) $entry['title'];
+	if ( function_exists( 'dejoiy_library_make_cover_gradient_url' ) ) {
+		update_post_meta( $product_id, '_dejoiy_library_cover_fallback', esc_url_raw( dejoiy_library_make_cover_gradient_url( $title, $slug ) ) );
+	}
+	if ( function_exists( 'dejoiy_library_make_cover_url' ) ) {
+		update_post_meta( $product_id, '_dejoiy_library_cover', esc_url_raw( dejoiy_library_make_cover_url( $title, $slug ) ) );
+	}
+	if ( function_exists( 'dejoiy_library_apply_virtual_product' ) ) {
+		$saved = wc_get_product( $product_id );
+		if ( $saved ) {
+			dejoiy_library_apply_virtual_product( $saved );
+		}
+	}
+	dejoiy_library_set_book_language( $product_id, 'hi' );
+
+	return $product_id;
+}
+
+/**
+ * Seed curated Hindi free books (Gutendex has almost no native Hindi catalog).
+ *
+ * @return int Books created or updated.
+ */
+function dejoiy_library_seed_hindi_nexus_books() {
+	if ( get_option( 'dejoiy_library_hindi_seed_v1' ) ) {
+		return 0;
+	}
+	$count = 0;
+	foreach ( dejoiy_library_get_hindi_seed_catalog() as $entry ) {
+		if ( dejoiy_library_upsert_hindi_nexus_book( $entry ) ) {
+			++$count;
+		}
+	}
+	update_option( 'dejoiy_library_hindi_seed_v1', '1' );
+	return $count;
+}
+
+/**
+ * Ensure Hindi shelf has books when Gutendex cannot supply hi editions.
+ */
+function dejoiy_library_maybe_seed_hindi_nexus_books() {
+	if ( ! function_exists( 'dejoiy_library_should_load_nexus_app' ) || ! dejoiy_library_should_load_nexus_app() ) {
+		return;
+	}
+	if ( dejoiy_library_count_books_in_language( 'hi' ) >= 8 ) {
+		return;
+	}
+	dejoiy_library_seed_hindi_nexus_books();
+}
+
+function dejoiy_library_run_hindi_gutenberg_batch( $batch_size = 5 ) {
+	$batch_size = max( 1, min( 10, (int) $batch_size ) );
+	$target     = 40;
+	$imported   = (int) get_option( 'dejoiy_library_hindi_gutenberg_imported', 0 );
+	if ( $imported >= $target ) {
+		update_option( 'dejoiy_library_hindi_gutenberg_done', '1' );
+		dejoiy_library_maybe_seed_hindi_nexus_books();
+		return 0;
+	}
+
+	$strategies = dejoiy_library_get_hindi_gutenberg_strategies();
+	$idx        = max( 0, min( count( $strategies ) - 1, (int) get_option( 'dejoiy_library_hindi_gutenberg_strategy', 0 ) ) );
+	$strategy   = $strategies[ $idx ];
+	$page       = max( 1, (int) get_option( 'dejoiy_library_hindi_gutenberg_page', 1 ) );
+
+	$args = array( 'page' => $page );
+	foreach ( $strategy as $key => $value ) {
+		if ( 'page' !== $key ) {
+			$args[ $key ] = $value;
+		}
+	}
+	$url = add_query_arg( $args, 'https://gutendex.com/books/' );
+
+	$response = wp_remote_get(
+		$url,
+		array(
+			'timeout'    => 25,
+			'user-agent' => 'DEJOIY-Nexus/1.0; ' . home_url(),
+		)
+	);
+
+	if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		return 0;
+	}
+
+	$data = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+	if ( empty( $data['results'] ) || ! is_array( $data['results'] ) ) {
+		if ( $idx + 1 < count( $strategies ) ) {
+			update_option( 'dejoiy_library_hindi_gutenberg_strategy', $idx + 1 );
+			update_option( 'dejoiy_library_hindi_gutenberg_page', 1 );
+		} else {
+			update_option( 'dejoiy_library_hindi_gutenberg_done', '1' );
+			dejoiy_library_seed_hindi_nexus_books();
+		}
+		return 0;
+	}
+
+	$done_this_run = 0;
+	foreach ( $data['results'] as $book ) {
+		if ( $done_this_run >= $batch_size || $imported >= $target ) {
+			break;
+		}
+		if ( ! dejoiy_library_gutendex_counts_as_hindi( $book ) ) {
+			continue;
+		}
+
+		$gid = ! empty( $book['id'] ) ? (int) $book['id'] : 0;
+		if ( $gid < 1 ) {
+			continue;
+		}
+
+		$title = isset( $book['title'] ) ? wp_strip_all_tags( (string) $book['title'] ) : '';
+		if ( '' === $title ) {
+			continue;
+		}
+
+		$author = __( 'Unknown', 'dejoiy' );
+		if ( ! empty( $book['authors'][0]['name'] ) ) {
+			$author = (string) $book['authors'][0]['name'];
+		}
+
+		$slug  = function_exists( 'dejoiy_library_gutendex_category_slug' )
+			? dejoiy_library_gutendex_category_slug( isset( $book['subjects'] ) ? $book['subjects'] : array() )
+			: 'literature';
+		$blurb = ! empty( $book['subjects'][0] ) ? (string) $book['subjects'][0] : '';
+
+		$lang = dejoiy_library_gutendex_primary_language( isset( $book['languages'] ) ? $book['languages'] : array() );
+		if ( ! in_array( $lang, array( 'hi', 'ur', 'mr', 'bn', 'pa', 'gu' ), true ) ) {
+			$lang = 'hi';
+		}
+
+		$entry = array(
+			'slug'     => $slug,
+			'title'    => $title,
+			'author'   => $author,
+			'gid'      => $gid,
+			'blurb'    => $blurb,
+			'language' => $lang,
+		);
+
+		if ( ! function_exists( 'dejoiy_library_upsert_gutenberg_book' ) ) {
+			break;
+		}
+
+		$product_id = dejoiy_library_upsert_gutenberg_book( $entry );
+		if ( $product_id ) {
+			dejoiy_library_set_book_language( $product_id, 'hi' );
+			++$done_this_run;
+			++$imported;
+		}
+	}
+
+	update_option( 'dejoiy_library_hindi_gutenberg_imported', $imported );
+	update_option( 'dejoiy_library_hindi_gutenberg_page', $page + 1 );
+
+	if ( $imported >= $target ) {
+		update_option( 'dejoiy_library_hindi_gutenberg_done', '1' );
+		dejoiy_library_maybe_seed_hindi_nexus_books();
+	} elseif ( empty( $data['next'] ) ) {
+		if ( $idx + 1 < count( $strategies ) ) {
+			update_option( 'dejoiy_library_hindi_gutenberg_strategy', $idx + 1 );
+			update_option( 'dejoiy_library_hindi_gutenberg_page', 1 );
+		} else {
+			update_option( 'dejoiy_library_hindi_gutenberg_done', '1' );
+			dejoiy_library_maybe_seed_hindi_nexus_books();
+		}
+	}
+
+	return $done_this_run;
+}
+
+/**
+ * Run Hindi import on Nexus page loads (throttled).
+ */
+function dejoiy_library_maybe_run_hindi_gutenberg_batch() {
+	if ( ! function_exists( 'dejoiy_library_should_load_nexus_app' ) || ! dejoiy_library_should_load_nexus_app() ) {
+		return;
+	}
+	if ( ! get_option( 'dejoiy_library_hindi_gutenberg_done' ) ) {
+		dejoiy_library_run_hindi_gutenberg_batch( 5 );
+	}
+	dejoiy_library_maybe_seed_hindi_nexus_books();
+}
+
+/**
+ * On seller product save: persist language meta from custom field.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_sync_seller_book_language( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || 'product' !== get_post_type( $product_id ) ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_library_is_nexus_product' ) || ! dejoiy_library_is_nexus_product( $product_id ) ) {
+		return;
+	}
+
+	$candidates = array(
+		get_post_meta( $product_id, '_dejoiy_book_language', true ),
+		get_post_meta( $product_id, 'dejoiy_book_language', true ),
+	);
+	foreach ( $candidates as $raw ) {
+		$code = sanitize_key( (string) $raw );
+		if ( dejoiy_library_is_valid_language( $code ) ) {
+			dejoiy_library_set_book_language( $product_id, $code );
+			return;
+		}
+	}
+
+	if ( ! get_post_meta( $product_id, '_dejoiy_book_language', true ) ) {
+		dejoiy_library_set_book_language( $product_id, 'en' );
+	}
+}
+
+/**
+ * Register language helpers.
+ */
+function dejoiy_library_languages_init() {
+	add_action( 'woocommerce_process_product_meta', 'dejoiy_library_sync_seller_book_language', 45 );
+	add_action( 'save_post_product', 'dejoiy_library_sync_seller_book_language', 45 );
+	add_action( 'init', 'dejoiy_library_maybe_run_hindi_gutenberg_batch', 32 );
+	add_action( 'init', 'dejoiy_library_maybe_seed_hindi_nexus_books', 33 );
+}
+
+
+
+
+/**
+ * Normalize search query (supports "lang:hi" / "language:Hindi").
+ *
+ * @param string $term Raw query.
+ * @return string
+ */
+function dejoiy_library_normalize_nexus_search_term( $term ) {
+	$term = trim( (string) $term );
+	if ( preg_match( '/^(?:language|lang)\s*:\s*(.+)$/iu', $term, $m ) ) {
+		return trim( $m[1] );
+	}
+	return $term;
+}
+
+/**
+ * Map a search phrase to a Nexus language code (e.g. "Hindi" -> hi).
+ *
+ * @param string $term Search phrase.
+ * @return string Language code or empty.
+ */
+function dejoiy_library_resolve_search_language( $term ) {
+	$term = dejoiy_library_normalize_nexus_search_term( $term );
+	if ( '' === $term ) {
+		return '';
+	}
+
+	$lower = function_exists( 'mb_strtolower' ) ? mb_strtolower( $term, 'UTF-8' ) : strtolower( $term );
+	$lower = trim( $lower );
+
+	foreach ( dejoiy_library_get_languages() as $code => $info ) {
+		$candidates = array(
+			$code,
+			function_exists( 'mb_strtolower' ) ? mb_strtolower( $info['label'], 'UTF-8' ) : strtolower( $info['label'] ),
+			$info['native'],
+		);
+		foreach ( $candidates as $c ) {
+			$c = trim( (string) $c );
+			if ( '' !== $c && $lower === ( function_exists( 'mb_strtolower' ) ? mb_strtolower( $c, 'UTF-8' ) : strtolower( $c ) ) ) {
+				return $code;
+			}
+		}
+	}
+
+	$aliases = array(
+		'hindi'     => 'hi',
+		'हिन्दी'    => 'hi',
+		'हिंदी'     => 'hi',
+		'english'   => 'en',
+		'bengali'   => 'bn',
+		'bangla'    => 'bn',
+		'tamil'     => 'ta',
+		'telugu'    => 'te',
+		'marathi'   => 'mr',
+		'gujarati'  => 'gu',
+		'kannada'   => 'kn',
+		'malayalam' => 'ml',
+		'punjabi'   => 'pa',
+		'urdu'      => 'ur',
+	);
+
+	if ( isset( $aliases[ $lower ] ) ) {
+		return $aliases[ $lower ];
+	}
+
+	return '';
+}
+
+/**
+ * Render language browse section for Nexus landing.
+ */
+function dejoiy_library_render_language_sections() {
+	if ( ! function_exists( 'dejoiy_library_get_languages' ) || ! function_exists( 'dejoiy_library_query_books' ) ) {
+		return;
+	}
+
+	$langs   = dejoiy_library_get_languages();
+	$active  = isset( $_GET['dlu_lang'] ) ? sanitize_key( wp_unslash( $_GET['dlu_lang'] ) ) : 'en';
+	if ( ! dejoiy_library_is_valid_language( $active ) ) {
+		$active = 'en';
+	}
+	$flow    = defined( 'DEJOIY_LIBRARY_FLOW' ) ? DEJOIY_LIBRARY_FLOW : 'dejoiy_library';
+	$landing = function_exists( 'dejoiy_library_get_landing_url' ) ? dejoiy_library_get_landing_url() : home_url( '/dejoiy-library/' );
+	?>
+	<section id="dlu-languages" class="dlu-sec dlu-sec-languages">
+		<div class="dlu-sec-in">
+			<h2 class="dlu-sec-title"><?php esc_html_e( 'Browse by language', 'dejoiy' ); ?></h2>
+			<p class="dlu-sec-desc"><?php esc_html_e( 'Read in the language you love. Free Hindi classics and more languages as creators publish.', 'dejoiy' ); ?></p>
+			<div class="dlu-lang-tabs" role="tablist" aria-label="<?php esc_attr_e( 'Book language', 'dejoiy' ); ?>">
+				<?php foreach ( $langs as $code => $info ) : ?>
+					<?php
+					$url = add_query_arg( array( $flow => '1', 'dlu_lang' => $code ), $landing );
+					?>
+					<a href="<?php echo esc_url( $url . '#dlu-languages' ); ?>" class="dlu-lang-tab<?php echo $code === $active ? ' is-active' : ''; ?>" role="tab" aria-selected="<?php echo $code === $active ? 'true' : 'false'; ?>" data-lang="<?php echo esc_attr( $code ); ?>">
+						<span class="dlu-lang-tab-label"><?php echo esc_html( $info['label'] ); ?></span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+			<?php foreach ( $langs as $code => $info ) : ?>
+				<?php
+				$is_active = ( $code === $active );
+				$q         = dejoiy_library_query_books( array( 'language' => $code, 'posts_per_page' => 24 ) );
+				$has_books = $q->have_posts();
+				?>
+				<div class="dlu-lang-panel<?php echo $is_active ? ' is-active' : ''; ?>" id="dlu-lang-<?php echo esc_attr( $code ); ?>" role="tabpanel" data-lang="<?php echo esc_attr( $code ); ?>"<?php echo $is_active ? '' : ' hidden'; ?>>
+					<?php if ( $has_books ) : ?>
+						<ul class="products dlu-books-grid columns-4 dlu-lang-grid">
+							<?php
+							foreach ( $q->posts as $p ) {
+								echo dejoiy_library_render_book_card( $p );
+							}
+							wp_reset_postdata();
+							?>
+						</ul>
+					<?php else : ?>
+						<div class="dlu-lang-empty">
+							<p class="dlu-lang-empty-title"><?php echo esc_html( $info['label'] ); ?></p>
+							<p class="dlu-reader-note"><?php echo esc_html( dejoiy_library_language_collecting_message( $code ) ); ?></p>
+							<?php if ( 'hi' === $code ) : ?>
+								<p class="dlu-reader-note"><?php esc_html_e( 'We are importing free Hindi public-domain books now — refresh in a moment.', 'dejoiy' ); ?></p>
+							<?php endif; ?>
+						</div>
+					<?php endif; ?>
+				</div>
+			<?php endforeach; ?>
+		</div>
+	</section>
+	<?php
+}
+
+
+
+/**
+ * Remove third-party platform names from customer-facing Nexus copy.
+ *
+ * @param string $text Text.
+ * @return string
+ */
+function dejoiy_library_scrub_platform_copy( $text ) {
+	if ( ! is_string( $text ) || '' === $text ) {
+		return $text;
+	}
+	$map = array(
+		'WooCommerce' => 'DEJOIY Nexus',
+		'woocommerce' => 'DEJOIY Nexus',
+		'WCFM'        => 'DEJOIY',
+		'wcfm'        => 'DEJOIY',
+		'WordPress'   => 'DEJOIY',
+		'wordpress'   => 'DEJOIY',
+		'Hostinger'   => 'DEJOIY',
+	);
+	return str_ireplace( array_keys( $map ), array_values( $map ), $text );
+}
+
+/**
+ * Language tools on single book page.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_render_book_language_tools( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || ! function_exists( 'dejoiy_library_get_languages' ) ) {
+		return;
+	}
+
+	$langs    = dejoiy_library_get_languages();
+	$current  = dejoiy_library_get_book_language( $product_id );
+	$flow     = defined( 'DEJOIY_LIBRARY_FLOW' ) ? DEJOIY_LIBRARY_FLOW : 'dejoiy_library';
+	$landing  = function_exists( 'dejoiy_library_get_landing_url' ) ? dejoiy_library_get_landing_url() : home_url( '/dejoiy-library/' );
+	$label    = isset( $langs[ $current ]['label'] ) ? $langs[ $current ]['label'] : $current;
+	$select_id = 'dlu-book-lang-select';
+	?>
+	<div class="dlu-book-lang" id="dlu-book-lang">
+		<p class="dlu-book-lang-current">
+			<span class="dlu-book-lang-kicker"><?php esc_html_e( 'Edition language', 'dejoiy' ); ?></span>
+			<strong><?php echo esc_html( $label ); ?></strong>
+		</p>
+		<label class="dlu-book-lang-label" for="<?php echo esc_attr( $select_id ); ?>"><?php esc_html_e( 'Browse library in', 'dejoiy' ); ?></label>
+		<select id="<?php echo esc_attr( $select_id ); ?>" class="dlu-book-lang-select" data-dlu-lang-select>
+			<option value=""><?php esc_html_e( 'Choose a language…', 'dejoiy' ); ?></option>
+			<?php foreach ( $langs as $code => $info ) : ?>
+				<?php
+				$url = add_query_arg(
+					array(
+						$flow     => '1',
+						'dlu_lang' => $code,
+					),
+					$landing
+				) . '#dlu-languages';
+				$count = dejoiy_library_count_books_in_language( $code );
+				$opt_label = $info['label'];
+				if ( $count > 0 ) {
+					$opt_label .= ' (' . $count . ')';
+				}
+				?>
+				<option value="<?php echo esc_url( $url ); ?>" <?php selected( $code, $current ); ?>><?php echo esc_html( $opt_label ); ?></option>
+			<?php endforeach; ?>
+		</select>
+		<a class="dlu-book-lang-link" href="<?php echo esc_url( add_query_arg( array( $flow => '1', 'dlu_lang' => $current ), $landing ) . '#dlu-languages' ); ?>"><?php echo esc_html( sprintf( __( 'See all %s books', 'dejoiy' ), $label ) ); ?></a>
+	</div>
+	<?php
+}
+
+/**
+ * Related titles in the same language.
+ *
+ * @param int $product_id Product ID.
+ * @param int $limit      Max books.
+ */
+function dejoiy_library_render_book_related_by_language( $product_id, $limit = 8 ) {
+	$product_id = (int) $product_id;
+	$limit      = max( 1, min( 12, (int) $limit ) );
+	if ( $product_id < 1 || ! function_exists( 'dejoiy_library_query_books' ) ) {
+		return;
+	}
+
+	$lang  = dejoiy_library_get_book_language( $product_id );
+	$langs = dejoiy_library_get_languages();
+	$label = isset( $langs[ $lang ]['label'] ) ? $langs[ $lang ]['label'] : $lang;
+
+	$q = dejoiy_library_query_books(
+		array(
+			'language'       => $lang,
+			'posts_per_page' => $limit + 1,
+			'post__not_in'   => array( $product_id ),
+		)
+	);
+
+	if ( ! $q->have_posts() ) {
+		if ( 'hi' === $lang && function_exists( 'dejoiy_library_run_hindi_gutenberg_batch' ) ) {
+			dejoiy_library_run_hindi_gutenberg_batch( 6 );
+			$q = dejoiy_library_query_books(
+				array(
+					'language'       => $lang,
+					'posts_per_page' => $limit,
+					'post__not_in'   => array( $product_id ),
+				)
+			);
+		}
+	}
+
+	if ( ! $q->have_posts() ) {
+		?>
+		<section class="dlu-book-related dlu-book-related--empty">
+			<h2 class="dlu-sec-title"><?php echo esc_html( sprintf( __( 'More in %s', 'dejoiy' ), $label ) ); ?></h2>
+			<p class="dlu-reader-note"><?php echo esc_html( dejoiy_library_language_collecting_message( $lang ) ); ?></p>
+		</section>
+		<?php
+		return;
+	}
+	?>
+	<section class="dlu-book-related">
+		<h2 class="dlu-sec-title"><?php echo esc_html( sprintf( __( 'More in %s', 'dejoiy' ), $label ) ); ?></h2>
+		<ul class="products dlu-books-grid columns-4 dlu-book-related-grid">
+			<?php
+			$n = 0;
+			foreach ( $q->posts as $p ) {
+				if ( (int) $p->ID === $product_id ) {
+					continue;
+				}
+				echo dejoiy_library_render_book_card( $p );
+				if ( ++$n >= $limit ) {
+					break;
+				}
+			}
+			wp_reset_postdata();
+			?>
+		</ul>
+	</section>
+	<?php
+}
+
+dejoiy_library_languages_init();

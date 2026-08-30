@@ -1,0 +1,66 @@
+/**
+ * DEJOIY Mobile Home V2 — homepage interactions only.
+ */
+(function () {
+	'use strict';
+
+	var root = document.getElementById('dejoiy-mobile-home');
+	if (!root || !window.matchMedia('(max-width: 1024px)').matches) {
+		return;
+	}
+
+	function syncFav(btn) {
+		var id = btn.getAttribute('data-fav-id');
+		if (!id) {
+			return;
+		}
+		var pressed = false;
+		try {
+			var raw = localStorage.getItem('dlu_nexus_wishlist_v1');
+			if (raw) {
+				var list = JSON.parse(raw);
+				pressed = Array.isArray(list) && list.indexOf(parseInt(id, 10)) !== -1;
+			}
+		} catch (e) {
+			/* ignore */
+		}
+		btn.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+		btn.textContent = pressed ? '♥' : '♡';
+	}
+
+	root.querySelectorAll('.dm-card__fav').forEach(function (btn) {
+		syncFav(btn);
+		btn.addEventListener('click', function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var id = parseInt(btn.getAttribute('data-fav-id'), 10);
+			if (!id) {
+				return;
+			}
+			var key = 'dlu_nexus_wishlist_v1';
+			var list = [];
+			try {
+				list = JSON.parse(localStorage.getItem(key) || '[]');
+				if (!Array.isArray(list)) {
+					list = [];
+				}
+			} catch (err) {
+				list = [];
+			}
+			var idx = list.indexOf(id);
+			if (idx === -1) {
+				list.push(id);
+			} else {
+				list.splice(idx, 1);
+			}
+			localStorage.setItem(key, JSON.stringify(list));
+			syncFav(btn);
+			document.dispatchEvent(new CustomEvent('dejoiy-wishlist-updated', { detail: { id: id } }));
+		});
+	});
+
+	var carousel = document.getElementById('dm-universe-carousel');
+	if (carousel) {
+		carousel.setAttribute('tabindex', '0');
+	}
+})();

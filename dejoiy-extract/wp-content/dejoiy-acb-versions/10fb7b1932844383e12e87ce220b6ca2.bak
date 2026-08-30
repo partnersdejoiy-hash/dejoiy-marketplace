@@ -1,0 +1,115 @@
+<?php
+/**
+ * DEJOIY Reader — custom reading shell with LMS slides + resume.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$book_id = isset( $_GET['dejoiy_reader'] ) ? absint( $_GET['dejoiy_reader'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$product = $book_id && function_exists( 'wc_get_product' ) ? wc_get_product( $book_id ) : null;
+
+if ( ! $product || ! dejoiy_library_is_book_product( $book_id ) ) {
+	wp_safe_redirect( dejoiy_library_get_landing_url() );
+	exit;
+}
+
+$can_read_full = function_exists( 'dejoiy_library_user_can_read_book' )
+	? dejoiy_library_user_can_read_book( 0, $book_id )
+	: true;
+$is_download   = function_exists( 'dejoiy_library_lms_is_download_only_product' )
+	&& dejoiy_library_lms_is_download_only_product( $book_id );
+$server_prog   = function_exists( 'dejoiy_library_lms_get_progress' ) && is_user_logged_in()
+	? dejoiy_library_lms_get_progress( 0, $book_id )
+	: 0;
+
+require get_stylesheet_directory() . '/library-header.php';
+$cover = dejoiy_library_get_cover_url( $book_id, 'large' );
+?>
+<main class="dlu-reader" id="dlu-reader" data-book-id="<?php echo esc_attr( (string) $book_id ); ?>" data-can-read="<?php echo $can_read_full ? '1' : '0'; ?>" data-server-progress="<?php echo esc_attr( (string) $server_prog ); ?>">
+	<div class="dlu-reader-toolbar">
+		<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-btn-ghost">← My Nexus</a>
+		<h1><?php echo esc_html( $product->get_name() ); ?></h1>
+		<?php if ( 'publish' !== get_post_status( $book_id ) ) : ?>
+			<p class="dlu-reader-draft-note"><?php esc_html_e( 'This book is not published yet — publish it in WooCommerce (Products) so it appears in the library catalog.', 'dejoiy' ); ?></p>
+		<?php endif; ?>
+		<div class="dlu-reader-modes">
+			<button type="button" data-mode="slides" class="is-on"><?php esc_html_e( 'Slides', 'dejoiy' ); ?></button>
+			<button type="button" data-mode="scroll"><?php esc_html_e( 'Scroll', 'dejoiy' ); ?></button>
+			<button type="button" data-mode="dark"><?php esc_html_e( 'Dark', 'dejoiy' ); ?></button>
+			<button type="button" data-mode="light"><?php esc_html_e( 'Light', 'dejoiy' ); ?></button>
+		</div>
+	</div>
+	<div class="dlu-reader-body" data-mode="dark" data-layout="slides">
+		<aside class="dlu-reader-side">
+			<img src="<?php echo esc_url( $cover ); ?>" alt="" class="dlu-reader-cover" data-fallback="<?php echo esc_url( dejoiy_library_get_cover_fallback_url( $book_id ) ); ?>" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.onerror=null;}" />
+			<p class="dlu-reader-author"><?php echo esc_html( dejoiy_library_get_author( $book_id ) ); ?></p>
+			<div class="dlu-reader-progress">
+				<label><?php esc_html_e( 'Progress', 'dejoiy' ); ?></label>
+				<progress id="dlu-read-progress" value="0" max="100">0%</progress>
+			</div>
+			<?php if ( ! $can_read_full && ! $is_download ) : ?>
+				<p class="dlu-reader-note"><?php esc_html_e( 'Purchase this edition to unlock the full reader and save your place in My Nexus.', 'dejoiy' ); ?></p>
+				<a href="<?php echo esc_url( dejoiy_library_get_add_to_cart_url( $book_id ) ); ?>" class="dlu-btn-primary dlu-reader-add"><?php esc_html_e( 'Add to Nexus shelf', 'dejoiy' ); ?></a>
+				<a href="<?php echo esc_url( dejoiy_library_get_buy_now_url( $book_id ) ); ?>" class="dlu-btn-secondary dlu-reader-buy"><?php esc_html_e( 'Buy this edition', 'dejoiy' ); ?></a>
+			<?php elseif ( $is_download && is_user_logged_in() && function_exists( 'dejoiy_library_lms_user_owns_book' ) && dejoiy_library_lms_user_owns_book( 0, $book_id ) ) : ?>
+				<p class="dlu-reader-note"><?php esc_html_e( 'This edition is a downloadable file — open it from My Nexus → Downloads.', 'dejoiy' ); ?></p>
+				<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-btn-primary"><?php esc_html_e( 'Go to Downloads', 'dejoiy' ); ?></a>
+			<?php endif; ?>
+			<button type="button" class="dlu-btn-ghost" id="dlu-add-bookmark"><?php esc_html_e( 'Add bookmark', 'dejoiy' ); ?></button>
+		</aside>
+		<div class="dlu-reader-main">
+			<div class="dlu-slide-nav" id="dlu-slide-nav" hidden>
+				<button type="button" class="dlu-btn-ghost" id="dlu-slide-prev" aria-label="<?php esc_attr_e( 'Previous slide', 'dejoiy' ); ?>">←</button>
+				<span id="dlu-slide-indicator">1 / 1</span>
+				<button type="button" class="dlu-btn-ghost" id="dlu-slide-next" aria-label="<?php esc_attr_e( 'Next slide', 'dejoiy' ); ?>">→</button>
+			</div>
+			<article class="dlu-reader-content" id="dlu-reader-content">
+				<?php
+				if ( function_exists( 'dejoiy_library_load_gutenberg_module' ) ) {
+					dejoiy_library_load_gutenberg_module();
+				}
+				$reader_text = function_exists( 'dejoiy_library_get_reader_text' )
+					? dejoiy_library_get_reader_text( $book_id )
+					: '';
+				$is_gutenberg = function_exists( 'dejoiy_library_is_gutenberg_edition' )
+					&& dejoiy_library_is_gutenberg_edition( $book_id );
+				if ( $reader_text && $can_read_full ) {
+					echo '<div class="dlu-reader-source-html">' . wp_kses_post( $reader_text ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				} else {
+					$desc = $product->get_description() ?: $product->get_short_description();
+					if ( $desc ) {
+						echo wp_kses_post( wpautop( $desc ) );
+					}
+					if ( $is_gutenberg && $can_read_full ) {
+						?>
+						<p class="dlu-reader-note"><?php esc_html_e( 'Full text is loading from Project Gutenberg. If this page is empty, open the book again in a minute while the sync completes.', 'dejoiy' ); ?></p>
+						<?php
+					} elseif ( ! $can_read_full && ! $desc ) {
+						?>
+						<p class="dlu-reader-note"><?php esc_html_e( 'Preview only — buy this edition for Nexus checkout and full reading in My Nexus.', 'dejoiy' ); ?></p>
+						<?php
+					} elseif ( ! $desc && $can_read_full ) {
+						?>
+						<p class="dlu-reader-note"><?php esc_html_e( 'Seller edition — reading content will appear when the vendor adds book text in the product description.', 'dejoiy' ); ?></p>
+						<?php
+					}
+				}
+				if ( $is_gutenberg && $reader_text && $can_read_full ) {
+					?>
+					<p class="dlu-reader-source">
+						<small><?php esc_html_e( 'Public-domain edition from Project Gutenberg.', 'dejoiy' ); ?></small>
+					</p>
+					<?php
+				}
+				?>
+			</article>
+			<div class="dlu-slide-stage" id="dlu-slide-stage" hidden aria-live="polite"></div>
+		</div>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';

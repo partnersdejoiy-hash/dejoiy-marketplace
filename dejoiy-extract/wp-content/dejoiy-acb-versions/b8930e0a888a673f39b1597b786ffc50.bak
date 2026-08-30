@@ -1,0 +1,79 @@
+<?php
+/**
+ * DEJOIY Mobile / tablet single product — no marketplace header or footer.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_mobile_product_is_focus_view() {
+	if ( is_admin() ) {
+		return false;
+	}
+	return function_exists( 'is_product' ) && is_product();
+}
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_mobile_product_body_class( $classes ) {
+	if ( dejoiy_mobile_product_is_focus_view() ) {
+		$classes[] = 'dejoiy-mobile-product-view';
+		$classes[] = 'dejoiy-mobile-os-off';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_mobile_product_body_class', 22 );
+
+/**
+ * Enqueue minimal product view styles.
+ */
+function dejoiy_mobile_product_assets() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-mobile-product.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-product',
+			$uri . '/dejoiy-mobile-product.css',
+			array(),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_product_assets', 1011 );
+
+/**
+ * Minimal back bar (not full header).
+ */
+function dejoiy_mobile_product_print_bar() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	$back = wp_get_referer();
+	if ( ! $back ) {
+		$back = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
+	}
+	?>
+	<div class="dejoiy-mobile-product-bar" role="navigation" aria-label="<?php esc_attr_e( 'Product navigation', 'dejoiy' ); ?>">
+		<a class="dejoiy-mobile-product-bar__back" href="<?php echo esc_url( $back ); ?>">← <?php esc_html_e( 'Back', 'dejoiy' ); ?></a>
+	</div>
+	<?php
+}
+add_action( 'wp_body_open', 'dejoiy_mobile_product_print_bar', 3 );

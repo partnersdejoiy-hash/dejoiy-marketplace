@@ -1,0 +1,1093 @@
+<?php
+/**
+ * DEJOIY Refurbished — landing, category, viewer, chrome.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return int
+ */
+function dejoiy_refurbished_cart_count() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return 0;
+	}
+	return (int) WC()->cart->get_cart_contents_count();
+}
+
+/**
+ * Virtual category explorer cards.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function dejoiy_refurbished_category_cards() {
+	return apply_filters(
+		'dejoiy_refurbished_category_cards',
+		array(
+			array( 'key' => 'smartphones', 'icon' => '📱', 'title' => __( 'Smartphones', 'dejoiy' ), 'terms' => array( 'refurbished-phones', 'smartphones', 'mobile-phones' ) ),
+			array( 'key' => 'laptops', 'icon' => '💻', 'title' => __( 'Laptops', 'dejoiy' ), 'terms' => array( 'refurbished-laptops', 'laptops', 'notebooks' ) ),
+			array( 'key' => 'tablets', 'icon' => '📲', 'title' => __( 'Tablets', 'dejoiy' ), 'terms' => array( 'refurbished-tablets', 'tablets', 'ipads' ) ),
+			array( 'key' => 'smartwatches', 'icon' => '⌚', 'title' => __( 'Smart Watches', 'dejoiy' ), 'terms' => array( 'smart-watches', 'wearables', 'refurbished-watches' ) ),
+			array( 'key' => 'earbuds', 'icon' => '🎧', 'title' => __( 'Earbuds', 'dejoiy' ), 'terms' => array( 'earbuds', 'headphones', 'refurbished-audio' ) ),
+			array( 'key' => 'gaming', 'icon' => '🎮', 'title' => __( 'Gaming Consoles', 'dejoiy' ), 'terms' => array( 'gaming-consoles', 'playstation', 'xbox' ) ),
+			array( 'key' => 'cameras', 'icon' => '📷', 'title' => __( 'Cameras', 'dejoiy' ), 'terms' => array( 'cameras', 'refurbished-cameras', 'dslr' ) ),
+			array( 'key' => 'accessories', 'icon' => '🔌', 'title' => __( 'Accessories', 'dejoiy' ), 'terms' => array( 'accessories', 'refurbished-accessories', 'chargers' ) ),
+		)
+	);
+}
+
+/**
+ * Product count for a category (real WC count, or branded fallback when empty).
+ *
+ * @param string $cat_key Category key.
+ * @return int
+ */
+function dejoiy_refurbished_category_count( $cat_key ) {
+	static $cache = array();
+	if ( isset( $cache[ $cat_key ] ) ) {
+		return $cache[ $cat_key ];
+	}
+	$q = new WP_Query(
+		array_merge(
+			dejoiy_refurbished_category_query_args( $cat_key ),
+			array(
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		)
+	);
+	$count = (int) $q->found_posts;
+	wp_reset_postdata();
+	if ( $count < 1 ) {
+		$fallbacks = array(
+			'smartphones'  => 1245,
+			'laptops'      => 892,
+			'tablets'      => 456,
+			'smartwatches' => 318,
+			'earbuds'      => 567,
+			'gaming'       => 203,
+			'cameras'      => 174,
+			'accessories'  => 980,
+		);
+		$count = isset( $fallbacks[ $cat_key ] ) ? $fallbacks[ $cat_key ] : 240;
+	}
+	$cache[ $cat_key ] = $count;
+	return $count;
+}
+
+/**
+ * Representative product image for category card / hero.
+ *
+ * @param string $cat_key Category key.
+ * @return string
+ */
+function dejoiy_refurbished_category_image( $cat_key ) {
+	static $cache = array();
+	if ( isset( $cache[ $cat_key ] ) ) {
+		return $cache[ $cat_key ];
+	}
+	$q = new WP_Query(
+		array_merge(
+			dejoiy_refurbished_category_query_args( $cat_key ),
+			array(
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+			)
+		)
+	);
+	$img = '';
+	if ( ! empty( $q->posts[0] ) ) {
+		$img = (string) get_the_post_thumbnail_url( (int) $q->posts[0], 'medium_large' );
+	}
+	wp_reset_postdata();
+	if ( ! $img && function_exists( 'wc_placeholder_img_src' ) ) {
+		$img = (string) wc_placeholder_img_src( 'medium_large' );
+	}
+	$cache[ $cat_key ] = $img;
+	return $img;
+}
+
+/**
+ * Premium hero mock product photos (demo until catalog images exist).
+ *
+ * @return array<int, array{key:string,alt:string,src:string,class:string}>
+ */
+function dejoiy_refurbished_hero_mock_images() {
+	return apply_filters(
+		'dejoiy_refurbished_hero_mock_images',
+		array(
+			array(
+				'key'   => 'phone',
+				'class' => 'drf-float--phone',
+				'alt'   => __( 'Refurbished smartphone', 'dejoiy' ),
+				'src'   => 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=360&h=360&fit=crop&q=85&auto=format',
+			),
+			array(
+				'key'   => 'laptop',
+				'class' => 'drf-float--laptop',
+				'alt'   => __( 'Refurbished laptop', 'dejoiy' ),
+				'src'   => 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=360&h=360&fit=crop&q=85&auto=format',
+			),
+			array(
+				'key'   => 'fridge',
+				'class' => 'drf-float--fridge',
+				'alt'   => __( 'Refurbished refrigerator', 'dejoiy' ),
+				'src'   => 'https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?w=360&h=360&fit=crop&q=85&auto=format',
+			),
+			array(
+				'key'   => 'washer',
+				'class' => 'drf-float--washer',
+				'alt'   => __( 'Refurbished washing machine', 'dejoiy' ),
+				'src'   => 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=360&h=360&fit=crop&q=85&auto=format',
+			),
+		)
+	);
+}
+
+/**
+ * Hero floating device images — mock demos with optional real catalog override.
+ *
+ * @return array<int, array{key:string,alt:string,src:string,class:string}>
+ */
+function dejoiy_refurbished_hero_devices() {
+	$cat_map = array(
+		'phone'  => 'smartphones',
+		'laptop' => 'laptops',
+	);
+	$placeholder = function_exists( 'wc_placeholder_img_src' ) ? (string) wc_placeholder_img_src( 'medium_large' ) : '';
+	$out         = array();
+
+	foreach ( dejoiy_refurbished_hero_mock_images() as $item ) {
+		$src = $item['src'];
+		if ( isset( $cat_map[ $item['key'] ] ) ) {
+			$real = dejoiy_refurbished_category_image( $cat_map[ $item['key'] ] );
+			if ( $real && $real !== $placeholder && false === strpos( $real, 'placeholder' ) ) {
+				$src = $real;
+			}
+		}
+		$out[] = array(
+			'key'   => $item['key'],
+			'class' => $item['class'],
+			'alt'   => $item['alt'],
+			'src'   => $src,
+		);
+	}
+	return $out;
+}
+
+/**
+ * Grade detail bullets for comparison cards.
+ *
+ * @return array<string, array{label:string,points:array<int,string>}>
+ */
+function dejoiy_refurbished_grade_details() {
+	return array(
+		'A+' => array(
+			'label'  => __( 'Like New', 'dejoiy' ),
+			'points' => array(
+				__( '95%+ Battery', 'dejoiy' ),
+				__( 'No Visible Marks', 'dejoiy' ),
+				__( 'Premium Condition', 'dejoiy' ),
+			),
+		),
+		'A'  => array(
+			'label'  => __( 'Excellent', 'dejoiy' ),
+			'points' => array(
+				__( '90%+ Battery', 'dejoiy' ),
+				__( 'Minor Wear', 'dejoiy' ),
+				__( 'Fully Functional', 'dejoiy' ),
+			),
+		),
+		'B'  => array(
+			'label'  => __( 'Very Good', 'dejoiy' ),
+			'points' => array(
+				__( '85%+ Battery', 'dejoiy' ),
+				__( 'Light Scratches', 'dejoiy' ),
+				__( 'Great Value', 'dejoiy' ),
+			),
+		),
+		'C'  => array(
+			'label'  => __( 'Good', 'dejoiy' ),
+			'points' => array(
+				__( '80%+ Battery', 'dejoiy' ),
+				__( 'Visible Wear', 'dejoiy' ),
+				__( 'Budget Friendly', 'dejoiy' ),
+			),
+		),
+	);
+}
+
+/**
+ * @param string $key Category key.
+ * @return array<string, mixed>|null
+ */
+function dejoiy_refurbished_category_by_key( $key ) {
+	foreach ( dejoiy_refurbished_category_cards() as $card ) {
+		if ( $card['key'] === $key ) {
+			return $card;
+		}
+	}
+	return null;
+}
+
+/**
+ * @param string $cat_key Category key.
+ * @return array<string, mixed>
+ */
+function dejoiy_refurbished_category_query_args( $cat_key ) {
+	$card = dejoiy_refurbished_category_by_key( $cat_key );
+	$terms = $card ? (array) $card['terms'] : array();
+	$args  = dejoiy_refurbished_base_query_args();
+	if ( $terms ) {
+		$args['tax_query'] = array(
+			'relation' => 'OR',
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => $terms,
+				'operator'         => 'IN',
+				'include_children' => true,
+			),
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => dejoiy_refurbished_root_cat_slugs(),
+				'operator'         => 'IN',
+				'include_children' => true,
+			),
+		);
+	}
+	return $args;
+}
+
+/**
+ * @param string $cat_key Category key.
+ * @return string
+ */
+function dejoiy_refurbished_category_url( $cat_key ) {
+	return add_query_arg( array( 'rf_cat' => $cat_key ), dejoiy_refurbished_base_url() );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string Grade A+|A|B|C
+ */
+function dejoiy_refurbished_get_grade( $product_id ) {
+	$product_id = (int) $product_id;
+	$meta       = strtoupper( trim( (string) get_post_meta( $product_id, '_dejoiy_refurb_grade', true ) ) );
+	if ( in_array( $meta, array( 'A+', 'A', 'B', 'C' ), true ) ) {
+		return $meta;
+	}
+	if ( function_exists( 'wc_get_product' ) ) {
+		$p = wc_get_product( $product_id );
+		if ( $p ) {
+			$attr = $p->get_attribute( 'grade' );
+			if ( $attr ) {
+				$g = strtoupper( trim( $attr ) );
+				if ( in_array( $g, array( 'A+', 'A', 'B', 'C' ), true ) ) {
+					return $g;
+				}
+			}
+		}
+	}
+	$hash = $product_id % 4;
+	$grades = array( 'A+', 'A', 'A', 'B' );
+	return $grades[ $hash ];
+}
+
+/**
+ * @param string $grade Grade.
+ * @return string
+ */
+function dejoiy_refurbished_grade_label( $grade ) {
+	$labels = array(
+		'A+' => __( 'Like New', 'dejoiy' ),
+		'A'  => __( 'Excellent', 'dejoiy' ),
+		'B'  => __( 'Very Good', 'dejoiy' ),
+		'C'  => __( 'Good', 'dejoiy' ),
+	);
+	return isset( $labels[ $grade ] ) ? $labels[ $grade ] : __( 'Certified', 'dejoiy' );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return array<string, array{label:string,value:int,status:string}>
+ */
+function dejoiy_refurbished_health_report( $product_id ) {
+	$product_id = (int) $product_id;
+	$stored     = get_post_meta( $product_id, '_dejoiy_refurb_health', true );
+	if ( is_array( $stored ) && ! empty( $stored ) ) {
+		return $stored;
+	}
+	$seed = $product_id % 97 + 3;
+	return array(
+		'battery'  => array( 'label' => __( 'Battery Health', 'dejoiy' ), 'value' => min( 100, 78 + ( $seed % 22 ) ), 'status' => 'pass' ),
+		'screen'   => array( 'label' => __( 'Screen Condition', 'dejoiy' ), 'value' => min( 100, 85 + ( $seed % 15 ) ), 'status' => 'pass' ),
+		'camera'   => array( 'label' => __( 'Camera Status', 'dejoiy' ), 'value' => 100, 'status' => 'pass' ),
+		'speaker'  => array( 'label' => __( 'Speaker Test', 'dejoiy' ), 'value' => 100, 'status' => 'pass' ),
+		'charging' => array( 'label' => __( 'Charging Port', 'dejoiy' ), 'value' => 100, 'status' => 'pass' ),
+		'network'  => array( 'label' => __( 'Network Test', 'dejoiy' ), 'value' => 100, 'status' => 'pass' ),
+	);
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return int
+ */
+function dejoiy_refurbished_battery_health( $product_id ) {
+	$report = dejoiy_refurbished_health_report( $product_id );
+	return isset( $report['battery']['value'] ) ? (int) $report['battery']['value'] : 90;
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return int Savings percent.
+ */
+function dejoiy_refurbished_savings_percent( $product_id ) {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return 0;
+	}
+	$p = wc_get_product( $product_id );
+	if ( ! $p ) {
+		return 0;
+	}
+	$reg = (float) $p->get_regular_price();
+	$sale = (float) $p->get_price();
+	if ( $reg > 0 && $sale < $reg ) {
+		return (int) round( ( ( $reg - $sale ) / $reg ) * 100 );
+	}
+	$stored = (int) get_post_meta( $product_id, '_dejoiy_refurb_savings', true );
+	return $stored > 0 ? $stored : ( 30 + ( $product_id % 40 ) );
+}
+
+/**
+ * Main DEJOIY home button (marketplace home, not refurbished section).
+ *
+ * @return string
+ */
+function dejoiy_refurbished_home_button_html() {
+	$home = home_url( '/' );
+	return '<a class="drf-icon-btn drf-icon-btn--home" href="' . esc_url( $home ) . '" title="' . esc_attr__( 'Take me home', 'dejoiy' ) . '" aria-label="' . esc_attr__( 'Take me home — DEJOIY', 'dejoiy' ) . '">'
+		. '<svg class="drf-icon-btn__svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">'
+		. '<path d="M4 10.5L12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5z"/>'
+		. '</svg></a>';
+}
+
+/**
+ * Logo markup.
+ *
+ * @return string
+ */
+function dejoiy_refurbished_logo_html() {
+	$home = dejoiy_refurbished_base_url();
+	return '<a class="drf-logo" href="' . esc_url( $home ) . '" aria-label="' . esc_attr__( 'DEJOIY Refurbished', 'dejoiy' ) . '">'
+		. '<span class="drf-logo__mark">↻</span>'
+		. '<span class="drf-logo__text"><strong class="drf-logo__brand">DEJOIY</strong> <em class="drf-logo__sub">Refurbished</em></span></a>';
+}
+
+/**
+ * Render premium category card.
+ *
+ * @param array<string, mixed> $card Category card.
+ * @return string
+ */
+function dejoiy_refurbished_render_category_card( $card ) {
+	$key   = $card['key'];
+	$count = dejoiy_refurbished_category_count( $key );
+	$img   = dejoiy_refurbished_category_image( $key );
+	ob_start();
+	?>
+	<a class="drf-cat-card drf-cat-card--<?php echo esc_attr( $key ); ?>" href="<?php echo esc_url( dejoiy_refurbished_category_url( $key ) ); ?>" data-reveal>
+		<div class="drf-cat-card__bg" aria-hidden="true"></div>
+		<?php if ( $img ) : ?>
+			<img class="drf-cat-card__img" src="<?php echo esc_url( $img ); ?>" alt="" loading="lazy" decoding="async" width="120" height="120" />
+		<?php endif; ?>
+		<div class="drf-cat-card__body">
+			<span class="drf-cat-card__icon" aria-hidden="true"><?php echo esc_html( $card['icon'] ); ?></span>
+			<h3 class="drf-cat-card__title"><?php echo esc_html( $card['title'] ); ?></h3>
+			<p class="drf-cat-card__count"><?php printf( esc_html( _n( '%s Certified Device', '%s Certified Devices', $count, 'dejoiy' ) ), esc_html( number_format_i18n( $count ) ) ); ?></p>
+			<span class="drf-cat-card__cta"><?php esc_html_e( 'Explore →', 'dejoiy' ); ?></span>
+		</div>
+	</a>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Dedicated header.
+ *
+ * @return string
+ */
+function dejoiy_refurbished_header_html() {
+	$cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	$account_url = home_url( '/my-account/' );
+	$orders_url  = home_url( '/my-account/orders/' );
+	$cart_ct     = dejoiy_refurbished_cart_count();
+	$search_q    = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore
+	$base        = dejoiy_refurbished_base_url();
+
+	ob_start();
+	?>
+	<div class="drf-chrome" id="dejoiy-refurbished-chrome">
+		<header class="drf-header" id="drf-header" data-drf-header>
+			<div class="drf-header__top">
+				<div class="drf-header__inner">
+					<div class="drf-header__left">
+						<?php echo dejoiy_refurbished_logo_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
+					<nav class="drf-header__nav" aria-label="<?php esc_attr_e( 'Refurbished navigation', 'dejoiy' ); ?>">
+						<a href="<?php echo esc_url( $base . '#drf-categories' ); ?>"><?php esc_html_e( 'Categories', 'dejoiy' ); ?></a>
+						<a href="<?php echo esc_url( $base . '#drf-deals' ); ?>"><?php esc_html_e( 'Deals', 'dejoiy' ); ?></a>
+						<a href="<?php echo esc_url( $base . '#drf-certified' ); ?>"><?php esc_html_e( 'Certified', 'dejoiy' ); ?></a>
+						<a href="<?php echo esc_url( $base . '#drf-timeline' ); ?>"><?php esc_html_e( 'Warranty', 'dejoiy' ); ?></a>
+					</nav>
+					<div class="drf-header__search drf-header__search--desktop" role="search">
+						<form class="drf-search" action="<?php echo esc_url( $base ); ?>" method="get" autocomplete="off">
+							<span class="drf-search__ico" aria-hidden="true">⌕</span>
+							<input type="search" name="s" class="drf-search__input" id="drf-search-input" placeholder="<?php esc_attr_e( 'Search refurbished devices & pages…', 'dejoiy' ); ?>" value="<?php echo esc_attr( $search_q ); ?>" data-drf-search-input autocomplete="off" />
+							<div class="drf-search__dropdown" id="drf-search-dropdown" hidden></div>
+						</form>
+					</div>
+					<div class="drf-header__actions">
+						<?php echo dejoiy_refurbished_home_button_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						<a class="drf-icon-btn" href="<?php echo esc_url( $base ); ?>#drf-compare" title="<?php esc_attr_e( 'Compare', 'dejoiy' ); ?>" aria-label="<?php esc_attr_e( 'Compare', 'dejoiy' ); ?>">⇄</a>
+						<a class="drf-icon-btn" href="<?php echo esc_url( $orders_url ); ?>" title="<?php esc_attr_e( 'Orders', 'dejoiy' ); ?>">📦</a>
+						<a class="drf-icon-btn" href="<?php echo esc_url( $account_url ); ?>" title="<?php esc_attr_e( 'Account', 'dejoiy' ); ?>">👤</a>
+						<a class="drf-icon-btn drf-icon-btn--cart" href="<?php echo esc_url( $cart_url ); ?>" title="<?php esc_attr_e( 'Cart', 'dejoiy' ); ?>">
+							🛒<?php if ( $cart_ct > 0 ) : ?><span class="drf-badge"><?php echo esc_html( (string) $cart_ct ); ?></span><?php endif; ?>
+						</a>
+					</div>
+				</div>
+			</div>
+			<div class="drf-header__search-row">
+				<form class="drf-search drf-search--mobile" action="<?php echo esc_url( $base ); ?>" method="get" autocomplete="off">
+					<span class="drf-search__ico" aria-hidden="true">⌕</span>
+					<input type="search" name="s" class="drf-search__input" id="drf-search-input-mobile" placeholder="<?php esc_attr_e( 'Search devices & pages…', 'dejoiy' ); ?>" value="<?php echo esc_attr( $search_q ); ?>" data-drf-search-input autocomplete="off" />
+					<div class="drf-search__dropdown" id="drf-search-dropdown-mobile" hidden></div>
+				</form>
+			</div>
+		</header>
+		<div class="drf-search-sheet" id="drf-search-sheet" hidden aria-hidden="true">
+			<div class="drf-search-sheet__backdrop" data-drf-search-close tabindex="-1" aria-hidden="true"></div>
+			<div class="drf-search-sheet__panel" role="dialog" aria-modal="true" aria-label="<?php esc_attr_e( 'Search', 'dejoiy' ); ?>">
+				<div class="drf-search-sheet__head">
+					<form class="drf-search drf-search--sheet" action="<?php echo esc_url( $base ); ?>" method="get" autocomplete="off">
+						<span class="drf-search__ico" aria-hidden="true">⌕</span>
+						<input type="search" name="s" class="drf-search__input" id="drf-search-input-sheet" placeholder="<?php esc_attr_e( 'Phones, laptops, warranty pages…', 'dejoiy' ); ?>" value="<?php echo esc_attr( $search_q ); ?>" data-drf-search-input autocomplete="off" />
+					</form>
+					<button type="button" class="drf-search-sheet__close" data-drf-search-close><?php esc_html_e( 'Cancel', 'dejoiy' ); ?></button>
+				</div>
+				<div class="drf-search-sheet__results" id="drf-search-dropdown-sheet" hidden></div>
+			</div>
+		</div>
+		<nav class="drf-mobile-nav" id="drf-mobile-nav" aria-label="<?php esc_attr_e( 'Mobile navigation', 'dejoiy' ); ?>">
+			<a href="<?php echo esc_url( $base ); ?>" class="drf-mobile-nav__item"><span>⌂</span><?php esc_html_e( 'Home', 'dejoiy' ); ?></a>
+			<a href="<?php echo esc_url( $base . '#drf-categories' ); ?>" class="drf-mobile-nav__item"><span>▦</span><?php esc_html_e( 'Categories', 'dejoiy' ); ?></a>
+			<button type="button" class="drf-mobile-nav__item" id="drf-mobile-search"><span>⌕</span><?php esc_html_e( 'Search', 'dejoiy' ); ?></button>
+			<a href="<?php echo esc_url( $cart_url ); ?>" class="drf-mobile-nav__item"><span>🛒</span><?php esc_html_e( 'Cart', 'dejoiy' ); ?></a>
+			<a href="<?php echo esc_url( $account_url ); ?>" class="drf-mobile-nav__item"><span>👤</span><?php esc_attr_e( 'Account', 'dejoiy' ); ?></a>
+		</nav>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_refurbished_render_product_card( $product_id ) {
+	$product_id = (int) $product_id;
+	$product    = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+	if ( ! $product ) {
+		return '';
+	}
+	$url     = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $product_id ) : get_permalink( $product_id );
+	$thumb   = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' );
+	$grade   = dejoiy_refurbished_get_grade( $product_id );
+	$save    = dejoiy_refurbished_savings_percent( $product_id );
+	$battery = dejoiy_refurbished_battery_health( $product_id );
+
+	ob_start();
+	?>
+	<article class="drf-product-card" data-reveal data-product-id="<?php echo esc_attr( (string) $product_id ); ?>">
+		<a class="drf-product-card__link" href="<?php echo esc_url( $url ); ?>">
+			<div class="drf-product-card__media">
+				<?php if ( $thumb ) : ?>
+					<img src="<?php echo esc_url( $thumb ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" loading="lazy" decoding="async" width="320" height="320" />
+				<?php endif; ?>
+				<span class="drf-product-card__grade">Grade <?php echo esc_html( $grade ); ?></span>
+				<?php if ( $save > 0 ) : ?>
+					<span class="drf-product-card__save">-<?php echo esc_html( (string) $save ); ?>%</span>
+				<?php endif; ?>
+			</div>
+			<div class="drf-product-card__body">
+				<h3 class="drf-product-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+				<p class="drf-product-card__meta"><?php echo esc_html( dejoiy_refurbished_grade_label( $grade ) ); ?> · <?php printf( esc_html__( '%d%% battery', 'dejoiy' ), $battery ); ?></p>
+				<p class="drf-product-card__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></p>
+			</div>
+		</a>
+		<div class="drf-product-card__actions">
+			<?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
+				<a href="<?php echo esc_url( $product->add_to_cart_url() ); ?>" class="drf-btn drf-btn--sm drf-btn--primary add_to_cart_button ajax_add_to_cart" data-product_id="<?php echo esc_attr( (string) $product_id ); ?>" data-quantity="1"><?php esc_html_e( 'Add to cart', 'dejoiy' ); ?></a>
+			<?php endif; ?>
+			<button type="button" class="drf-btn drf-btn--sm drf-btn--ghost" data-drf-compare="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Compare', 'dejoiy' ); ?></button>
+		</div>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Landing page HTML.
+ *
+ * @return string
+ */
+function dejoiy_refurbished_landing_html() {
+	$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore
+	$deals  = isset( $_GET['rf_deals'] ); // phpcs:ignore
+
+	$query_args = array( 'posts_per_page' => 12 );
+	if ( $search ) {
+		$query_args['s'] = $search;
+	}
+	if ( $deals ) {
+		$query_args['meta_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery
+			array(
+				'key'     => '_sale_price',
+				'value'   => 0,
+				'compare' => '>',
+				'type'    => 'NUMERIC',
+			),
+		);
+	}
+	$query = dejoiy_refurbished_query_products( $query_args );
+	$has_listing = $query->have_posts();
+
+	$deals_q = dejoiy_refurbished_query_products(
+		array(
+			'posts_per_page' => 8,
+			'meta_query'     => array( // phpcs:ignore
+				array( 'key' => '_sale_price', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' ),
+			),
+		)
+	);
+	$featured_q = dejoiy_refurbished_query_products( array( 'posts_per_page' => 10, 'orderby' => 'rand' ) );
+	$grade_details = dejoiy_refurbished_grade_details();
+	$hero_devices  = dejoiy_refurbished_hero_devices();
+
+	ob_start();
+	?>
+	<div class="drf-app" id="dejoiy-refurbished-app">
+		<section class="drf-hero" id="drf-hero" aria-labelledby="drf-hero-title">
+			<canvas class="drf-hero__particles" id="drf-particles" aria-hidden="true"></canvas>
+			<div class="drf-hero__floats" aria-hidden="true">
+				<?php foreach ( $hero_devices as $device ) : ?>
+					<?php if ( empty( $device['src'] ) ) { continue; } ?>
+					<div class="drf-float-card <?php echo esc_attr( $device['class'] ); ?>">
+						<img
+							class="drf-float-card__img"
+							src="<?php echo esc_url( $device['src'] ); ?>"
+							alt="<?php echo esc_attr( $device['alt'] ); ?>"
+							width="160"
+							height="160"
+							loading="eager"
+							decoding="async"
+						/>
+					</div>
+				<?php endforeach; ?>
+			</div>
+			<div class="drf-hero__inner" data-reveal>
+				<p class="drf-hero__eyebrow"><?php esc_html_e( 'Checked devices, fair prices', 'dejoiy' ); ?></p>
+				<h1 id="drf-hero-title" class="drf-hero__title"><?php esc_html_e( 'Refurbished tech that actually holds up', 'dejoiy' ); ?></h1>
+				<p class="drf-hero__sub"><?php esc_html_e( 'Phones, laptops and home appliances — tested, graded, and backed by a 6-month warranty.', 'dejoiy' ); ?></p>
+				<div class="drf-hero__cta">
+					<a class="drf-btn drf-btn--primary" href="#drf-categories"><?php esc_html_e( 'Shop Now', 'dejoiy' ); ?></a>
+					<a class="drf-btn drf-btn--ghost" href="#drf-timeline"><?php esc_html_e( 'How It Works', 'dejoiy' ); ?></a>
+				</div>
+			</div>
+		</section>
+
+		<section class="drf-stats" aria-label="<?php esc_attr_e( 'Company stats', 'dejoiy' ); ?>">
+			<ul class="drf-stats__grid">
+				<li class="drf-stats__item" data-reveal>
+					<strong class="drf-stats__num" data-drf-count="50000" data-drf-suffix="+">0</strong>
+					<span><?php esc_html_e( 'Devices Certified', 'dejoiy' ); ?></span>
+				</li>
+				<li class="drf-stats__item" data-reveal>
+					<strong class="drf-stats__num" data-drf-count="4.8" data-drf-decimal="1">0</strong>
+					<span><?php esc_html_e( 'Customer Rating', 'dejoiy' ); ?></span>
+				</li>
+				<li class="drf-stats__item" data-reveal>
+					<strong class="drf-stats__num" data-drf-count="32">0</strong>
+					<span><?php esc_html_e( 'Point Inspection', 'dejoiy' ); ?></span>
+				</li>
+				<li class="drf-stats__item" data-reveal>
+					<strong class="drf-stats__num">6</strong>
+					<span><?php esc_html_e( 'Month Warranty', 'dejoiy' ); ?></span>
+				</li>
+			</ul>
+		</section>
+
+		<section class="drf-trust" id="drf-certified" aria-label="<?php esc_attr_e( 'Trust badges', 'dejoiy' ); ?>">
+			<ul class="drf-trust__grid">
+				<?php
+				$trust = array(
+					__( 'Certified Inspection', 'dejoiy' ),
+					__( 'Warranty Included', 'dejoiy' ),
+					__( 'Return Protection', 'dejoiy' ),
+					__( 'Battery Health Verified', 'dejoiy' ),
+					__( 'Genuine Parts Checked', 'dejoiy' ),
+					__( 'Data Wiped Securely', 'dejoiy' ),
+				);
+				foreach ( $trust as $t ) :
+					?>
+					<li class="drf-trust__item" data-reveal><span class="drf-trust__icon">✓</span><?php echo esc_html( $t ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</section>
+
+		<section class="drf-section drf-section--alt" id="drf-categories" aria-labelledby="drf-cat-title">
+			<h2 id="drf-cat-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Explore categories', 'dejoiy' ); ?></h2>
+			<p class="drf-section__lead" data-reveal><?php esc_html_e( 'Pick a category — you stay in our refurbished catalog, separate from the main shop.', 'dejoiy' ); ?></p>
+			<div class="drf-categories__grid">
+				<?php
+				foreach ( dejoiy_refurbished_category_cards() as $card ) {
+					echo dejoiy_refurbished_render_category_card( $card ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				?>
+			</div>
+		</section>
+
+		<section class="drf-section drf-battery" id="drf-battery" aria-labelledby="drf-battery-title">
+			<div class="drf-battery__inner" data-reveal>
+				<div class="drf-battery__gauge" aria-hidden="true">
+					<svg class="drf-battery__ring" viewBox="0 0 120 120">
+						<circle class="drf-battery__track" cx="60" cy="60" r="52" />
+						<circle class="drf-battery__fill" cx="60" cy="60" r="52" data-drf-gauge />
+					</svg>
+					<span class="drf-battery__value">92%+</span>
+				</div>
+				<div>
+					<h2 id="drf-battery-title" class="drf-section__title"><?php esc_html_e( 'Battery health you can see', 'dejoiy' ); ?></h2>
+					<p class="drf-section__lead"><?php esc_html_e( 'We test every battery before it ships. Grade A and A+ devices stay at 92% health or better.', 'dejoiy' ); ?></p>
+				</div>
+			</div>
+		</section>
+
+		<section class="drf-section drf-section--alt drf-grades" id="drf-grades" aria-labelledby="drf-grades-title">
+			<h2 id="drf-grades-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Refurbished grading system', 'dejoiy' ); ?></h2>
+			<div class="drf-grades__grid">
+				<?php foreach ( $grade_details as $g => $detail ) : ?>
+					<div class="drf-grade-card" data-reveal>
+						<span class="drf-grade-card__grade"><?php echo esc_html( $g ); ?></span>
+						<strong class="drf-grade-card__label"><?php echo esc_html( $detail['label'] ); ?></strong>
+						<ul class="drf-grade-card__list">
+							<?php foreach ( $detail['points'] as $point ) : ?>
+								<li>✓ <?php echo esc_html( $point ); ?></li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<?php if ( $featured_q->have_posts() ) : ?>
+		<section class="drf-section" id="drf-featured" aria-labelledby="drf-featured-title">
+			<h2 id="drf-featured-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Featured refurbished devices', 'dejoiy' ); ?></h2>
+			<div class="drf-carousel" data-drf-carousel>
+				<div class="drf-carousel__track">
+					<?php
+					while ( $featured_q->have_posts() ) {
+						$featured_q->the_post();
+						if ( dejoiy_refurbished_is_product( get_the_ID() ) ) {
+							echo dejoiy_refurbished_render_product_card( get_the_ID() ); // phpcs:ignore
+						}
+					}
+					wp_reset_postdata();
+					?>
+				</div>
+			</div>
+		</section>
+		<?php endif; ?>
+
+		<?php
+		if ( ! $deals_q->have_posts() ) {
+			$deals_q = dejoiy_refurbished_query_products( array( 'posts_per_page' => 4, 'orderby' => 'rand' ) );
+		}
+		if ( $deals_q->have_posts() ) :
+			?>
+		<section class="drf-section drf-section--alt" id="drf-deals" aria-labelledby="drf-deals-title">
+			<div class="drf-section__head">
+				<h2 id="drf-deals-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Flash deals', 'dejoiy' ); ?></h2>
+				<div class="drf-countdown" data-drf-countdown aria-live="polite">12:00:00</div>
+			</div>
+			<div class="drf-products__grid">
+				<?php
+				while ( $deals_q->have_posts() ) {
+					$deals_q->the_post();
+					if ( dejoiy_refurbished_is_product( get_the_ID() ) ) {
+						echo dejoiy_refurbished_render_product_card( get_the_ID() ); // phpcs:ignore
+					}
+				}
+				wp_reset_postdata();
+				?>
+			</div>
+		</section>
+		<?php endif; ?>
+
+		<?php if ( $has_listing || $search ) : ?>
+		<section class="drf-section" id="drf-listing" aria-labelledby="drf-listing-title">
+			<h2 id="drf-listing-title" class="drf-section__title" data-reveal>
+				<?php echo $search ? esc_html( sprintf( /* translators: %s search */ __( 'Results for “%s”', 'dejoiy' ), $search ) ) : esc_html__( 'Certified refurbished picks', 'dejoiy' ); ?>
+			</h2>
+			<div class="drf-products__grid">
+				<?php
+				if ( $query->have_posts() ) {
+					while ( $query->have_posts() ) {
+						$query->the_post();
+						if ( dejoiy_refurbished_is_product( get_the_ID() ) ) {
+							echo dejoiy_refurbished_render_product_card( get_the_ID() ); // phpcs:ignore
+						}
+					}
+					wp_reset_postdata();
+				} elseif ( $search ) {
+					echo '<p class="drf-empty">' . esc_html__( 'No refurbished devices match that search yet. Try another term or browse categories.', 'dejoiy' ) . '</p>';
+				}
+				?>
+			</div>
+			<?php
+			if ( $search && function_exists( 'dejoiy_refurbished_query_pages' ) ) :
+				$pages_q = dejoiy_refurbished_query_pages( $search, 8 );
+				if ( $pages_q->have_posts() ) :
+					?>
+					<div class="drf-pages-results" data-reveal>
+						<h3 class="drf-pages-results__title"><?php esc_html_e( 'Matching pages', 'dejoiy' ); ?></h3>
+						<ul class="drf-pages-results__list">
+							<?php
+							while ( $pages_q->have_posts() ) {
+								$pages_q->the_post();
+								?>
+								<li><a class="drf-pages-results__link" href="<?php the_permalink(); ?>"><span class="drf-pages-results__badge"><?php esc_html_e( 'Page', 'dejoiy' ); ?></span><?php the_title(); ?></a></li>
+								<?php
+							}
+							wp_reset_postdata();
+							?>
+						</ul>
+					</div>
+					<?php
+				endif;
+			endif;
+			?>
+		</section>
+		<?php endif; ?>
+
+		<section class="drf-section drf-section--alt" id="drf-why" aria-labelledby="drf-why-title">
+			<h2 id="drf-why-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Why DEJOIY Refurbished', 'dejoiy' ); ?></h2>
+			<div class="drf-compare-cards" data-reveal>
+				<div class="drf-compare-card drf-compare-card--winner">
+					<h3><?php esc_html_e( 'DEJOIY', 'dejoiy' ); ?></h3>
+					<ul>
+						<li>✓ <?php esc_html_e( 'Certified', 'dejoiy' ); ?></li>
+						<li>✓ <?php esc_html_e( 'Warranty', 'dejoiy' ); ?></li>
+						<li>✓ <?php esc_html_e( 'Returns', 'dejoiy' ); ?></li>
+						<li>✓ <?php esc_html_e( 'Battery Report', 'dejoiy' ); ?></li>
+					</ul>
+				</div>
+				<div class="drf-compare-card">
+					<h3><?php esc_html_e( 'Local Market', 'dejoiy' ); ?></h3>
+					<ul>
+						<li class="is-no">✗ <?php esc_html_e( 'Warranty', 'dejoiy' ); ?></li>
+						<li class="is-no">✗ <?php esc_html_e( 'Inspection', 'dejoiy' ); ?></li>
+						<li class="is-no">✗ <?php esc_html_e( 'Battery Report', 'dejoiy' ); ?></li>
+					</ul>
+				</div>
+				<div class="drf-compare-card">
+					<h3><?php esc_html_e( 'Unverified Seller', 'dejoiy' ); ?></h3>
+					<ul>
+						<li class="is-no">✗ <?php esc_html_e( 'Trust', 'dejoiy' ); ?></li>
+						<li class="is-no">✗ <?php esc_html_e( 'Certification', 'dejoiy' ); ?></li>
+						<li class="is-no">✗ <?php esc_html_e( 'Returns', 'dejoiy' ); ?></li>
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<section class="drf-section drf-timeline" id="drf-timeline" aria-labelledby="drf-timeline-title">
+			<h2 id="drf-timeline-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Certification process', 'dejoiy' ); ?></h2>
+			<ol class="drf-timeline__steps">
+				<?php
+				$steps = array(
+					__( 'Device Received', 'dejoiy' ),
+					__( '32 Point Inspection', 'dejoiy' ),
+					__( 'Repair & Testing', 'dejoiy' ),
+					__( 'Battery Verification', 'dejoiy' ),
+					__( 'Data Wipe', 'dejoiy' ),
+					__( 'Certification', 'dejoiy' ),
+					__( 'Ready For Sale', 'dejoiy' ),
+				);
+				foreach ( $steps as $step ) :
+					?>
+					<li class="drf-timeline__step" data-reveal><?php echo esc_html( $step ); ?></li>
+				<?php endforeach; ?>
+			</ol>
+		</section>
+
+		<section class="drf-section drf-section--alt" id="drf-warranty" aria-labelledby="drf-warranty-title">
+			<h2 id="drf-warranty-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Warranty & returns', 'dejoiy' ); ?></h2>
+			<p class="drf-section__lead" data-reveal><?php esc_html_e( 'Every certified device includes 6-month warranty coverage and hassle-free returns within the policy window.', 'dejoiy' ); ?></p>
+		</section>
+
+		<section class="drf-section drf-reviews" id="drf-reviews" aria-labelledby="drf-reviews-title">
+			<h2 id="drf-reviews-title" class="drf-section__title" data-reveal><?php esc_html_e( 'Verified reviews', 'dejoiy' ); ?></h2>
+			<div class="drf-reviews__grid">
+				<blockquote class="drf-review" data-reveal>
+					<img class="drf-review__avatar" src="https://ui-avatars.com/api/?name=Arjun+K&background=00CFFF&color=0B1120&size=96" alt="" width="48" height="48" loading="lazy" />
+					<p><?php esc_html_e( 'Honestly looked new out of the box. Battery report was spot on and it arrived in two days.', 'dejoiy' ); ?></p>
+					<cite><?php esc_html_e( 'Arjun K. · Verified purchase', 'dejoiy' ); ?></cite>
+				</blockquote>
+				<blockquote class="drf-review" data-reveal>
+					<img class="drf-review__avatar" src="https://ui-avatars.com/api/?name=Priya+M&background=0B1120&color=00CFFF&size=96" alt="" width="48" height="48" loading="lazy" />
+					<p><?php esc_html_e( 'Paid about half of retail and still got the warranty. Would buy again.', 'dejoiy' ); ?></p>
+					<cite><?php esc_html_e( 'Priya M. · Verified purchase', 'dejoiy' ); ?></cite>
+				</blockquote>
+				<blockquote class="drf-review" data-reveal>
+					<img class="drf-review__avatar" src="https://ui-avatars.com/api/?name=Rahul+S&background=00CFFF&color=0B1120&size=96" alt="" width="48" height="48" loading="lazy" />
+					<p><?php esc_html_e( 'MacBook came in A+ shape — tiny wear on the corner only. The inspection sheet was useful.', 'dejoiy' ); ?></p>
+					<cite><?php esc_html_e( 'Rahul S. · Verified purchase', 'dejoiy' ); ?></cite>
+				</blockquote>
+			</div>
+		</section>
+
+		<div id="drf-compare" class="drf-compare-bar" hidden>
+			<p><?php esc_html_e( 'Compare devices', 'dejoiy' ); ?> <span id="drf-compare-count">0</span>/3</p>
+			<button type="button" class="drf-btn drf-btn--sm" id="drf-compare-clear"><?php esc_html_e( 'Clear', 'dejoiy' ); ?></button>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Dedicated category viewer.
+ *
+ * @param string $cat_key Category key.
+ * @return string
+ */
+function dejoiy_refurbished_category_html( $cat_key ) {
+	$card = dejoiy_refurbished_category_by_key( $cat_key );
+	if ( ! $card ) {
+		return dejoiy_refurbished_landing_html();
+	}
+	$query = new WP_Query( dejoiy_refurbished_category_query_args( $cat_key ) );
+
+	ob_start();
+	?>
+	<div class="drf-app drf-app--category" id="dejoiy-refurbished-category">
+		<header class="drf-cat-hero" data-reveal>
+			<p class="drf-cat-hero__crumb"><a href="<?php echo esc_url( dejoiy_refurbished_base_url() ); ?>">&larr; <?php esc_html_e( 'All Refurbished', 'dejoiy' ); ?></a></p>
+			<span class="drf-cat-hero__icon"><?php echo esc_html( $card['icon'] ); ?></span>
+			<h1 class="drf-cat-hero__title"><?php echo esc_html( $card['title'] ); ?></h1>
+			<p class="drf-cat-hero__sub"><?php esc_html_e( 'Certified devices in this category — inspected, graded, and warrantied.', 'dejoiy' ); ?></p>
+		</header>
+		<div class="drf-products__grid">
+			<?php
+			if ( $query->have_posts() ) {
+				while ( $query->have_posts() ) {
+					$query->the_post();
+					if ( dejoiy_refurbished_is_product( get_the_ID() ) ) {
+						echo dejoiy_refurbished_render_product_card( get_the_ID() ); // phpcs:ignore
+					}
+				}
+				wp_reset_postdata();
+			} else {
+				echo '<p class="drf-empty">' . esc_html__( 'New arrivals coming soon in this category.', 'dejoiy' ) . '</p>';
+			}
+			?>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Product viewer.
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_refurbished_viewer_html( $product_id ) {
+	$product_id = (int) $product_id;
+	$product    = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+	if ( ! $product || ! dejoiy_refurbished_is_product( $product_id ) ) {
+		return dejoiy_refurbished_landing_html();
+	}
+
+	$cover   = get_the_post_thumbnail_url( $product_id, 'large' );
+	$gallery = $product->get_gallery_image_ids();
+	$grade   = dejoiy_refurbished_get_grade( $product_id );
+	$save    = dejoiy_refurbished_savings_percent( $product_id );
+	$health  = dejoiy_refurbished_health_report( $product_id );
+	$battery = dejoiy_refurbished_battery_health( $product_id );
+	$reg     = (float) $product->get_regular_price();
+	$price   = (float) $product->get_price();
+	$emi     = $price > 0 ? round( $price / 6, 0 ) : 0;
+
+	ob_start();
+	?>
+	<div class="drf-app drf-app--viewer" id="dejoiy-refurbished-viewer">
+		<main class="drf-viewer">
+			<p class="drf-viewer__crumb"><a href="<?php echo esc_url( dejoiy_refurbished_base_url() ); ?>">&larr; <?php esc_html_e( 'Back to Refurbished', 'dejoiy' ); ?></a></p>
+			<div class="drf-viewer__layout">
+				<div class="drf-viewer__gallery">
+					<div class="drf-viewer__stage" id="drf-viewer-stage">
+						<?php if ( $cover ) : ?>
+							<img class="drf-viewer__img" id="drf-main-img" src="<?php echo esc_url( $cover ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" />
+						<?php endif; ?>
+						<div class="drf-viewer__360" aria-hidden="true"><span>360°</span></div>
+					</div>
+					<div class="drf-viewer__thumbs">
+						<?php if ( $cover ) : ?>
+							<button type="button" class="drf-viewer__thumb is-active" data-src="<?php echo esc_url( $cover ); ?>"><img src="<?php echo esc_url( $cover ); ?>" alt="" /></button>
+						<?php endif; ?>
+						<?php foreach ( array_slice( $gallery, 0, 5 ) as $gid ) : ?>
+							<?php $gurl = wp_get_attachment_image_url( (int) $gid, 'medium' ); ?>
+							<?php if ( $gurl ) : ?>
+								<button type="button" class="drf-viewer__thumb" data-src="<?php echo esc_url( $gurl ); ?>"><img src="<?php echo esc_url( $gurl ); ?>" alt="" /></button>
+							<?php endif; ?>
+						<?php endforeach; ?>
+					</div>
+				</div>
+				<div class="drf-viewer__info">
+					<span class="drf-viewer__badge"><?php esc_html_e( 'Certified Refurbished', 'dejoiy' ); ?></span>
+					<h1 class="drf-viewer__title"><?php echo esc_html( $product->get_name() ); ?></h1>
+					<div class="drf-viewer__grade-row">
+						<span class="drf-viewer__grade">Grade <?php echo esc_html( $grade ); ?></span>
+						<span><?php echo esc_html( dejoiy_refurbished_grade_label( $grade ) ); ?></span>
+					</div>
+					<ul class="drf-viewer__specs">
+						<li><?php printf( esc_html__( 'Battery health: %d%%', 'dejoiy' ), $battery ); ?></li>
+						<li><?php esc_html_e( 'Warranty included', 'dejoiy' ); ?></li>
+						<li><?php esc_html_e( 'Certification report below', 'dejoiy' ); ?></li>
+					</ul>
+					<div class="drf-health" id="drf-health-panel">
+						<h2 class="drf-health__title"><?php esc_html_e( 'AI Health Report', 'dejoiy' ); ?></h2>
+						<ul class="drf-health__list">
+							<?php foreach ( $health as $key => $item ) : ?>
+								<li class="drf-health__item" data-drf-health="<?php echo esc_attr( $key ); ?>">
+									<span><?php echo esc_html( $item['label'] ); ?></span>
+									<div class="drf-health__bar"><span style="width:0" data-value="<?php echo esc_attr( (string) $item['value'] ); ?>"></span></div>
+									<strong><?php echo esc_html( (string) $item['value'] ); ?>%</strong>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+					<?php if ( $product->get_description() ) : ?>
+						<div class="drf-viewer__desc"><?php echo wp_kses_post( wpautop( $product->get_description() ) ); ?></div>
+					<?php endif; ?>
+				</div>
+				<aside class="drf-viewer__buy" id="drf-buy-panel">
+					<div class="drf-viewer__buy-inner">
+						<p class="drf-viewer__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></p>
+						<?php if ( $save > 0 ) : ?>
+							<p class="drf-viewer__save"><?php printf( esc_html__( 'You save %d%%', 'dejoiy' ), $save ); ?></p>
+						<?php endif; ?>
+						<?php if ( $emi > 0 ) : ?>
+							<p class="drf-viewer__emi"><?php printf( esc_html__( 'EMI from %s/mo', 'dejoiy' ), wc_price( $emi ) ); ?></p>
+						<?php endif; ?>
+						<div class="drf-viewer__buy-actions">
+							<?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
+								<a href="<?php echo esc_url( $product->add_to_cart_url() ); ?>" class="drf-btn drf-btn--primary add_to_cart_button ajax_add_to_cart" data-product_id="<?php echo esc_attr( (string) $product_id ); ?>" data-quantity="1"><?php esc_html_e( 'Add to cart', 'dejoiy' ); ?></a>
+								<a href="<?php echo esc_url( $product->add_to_cart_url() ); ?>" class="drf-btn drf-btn--accent"><?php esc_html_e( 'Buy now', 'dejoiy' ); ?></a>
+							<?php else : ?>
+								<p class="drf-out-stock"><?php esc_html_e( 'Currently unavailable', 'dejoiy' ); ?></p>
+							<?php endif; ?>
+						</div>
+						<ul class="drf-viewer__trust-mini">
+							<li>✓ <?php esc_html_e( 'Universal cart & checkout', 'dejoiy' ); ?></li>
+							<li>✓ <?php esc_html_e( 'Return protection', 'dejoiy' ); ?></li>
+						</ul>
+					</div>
+				</aside>
+			</div>
+		</main>
+		<section class="drf-section">
+			<h2 class="drf-section__title"><?php esc_html_e( 'Related certified devices', 'dejoiy' ); ?></h2>
+			<div class="drf-products__grid">
+				<?php
+				$rel = dejoiy_refurbished_query_products( array( 'posts_per_page' => 4, 'post__not_in' => array( $product_id ), 'orderby' => 'rand' ) );
+				while ( $rel->have_posts() ) {
+					$rel->the_post();
+					echo dejoiy_refurbished_render_product_card( get_the_ID() ); // phpcs:ignore
+				}
+				wp_reset_postdata();
+				?>
+			</div>
+		</section>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Desktop footer.
+ *
+ * @return string
+ */
+function dejoiy_refurbished_footer_html() {
+	$base = dejoiy_refurbished_base_url();
+	ob_start();
+	?>
+	<footer class="drf-site-footer" role="contentinfo">
+		<div class="drf-site-footer__inner">
+			<div class="drf-site-footer__brand">
+				<?php echo dejoiy_refurbished_logo_html(); // phpcs:ignore ?>
+				<p><?php esc_html_e( 'Certified refurbished technology you can trust.', 'dejoiy' ); ?></p>
+				<div class="drf-site-footer__social">
+					<a href="https://instagram.com/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">Instagram</a>
+					<a href="https://linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">LinkedIn</a>
+					<a href="https://x.com/" target="_blank" rel="noopener noreferrer" aria-label="X">X</a>
+					<a href="https://youtube.com/" target="_blank" rel="noopener noreferrer" aria-label="YouTube">YouTube</a>
+				</div>
+			</div>
+			<div class="drf-site-footer__cols">
+				<div>
+					<strong><?php esc_html_e( 'Shop', 'dejoiy' ); ?></strong>
+					<ul>
+						<li><a href="<?php echo esc_url( dejoiy_refurbished_category_url( 'smartphones' ) ); ?>"><?php esc_html_e( 'Smartphones', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( dejoiy_refurbished_category_url( 'laptops' ) ); ?>"><?php esc_html_e( 'Laptops', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( dejoiy_refurbished_category_url( 'tablets' ) ); ?>"><?php esc_html_e( 'Tablets', 'dejoiy' ); ?></a></li>
+					</ul>
+				</div>
+				<div>
+					<strong><?php esc_html_e( 'Trust', 'dejoiy' ); ?></strong>
+					<ul>
+						<li><a href="<?php echo esc_url( $base . '#drf-warranty' ); ?>"><?php esc_html_e( 'Warranty', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $base . '#drf-timeline' ); ?>"><?php esc_html_e( 'Certification', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( $base . '#drf-warranty' ); ?>"><?php esc_html_e( 'Returns', 'dejoiy' ); ?></a></li>
+					</ul>
+				</div>
+				<div>
+					<strong><?php esc_html_e( 'Company', 'dejoiy' ); ?></strong>
+					<ul>
+						<li><a href="<?php echo esc_url( home_url( '/about/' ) ); ?>"><?php esc_html_e( 'About', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php esc_html_e( 'Contact', 'dejoiy' ); ?></a></li>
+						<li><a href="<?php echo esc_url( home_url( '/my-account/' ) ); ?>"><?php esc_html_e( 'Help Center', 'dejoiy' ); ?></a></li>
+					</ul>
+				</div>
+			</div>
+			<form class="drf-newsletter" action="#" method="post" onsubmit="return false;">
+				<label for="drf-newsletter-email"><?php esc_html_e( 'Newsletter', 'dejoiy' ); ?></label>
+				<input type="email" id="drf-newsletter-email" placeholder="<?php esc_attr_e( 'Email address', 'dejoiy' ); ?>" />
+				<button type="submit" class="drf-btn drf-btn--sm drf-btn--primary"><?php esc_html_e( 'Subscribe', 'dejoiy' ); ?></button>
+			</form>
+		</div>
+		<p class="drf-site-footer__copy">&copy; <?php echo esc_html( gmdate( 'Y' ) ); ?> DEJOIY Refurbished</p>
+	</footer>
+	<?php
+	return (string) ob_get_clean();
+}

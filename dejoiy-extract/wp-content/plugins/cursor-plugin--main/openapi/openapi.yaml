@@ -1,0 +1,244 @@
+openapi: 3.1.0
+info:
+  title: DEJOIY AI Control Bridge API
+  version: 1.0.0
+  description: Enterprise AI operating layer for WordPress — REST API for Cursor, Claude, OpenAI Agents, and MCP clients.
+  contact:
+    name: DEJOIY
+    url: https://dejoiy.tech
+servers:
+  - url: /wp-json/dejoiy-ai/v1
+    description: WordPress REST API namespace
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Dejoiy-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /structure:
+    get:
+      summary: Get full WordPress structure
+      tags: [Structure]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      responses:
+        '200':
+          description: Structure overview
+  /files/tree:
+    get:
+      summary: Directory tree
+      tags: [Files]
+      parameters:
+        - name: zone
+          in: query
+          schema: { type: string, enum: [wp-content, themes, plugins, uploads, mu-plugins] }
+        - name: path
+          in: query
+          schema: { type: string }
+        - name: depth
+          in: query
+          schema: { type: integer, default: 3 }
+      responses:
+        '200':
+          description: File tree
+  /files/read:
+    get:
+      summary: Read file
+      tags: [Files]
+      parameters:
+        - { name: zone, in: query, required: true, schema: { type: string } }
+        - { name: path, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: File content
+  /files/write:
+    post:
+      summary: Write file
+      tags: [Files]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                zone: { type: string }
+                path: { type: string }
+                content: { type: string }
+      responses:
+        '200': { description: Success }
+        '202': { description: Approval required }
+  /files/create:
+    post:
+      summary: Create file or directory
+      tags: [Files]
+      responses:
+        '200': { description: Created }
+  /files/delete:
+    delete:
+      summary: Delete file or directory
+      tags: [Files]
+      responses:
+        '202': { description: Approval required }
+  /files/rename:
+    post:
+      summary: Rename file
+      tags: [Files]
+      responses:
+        '200': { description: Renamed }
+  /database/tables:
+    get:
+      summary: List database tables
+      tags: [Database]
+      responses:
+        '200': { description: Table list }
+  /database/schema:
+    get:
+      summary: Database schema
+      tags: [Database]
+      parameters:
+        - name: table
+          in: query
+          schema: { type: string }
+      responses:
+        '200': { description: Schema }
+  /database/query:
+    get:
+      summary: Execute SQL (SELECT default)
+      tags: [Database]
+      parameters:
+        - name: sql
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Query results }
+    post:
+      summary: Execute SQL via POST body
+      tags: [Database]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sql: { type: string }
+      responses:
+        '200': { description: Results }
+  /wordpress/posts:
+    post:
+      summary: Create post or page
+      tags: [WordPress]
+      responses:
+        '200': { description: Created }
+  /wordpress/products:
+    post:
+      summary: Create WooCommerce product
+      tags: [WordPress]
+      responses:
+        '200': { description: Created }
+  /plugins:
+    get:
+      summary: List plugins
+      tags: [Plugins]
+      responses:
+        '200': { description: Plugin list }
+  /plugins/install:
+    post:
+      summary: Install plugin
+      tags: [Plugins]
+      responses:
+        '200': { description: Installed }
+  /plugins/activate:
+    post:
+      summary: Activate plugin
+      tags: [Plugins]
+  /plugins/deactivate:
+    post:
+      summary: Deactivate plugin
+      tags: [Plugins]
+  /plugins/delete:
+    delete:
+      summary: Delete plugin
+      tags: [Plugins]
+  /plugins/update:
+    post:
+      summary: Update plugin
+      tags: [Plugins]
+  /themes:
+    get:
+      summary: List themes
+      tags: [Themes]
+  /themes/template/read:
+    get:
+      summary: Read theme template
+      tags: [Themes]
+  /themes/template/write:
+    post:
+      summary: Write theme template
+      tags: [Themes]
+  /themes/child:
+    post:
+      summary: Create child theme
+      tags: [Themes]
+  /deployment/deploy:
+    post:
+      summary: Deploy via Git
+      tags: [Deployment]
+  /deployment/rollback:
+    post:
+      summary: Rollback deployment
+      tags: [Deployment]
+  /backup:
+    get:
+      summary: List backups
+      tags: [Backup]
+  /backup/create:
+    post:
+      summary: Create backup
+      tags: [Backup]
+  /backup/restore:
+    post:
+      summary: Restore backup
+      tags: [Backup]
+  /cache/clear:
+    post:
+      summary: Clear caches
+      tags: [WordPress]
+  /mcp/manifest:
+    get:
+      summary: MCP manifest (public)
+      tags: [MCP]
+      security: []
+  /mcp/tools:
+    get:
+      summary: MCP tool definitions (public)
+      tags: [MCP]
+      security: []
+  /mcp/execute:
+    post:
+      summary: Execute MCP tool
+      tags: [MCP]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tool: { type: string }
+                arguments: { type: object }
+  /auth/token:
+    post:
+      summary: Issue JWT from API key
+      tags: [Auth]
+  /openapi:
+    get:
+      summary: OpenAPI specification
+      tags: [MCP]
+      security: []

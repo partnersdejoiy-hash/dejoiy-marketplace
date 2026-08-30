@@ -1,0 +1,49 @@
+/**
+ * DEJOIY Mobile OS — site-wide mobile/tablet chrome.
+ */
+(function () {
+	'use strict';
+
+	if (!window.matchMedia('(max-width: 1024px)').matches) {
+		return;
+	}
+
+	var header = document.getElementById('dejoiy-mobile-os-header');
+	if (!header) {
+		return;
+	}
+
+	/* Measure fixed header for content offset */
+	function setHeaderOffset() {
+		var h = header.offsetHeight;
+		document.documentElement.style.setProperty('--dm-os-header-h', h + 'px');
+	}
+	setHeaderOffset();
+	window.addEventListener('resize', setHeaderOffset, { passive: true });
+
+	/* JOI search placeholder rotation */
+	var input = header.querySelector('.dm-search__input');
+	if (input) {
+		var hints = [];
+		try {
+			hints = JSON.parse(input.getAttribute('data-joi-hints') || '[]');
+		} catch (e) {
+			hints = [];
+		}
+		if (!hints.length && window.dejoiyMobileOs && window.dejoiyMobileOs.searchHints) {
+			hints = window.dejoiyMobileOs.searchHints;
+		}
+		var idx = 0;
+		function rotate() {
+			if (!hints.length || document.activeElement === input || (input.value && input.value.length)) {
+				return;
+			}
+			input.setAttribute('placeholder', hints[idx % hints.length]);
+			idx += 1;
+		}
+		rotate();
+		if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			setInterval(rotate, 3200);
+		}
+	}
+})();

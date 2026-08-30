@@ -1,0 +1,149 @@
+/**
+ * DEJOIY Universe — Phase 2 interactions
+ */
+(function () {
+	'use strict';
+
+	var root = document.getElementById('dejoiy-universe');
+	if (!root || root.getAttribute('data-du-version') !== '2') {
+		return;
+	}
+
+	/* Recommendation tabs */
+	var tabs = root.querySelectorAll('.du-reco__tab');
+	var panels = root.querySelectorAll('.du-reco__panel');
+
+	function activateTab(tab) {
+		var id = tab.getAttribute('data-reco-panel');
+		if (!id) {
+			return;
+		}
+		tabs.forEach(function (t) {
+			var on = t === tab;
+			t.classList.toggle('is-active', on);
+			t.setAttribute('aria-selected', on ? 'true' : 'false');
+		});
+		panels.forEach(function (p) {
+			var match = p.id === 'du-reco-' + id;
+			p.classList.toggle('is-active', match);
+			if (match) {
+				p.removeAttribute('hidden');
+			} else {
+				p.setAttribute('hidden', 'hidden');
+			}
+		});
+	}
+
+	tabs.forEach(function (tab) {
+		tab.addEventListener('click', function () {
+			activateTab(tab);
+		});
+	});
+
+	/* JOI chips → fill search */
+	var joiInput = document.getElementById('du-joi-input');
+	root.querySelectorAll('.du-joi__chip').forEach(function (chip) {
+		chip.addEventListener('click', function (e) {
+			var q = chip.getAttribute('data-joi-q');
+			if (q && joiInput) {
+				joiInput.value = q;
+			}
+		});
+	});
+
+	/* Favorites (localStorage) */
+	var favKey = 'dejoiy_universe_favs';
+
+	function loadFavs() {
+		try {
+			return JSON.parse(localStorage.getItem(favKey) || '[]');
+		} catch (err) {
+			return [];
+		}
+	}
+
+	function saveFavs(list) {
+		try {
+			localStorage.setItem(favKey, JSON.stringify(list));
+		} catch (err) {
+			/* ignore */
+		}
+	}
+
+	function syncFavs() {
+		var favs = loadFavs();
+		root.querySelectorAll('.du-card-v2__fav').forEach(function (btn) {
+			var id = btn.getAttribute('data-fav-id');
+			var on = favs.indexOf(id) !== -1;
+			btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+			btn.querySelector('span').textContent = on ? '♥' : '♡';
+		});
+	}
+
+	root.querySelectorAll('.du-card-v2__fav').forEach(function (btn) {
+		btn.addEventListener('click', function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var id = btn.getAttribute('data-fav-id');
+			if (!id) {
+				return;
+			}
+			var favs = loadFavs();
+			var idx = favs.indexOf(id);
+			if (idx === -1) {
+				favs.push(id);
+			} else {
+				favs.splice(idx, 1);
+			}
+			saveFavs(favs);
+			syncFavs();
+		});
+	});
+
+	syncFavs();
+
+	/* Scroll reveal */
+	if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		var reveals = root.querySelectorAll('.du-reveal');
+		if ('IntersectionObserver' in window && reveals.length) {
+			var io = new IntersectionObserver(
+				function (entries) {
+					entries.forEach(function (entry) {
+						if (entry.isIntersecting) {
+							entry.target.classList.add('du-visible');
+							io.unobserve(entry.target);
+						}
+					});
+				},
+				{ rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+			);
+			reveals.forEach(function (el) {
+				io.observe(el);
+			});
+		} else {
+			reveals.forEach(function (el) {
+				el.classList.add('du-visible');
+			});
+		}
+	} else {
+		root.querySelectorAll('.du-reveal').forEach(function (el) {
+			el.classList.add('du-visible');
+		});
+	}
+})();
+
+	/* Subtle antigravity parallax (hero only) */
+	var heroAg = root.querySelector('.du-hero__ag');
+	if (heroAg && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		var floats = heroAg.querySelectorAll('.du-ag-float');
+		var onMove = function (e) {
+			var rect = heroAg.getBoundingClientRect();
+			var x = (e.clientX - rect.left) / rect.width - 0.5;
+			var y = (e.clientY - rect.top) / rect.height - 0.5;
+			floats.forEach(function (el, i) {
+				var k = (i + 1) * 6;
+				el.style.transform = 'translate3d(' + (x * k) + 'px,' + (y * k) + 'px,0)';
+			});
+		};
+		heroAg.addEventListener('pointermove', onMove, { passive: true });
+	}

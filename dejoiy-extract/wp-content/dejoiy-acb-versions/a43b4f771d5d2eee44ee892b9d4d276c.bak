@@ -1,0 +1,271 @@
+/* DEJOIY Library Universe — header, footer, cart panel */
+
+body.dejoiy-library-active .site-header,
+body.dejoiy-library-active #main-header,
+body.dejoiy-library-active .elementor-location-header,
+body.dejoiy-library-active .elementor,
+body.dejoiy-library-active .page-heading,
+body.dejoiy-library-active footer.footer,
+body.dejoiy-library-active .etheme-footer,
+body.dlu-screen .site-header,
+body.dlu-screen #main-header,
+body.dlu-screen .elementor {
+  display: none !important;
+}
+
+body.dejoiy-library-active .dlu-root,
+body.dlu-screen .dlu-root,
+body.dlu-screen .dlu-page,
+body.dlu-screen .dlu-reader {
+  display: block !important;
+}
+
+body.dejoiy-library-active,
+body.dlu-screen {
+  background: #050508;
+  color: #f5f0e6;
+}
+
+.dlu-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(5, 5, 8, 0.82);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.dlu-hdr-in {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dlu-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #f5f0e6;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.dlu-brand em {
+  color: #c9a227;
+  font-style: normal;
+}
+
+.dlu-brand-icon {
+  color: #c9a227;
+  filter: drop-shadow(0 0 8px rgba(201, 162, 39, 0.6));
+  animation: dlu-glow 3s ease-in-out infinite;
+}
+
+@keyframes dlu-glow {
+  50% { filter: drop-shadow(0 0 14px rgba(201, 162, 39, 0.9)); }
+}
+
+.dlu-nav {
+  display: none;
+  gap: 0.35rem 1rem;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+}
+
+.dlu-nav a {
+  color: rgba(245, 240, 230, 0.75);
+  text-decoration: none;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dlu-nav a:hover { color: #c9a227; }
+
+.dlu-hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.dlu-hdr-search input {
+  width: 140px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.dlu-icon-btn,
+.dlu-cart-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #f5f0e6;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+}
+
+.dlu-cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #c9a227;
+  color: #0a0a0a;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.dlu-btn-pass {
+  display: none;
+  background: linear-gradient(135deg, #e8c547, #9a7518);
+  color: #0a0a0a;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.dlu-burger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.dlu-burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #c9a227;
+}
+
+.dlu-cart-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(380px, 92vw);
+  height: 100vh;
+  z-index: 300;
+  background: rgba(12, 12, 16, 0.92);
+  backdrop-filter: blur(20px);
+  border-left: 1px solid rgba(201, 162, 39, 0.3);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dlu-cart-panel.is-open {
+  transform: translateX(0);
+}
+
+.dlu-cart-panel[hidden] { display: flex !important; }
+
+.dlu-cart-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dlu-cart-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.dlu-cart-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.dlu-cart-panel-foot {
+  padding: 1rem;
+  border-top: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.dlu-cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 299;
+}
+
+.dlu-cart-backdrop.is-open { display: block !important; }
+
+.dlu-ft {
+  position: relative;
+  margin-top: 4rem;
+  padding: 3rem 0 2rem;
+  border-top: 1px solid rgba(201, 162, 39, 0.15);
+  overflow: hidden;
+}
+
+.dlu-ft-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.dlu-ft-in {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.dlu-ft-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.dlu-ft-col h3 {
+  color: #c9a227;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.dlu-ft-col ul { list-style: none; padding: 0; margin: 0.5rem 0 0; }
+.dlu-ft-col a { color: rgba(245, 240, 230, 0.65); text-decoration: none; font-size: 0.9rem; }
+.dlu-ft-tag { text-align: center; margin-top: 2rem; color: #c9a227; font-style: italic; }
+.dlu-ft-copy { text-align: center; font-size: 0.8rem; opacity: 0.5; }
+
+@media (min-width: 900px) {
+  .dlu-nav { display: flex; }
+  .dlu-btn-pass { display: inline-block; }
+  .dlu-burger { display: none; }
+  .dlu-hdr-search input { width: 200px; }
+}

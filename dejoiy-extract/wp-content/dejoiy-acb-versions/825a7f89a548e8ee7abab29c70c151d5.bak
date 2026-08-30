@@ -1,0 +1,73 @@
+<?php
+/**
+ * Studio header partial — only included on Custom Studio screens.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$dsu_logo      = get_theme_mod( 'custom_logo' );
+$dsu_logo_url  = $dsu_logo ? wp_get_attachment_image_url( $dsu_logo, 'medium' ) : '';
+$dsu_studio    = home_url( '/dejoiy-custom-studio/' );
+$dsu_cart_url  = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+$dsu_cart_cnt  = function_exists( 'dejoiy_studio_cart_count' ) ? dejoiy_studio_cart_count() : ( function_exists( 'WC' ) && WC()->cart ? WC()->cart->get_cart_contents_count() : 0 );
+if ( dejoiy_studio_is_flow() ) {
+	$dsu_cart_url = add_query_arg( 'dejoiy_studio', '1', $dsu_cart_url );
+}
+?>
+<header id="dsu-hdr" class="dsu-hdr" role="banner" data-dsu-studio-chrome>
+	<div class="dsu-hdr-in">
+		<div class="dsu-hdr-bar">
+			<a href="<?php echo esc_url( $dsu_studio ); ?>" class="dsu-hdr-logo" aria-label="DEJOIY Custom Studio">
+				<?php if ( $dsu_logo_url ) : ?>
+					<img src="<?php echo esc_url( $dsu_logo_url ); ?>" alt="DEJOIY" height="40" width="auto" />
+				<?php else : ?>
+					<span class="dsu-hdr-wordmark">DEJOIY</span>
+				<?php endif; ?>
+				<span class="dsu-hdr-tag dsu-hdr-tag--logo">STUDIO</span>
+			</a>
+
+			<div class="dsu-hdr-actions" aria-label="Mobile studio actions">
+				<a href="<?php echo esc_url( $dsu_studio ); ?>" class="dsu-hdr-tag dsu-hdr-tag--action">STUDIO</a>
+				<a href="<?php echo esc_url( $dsu_cart_url ); ?>" class="dsu-hdr-icon-btn dsu-hdr-cart-mob" id="dsu-hdr-cart-mob" aria-label="Studio cart">
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M6 6L5 3H2"/></svg>
+					<span class="dsu-hdr-badge dsu-hdr-badge--icon" id="dsu-hdr-cart-count-mob"<?php echo $dsu_cart_cnt > 0 ? '' : ' hidden'; ?>><?php echo (int) $dsu_cart_cnt; ?></span>
+				</a>
+				<button type="button" class="dsu-hdr-icon-btn dsu-hdr-burger" id="dsu-hdr-burger" aria-label="Menu" aria-expanded="false">
+					<span></span><span></span><span></span>
+				</button>
+			</div>
+		</div>
+
+		<form class="dsu-hdr-search" id="dsu-search-form" action="<?php echo esc_url( home_url( '/' ) ); ?>" method="get" role="search" autocomplete="off">
+			<div class="dsu-hdr-search-wrap">
+				<input type="search" name="s" id="dsu-search-in" placeholder="Search studio products &amp; marketplace…" aria-label="Search" autocomplete="off" />
+				<button type="submit" aria-label="Search">
+					<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+				</button>
+				<div id="dsu-search-drop" class="dsu-hdr-search-drop" hidden></div>
+			</div>
+		</form>
+
+		<nav class="dsu-hdr-nav" aria-label="Studio navigation">
+			<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-products">Products</a>
+			<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-bestsellers">Best Sellers</a>
+			<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-mock-sellers">Mockups</a>
+			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="dsu-hdr-home">Take Me Home</a>
+			<a href="<?php echo esc_url( $dsu_cart_url ); ?>" class="dsu-hdr-cart" id="dsu-hdr-cart-link">
+				Cart<span class="dsu-hdr-badge" id="dsu-hdr-cart-count"<?php echo $dsu_cart_cnt > 0 ? '' : ' hidden'; ?>><?php echo (int) $dsu_cart_cnt; ?></span>
+			</a>
+		</nav>
+	</div>
+</header>
+<div id="dsu-hdr-drawer" class="dsu-hdr-drawer" hidden data-dsu-studio-chrome>
+	<a href="<?php echo esc_url( $dsu_studio ); ?>">Studio Home</a>
+	<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-products">Products</a>
+	<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-bestsellers">Best Sellers</a>
+	<a href="<?php echo esc_url( $dsu_studio ); ?>#dsu-mock-sellers">Mockup Sellers</a>
+	<a href="<?php echo esc_url( home_url( '/' ) ); ?>">Marketplace Home</a>
+	<a href="<?php echo esc_url( $dsu_cart_url ); ?>">Cart</a>
+</div>

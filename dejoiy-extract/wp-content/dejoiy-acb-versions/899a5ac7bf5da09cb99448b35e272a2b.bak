@@ -1,0 +1,160 @@
+<?php
+/**
+ * Separate Nexus shelf cart from marketplace WooCommerce cart.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool Viewing Nexus cart, checkout, or shelf with flow flag.
+ */
+function dejoiy_library_is_nexus_cart_context() {
+	if ( function_exists( 'dejoiy_library_has_nexus_flow_request' ) && dejoiy_library_has_nexus_flow_request() ) {
+		return true;
+	}
+	if ( ! did_action( 'wp' ) ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_library_use_cart_template' ) && dejoiy_library_use_cart_template() ) {
+		return true;
+	}
+	if ( function_exists( 'dejoiy_library_use_checkout_template' ) && dejoiy_library_use_checkout_template() ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @param array $cart_item Cart line.
+ * @return bool
+ */
+function dejoiy_library_cart_line_is_nexus( $cart_item ) {
+	if ( ! empty( $cart_item['dejoiy_library_item'] ) ) {
+		return true;
+	}
+	$product_id = isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0;
+	return $product_id && function_exists( 'dejoiy_library_is_nexus_product' ) && dejoiy_library_is_nexus_product( $product_id );
+}
+
+/**
+ * @param bool   $visible   Visible.
+ * @param array  $cart_item Item.
+ * @param string $cart_key  Key.
+ * @return bool
+ */
+function dejoiy_library_cart_item_visible( $visible, $cart_item, $cart_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	$is_nexus = dejoiy_library_cart_line_is_nexus( $cart_item );
+	if ( dejoiy_library_is_nexus_cart_context() ) {
+		return $is_nexus ? $visible : false;
+	}
+	return $is_nexus ? false : $visible;
+}
+
+/**
+ * @param array $cart_item_data Data.
+ * @param int   $product_id     Product.
+ * @param int   $variation_id   Variation.
+ * @return array
+ */
+function dejoiy_library_isolation_add_cart_item_data( $cart_item_data, $product_id, $variation_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! function_exists( 'dejoiy_library_is_nexus_product' ) || ! dejoiy_library_is_nexus_product( $product_id ) ) {
+		return $cart_item_data;
+	}
+	$tag = dejoiy_library_is_nexus_cart_context()
+		|| ( function_exists( 'dejoiy_library_has_nexus_flow_request' ) && dejoiy_library_has_nexus_flow_request() )
+		|| ( function_exists( 'dejoiy_library_should_load_nexus_app' ) && dejoiy_library_should_load_nexus_app() );
+	if ( $tag ) {
+		$cart_item_data['dejoiy_library_item'] = 1;
+	}
+	return $cart_item_data;
+}
+
+/**
+ * @param array  $cart_item     Item.
+ * @param array  $values        Session values.
+ * @param string $cart_item_key Key.
+ * @return array
+ */
+function dejoiy_library_isolation_get_cart_item_from_session( $cart_item, $values, $cart_item_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( isset( $values['dejoiy_library_item'] ) ) {
+		$cart_item['dejoiy_library_item'] = $values['dejoiy_library_item'];
+	}
+	return $cart_item;
+}
+
+/**
+ * @param bool $passed       Passed.
+ * @param int  $product_id   Product.
+ * @param int  $quantity     Qty.
+ * @return bool
+ */
+function dejoiy_library_add_to_cart_validation( $passed, $product_id, $quantity ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! $passed || ! function_exists( 'dejoiy_library_is_nexus_product' ) ) {
+		return $passed;
+	}
+
+	$is_nexus = dejoiy_library_is_nexus_product( $product_id );
+	$nexus_ui = dejoiy_library_is_nexus_cart_context()
+		|| ( function_exists( 'dejoiy_library_has_nexus_flow_request' ) && dejoiy_library_has_nexus_flow_request() )
+		|| ( function_exists( 'dejoiy_library_should_load_nexus_app' ) && dejoiy_library_should_load_nexus_app() );
+
+	if ( $is_nexus && ! $nexus_ui ) {
+		wc_add_notice(
+			__( 'This book is only available through DEJOIY Nexus. Open the library to add it to your Nexus shelf.', 'dejoiy' ),
+			'error'
+		);
+		return false;
+	}
+
+	if ( ! $is_nexus && dejoiy_library_is_nexus_cart_context() ) {
+		wc_add_notice(
+			__( 'Marketplace products cannot be added to your Nexus shelf. Use the main store cart instead.', 'dejoiy' ),
+			'error'
+		);
+		return false;
+	}
+
+	return $passed;
+}
+
+/**
+ * Marketplace header mini-cart: exclude Nexus shelf lines from count.
+ *
+ * @param int $count Count.
+ * @return int
+ */
+function dejoiy_library_cart_contents_count( $count ) {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart || dejoiy_library_is_nexus_cart_context() ) {
+		return $count;
+	}
+	$nexus_qty = 0;
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( dejoiy_library_cart_line_is_nexus( $item ) ) {
+			$nexus_qty += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
+		}
+	}
+	return max( 0, (int) $count - $nexus_qty );
+}
+
+/**
+ * Register cart isolation (runs on every WooCommerce request).
+ */
+function dejoiy_library_cart_isolation_init() {
+	static $done = false;
+	if ( $done || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	$done = true;
+
+	add_filter( 'woocommerce_cart_item_visible', 'dejoiy_library_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_checkout_cart_item_visible', 'dejoiy_library_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_widget_cart_item_visible', 'dejoiy_library_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_add_cart_item_data', 'dejoiy_library_isolation_add_cart_item_data', 10, 3 );
+	add_filter( 'woocommerce_get_cart_item_from_session', 'dejoiy_library_isolation_get_cart_item_from_session', 10, 3 );
+	add_filter( 'woocommerce_add_to_cart_validation', 'dejoiy_library_add_to_cart_validation', 10, 3 );
+	add_filter( 'woocommerce_cart_contents_count', 'dejoiy_library_cart_contents_count', 20, 1 );
+}

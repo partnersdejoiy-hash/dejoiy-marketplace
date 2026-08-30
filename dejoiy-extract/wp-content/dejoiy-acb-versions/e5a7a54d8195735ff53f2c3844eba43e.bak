@@ -1,0 +1,439 @@
+<?php
+/**
+ * DEJOIY Mobile Home V2 — dedicated mobile/tablet front page (not shrunken desktop).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_mobile_home_v2_active() {
+	if ( ! function_exists( 'dejoiy_universe_home_is_active' ) || ! dejoiy_universe_home_is_active() ) {
+		return false;
+	}
+	return is_front_page();
+}
+
+/**
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_mobile_home_v2_chips() {
+	$home = home_url( '/' );
+	return array(
+		array( 'id' => 'marketplace', 'label' => 'Marketplace', 'url' => $home, 'color' => '#2563EB' ),
+		array( 'id' => 'nexus', 'label' => 'Nexus', 'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'color' => '#7C3AED' ),
+		array( 'id' => 'quickmart', 'label' => 'QuickMart', 'url' => home_url( '/dejoiy-quick-mart/' ), 'color' => '#16A34A' ),
+		array( 'id' => 'studio', 'label' => 'Studio', 'url' => home_url( '/dejoiy-custom-studio/' ), 'color' => '#EC4899' ),
+		array( 'id' => 'services', 'label' => 'Services', 'url' => home_url( '/dejoiy-services/' ), 'color' => '#EA580C' ),
+		array( 'id' => 'refurbished', 'label' => 'Refurbished', 'url' => home_url( '/dejoiy-refurbished/' ), 'color' => '#0D9488' ),
+	);
+}
+
+/**
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_mobile_home_v2_carousel() {
+	return array(
+		array(
+			'id'    => 'marketplace',
+			'label' => 'Marketplace',
+			'desc'  => 'Shop from verified sellers',
+			'url'   => home_url( '/' ),
+			'color' => '#2563EB',
+			'emoji' => '◆',
+		),
+		array(
+			'id'    => 'nexus',
+			'label' => 'Nexus',
+			'desc'  => 'Books, courses & knowledge',
+			'url'   => home_url( '/dejoiy-library/?dejoiy_library=1' ),
+			'color' => '#7C3AED',
+			'emoji' => '✦',
+		),
+		array(
+			'id'    => 'studio',
+			'label' => 'Custom Studio',
+			'desc'  => 'Design personalized products',
+			'url'   => home_url( '/dejoiy-custom-studio/' ),
+			'color' => '#EC4899',
+			'emoji' => '✿',
+		),
+		array(
+			'id'    => 'quickmart',
+			'label' => 'QuickMart',
+			'desc'  => 'Fast essentials & groceries',
+			'url'   => home_url( '/dejoiy-quick-mart/' ),
+			'color' => '#16A34A',
+			'emoji' => '⚡',
+		),
+		array(
+			'id'    => 'services',
+			'label' => 'Services',
+			'desc'  => 'Hire trusted experts',
+			'url'   => home_url( '/dejoiy-services/' ),
+			'color' => '#EA580C',
+			'emoji' => '◎',
+		),
+		array(
+			'id'    => 'refurbished',
+			'label' => 'Refurbished',
+			'desc'  => 'Certified renewed tech',
+			'url'   => home_url( '/dejoiy-refurbished/' ),
+			'color' => '#0D9488',
+			'emoji' => '↻',
+		),
+	);
+}
+
+/**
+ * @return string
+ */
+function dejoiy_mobile_home_delivery_label() {
+	if ( function_exists( 'WC' ) && WC()->customer ) {
+		$city  = trim( (string) WC()->customer->get_shipping_city() );
+		$state = trim( (string) WC()->customer->get_shipping_state() );
+		if ( $city ) {
+			return $state ? $city . ', ' . $state : $city;
+		}
+	}
+	return __( 'Set delivery location', 'dejoiy' );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_mobile_home_delivery_url() {
+	if ( function_exists( 'wc_get_account_endpoint_url' ) ) {
+		return wc_get_account_endpoint_url( 'edit-address' );
+	}
+	return home_url( '/my-account/' );
+}
+
+/**
+ * @return array<int, int>
+ */
+function dejoiy_mobile_home_recently_viewed_ids() {
+	$raw = isset( $_COOKIE['woocommerce_recently_viewed'] ) ? wp_unslash( $_COOKIE['woocommerce_recently_viewed'] ) : ''; // phpcs:ignore
+	if ( ! $raw ) {
+		return array();
+	}
+	$ids = array_filter( array_map( 'absint', explode( '|', $raw ) ) );
+	return array_slice( array_values( $ids ), 0, 12 );
+}
+
+/**
+ * Render mobile product card.
+ *
+ * @param int    $product_id Product ID.
+ * @param string $world      World slug.
+ */
+function dejoiy_mobile_home_render_card( $product_id, $world = 'market' ) {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		return;
+	}
+
+	$url = function_exists( 'dejoiy_ecosystem_product_url' )
+		? dejoiy_ecosystem_product_url( $product_id )
+		: get_permalink( $product_id );
+
+	$cover = '';
+	$fb    = '';
+	if ( function_exists( 'dejoiy_universe_product_cover_urls' ) ) {
+		$covers = dejoiy_universe_product_cover_urls( $product_id );
+		$cover  = $covers['src'];
+		$fb     = $covers['fallback'];
+	} else {
+		$cover = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' );
+	}
+
+	$badge  = function_exists( 'dejoiy_universe_eco_badge' ) ? dejoiy_universe_eco_badge( $product_id ) : '';
+	$dpin   = function_exists( 'dejoiy_get_product_dpin' ) ? dejoiy_get_product_dpin( $product_id ) : '';
+	$seller = function_exists( 'dejoiy_universe_seller_label' ) ? dejoiy_universe_seller_label( $product_id ) : __( 'Verified seller', 'dejoiy' );
+	?>
+	<article class="dm-card dm-card--<?php echo esc_attr( $world ); ?>" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>">
+		<button type="button" class="dm-card__fav" aria-label="<?php esc_attr_e( 'Add to favorites', 'dejoiy' ); ?>" data-fav-id="<?php echo esc_attr( (string) $product_id ); ?>">♡</button>
+		<a class="dm-card__link" href="<?php echo esc_url( $url ); ?>">
+			<div class="dm-card__media">
+				<?php if ( $cover ) : ?>
+					<img src="<?php echo esc_url( $cover ); ?>" alt="" loading="lazy" decoding="async"<?php echo $fb ? ' data-fallback="' . esc_url( $fb ) . '" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;}"' : ''; ?> />
+				<?php else : ?>
+					<span class="dm-card__ph" aria-hidden="true"></span>
+				<?php endif; ?>
+				<?php if ( $badge ) : ?>
+					<span class="dm-card__eco"><?php echo esc_html( $badge ); ?></span>
+				<?php endif; ?>
+			</div>
+			<div class="dm-card__body">
+				<?php if ( $dpin ) : ?>
+					<span class="dm-card__dpin"><?php echo esc_html( $dpin ); ?></span>
+				<?php endif; ?>
+				<h3 class="dm-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+				<span class="dm-card__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
+				<span class="dm-card__seller"><span class="dm-card__dot" aria-hidden="true"></span><?php echo esc_html( $seller ); ?></span>
+			</div>
+		</a>
+	</article>
+	<?php
+}
+
+/**
+ * @param string               $title Shelf title.
+ * @param array<string, mixed> $query_args WP_Query args.
+ * @param string               $world World slug.
+ */
+function dejoiy_mobile_home_render_shelf( $title, $query_args, $world = 'market' ) {
+	if ( ! function_exists( 'dejoiy_universe_get_products' ) ) {
+		return;
+	}
+	$query_args['posts_per_page'] = isset( $query_args['posts_per_page'] ) ? $query_args['posts_per_page'] : 8;
+	$posts = dejoiy_universe_get_products( $query_args );
+	if ( empty( $posts ) ) {
+		return;
+	}
+	?>
+	<section class="dm-shelf dm-reveal">
+		<h2 class="dm-shelf__title"><?php echo esc_html( $title ); ?></h2>
+		<div class="dm-shelf__track" tabindex="0">
+			<?php
+			foreach ( $posts as $p ) {
+				dejoiy_mobile_home_render_card( $p->ID, $world );
+			}
+			?>
+		</div>
+	</section>
+	<?php
+}
+
+/**
+ * @return string
+ */
+function dejoiy_mobile_home_v2_html() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return '';
+	}
+
+	$shop_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+	$logo_url = home_url( '/' );
+	$cart_url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	$cart_ct  = function_exists( 'WC' ) && WC()->cart ? (int) WC()->cart->get_cart_contents_count() : 0;
+
+	ob_start();
+	?>
+	<div id="dejoiy-mobile-home" class="dejoiy-mobile-home-v2" data-version="2">
+		<header class="dm-top" role="banner">
+			<div class="dm-top__row">
+				<a class="dm-top__logo" href="<?php echo esc_url( $logo_url ); ?>">
+					<?php
+					$logo_id = (int) get_theme_mod( 'custom_logo' );
+					if ( $logo_id ) {
+						echo wp_get_attachment_image( $logo_id, 'medium', false, array( 'class' => 'dm-top__logo-img', 'alt' => 'DEJOIY' ) );
+					} else {
+						?>
+						<img class="dm-top__logo-img" src="https://dejoiy.tech/wp-content/uploads/2026/05/DEJOIY-OFFICIAL-LOGO.png" alt="DEJOIY" width="140" height="46" />
+						<?php
+					}
+					?>
+				</a>
+				<form class="dm-top__search" action="<?php echo esc_url( $shop_url ); ?>" method="get" role="search">
+					<input type="hidden" name="post_type" value="product" />
+					<label class="dm-top__search-wrap">
+						<span class="dm-top__search-ico" aria-hidden="true">⌕</span>
+						<input type="search" name="s" class="dm-top__search-input" autocomplete="off" placeholder="<?php esc_attr_e( 'Looking for Joy? Try DEJOIY ✨', 'dejoiy' ); ?>" aria-label="<?php esc_attr_e( 'Search DEJOIY', 'dejoiy' ); ?>" />
+					</label>
+				</form>
+				<a class="dm-top__cart" href="<?php echo esc_url( $cart_url ); ?>" aria-label="<?php esc_attr_e( 'Cart', 'dejoiy' ); ?>">
+					<span aria-hidden="true">🛒</span>
+					<?php if ( $cart_ct > 0 ) : ?>
+						<span class="dm-top__badge"><?php echo esc_html( (string) $cart_ct ); ?></span>
+					<?php endif; ?>
+				</a>
+			</div>
+			<a class="dm-location" href="<?php echo esc_url( dejoiy_mobile_home_delivery_url() ); ?>">
+				<span class="dm-location__label"><?php esc_html_e( 'Delivering to', 'dejoiy' ); ?></span>
+				<span class="dm-location__value"><?php echo esc_html( dejoiy_mobile_home_delivery_label() ); ?></span>
+			</a>
+			<nav class="dm-chips" aria-label="<?php esc_attr_e( 'Ecosystems', 'dejoiy' ); ?>">
+				<?php foreach ( dejoiy_mobile_home_v2_chips() as $chip ) : ?>
+					<a class="dm-chips__item" href="<?php echo esc_url( $chip['url'] ); ?>" style="--dm-color:<?php echo esc_attr( $chip['color'] ); ?>"><?php echo esc_html( $chip['label'] ); ?></a>
+				<?php endforeach; ?>
+			</nav>
+		</header>
+
+		<section class="dm-carousel-wrap dm-reveal" aria-label="<?php esc_attr_e( 'Explore DEJOIY Universe', 'dejoiy' ); ?>">
+			<h2 class="dm-carousel__heading"><?php esc_html_e( 'Explore Universe', 'dejoiy' ); ?></h2>
+			<div class="dm-carousel" id="dm-universe-carousel">
+				<?php foreach ( dejoiy_mobile_home_v2_carousel() as $card ) : ?>
+					<a class="dm-carousel__card" href="<?php echo esc_url( $card['url'] ); ?>" style="--dm-card:<?php echo esc_attr( $card['color'] ); ?>">
+						<span class="dm-carousel__emoji" aria-hidden="true"><?php echo esc_html( $card['emoji'] ); ?></span>
+						<strong><?php echo esc_html( $card['label'] ); ?></strong>
+						<span><?php echo esc_html( $card['desc'] ); ?></span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<main class="dm-main">
+			<?php
+			dejoiy_mobile_home_render_shelf(
+				__( 'Recommended For You', 'dejoiy' ),
+				array( 'orderby' => 'rand', 'posts_per_page' => 8 ),
+				'market'
+			);
+
+			$recent = dejoiy_mobile_home_recently_viewed_ids();
+			if ( ! empty( $recent ) ) {
+				dejoiy_mobile_home_render_shelf(
+					__( 'Recently Viewed', 'dejoiy' ),
+					array(
+						'post__in'       => $recent,
+						'orderby'        => 'post__in',
+						'posts_per_page' => 8,
+					),
+					'market'
+				);
+			}
+
+			dejoiy_mobile_home_render_shelf(
+				__( 'Trending Today', 'dejoiy' ),
+				array(
+					'meta_key'       => 'total_sales',
+					'orderby'        => 'meta_value_num',
+					'order'          => 'DESC',
+					'posts_per_page' => 8,
+				),
+				'market'
+			);
+
+			dejoiy_mobile_home_render_shelf(
+				__( 'JOI Picks', 'dejoiy' ),
+				array( 'orderby' => 'date', 'order' => 'DESC', 'posts_per_page' => 8 ),
+				'market'
+			);
+
+			dejoiy_mobile_home_render_shelf(
+				__( 'Most Loved', 'dejoiy' ),
+				array( 'orderby' => 'comment_count', 'order' => 'DESC', 'posts_per_page' => 8 ),
+				'market'
+			);
+			?>
+		</main>
+
+		<nav class="dm-bottom" aria-label="<?php esc_attr_e( 'Primary', 'dejoiy' ); ?>">
+			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="dm-bottom__item is-active"><span>⌂</span><small>Home</small></a>
+			<a href="<?php echo esc_url( $shop_url ); ?>" class="dm-bottom__item"><span>◎</span><small>Discover</small></a>
+			<a href="<?php echo esc_url( home_url( '/dejoiy-library/?dejoiy_library=1' ) ); ?>" class="dm-bottom__item"><span>✦</span><small>Nexus</small></a>
+			<a href="<?php echo esc_url( home_url( '/my-account/?et-wishlist-page' ) ); ?>" class="dm-bottom__item"><span>♡</span><small>Favorites</small></a>
+			<a href="<?php echo esc_url( home_url( '/my-account/' ) ); ?>" class="dm-bottom__item"><span>👤</span><small>Account</small></a>
+			<a href="<?php echo esc_url( $cart_url ); ?>" class="dm-bottom__item"><span>🛒</span><small>Cart</small></a>
+		</nav>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Wrap desktop universe + output mobile home (CSS shows correct one).
+ *
+ * @param string $content Post content.
+ * @return string
+ */
+function dejoiy_mobile_home_v2_replace_content( $content ) {
+	if ( ! dejoiy_mobile_home_v2_active() ) {
+		return $content;
+	}
+
+	$desktop = $content;
+	if ( false === strpos( $desktop, 'dejoiy-universe' ) && function_exists( 'dejoiy_universe_home_html' ) ) {
+		$desktop = dejoiy_universe_home_html();
+	}
+
+	return '<div class="dejoiy-universe-desktop-only">' . $desktop . '</div>' . dejoiy_mobile_home_v2_html();
+}
+add_filter( 'the_content', 'dejoiy_mobile_home_v2_replace_content', 10000 );
+add_filter( 'elementor/frontend/the_content', 'dejoiy_mobile_home_v2_replace_content', 10000 );
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_mobile_home_v2_body_class( $classes ) {
+	if ( dejoiy_mobile_home_v2_active() ) {
+		$classes[] = 'dejoiy-mobile-home-v2-active';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_mobile_home_v2_body_class', 25 );
+
+/**
+ * Enqueue mobile home assets (screen-scoped).
+ */
+function dejoiy_mobile_home_v2_assets() {
+	if ( ! dejoiy_mobile_home_v2_active() ) {
+		return;
+	}
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
+	$css = $dir . '/dejoiy-mobile-home-v2.css';
+	$js  = $dir . '/dejoiy-mobile-home-v2.js';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-home-v2',
+			$uri . '/dejoiy-mobile-home-v2.css',
+			array(),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+	}
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-mobile-home-v2',
+			$uri . '/dejoiy-mobile-home-v2.js',
+			array(),
+			(string) filemtime( $js ),
+			true
+		);
+		wp_localize_script(
+			'dejoiy-mobile-home-v2',
+			'dejoiyMobileHomeV2',
+			array(
+				'searchHints' => array(
+					'Looking for Joy? Try DEJOIY ✨',
+					'Find books 📚',
+					'Need custom products 🎨',
+					'Find services 💼',
+					'Discover something amazing 🚀',
+				),
+				'storeApi'    => rest_url( 'wc/store/v1/products' ),
+			)
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_home_v2_assets', 1009 );
+
+/**
+ * Scope desktop universe CSS to large screens only.
+ */
+function dejoiy_mobile_home_v2_scope_desktop_assets() {
+	if ( ! dejoiy_mobile_home_v2_active() ) {
+		return;
+	}
+	global $wp_styles;
+	if ( ! $wp_styles ) {
+		return;
+	}
+	foreach ( array( 'dejoiy-universe-home', 'dejoiy-universe-responsive' ) as $handle ) {
+		if ( isset( $wp_styles->registered[ $handle ] ) ) {
+			$wp_styles->registered[ $handle ]->args = 'screen and (min-width: 1025px)';
+		}
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_home_v2_scope_desktop_assets', 1010 );

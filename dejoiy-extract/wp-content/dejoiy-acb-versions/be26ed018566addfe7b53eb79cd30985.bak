@@ -1,0 +1,26 @@
+<?php
+/**
+ * My Nexus — content partial.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require get_stylesheet_directory() . '/library-header.php';
+?>
+<main class="dlu-page dlu-my-universe" id="dlu-my-universe">
+	<div class="dlu-page-in">
+		<p class="dlu-crumb"><a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>">← DEJOIY Nexus</a></p>
+		<h1>My Nexus</h1>
+		<p class="dlu-page-sub">Your living knowledge collection.</p>
+		<section class="dlu-dash-sec">
+			<h2>Nexus Wishlist</h2>
+			<div id="dlu-favorites" class="dlu-fav-grid"></div>
+		</section>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';

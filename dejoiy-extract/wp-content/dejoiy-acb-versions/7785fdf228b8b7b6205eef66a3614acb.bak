@@ -1,0 +1,605 @@
+/**
+ * DEJOIY Nexus
+ */
+(function () {
+  'use strict';
+
+  var CFG = window.DEJOIY_LIBRARY || {};
+  var root = document.getElementById('dlu');
+  var isNexus = document.body.classList.contains('dejoiy-library-active')
+    || document.body.classList.contains('dejoiy-nexus-active')
+    || document.body.classList.contains('dlu-screen');
+  if (!root && !isNexus) return;
+
+  /* ── Galaxy hero ── */
+  function initGalaxy() {
+    var canvas = document.getElementById('dlu-galaxy');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var books = CFG.books || [];
+    var topics = CFG.topics || [];
+    var orbs = [];
+    var mx = 0;
+    var my = 0;
+
+    function resize() {
+      canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+      canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
+      ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    }
+
+    var cx = function () { return canvas.offsetWidth / 2; };
+    var cy = function () { return canvas.offsetHeight / 2; };
+
+    topics.forEach(function (t, i) {
+      orbs.push({ type: 'topic', label: t, angle: (i / topics.length) * Math.PI * 2, dist: 120 + i * 8, speed: 0.0008 + i * 0.0001 });
+    });
+    books.slice(0, 8).forEach(function (b, i) {
+      orbs.push({ type: 'book', data: b, angle: (i / 8) * Math.PI * 2, dist: 200 + (i % 3) * 30, speed: 0.0012 + i * 0.00015 });
+    });
+
+    root.addEventListener('mousemove', function (e) {
+      var r = canvas.getBoundingClientRect();
+      mx = (e.clientX - r.left) / r.width - 0.5;
+      my = (e.clientY - r.top) / r.height - 0.5;
+    });
+
+    function draw() {
+      var w = canvas.offsetWidth;
+      var h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      for (var s = 0; s < 60; s++) {
+        var starHue = s % 3 === 0 ? '124,58,237' : s % 3 === 1 ? '236,72,153' : '6,182,212';
+        ctx.fillStyle = 'rgba(' + starHue + ',' + (0.15 + Math.random() * 0.35) + ')';
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1.2, 1.2);
+      }
+      var centerX = cx() + mx * 24;
+      var centerY = cy() + my * 24;
+      orbs.forEach(function (o) {
+        o.angle += o.speed;
+        var x = centerX + Math.cos(o.angle) * o.dist;
+        var y = centerY + Math.sin(o.angle) * o.dist * 0.55;
+        if (o.type === 'topic') {
+          ctx.fillStyle = 'rgba(124,58,237,0.85)';
+          ctx.font = '600 11px system-ui,sans-serif';
+          ctx.fillText(o.label, x - 24, y);
+        } else if (o.data && o.data.cover) {
+          ctx.strokeStyle = 'rgba(6,182,212,0.45)';
+          ctx.fillStyle = 'rgba(168,85,247,0.15)';
+          ctx.fillRect(x - 14, y - 20, 28, 40);
+          ctx.strokeRect(x - 14, y - 20, 28, 40);
+        }
+      });
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    draw();
+  }
+
+  /* ── JOI Librarian ── */
+  function initJoi() {
+    var input = document.getElementById('dlu-joi-input');
+    var btn = document.getElementById('dlu-joi-go');
+    var out = document.getElementById('dlu-joi-result');
+    if (!input || !btn || !out) return;
+
+    function run() {
+      var q = input.value.trim();
+      if (q.length < 2) return;
+      btn.disabled = true;
+      fetch((CFG.joi || CFG.ajax) + '&q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.success || !res.data) return;
+          var html = '<p><strong>' + (res.data.message || '') + '</strong></p><div class="dlu-joi-books">';
+          (res.data.books || []).forEach(function (b) {
+            html += '<a href="' + b.url + '"><img src="' + (b.cover || '') + '" alt="" /><span>' + b.title + '</span></a>';
+          });
+          html += '</div>';
+          out.innerHTML = html;
+          out.hidden = false;
+        })
+        .catch(function () { btn.disabled = false; });
+    }
+
+    btn.addEventListener('click', run);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+  }
+
+  var WISH_KEY = CFG.wishlist_key || 'dlu_nexus_wishlist_v1';
+
+  function getWishlist() {
+    try {
+      var raw = localStorage.getItem(WISH_KEY);
+      if (raw) return JSON.parse(raw);
+      var legacy = localStorage.getItem('dlu_favs');
+      if (legacy) {
+        var ids = JSON.parse(legacy);
+        if (Array.isArray(ids)) {
+          return ids.map(function (id) { return { id: String(id) }; });
+        }
+      }
+    } catch (err) { /* ignore */ }
+    return [];
+  }
+
+  function setWishlist(items) {
+    localStorage.setItem(WISH_KEY, JSON.stringify(items));
+    updateWishlistBadge();
+    renderWishlistPanel();
+    renderFavoritesGrid();
+  }
+
+  function updateWishlistBadge() {
+    var n = getWishlist().length;
+    document.querySelectorAll('#dlu-wishlist-badge, .dlu-wishlist-badge').forEach(function (badge) {
+      badge.textContent = String(n);
+      badge.hidden = n < 1;
+    });
+  }
+
+  function renderWishlistPanel() {
+    var body = document.getElementById('dlu-wishlist-body');
+    if (!body) return;
+    var items = getWishlist();
+    if (!items.length) {
+      body.innerHTML = '<p class="dlu-cart-empty">Save books with ♡ on this page — your wishlist stays in DEJOIY Nexus only.</p>';
+      return;
+    }
+    var html = '<div class="dlu-wishlist-list">';
+    items.forEach(function (item) {
+      var url = item.url || (CFG.home || '/') + '?dejoiy_reader=' + item.id;
+      html += '<a class="dlu-wishlist-item" href="' + url + '">';
+      if (item.cover) html += '<img src="' + item.cover + '" alt="" />';
+      html += '<span>' + (item.title || ('Book #' + item.id)) + '</span></a>';
+    });
+    html += '</div>';
+    body.innerHTML = html;
+  }
+
+  function renderFavoritesGrid() {
+    var grid = document.getElementById('dlu-favorites');
+    if (!grid) return;
+    var items = getWishlist();
+    if (!items.length) {
+      grid.innerHTML = '<p class="dlu-empty-inline">No saved books yet. Tap ♡ on any title in Nexus.</p>';
+      return;
+    }
+    var html = '';
+    items.forEach(function (item) {
+      var url = item.url || '#';
+      html += '<a href="' + url + '" class="dlu-fav-chip">' + (item.title || item.id) + '</a>';
+    });
+    grid.innerHTML = html;
+  }
+
+  /* ── Mobile nav drawer ── */
+  function initDrawer() {
+    var burger = document.getElementById('dlu-burger');
+    var drawer = document.getElementById('dlu-hdr-drawer');
+    var backdrop = document.getElementById('dlu-drawer-backdrop');
+    if (!burger || !drawer) return;
+
+    function open() {
+      drawer.removeAttribute('hidden');
+      drawer.classList.add('is-open');
+      if (backdrop) {
+        backdrop.removeAttribute('hidden');
+        backdrop.classList.add('is-open');
+      }
+      burger.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('dlu-nav-open');
+    }
+
+    function shut() {
+      drawer.classList.remove('is-open');
+      burger.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('dlu-nav-open');
+      setTimeout(function () {
+        drawer.setAttribute('hidden', '');
+        if (backdrop) {
+          backdrop.classList.remove('is-open');
+          backdrop.setAttribute('hidden', '');
+        }
+      }, 320);
+    }
+
+    function toggleDrawer(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (drawer.classList.contains('is-open')) shut();
+      else open();
+    }
+
+    burger.addEventListener('click', toggleDrawer);
+
+    var drawerClose = document.getElementById('dlu-drawer-close');
+    if (drawerClose) drawerClose.addEventListener('click', shut);
+
+    if (backdrop) backdrop.addEventListener('click', shut);
+    drawer.querySelectorAll('a').forEach(function (a) {
+      a.addEventListener('click', shut);
+    });
+    var mobWish = document.getElementById('dlu-wishlist-toggle-mobile');
+    if (mobWish) {
+      mobWish.addEventListener('click', function (e) {
+        e.preventDefault();
+        shut();
+        openWishlistPanel();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && drawer.classList.contains('is-open')) shut();
+    });
+  }
+
+  function openWishlistPanel() {
+    var panel = document.getElementById('dlu-wishlist-panel');
+    var backdrop = document.getElementById('dlu-wishlist-backdrop');
+    if (!panel) return;
+    renderWishlistPanel();
+    panel.removeAttribute('hidden');
+    panel.classList.add('is-open');
+    if (backdrop) {
+      backdrop.removeAttribute('hidden');
+      backdrop.classList.add('is-open');
+    }
+  }
+
+  function shutWishlistPanel() {
+    var panel = document.getElementById('dlu-wishlist-panel');
+    var backdrop = document.getElementById('dlu-wishlist-backdrop');
+    if (!panel) return;
+    panel.classList.remove('is-open');
+    setTimeout(function () {
+      panel.setAttribute('hidden', '');
+      if (backdrop) {
+        backdrop.classList.remove('is-open');
+        backdrop.setAttribute('hidden', '');
+      }
+    }, 350);
+  }
+
+  function initWishlist() {
+    updateWishlistBadge();
+    renderWishlistPanel();
+    renderFavoritesGrid();
+
+    ['dlu-wishlist-toggle'].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var panel = document.getElementById('dlu-wishlist-panel');
+        if (panel && panel.classList.contains('is-open')) shutWishlistPanel();
+        else openWishlistPanel();
+      });
+    });
+    var close = document.getElementById('dlu-wishlist-close');
+    var backdrop = document.getElementById('dlu-wishlist-backdrop');
+    if (close) close.addEventListener('click', shutWishlistPanel);
+    if (backdrop) backdrop.addEventListener('click', shutWishlistPanel);
+  }
+
+  function refreshCartBadges() {
+    if (!CFG.cart_count) return;
+    fetch(CFG.cart_count, { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var n = d.data && d.data.count ? d.data.count : 0;
+        document.querySelectorAll('.dlu-cart-badge').forEach(function (badge) {
+          badge.textContent = String(n);
+          badge.hidden = n < 1;
+        });
+        document.querySelectorAll('.dlu-cart-btn[data-count]').forEach(function (btn) {
+          btn.setAttribute('data-count', String(n));
+        });
+      });
+  }
+
+  /* ── Nexus cart panel ── */
+  function initCartPanel() {
+    var toggle = document.getElementById('dlu-cart-toggle');
+    var panel = document.getElementById('dlu-cart-panel');
+    var close = document.getElementById('dlu-cart-close');
+    var backdrop = document.getElementById('dlu-cart-backdrop');
+    if (!panel) {
+      refreshCartBadges();
+      return;
+    }
+
+    function open() {
+      panel.hidden = false;
+      panel.classList.add('is-open');
+      if (backdrop) { backdrop.hidden = false; backdrop.classList.add('is-open'); }
+      refreshCartBadges();
+    }
+    function shut() {
+      panel.classList.remove('is-open');
+      if (backdrop) backdrop.classList.remove('is-open');
+      setTimeout(function () {
+        panel.hidden = true;
+        if (backdrop) backdrop.hidden = true;
+      }, 350);
+    }
+
+    if (toggle) toggle.addEventListener('click', open);
+    if (close) close.addEventListener('click', shut);
+    if (backdrop) backdrop.addEventListener('click', shut);
+    refreshCartBadges();
+  }
+
+  /* ── Nexus-only wishlist (localStorage, not global shop wishlist) ── */
+  function initSaves() {
+    document.querySelectorAll('.dlu-book-save').forEach(function (btn) {
+      var id = btn.getAttribute('data-id');
+      var list = getWishlist();
+      if (list.some(function (x) { return String(x.id) === String(id); })) {
+        btn.textContent = '♥';
+      }
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var card = btn.closest('.dlu-book');
+        var titleEl = card && card.querySelector('.dlu-book-meta h3 a');
+        var coverEl = card && card.querySelector('.dlu-book-cover img');
+        var linkEl = card && card.querySelector('.dlu-book-cover');
+        var item = {
+          id: String(id),
+          title: titleEl ? titleEl.textContent.trim() : '',
+          url: linkEl ? linkEl.getAttribute('href') : '',
+          cover: coverEl ? coverEl.getAttribute('src') : ''
+        };
+        var current = getWishlist();
+        var exists = current.some(function (x) { return String(x.id) === String(id); });
+        var items;
+        if (exists) {
+          items = current.filter(function (x) { return String(x.id) !== String(id); });
+          btn.textContent = '♡';
+        } else {
+          items = current.concat([item]);
+          btn.textContent = '♥';
+        }
+        setWishlist(items);
+      });
+    });
+  }
+
+  /* ── Reveal on scroll ── */
+  function initReveal() {
+    var els = document.querySelectorAll('[data-dlu-reveal]');
+    if (!els.length || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) en.target.classList.add('is-visible');
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ── Quick preview modal ── */
+  function initPreview() {
+    var modal = document.getElementById('dlu-preview-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'dlu-preview-modal';
+      modal.className = 'dlu-preview-modal';
+      modal.setAttribute('hidden', '');
+      modal.innerHTML =
+        '<div class="dlu-preview-backdrop" data-close></div>' +
+        '<div class="dlu-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="dlu-preview-title">' +
+        '<button type="button" class="dlu-preview-close" data-close aria-label="Close">&times;</button>' +
+        '<div class="dlu-preview-grid">' +
+        '<img class="dlu-preview-cover" src="" alt="" />' +
+        '<div class="dlu-preview-body">' +
+        '<h2 id="dlu-preview-title"></h2>' +
+        '<p class="dlu-preview-author"></p>' +
+        '<p class="dlu-preview-price"></p>' +
+        '<p class="dlu-preview-excerpt"></p>' +
+        '<div class="dlu-preview-actions">' +
+        '<a href="#" class="dlu-btn-primary dlu-preview-read">Read sample</a>' +
+        '<a href="#" class="dlu-btn-secondary dlu-preview-buy">Buy</a>' +
+        '</div></div></div></div>';
+      document.body.appendChild(modal);
+    }
+
+    var coverEl = modal.querySelector('.dlu-preview-cover');
+    var titleEl = modal.querySelector('#dlu-preview-title');
+    var authorEl = modal.querySelector('.dlu-preview-author');
+    var priceEl = modal.querySelector('.dlu-preview-price');
+    var excerptEl = modal.querySelector('.dlu-preview-excerpt');
+    var readEl = modal.querySelector('.dlu-preview-read');
+    var buyEl = modal.querySelector('.dlu-preview-buy');
+
+    function shut() {
+      modal.setAttribute('hidden', '');
+      modal.classList.remove('is-open');
+      document.body.classList.remove('dlu-preview-open');
+    }
+
+    function openFromCard(card) {
+      if (!card) return;
+      var cover = card.getAttribute('data-cover') || '';
+      var fallback = card.getAttribute('data-cover-fallback') || cover;
+      if (coverEl) {
+        coverEl.src = cover;
+        coverEl.dataset.fallback = fallback;
+        coverEl.onerror = function () {
+          if (fallback && coverEl.src !== fallback) {
+            coverEl.src = fallback;
+            coverEl.onerror = null;
+          }
+        };
+      }
+      if (titleEl) titleEl.textContent = card.getAttribute('data-title') || '';
+      if (authorEl) authorEl.textContent = card.getAttribute('data-author') || '';
+      if (priceEl) priceEl.textContent = card.getAttribute('data-price') || '';
+      if (excerptEl) {
+        var ex = card.getAttribute('data-excerpt') || '';
+        excerptEl.textContent = ex || 'Digital edition for DEJOIY Nexus — read in the dedicated reader after purchase.';
+        excerptEl.hidden = !excerptEl.textContent;
+      }
+      var readUrl = card.getAttribute('data-read-url') || '#';
+      var buyUrl = card.getAttribute('data-buy-url') || readUrl;
+      if (readEl) readEl.href = readUrl;
+      if (buyEl) {
+        buyEl.href = buyUrl;
+        buyEl.textContent = card.getAttribute('data-price') ? 'Buy ' + card.getAttribute('data-price') : 'Buy';
+      }
+      modal.removeAttribute('hidden');
+      modal.classList.add('is-open');
+      document.body.classList.add('dlu-preview-open');
+    }
+
+    modal.querySelectorAll('[data-close]').forEach(function (el) {
+      el.addEventListener('click', shut);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('is-open')) shut();
+    });
+
+    document.querySelectorAll('.dlu-book-preview').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var card = btn.closest('.dlu-book');
+        openFromCard(card);
+      });
+    });
+  }
+
+  /* ── Reader modes + progress ── */
+  function initReader() {
+    var reader = document.getElementById('dlu-reader');
+    if (!reader) return;
+    var bookId = reader.getAttribute('data-book-id');
+    var prog = document.getElementById('dlu-read-progress');
+    var key = 'dlu_progress_' + bookId;
+    var saved = parseInt(localStorage.getItem(key) || '0', 10);
+    if (prog) prog.value = saved;
+
+    reader.querySelectorAll('.dlu-reader-modes button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-mode');
+        var body = reader.querySelector('.dlu-reader-body');
+        if (body) body.setAttribute('data-mode', mode);
+        reader.querySelectorAll('.dlu-reader-modes button').forEach(function (b) { b.classList.remove('is-on'); });
+        btn.classList.add('is-on');
+      });
+    });
+
+    var content = document.getElementById('dlu-reader-content');
+    if (content) {
+      content.addEventListener('scroll', function () {
+        var pct = Math.min(100, Math.round((content.scrollTop / (content.scrollHeight - content.clientHeight)) * 100) || 0);
+        if (prog) prog.value = pct;
+        localStorage.setItem(key, String(pct));
+      });
+    }
+  }
+
+  /* ── Footer starfield ── */
+  function initStars() {
+    var c = document.getElementById('dlu-ft-stars');
+    if (!c) return;
+    var ctx = c.getContext('2d');
+    function resize() {
+      c.width = c.offsetWidth;
+      c.height = c.offsetHeight;
+      ctx.clearRect(0, 0, c.width, c.height);
+      for (var i = 0; i < 120; i++) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.5 + 0.2) + ')';
+        ctx.beginPath();
+        ctx.arc(Math.random() * c.width, Math.random() * c.height, Math.random() * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  /* ── My Nexus + in-page anchors ── */
+  function initNexusAnchors() {
+    function scrollToHash(hash, smooth) {
+      if (!hash || hash.charAt(0) !== '#') return;
+      var id = hash.slice(1);
+      var el = document.getElementById(id);
+      if (!el) return;
+      var hdr = document.getElementById('dlu-hdr');
+      var offset = hdr ? hdr.offsetHeight + 12 : 72;
+      var top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+      window.scrollTo({ top: top, behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function onLanding() {
+      var root = document.getElementById('dlu');
+      return !!root;
+    }
+
+    if (window.location.hash) {
+      setTimeout(function () { scrollToHash(window.location.hash, false); }, 120);
+      setTimeout(function () { scrollToHash(window.location.hash, true); }, 450);
+    }
+
+    document.querySelectorAll('a[href*="#dlu-"]').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        var href = link.getAttribute('href') || '';
+        var hashIdx = href.indexOf('#');
+        if (hashIdx < 0) return;
+        var hash = href.slice(hashIdx);
+        var samePage = false;
+        try {
+          var parsed = new URL(href, window.location.origin);
+          samePage = parsed.pathname === window.location.pathname;
+        } catch (err) {
+          samePage = href.charAt(0) === '#';
+        }
+        if (samePage && onLanding()) {
+          e.preventDefault();
+          scrollToHash(hash, true);
+          if (history.pushState) {
+            history.pushState(null, '', hash);
+          } else {
+            window.location.hash = hash;
+          }
+          var drawer = document.getElementById('dlu-hdr-drawer');
+          if (drawer && drawer.classList.contains('is-open')) {
+            drawer.classList.remove('is-open');
+            document.body.classList.remove('dlu-nav-open');
+          }
+        }
+      });
+    });
+  }
+
+  /* Hero search → scroll to discover */
+  var heroSearch = document.getElementById('dlu-hero-search');
+  if (heroSearch) {
+    heroSearch.addEventListener('submit', function (e) {
+      var q = document.getElementById('dlu-hero-search-in');
+      if (q && q.value.trim().length < 2) {
+        e.preventDefault();
+        document.getElementById('dlu-discover') && document.getElementById('dlu-discover').scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
+
+  initDrawer();
+  initNexusAnchors();
+  initGalaxy();
+  initJoi();
+  initCartPanel();
+  initWishlist();
+  initSaves();
+  initPreview();
+  initReveal();
+  initReader();
+  initStars();
+})();

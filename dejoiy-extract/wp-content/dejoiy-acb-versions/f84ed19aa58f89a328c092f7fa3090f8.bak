@@ -1,0 +1,395 @@
+/* DEJOIY Library Universe — landing & components */
+
+.dlu-root {
+  --dlu-gold: #c9a227;
+  --dlu-bg: #050508;
+  --dlu-card: rgba(18, 18, 24, 0.85);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.dlu-hero {
+  position: relative;
+  min-height: 92vh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 6rem 1.5rem 4rem;
+}
+
+.dlu-galaxy-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.dlu-hero-core {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.45) 0%, rgba(201, 162, 39, 0.08) 45%, transparent 70%);
+  filter: blur(2px);
+  animation: dlu-pulse 4s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes dlu-pulse {
+  50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+.dlu-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 720px;
+}
+
+.dlu-kicker {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.75rem;
+  color: var(--dlu-gold);
+  margin-bottom: 1rem;
+}
+
+.dlu-hero-title {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1.1;
+  font-weight: 800;
+  margin: 0 0 1rem;
+}
+
+.dlu-hero-title span {
+  background: linear-gradient(90deg, #f5e6b8, #c9a227);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dlu-hero-sub {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+
+.dlu-hero-ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.dlu-btn-primary {
+  background: linear-gradient(135deg, #e8c547, #9a7518);
+  color: #0a0a0a;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.dlu-btn-ghost {
+  border: 1px solid rgba(201, 162, 39, 0.5);
+  color: #f5f0e6;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.dlu-sec {
+  padding: 4rem 0;
+  position: relative;
+}
+
+.dlu-sec-in {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.dlu-sec-title {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin: 0 0 0.5rem;
+  color: #f5f0e6;
+}
+
+.dlu-sec-desc {
+  opacity: 0.7;
+  margin-bottom: 2rem;
+  max-width: 560px;
+}
+
+.dlu-joi-box {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--dlu-card);
+  border: 1px solid rgba(201, 162, 39, 0.25);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.dlu-joi-box input {
+  flex: 1;
+  min-width: 200px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.dlu-joi-result {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(201, 162, 39, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+}
+
+.dlu-joi-books {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.dlu-joi-books a {
+  text-decoration: none;
+  color: inherit;
+  text-align: center;
+}
+
+.dlu-joi-books img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.dlu-collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.dlu-collection-card {
+  background: var(--dlu-card);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.3s, border-color 0.3s;
+}
+
+.dlu-collection-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--dlu-gold);
+}
+
+.dlu-collection-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.dlu-books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.dlu-book {
+  perspective: 800px;
+}
+
+.dlu-book-cover {
+  display: block;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dlu-book:hover .dlu-book-cover {
+  transform: translateY(-12px) rotateX(8deg) scale(1.03);
+}
+
+.dlu-book-cover img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  border-radius: 8px 12px 12px 8px;
+  box-shadow: 8px 12px 32px rgba(0, 0, 0, 0.6), inset -4px 0 12px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid var(--dlu-accent, #c9a227);
+}
+
+.dlu-book-reflection {
+  position: absolute;
+  inset: auto 0 -20px 0;
+  height: 40px;
+  background: linear-gradient(to bottom, rgba(201, 162, 39, 0.15), transparent);
+  transform: scaleY(-0.4);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.dlu-book-save,
+.dlu-book-preview {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.dlu-book:hover .dlu-book-save,
+.dlu-book:hover .dlu-book-preview { opacity: 1; }
+
+.dlu-book-save {
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+}
+
+.dlu-book-preview {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dlu-gold);
+  color: #0a0a0a;
+  padding: 0.35rem 0.65rem;
+  font-weight: 600;
+}
+
+.dlu-book-meta h3 {
+  font-size: 0.95rem;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.dlu-book-meta h3 a { color: inherit; text-decoration: none; }
+
+.dlu-book-author {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  margin: 0;
+}
+
+.dlu-book-foot {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  opacity: 0.75;
+  margin-top: 0.35rem;
+}
+
+.dlu-book-price { color: var(--dlu-gold); font-weight: 700; }
+
+.dlu-book-add {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--dlu-gold);
+  text-decoration: none;
+}
+
+.dlu-sec-pass {
+  text-align: center;
+  background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.12), transparent 70%);
+}
+
+.dlu-btn-pass--lg {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+}
+
+[data-dlu-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s, transform 0.6s;
+}
+
+[data-dlu-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Pages: cart, checkout, reader, dashboard */
+.dlu-page { padding: 2rem 0 4rem; min-height: 60vh; }
+.dlu-page-in { max-width: 900px; margin: 0 auto; padding: 0 1.25rem; }
+.dlu-crumb a { color: var(--dlu-gold); text-decoration: none; }
+.dlu-page-sub { opacity: 0.7; }
+
+.dlu-shelf-item {
+  display: flex;
+  gap: 1.25rem;
+  padding: 1rem;
+  background: var(--dlu-card);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.dlu-shelf-stack {
+  width: 80px;
+  height: 110px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 6px;
+  box-shadow: 4px 0 0 #1a1a1a, 8px 0 0 #2a2a2a;
+}
+
+.dlu-reader-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.dlu-reader-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 2rem;
+  padding: 2rem 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dlu-reader-body[data-mode="light"] {
+  background: #f4f1ea;
+  color: #1a1a1a;
+}
+
+.dlu-reader-body[data-mode="light"] .dlu-reader-content {
+  color: #222;
+}
+
+.dlu-reader-cover {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+  .dlu-reader-body { grid-template-columns: 1fr; }
+  .dlu-books-grid { grid-template-columns: repeat(2, 1fr); }
+}

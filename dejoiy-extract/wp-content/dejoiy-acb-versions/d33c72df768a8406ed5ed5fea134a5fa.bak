@@ -1,0 +1,153 @@
+<?php
+/**
+ * DEJOIY OS Component Library — PHP render helpers.
+ *
+ * Mirrors future React components: DejoiyButton, DejoiyCard, DejoiyProductCard, etc.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @param array<string, string> $attrs Attributes.
+ * @param string                $label  Label.
+ * @return string
+ */
+function dejoiy_os_button( $attrs, $label ) {
+	$href   = isset( $attrs['href'] ) ? esc_url( $attrs['href'] ) : '';
+	$class  = 'dejoiy-btn ' . ( isset( $attrs['variant'] ) ? 'dejoiy-btn--' . sanitize_html_class( $attrs['variant'] ) : 'dejoiy-btn--primary' );
+	$tag    = $href ? 'a' : 'button';
+	$extra  = $href ? ' href="' . $href . '"' : ' type="button"';
+	return '<' . $tag . ' class="' . esc_attr( $class ) . '"' . $extra . '>' . esc_html( $label ) . '</' . $tag . '>';
+}
+
+/**
+ * @param int   $product_id Product ID.
+ * @param array<string, string> $opts Options.
+ * @return string
+ */
+function dejoiy_os_product_card( $product_id, $opts = array() ) {
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		return '';
+	}
+	$url   = isset( $opts['url'] ) ? $opts['url'] : ( function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $product_id ) : get_permalink( $product_id ) );
+	$cover = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' );
+	$dpin  = function_exists( 'dejoiy_display_product_dpin' ) ? dejoiy_display_product_dpin( $product_id ) : '';
+	$badge = isset( $opts['badge'] ) ? $opts['badge'] : ( function_exists( 'dejoiy_ecosystem_badge_label' ) ? dejoiy_ecosystem_badge_label( $product_id ) : '' );
+	$world = isset( $opts['world'] ) ? sanitize_html_class( $opts['world'] ) : 'market';
+
+	ob_start();
+	?>
+	<article class="dejoiy-card dejoiy-product-card dejoiy-product-card--<?php echo esc_attr( $world ); ?>">
+		<a class="dejoiy-card__link" href="<?php echo esc_url( $url ); ?>">
+			<?php if ( $cover ) : ?>
+				<img class="dejoiy-card__img" src="<?php echo esc_url( $cover ); ?>" alt="" loading="lazy" />
+			<?php else : ?>
+				<span class="dejoiy-card__ph" aria-hidden="true"></span>
+			<?php endif; ?>
+			<?php if ( $badge ) : ?>
+				<span class="dejoiy-badge"><?php echo esc_html( $badge ); ?></span>
+			<?php endif; ?>
+			<h3 class="dejoiy-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+			<?php if ( $dpin ) : ?>
+				<span class="dejoiy-card__dpin"><?php echo esc_html( $dpin ); ?></span>
+			<?php endif; ?>
+			<span class="dejoiy-card__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
+		</a>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * @param string $title Section title.
+ * @param string $inner Inner HTML.
+ * @param string $world World modifier class.
+ * @return string
+ */
+function dejoiy_os_section( $title, $inner, $world = '' ) {
+	$mod = $world ? ' dejoiy-section--' . sanitize_html_class( $world ) : '';
+	return '<section class="dejoiy-section' . esc_attr( $mod ) . '"><div class="dejoiy-section__in"><h2 class="dejoiy-section__title">' . esc_html( $title ) . '</h2>' . $inner . '</div></section>';
+}
+
+/**
+ * @param string $label Badge label.
+ * @param string $variant Variant class suffix.
+ * @return string
+ */
+function dejoiy_os_badge( $label, $variant = 'default' ) {
+	return '<span class="dejoiy-badge dejoiy-badge--' . esc_attr( sanitize_html_class( $variant ) ) . '">' . esc_html( $label ) . '</span>';
+}
+
+/**
+ * @param array<string, string> $attrs Input attributes.
+ * @return string
+ */
+function dejoiy_os_input( $attrs ) {
+	$type  = isset( $attrs['type'] ) ? sanitize_text_field( $attrs['type'] ) : 'text';
+	$name  = isset( $attrs['name'] ) ? sanitize_text_field( $attrs['name'] ) : '';
+	$value = isset( $attrs['value'] ) ? esc_attr( $attrs['value'] ) : '';
+	$ph    = isset( $attrs['placeholder'] ) ? esc_attr( $attrs['placeholder'] ) : '';
+	return '<input class="dejoiy-input" type="' . esc_attr( $type ) . '" name="' . esc_attr( $name ) . '" value="' . $value . '" placeholder="' . $ph . '" />';
+}
+
+/**
+ * @param string $inner Modal body HTML.
+ * @param string $id Modal id.
+ * @return string
+ */
+function dejoiy_os_modal( $inner, $id = 'dejoiy-modal' ) {
+	return '<div class="dejoiy-modal" id="' . esc_attr( sanitize_html_class( $id ) ) . '" hidden><div class="dejoiy-modal__backdrop"></div><div class="dejoiy-modal__panel">' . $inner . '</div></div>';
+}
+
+/**
+ * @param string $inner Drawer body HTML.
+ * @param string $id Drawer id.
+ * @return string
+ */
+function dejoiy_os_drawer( $inner, $id = 'dejoiy-drawer' ) {
+	return '<aside class="dejoiy-drawer" id="' . esc_attr( sanitize_html_class( $id ) ) . '" hidden>' . $inner . '</aside>';
+}
+
+/**
+ * @param string $action Search form action URL.
+ * @param string $value Current query.
+ * @return string
+ */
+function dejoiy_os_search( $action, $value = '' ) {
+	ob_start();
+	?>
+	<form class="dejoiy-search" action="<?php echo esc_url( $action ); ?>" method="get" role="search">
+		<input class="dejoiy-search__input dejoiy-input" type="search" name="s" value="<?php echo esc_attr( $value ); ?>" placeholder="<?php esc_attr_e( 'Search DEJOIY…', 'dejoiy' ); ?>" />
+		<button class="dejoiy-btn dejoiy-btn--primary dejoiy-search__btn" type="submit"><?php esc_html_e( 'Search', 'dejoiy' ); ?></button>
+	</form>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * @param int   $vendor_id Vendor user ID.
+ * @param array<string, string> $opts Options.
+ * @return string
+ */
+function dejoiy_os_seller_card( $vendor_id, $opts = array() ) {
+	$user = get_userdata( (int) $vendor_id );
+	if ( ! $user ) {
+		return '';
+	}
+	$url = isset( $opts['url'] ) ? $opts['url'] : ( function_exists( 'wcfmmp_get_store_url' ) ? wcfmmp_get_store_url( (int) $vendor_id ) : '' );
+	ob_start();
+	?>
+	<article class="dejoiy-card dejoiy-seller-card">
+		<a class="dejoiy-card__link" href="<?php echo esc_url( $url ); ?>">
+			<h3 class="dejoiy-card__title"><?php echo esc_html( $user->display_name ); ?></h3>
+			<span class="dejoiy-badge dejoiy-badge--seller"><?php esc_html_e( 'Verified Seller', 'dejoiy' ); ?></span>
+		</a>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}

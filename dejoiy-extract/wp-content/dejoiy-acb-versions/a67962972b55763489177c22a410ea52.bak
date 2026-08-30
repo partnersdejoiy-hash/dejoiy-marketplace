@@ -1,0 +1,87 @@
+<?php
+/**
+ * DEJOIY Nexus — single book product page (purchase before full reader).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$book_id = isset( $_GET['dejoiy_book'] ) ? absint( $_GET['dejoiy_book'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$product = $book_id && function_exists( 'wc_get_product' ) ? wc_get_product( $book_id ) : null;
+
+if ( ! $product || ! function_exists( 'dejoiy_library_is_book_product' ) || ! dejoiy_library_is_book_product( $book_id ) ) {
+	wp_safe_redirect( function_exists( 'dejoiy_library_get_landing_url' ) ? dejoiy_library_get_landing_url() : home_url( '/' ) );
+	exit;
+}
+
+$is_free = function_exists( 'dejoiy_library_lms_is_free_read_product' ) && dejoiy_library_lms_is_free_read_product( $book_id );
+$can_read = function_exists( 'dejoiy_library_user_can_read_book' ) && dejoiy_library_user_can_read_book( 0, $book_id );
+
+if ( $is_free || $can_read ) {
+	wp_safe_redirect( dejoiy_library_reader_url( $book_id ) );
+	exit;
+}
+
+$cover    = dejoiy_library_get_cover_url( $book_id, 'large' );
+$fallback = dejoiy_library_get_cover_fallback_url( $book_id );
+$author   = dejoiy_library_get_author( $book_id );
+$price_html = $product->get_price_html();
+$desc     = $product->get_description() ?: $product->get_short_description();
+$gallery  = array_filter( array( $cover ) );
+$thumb_id = get_post_thumbnail_id( $book_id );
+if ( $thumb_id ) {
+	$full = wp_get_attachment_image_url( $thumb_id, 'large' );
+	if ( $full ) {
+		$gallery[] = $full;
+	}
+}
+$gallery   = array_values( array_unique( $gallery ) );
+$atc_url   = dejoiy_library_get_add_to_cart_url( $book_id );
+$buy_url   = dejoiy_library_get_buy_now_url( $book_id );
+$added_msg = isset( $_GET['dejoiy_added'] ) && '1' === (string) $_GET['dejoiy_added']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+require get_stylesheet_directory() . '/library-header.php';
+?>
+<main class="dlu-page dlu-book-page" id="dlu-book-page" data-book-id="<?php echo esc_attr( (string) $book_id ); ?>" data-title="<?php echo esc_attr( $product->get_name() ); ?>" data-cover="<?php echo esc_url( $cover ); ?>" data-read-url="<?php echo esc_url( dejoiy_library_reader_url( $book_id ) ); ?>">
+	<div class="dlu-page-in">
+		<p class="dlu-crumb"><a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>">&larr; DEJOIY Nexus</a></p>
+		<?php if ( $added_msg ) : ?>
+			<p class="dlu-notice dlu-notice--success" role="status"><?php esc_html_e( 'Added to your Nexus checkout queue. Complete payment when you are ready.', 'dejoiy' ); ?></p>
+		<?php endif; ?>
+		<div class="dlu-book-layout">
+			<div class="dlu-book-gallery">
+				<?php foreach ( $gallery as $img ) : ?>
+					<img src="<?php echo esc_url( $img ); ?>" alt="" class="dlu-book-gallery-img" loading="lazy" data-fallback="<?php echo esc_url( $fallback ); ?>" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.onerror=null;}" />
+				<?php endforeach; ?>
+				<?php if ( empty( $gallery ) ) : ?>
+					<img src="<?php echo esc_url( $fallback ); ?>" alt="" class="dlu-book-gallery-img" loading="lazy" />
+				<?php endif; ?>
+			</div>
+			<div class="dlu-book-summary">
+				<h1><?php echo esc_html( $product->get_name() ); ?></h1>
+				<?php if ( $author ) : ?>
+					<p class="dlu-book-author"><?php echo esc_html( $author ); ?></p>
+				<?php endif; ?>
+				<?php if ( $price_html ) : ?>
+					<p class="dlu-book-price"><?php echo wp_kses_post( $price_html ); ?></p>
+				<?php endif; ?>
+				<?php if ( $desc ) : ?>
+					<div class="dlu-book-desc"><?php echo wp_kses_post( wpautop( $desc ) ); ?></div>
+				<?php else : ?>
+					<p class="dlu-reader-note"><?php esc_html_e( 'Digital edition for DEJOIY Nexus. Purchase to unlock the full reader and save progress in My Nexus.', 'dejoiy' ); ?></p>
+				<?php endif; ?>
+				<div class="dlu-book-actions" id="dlu-book-purchase">
+					<a href="<?php echo esc_url( $atc_url ); ?>" class="dlu-btn-primary dlu-nexus-atc"><?php esc_html_e( 'Add to Nexus shelf', 'dejoiy' ); ?></a>
+					<a href="<?php echo esc_url( $buy_url ); ?>" class="dlu-btn-secondary dlu-buy-now"><?php esc_html_e( 'Buy now', 'dejoiy' ); ?></a>
+					<button type="button" class="dlu-btn-secondary dlu-book-save" data-id="<?php echo esc_attr( (string) $book_id ); ?>" data-title="<?php echo esc_attr( $product->get_name() ); ?>" data-cover="<?php echo esc_url( $cover ); ?>" data-url="<?php echo esc_url( dejoiy_library_book_url( $book_id ) ); ?>" aria-pressed="false"><?php esc_html_e( '♡ Favourite', 'dejoiy' ); ?></button>
+				</div>
+				<p class="dlu-book-note"><?php esc_html_e( 'Full reading unlocks after checkout. Orders use your existing WooCommerce account and payment methods.', 'dejoiy' ); ?></p>
+			</div>
+		</div>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';

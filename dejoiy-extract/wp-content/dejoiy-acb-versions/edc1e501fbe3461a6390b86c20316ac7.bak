@@ -1,0 +1,245 @@
+<?php
+/**
+ * DEJOIY Library — curated catalog structure (100 titles).
+ * Upload licensed files per title in WooCommerce admin before selling downloads.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return array<string, array{label: string, books: string[]}>
+ */
+function dejoiy_library_get_catalog() {
+	return array(
+		'business'           => array(
+			'label' => 'Business',
+			'books' => array(
+				'Rich Dad Poor Dad',
+				'The Lean Startup',
+				'Zero to One',
+				'Blue Ocean Strategy',
+				'Good to Great',
+				'The Personal MBA',
+				'Rework',
+				'Built to Last',
+				'The Hard Thing About Hard Things',
+				'Start With Why',
+			),
+		),
+		'psychology'         => array(
+			'label' => 'Psychology',
+			'books' => array(
+				'Thinking Fast and Slow',
+				'Influence',
+				'Predictably Irrational',
+				'The Psychology of Money',
+				'Atomic Habits',
+				'Mindset',
+				'Grit',
+				'Drive',
+				'Flow',
+				'The Power of Habit',
+			),
+		),
+		'self-growth'        => array(
+			'label' => 'Self Growth',
+			'books' => array(
+				'Deep Work',
+				'Essentialism',
+				'Ikigai',
+				'The One Thing',
+				'Eat That Frog',
+				'Limitless',
+				"Can't Hurt Me",
+				'The Compound Effect',
+				'Make Your Bed',
+				'Peak',
+			),
+		),
+		'design'             => array(
+			'label' => 'Design',
+			'books' => array(
+				'The Design of Everyday Things',
+				'Steal Like an Artist',
+				'Show Your Work',
+				'Creative Confidence',
+				'Hooked',
+				'Sprint',
+				"Don't Make Me Think",
+				'Logo Design Love',
+				'Universal Principles of Design',
+				'Designing Interfaces',
+			),
+		),
+		'marketing'          => array(
+			'label' => 'Marketing',
+			'books' => array(
+				'Contagious',
+				'This Is Marketing',
+				'Jab Jab Jab Right Hook',
+				'Purple Cow',
+				'Building a StoryBrand',
+				'Made to Stick',
+				'Positioning',
+				'Ogilvy on Advertising',
+				'DotCom Secrets',
+				'Expert Secrets',
+			),
+		),
+		'ai-technology'      => array(
+			'label' => 'AI & Technology',
+			'books' => array(
+				'AI Superpowers',
+				'Life 3.0',
+				'The Singularity Is Near',
+				'Human Compatible',
+				'Deep Learning',
+				'Architects of Intelligence',
+				'Competing in the Age of AI',
+				'Prediction Machines',
+				'The Alignment Problem',
+				'Co-Intelligence',
+			),
+		),
+		'creativity'         => array(
+			'label' => 'Creativity',
+			'books' => array(
+				'Big Magic',
+				'The War of Art',
+				'Originals',
+				'Creative Calling',
+				'Keep Going',
+				'The Creative Habit',
+				'Art & Fear',
+				'Show Your Work',
+				'Steal Like an Artist',
+				'Creativity Inc.',
+			),
+		),
+		'productivity'       => array(
+			'label' => 'Productivity',
+			'books' => array(
+				'Getting Things Done',
+				'Hyperfocus',
+				'Indistractable',
+				'Time Blocking',
+				'168 Hours',
+				'The Productivity Project',
+				'Digital Minimalism',
+				'Essentialism',
+				'Deep Work',
+				'Four Thousand Weeks',
+			),
+		),
+		'startups'           => array(
+			'label' => 'Startups',
+			'books' => array(
+				'Venture Deals',
+				'Blitzscaling',
+				'Founders at Work',
+				"The Startup Owner's Manual",
+				'Lean Analytics',
+				'Inspired',
+				'Measure What Matters',
+				'Crossing the Chasm',
+				'Hooked',
+				'The Mom Test',
+			),
+		),
+		'future-innovation'  => array(
+			'label' => 'Future & Innovation',
+			'books' => array(
+				'Abundance',
+				'The Future Is Faster Than You Think',
+				'Bold',
+				'Exponential Organizations',
+				"The Innovator's Dilemma",
+				"The Innovator's Solution",
+				'Future Minds',
+				'Superintelligence',
+				'Homo Deus',
+				'21 Lessons for the 21st Century',
+			),
+		),
+	);
+}
+
+/**
+ * Featured collection cards on the landing page.
+ *
+ * @return array<int, array{slug: string, title: string, desc: string, icon: string}>
+ */
+function dejoiy_library_get_collections() {
+	return array(
+		array(
+			'slug'  => 'startups',
+			'title' => 'Build a Startup',
+			'desc'  => 'From idea to scale — founder playbooks.',
+			'icon'  => '🚀',
+		),
+		array(
+			'slug'  => 'ai-technology',
+			'title' => 'Learn AI',
+			'desc'  => 'Machine intelligence & the future of work.',
+			'icon'  => '🤖',
+		),
+		array(
+			'slug'  => 'design',
+			'title' => 'Master Design',
+			'desc'  => 'Visual thinking & product craft.',
+			'icon'  => '✦',
+		),
+		array(
+			'slug'  => 'psychology',
+			'title' => 'Psychology Secrets',
+			'desc'  => 'Mind, behavior, and decision-making.',
+			'icon'  => '🧠',
+		),
+		array(
+			'slug'  => 'business',
+			'title' => 'Business Empire',
+			'desc'  => 'Strategy, leadership, and growth.',
+			'icon'  => '👑',
+		),
+		array(
+			'slug'  => 'productivity',
+			'title' => 'Productivity Mastery',
+			'desc'  => 'Focus systems for deep work.',
+			'icon'  => '⚡',
+		),
+		array(
+			'slug'  => 'creativity',
+			'title' => 'Creator Economy',
+			'desc'  => 'Ship art, build audience, stay inspired.',
+			'icon'  => '🎨',
+		),
+		array(
+			'slug'  => 'future-innovation',
+			'title' => 'Future Technology',
+			'desc'  => 'Tomorrow\'s tools & exponential change.',
+			'icon'  => '🔮',
+		),
+	);
+}
+
+/**
+ * Galaxy orbit topic labels.
+ *
+ * @return string[]
+ */
+function dejoiy_library_galaxy_topics() {
+	return array(
+		'Business',
+		'AI',
+		'Psychology',
+		'Design',
+		'Marketing',
+		'Creativity',
+		'Startups',
+		'Productivity',
+	);
+}

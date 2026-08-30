@@ -1,0 +1,43 @@
+<?php
+/**
+ * DEJOIY child theme safe functions.
+ * Loads only stable child theme styling and the guarded Library module.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles', 1001 );
+
+function theme_enqueue_styles() {
+	if ( function_exists( 'etheme_child_styles' ) ) {
+		etheme_child_styles();
+	}
+}
+
+function dejoiy_recovery_log_last_error() {
+	$error = error_get_last();
+	if ( ! $error || empty( $error['type'] ) ) {
+		return;
+	}
+	$fatal_types = array( E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR );
+	if ( ! in_array( (int) $error['type'], $fatal_types, true ) ) {
+		return;
+	}
+	$message = sprintf(
+		"[%s] %s in %s:%s\nURI: %s\n\n",
+		gmdate( 'c' ),
+		isset( $error['message'] ) ? $error['message'] : 'unknown',
+		isset( $error['file'] ) ? $error['file'] : 'unknown',
+		isset( $error['line'] ) ? $error['line'] : '0',
+		isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : ''
+	);
+	@file_put_contents( WP_CONTENT_DIR . '/dejoiy-recovery-fatal.log', $message, FILE_APPEND );
+}
+register_shutdown_function( 'dejoiy_recovery_log_last_error' );
+
+$dlu = get_stylesheet_directory() . '/library-universe.php';
+if ( is_readable( $dlu ) ) {
+	require_once $dlu;
+}

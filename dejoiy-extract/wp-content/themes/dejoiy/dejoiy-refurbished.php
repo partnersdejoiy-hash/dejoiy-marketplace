@@ -1,0 +1,485 @@
+<?php
+/**
+ * DEJOIY Refurbished — standalone premium refurbished marketplace.
+ *
+ * UI-only layer for /dejoiy-refurbished/. Does not alter cart, checkout, or main shop.
+ * Disable: define( 'DEJOIY_REFURBISHED_DISABLED', true );
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'DEJOIY_REFURBISHED_VERSION', '1.1.4' );
+
+$dejoiy_rf_ui = get_stylesheet_directory() . '/dejoiy-refurbished-ui.php';
+if ( is_readable( $dejoiy_rf_ui ) ) {
+	require_once $dejoiy_rf_ui;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_refurbished_enabled() {
+	if ( defined( 'DEJOIY_REFURBISHED_DISABLED' ) && DEJOIY_REFURBISHED_DISABLED ) {
+		return false;
+	}
+	if ( ! function_exists( 'dejoiy_evolution_is_enabled' ) || ! dejoiy_evolution_is_enabled() ) {
+		return false;
+	}
+	return (bool) apply_filters( 'dejoiy_refurbished_enabled', true );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_refurbished_base_url() {
+	return home_url( '/dejoiy-refurbished/' );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_refurbished_is_refurbished_page() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( is_page( 'dejoiy-refurbished' ) ) {
+		return true;
+	}
+	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+	return false !== strpos( $uri, '/dejoiy-refurbished' );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_refurbished_is_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_get_product_ecosystem' ) ) {
+		return 'refurbished' === dejoiy_get_product_ecosystem( $product_id );
+	}
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $terms ) ) {
+		return false;
+	}
+	$root = dejoiy_refurbished_root_cat_slugs();
+	foreach ( $terms as $slug ) {
+		if ( in_array( $slug, $root, true ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @return array<int, string>
+ */
+function dejoiy_refurbished_root_cat_slugs() {
+	return apply_filters(
+		'dejoiy_refurbished_root_cat_slugs',
+		array( 'renewed-refurbished', 'refurbished', 'refurbished-products' )
+	);
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_refurbished_is_app_page() {
+	if ( ! dejoiy_refurbished_enabled() ) {
+		return false;
+	}
+	return dejoiy_refurbished_is_refurbished_page();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_refurbished_is_viewer_view() {
+	if ( ! dejoiy_refurbished_is_refurbished_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_dpin_resolve_from_request' ) && dejoiy_dpin_resolve_from_request() ) {
+		return true;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $_GET['dpin'] ) ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_refurbished_is_category_view() {
+	if ( ! dejoiy_refurbished_is_refurbished_page() || dejoiy_refurbished_is_viewer_view() ) {
+		return false;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	return ! empty( $_GET['rf_cat'] );
+}
+
+/**
+ * @return int
+ */
+function dejoiy_refurbished_resolve_viewer_product_id() {
+	if ( function_exists( 'dejoiy_dpin_resolve_from_request' ) ) {
+		$pid = (int) dejoiy_dpin_resolve_from_request();
+		if ( $pid > 0 ) {
+			return $pid;
+		}
+	}
+	return 0;
+}
+
+/**
+ * Base query — refurbished ecosystem products only.
+ *
+ * @return array<string, mixed>
+ */
+function dejoiy_refurbished_base_query_args() {
+	return array(
+		'post_type'      => 'product',
+		'post_status'    => 'publish',
+		'posts_per_page' => 12,
+		'no_found_rows'  => false,
+		'tax_query'      => array(
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => dejoiy_refurbished_root_cat_slugs(),
+				'operator'         => 'IN',
+				'include_children' => true,
+			),
+		),
+	);
+}
+
+/**
+ * @param array<string, mixed> $extra Extra args.
+ * @return WP_Query
+ */
+function dejoiy_refurbished_query_products( $extra = array() ) {
+	return new WP_Query( array_merge( dejoiy_refurbished_base_query_args(), $extra ) );
+}
+
+/**
+ * Replace page content.
+ *
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_refurbished_replace_page_content( $content ) {
+	if ( ! dejoiy_refurbished_is_refurbished_page() || ! dejoiy_refurbished_enabled() ) {
+		return $content;
+	}
+	if ( is_admin() ) {
+		return $content;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return '';
+	}
+	$done = true;
+
+	if ( dejoiy_refurbished_is_viewer_view() ) {
+		$pid = dejoiy_refurbished_resolve_viewer_product_id();
+		if ( $pid > 0 && dejoiy_refurbished_is_product( $pid ) && function_exists( 'dejoiy_refurbished_viewer_html' ) ) {
+			return dejoiy_refurbished_viewer_html( $pid );
+		}
+	}
+
+	if ( dejoiy_refurbished_is_category_view() && function_exists( 'dejoiy_refurbished_category_html' ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return dejoiy_refurbished_category_html( sanitize_key( wp_unslash( $_GET['rf_cat'] ) ) );
+	}
+
+	if ( function_exists( 'dejoiy_refurbished_landing_html' ) ) {
+		return dejoiy_refurbished_landing_html();
+	}
+
+	return $content;
+}
+add_filter( 'the_content', 'dejoiy_refurbished_replace_page_content', 9999 );
+add_filter( 'elementor/frontend/the_content', 'dejoiy_refurbished_replace_page_content', 9999 );
+
+/**
+ * Print dedicated header.
+ */
+function dejoiy_refurbished_print_chrome() {
+	if ( ! dejoiy_refurbished_is_app_page() || ! function_exists( 'dejoiy_refurbished_header_html' ) ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_refurbished_header_html();
+}
+add_action( 'wp_body_open', 'dejoiy_refurbished_print_chrome', 2 );
+add_action( 'etheme_after_body_open', 'dejoiy_refurbished_print_chrome', 2 );
+
+/**
+ * Print footer (desktop).
+ */
+function dejoiy_refurbished_print_footer() {
+	if ( ! dejoiy_refurbished_is_app_page() || ! function_exists( 'dejoiy_refurbished_footer_html' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_refurbished_footer_html();
+}
+add_action( 'wp_footer', 'dejoiy_refurbished_print_footer', 5 );
+
+/**
+ * Redirect native WC single for refurbished products.
+ */
+function dejoiy_refurbished_redirect_native_single() {
+	if ( is_admin() || ! dejoiy_refurbished_enabled() ) {
+		return;
+	}
+	if ( dejoiy_refurbished_is_refurbished_page() ) {
+		return;
+	}
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	$pid = get_queried_object_id();
+	if ( ! $pid || ! dejoiy_refurbished_is_product( $pid ) ) {
+		return;
+	}
+	if ( function_exists( 'dejoiy_ecosystem_product_url' ) ) {
+		$url = dejoiy_ecosystem_product_url( $pid );
+		if ( $url ) {
+			wp_safe_redirect( $url );
+			exit;
+		}
+	}
+}
+add_action( 'template_redirect', 'dejoiy_refurbished_redirect_native_single', 8 );
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_refurbished_body_class( $classes ) {
+	if ( dejoiy_refurbished_is_app_page() ) {
+		$classes[] = 'dejoiy-refurbished-app';
+		$classes[] = 'dejoiy-mobile-os-off';
+		if ( dejoiy_refurbished_is_viewer_view() ) {
+			$classes[] = 'dejoiy-refurbished-viewer';
+		}
+		if ( dejoiy_refurbished_is_category_view() ) {
+			$classes[] = 'dejoiy-refurbished-category';
+		}
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_refurbished_body_class', 24 );
+
+/**
+ * Enqueue assets.
+ */
+function dejoiy_refurbished_enqueue_assets() {
+	if ( ! dejoiy_refurbished_is_app_page() ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-refurbished.css';
+	$js  = $dir . '/dejoiy-refurbished.js';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-refurbished',
+			$uri . '/dejoiy-refurbished.css',
+			array(),
+			(string) filemtime( $css )
+		);
+	}
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-refurbished',
+			$uri . '/dejoiy-refurbished.js',
+			array(),
+			(string) filemtime( $js ),
+			true
+		);
+		wp_localize_script(
+			'dejoiy-refurbished',
+			'dejoiyRefurbished',
+			array(
+				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
+				'nonce'      => wp_create_nonce( 'dejoiy_refurbished' ),
+				'baseUrl'    => dejoiy_refurbished_base_url(),
+				'cartUrl'    => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ),
+				'accountUrl' => home_url( '/my-account/' ),
+				'ordersUrl'  => home_url( '/my-account/orders/' ),
+				'shopUrl'    => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' ),
+				'i18n'       => array(
+					'added'   => __( 'Added to cart', 'dejoiy' ),
+					'compare' => __( 'Added to compare', 'dejoiy' ),
+				),
+			)
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_refurbished_enqueue_assets', 10072 );
+
+/**
+ * Page slugs excluded from Refurbished header page search.
+ *
+ * @return array<int, string>
+ */
+function dejoiy_refurbished_page_search_exclude_slugs() {
+	return apply_filters(
+		'dejoiy_refurbished_page_search_exclude_slugs',
+		array(
+			'cart',
+			'checkout',
+			'my-account',
+			'shop',
+			'dejoiy-refurbished',
+			'dejoiy-services',
+		)
+	);
+}
+
+/**
+ * Search published pages only (no marketplace products).
+ *
+ * @param string $term Search term.
+ * @param int    $limit Max results.
+ * @return WP_Query
+ */
+function dejoiy_refurbished_query_pages( $term, $limit = 6 ) {
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'page',
+			'post_status'            => 'publish',
+			's'                      => $term,
+			'posts_per_page'         => $limit,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$exclude = dejoiy_refurbished_page_search_exclude_slugs();
+	if ( empty( $exclude ) || empty( $query->posts ) ) {
+		return $query;
+	}
+
+	$filtered = array();
+	foreach ( $query->posts as $page ) {
+		if ( in_array( $page->post_name, $exclude, true ) ) {
+			continue;
+		}
+		$filtered[] = $page;
+	}
+	$query->posts      = $filtered;
+	$query->post_count = count( $filtered );
+
+	return $query;
+}
+
+/**
+ * Build AJAX search payload: refurbished products + site pages (no main marketplace).
+ *
+ * @param string $term Search term.
+ * @return array{products: array<int, array<string, string>>, pages: array<int, array<string, string>>}
+ */
+function dejoiy_refurbished_build_search_results( $term ) {
+	$products = array();
+	$query    = dejoiy_refurbished_query_products(
+		array(
+			's'              => $term,
+			'posts_per_page' => 8,
+			'no_found_rows'  => true,
+		)
+	);
+
+	foreach ( $query->posts as $post ) {
+		$pid = $post->ID;
+		if ( ! dejoiy_refurbished_is_product( $pid ) ) {
+			continue;
+		}
+		$url   = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $pid ) : get_permalink( $pid );
+		$thumb = get_the_post_thumbnail_url( $pid, 'thumbnail' );
+		$price = '';
+		if ( function_exists( 'wc_get_product' ) ) {
+			$p = wc_get_product( $pid );
+			if ( $p ) {
+				$price = wp_strip_all_tags( $p->get_price_html() );
+			}
+		}
+		$products[] = array(
+			'type'  => 'product',
+			'title' => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
+			'url'   => $url,
+			'thumb' => $thumb ? $thumb : '',
+			'price' => $price,
+			'grade' => function_exists( 'dejoiy_refurbished_get_grade' ) ? dejoiy_refurbished_get_grade( $pid ) : 'A',
+			'badge' => __( 'Refurbished', 'dejoiy' ),
+		);
+	}
+	wp_reset_postdata();
+
+	$pages_out = array();
+	$pages     = dejoiy_refurbished_query_pages( $term, 6 );
+	foreach ( $pages->posts as $page ) {
+		$pages_out[] = array(
+			'type'  => 'page',
+			'title' => html_entity_decode( get_the_title( $page->ID ), ENT_QUOTES, 'UTF-8' ),
+			'url'   => get_permalink( $page->ID ),
+			'thumb' => '',
+			'price' => '',
+			'grade' => '',
+			'badge' => __( 'Page', 'dejoiy' ),
+		);
+	}
+	wp_reset_postdata();
+
+	return array(
+		'products' => $products,
+		'pages'    => $pages_out,
+	);
+}
+
+/**
+ * AJAX search — refurbished products + marketplace pages only.
+ */
+function dejoiy_refurbished_ajax_search() {
+	check_ajax_referer( 'dejoiy_refurbished', 'nonce' );
+	$term = isset( $_POST['q'] ) ? sanitize_text_field( wp_unslash( $_POST['q'] ) ) : ''; // phpcs:ignore
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json_success(
+			array(
+				'products' => array(),
+				'pages'    => array(),
+				'items'    => array(),
+			)
+		);
+	}
+
+	$payload = dejoiy_refurbished_build_search_results( $term );
+	wp_send_json_success(
+		array(
+			'products' => $payload['products'],
+			'pages'    => $payload['pages'],
+			'items'    => array_merge( $payload['products'], $payload['pages'] ),
+		)
+	);
+}
+add_action( 'wp_ajax_dejoiy_refurbished_search', 'dejoiy_refurbished_ajax_search' );
+add_action( 'wp_ajax_nopriv_dejoiy_refurbished_search', 'dejoiy_refurbished_ajax_search' );

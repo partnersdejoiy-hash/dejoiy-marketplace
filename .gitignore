@@ -1,0 +1,30 @@
+# System files
+.lesshst
+.bash_history
+.mysql_history
+.profile
+.bashrc
+.config/
+.npm/
+.local/
+.ssh/
+.cache/
+
+# WordPress cache
+wp-content/cache/
+wp-content/wflogs/
+
+# Node modules
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Large backup files (GitHub 100MB limit)
+*.tar.gz
+*.zip
+*.sql.gz

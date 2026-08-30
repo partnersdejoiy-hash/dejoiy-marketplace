@@ -1,0 +1,191 @@
+<?php
+/**
+ * Restore XStore / Elementor site header & footer on DEJOIY Universe home.
+ *
+ * Angie canvas and Universe content-only layout skip theme chrome; this re-enables
+ * the real storefront header and footer without changing checkout, WCFM, or other pages.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_site_chrome_should_restore() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( ! is_front_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_universe_home_is_active' ) && ! dejoiy_universe_home_is_active() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Print Elementor Theme Builder location HTML, with fallback when location is registered but empty.
+ *
+ * @param string $location header|footer.
+ * @return bool Whether anything was printed.
+ */
+function dejoiy_site_chrome_print_elementor_location( $location ) {
+	if ( ! function_exists( 'elementor_theme_do_location' ) ) {
+		return false;
+	}
+
+	ob_start();
+	$handled = elementor_theme_do_location( $location );
+	$html    = trim( (string) ob_get_clean() );
+
+	if ( strlen( $html ) > 20 ) {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor markup.
+		echo $html;
+		return true;
+	}
+
+	if ( $handled ) {
+		$html = dejoiy_site_chrome_force_elementor_location_html( $location );
+		if ( strlen( $html ) > 20 ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor markup.
+			echo $html;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Force-render Theme Builder documents for a location (Angie / canvas pages).
+ *
+ * @param string $location header|footer.
+ * @return string
+ */
+function dejoiy_site_chrome_force_elementor_location_html( $location ) {
+	if ( ! class_exists( '\Elementor\Plugin' ) ) {
+		return '';
+	}
+
+	$document_ids = array();
+
+	if ( class_exists( '\ElementorPro\Modules\ThemeBuilder\Module' ) && class_exists( '\ElementorPro\Plugin' ) ) {
+		$module = \ElementorPro\Plugin::instance()->modules_manager->get_modules( 'theme-builder' );
+		if ( $module && method_exists( $module, 'get_conditions_manager' ) ) {
+			$documents = $module->get_conditions_manager()->get_documents_for_location( $location );
+			if ( is_array( $documents ) ) {
+				$document_ids = array_keys( $documents );
+			}
+		}
+	}
+
+	/**
+	 * Fallback template IDs when Theme Builder lookup returns nothing.
+	 *
+	 * @param int[]  $ids      Post IDs.
+	 * @param string $location header|footer.
+	 */
+	$document_ids = apply_filters( 'dejoiy_site_chrome_elementor_template_ids', $document_ids, $location );
+	if ( empty( $document_ids ) ) {
+		$fallback = array(
+			'header' => array( 4228 ),
+			'footer' => array( 4225 ),
+		);
+		$document_ids = isset( $fallback[ $location ] ) ? $fallback[ $location ] : array();
+	}
+
+	$frontend = \Elementor\Plugin::$instance->frontend;
+	$out      = '';
+
+	foreach ( $document_ids as $document_id ) {
+		$document_id = (int) $document_id;
+		if ( $document_id <= 0 ) {
+			continue;
+		}
+		$chunk = $frontend->get_builder_content_for_display( $document_id, true );
+		if ( is_string( $chunk ) && strlen( trim( $chunk ) ) > 0 ) {
+			$out .= $chunk;
+		}
+	}
+
+	return $out;
+}
+
+/**
+ * Output Elementor / XStore header (inside page-wrapper, matching shop layout).
+ */
+function dejoiy_site_chrome_render_header() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	echo '<div class="dejoiy-site-chrome-header">';
+
+	if ( dejoiy_site_chrome_print_elementor_location( 'header' ) ) {
+		echo '</div>';
+		return;
+	}
+
+	do_action( 'etheme_header_start' );
+	do_action( 'etheme_header' );
+	do_action( 'etheme_header_mobile' );
+	do_action( 'etheme_header_end' );
+
+	echo '</div>';
+}
+
+add_action( 'dejoiy_universe_home_before', 'dejoiy_site_chrome_render_header', 5 );
+add_action( 'wp_body_open', 'dejoiy_site_chrome_render_header', 5 );
+add_action( 'etheme_header_before_template_content', 'dejoiy_site_chrome_render_header', 5 );
+
+/**
+ * Output theme footer before wp_footer scripts.
+ */
+function dejoiy_site_chrome_render_footer() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	echo '<div class="et-footers-wrapper dejoiy-site-chrome-footer">';
+
+	if ( dejoiy_site_chrome_print_elementor_location( 'footer' ) ) {
+		echo '</div>';
+		return;
+	}
+
+	do_action( 'etheme_prefooter' );
+	do_action( 'etheme_footer' );
+	echo '</div>';
+}
+add_action( 'wp_footer', 'dejoiy_site_chrome_render_footer', 1 );
+
+/**
+ * Body class when site chrome is restored (hides duplicate Universe footer).
+ *
+ * @param array<int, string> $classes Classes.
+ * @return array<int, string>
+ */
+function dejoiy_site_chrome_body_class( $classes ) {
+	if ( dejoiy_site_chrome_should_restore() ) {
+		$classes[] = 'dejoiy-site-chrome-on';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_site_chrome_body_class', 25 );

@@ -1,0 +1,159 @@
+/**
+ * Studio WooCommerce — AJAX add to cart, buy now → studio checkout.
+ */
+(function ($) {
+  'use strict';
+
+  var CFG = window.DEJOIY_STUDIO_WC || {};
+  var BUY_NOW_SEL = '.et-single-buy-now, .buy-now-button, .buy_now_button, .button.buy-now';
+
+  function updateBadges(count) {
+    var n = parseInt(count, 10) || 0;
+    ['#dsu-hdr-cart-count', '#dsu-hdr-cart-count-mob'].forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      if (n > 0) {
+        el.textContent = String(n);
+        el.removeAttribute('hidden');
+      } else {
+        el.setAttribute('hidden', '');
+      }
+    });
+  }
+
+  function showNotice(msg, type) {
+    var existing = document.querySelector('.dsu-atc-notice');
+    if (existing) existing.remove();
+    var note = document.createElement('div');
+    note.className = 'dsu-atc-notice dsu-atc-notice--' + (type || 'success');
+    note.setAttribute('role', 'status');
+    note.textContent = msg;
+    var shell = document.querySelector('.dsu-single-shell');
+    if (shell) shell.insertBefore(note, shell.firstChild);
+    setTimeout(function () {
+      note.classList.add('dsu-atc-notice--out');
+      setTimeout(function () { note.remove(); }, 400);
+    }, 3200);
+  }
+
+  function ensureFlowFields($form) {
+    if (!$form || !$form.length) return;
+    if (!$form.find('[name="dejoiy_studio"]').length) {
+      $form.append('<input type="hidden" name="dejoiy_studio" value="1" />');
+    }
+  }
+
+  function isBuyNowButton(el) {
+    return el && $(el).is(BUY_NOW_SEL);
+  }
+
+  function bindForm() {
+    var $form = $('form.cart');
+    if (!$form.length) return;
+
+    var buyNowClicked = false;
+
+    $form.on('click', BUY_NOW_SEL, function () {
+      buyNowClicked = true;
+      ensureFlowFields($form);
+      var pid = $form.find('[name="add-to-cart"]').val();
+      $form.find('[name="woocommerce-buy-now"], [name="dejoiy_studio_buy_now"]').remove();
+      if (pid) {
+        $form.append('<input type="hidden" name="woocommerce-buy-now" value="' + pid + '" />');
+      }
+      $form.append('<input type="hidden" name="dejoiy_studio_buy_now" value="1" />');
+    });
+
+    $form.on('click', '.single_add_to_cart_button', function () {
+      if (!isBuyNowButton(this)) {
+        buyNowClicked = false;
+        $form.find('[name="woocommerce-buy-now"], [name="dejoiy_studio_buy_now"]').remove();
+      }
+    });
+
+    $form.on('submit', function (e) {
+      if (!$form.find('[name="add-to-cart"]').length) return;
+
+      var submitter = e.originalEvent && e.originalEvent.submitter;
+      var isBuyNow = buyNowClicked || isBuyNowButton(submitter);
+
+      /* No WC AJAX — allow normal POST (PHP redirect handles buy now). */
+      if (!CFG.wc_ajax) {
+        if (isBuyNow) {
+          ensureFlowFields($form);
+          return;
+        }
+        return;
+      }
+
+      e.preventDefault();
+
+      var $btn = isBuyNow
+        ? $form.find(BUY_NOW_SEL).first()
+        : $form.find('.single_add_to_cart_button').not(BUY_NOW_SEL).first();
+      if (!$btn.length) {
+        $btn = $form.find('.single_add_to_cart_button').first();
+      }
+      if ($btn.hasClass('loading')) return;
+
+      $btn.addClass('loading').prop('disabled', true);
+      ensureFlowFields($form);
+
+      var formData = new FormData($form[0]);
+      formData.set('dejoiy_studio', '1');
+      if (isBuyNow) {
+        formData.set('dejoiy_studio_buy_now', '1');
+        var productId = $form.find('[name="add-to-cart"]').val();
+        if (productId) {
+          formData.set('woocommerce-buy-now', productId);
+        }
+      } else {
+        formData.set('dejoiy_studio_ajax', '1');
+      }
+
+      var url = CFG.wc_ajax.replace('%%endpoint%%', 'add_to_cart');
+
+      $.ajax({
+        type: 'POST',
+        url: url,
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function (response) {
+          if (response.error && response.product_url) {
+            showNotice(CFG.i18n_error || 'Could not add to cart.', 'error');
+            return;
+          }
+
+          if (isBuyNow) {
+            window.location.href = CFG.checkout_url || '/checkout/?dejoiy_studio=1';
+            return;
+          }
+
+          showNotice(CFG.i18n_added || 'Added to studio cart', 'success');
+          if (response.fragments) {
+            $.each(response.fragments, function (key, html) {
+              $(key).replaceWith(html);
+            });
+          }
+          $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
+          var match = response.fragments && response.fragments['#dsu-hdr-cart-count'];
+          if (match) {
+            var tmp = $('<div>').html(match);
+            updateBadges(tmp.text());
+          }
+        },
+        error: function () {
+          showNotice(CFG.i18n_error || 'Could not add to cart.', 'error');
+        },
+        complete: function () {
+          $btn.removeClass('loading').prop('disabled', false);
+          buyNowClicked = false;
+        }
+      });
+    });
+  }
+
+  $(bindForm);
+})(jQuery);

@@ -1,0 +1,326 @@
+/**
+ * DEJOIY Universe — Phase 2 interactions
+ */
+(function () {
+	'use strict';
+
+	var root = document.getElementById('dejoiy-universe');
+	if (!root || root.getAttribute('data-du-version') !== '2') {
+		return;
+	}
+
+	var WISH_KEY = 'dlu_nexus_wishlist_v1';
+	var LEGACY_UNIVERSE_KEY = 'dejoiy_universe_favs';
+	var XSTORE_SETTINGS = JSON.stringify({
+		iconAdd: 'et-heart',
+		iconRemove: 'et-heart-o',
+		addText: 'Add to Wishlist',
+		removeText: 'Remove from Wishlist',
+	});
+
+	/* Recommendation tabs */
+	var tabs = root.querySelectorAll('.du-reco__tab');
+	var panels = root.querySelectorAll('.du-reco__panel');
+
+	function activateTab(tab) {
+		var id = tab.getAttribute('data-reco-panel');
+		if (!id) {
+			return;
+		}
+		tabs.forEach(function (t) {
+			var on = t === tab;
+			t.classList.toggle('is-active', on);
+			t.setAttribute('aria-selected', on ? 'true' : 'false');
+		});
+		panels.forEach(function (p) {
+			var match = p.id === 'du-reco-' + id;
+			p.classList.toggle('is-active', match);
+			if (match) {
+				p.removeAttribute('hidden');
+			} else {
+				p.setAttribute('hidden', 'hidden');
+			}
+		});
+	}
+
+	tabs.forEach(function (tab) {
+		tab.addEventListener('click', function () {
+			activateTab(tab);
+		});
+	});
+
+	/* JOI chips → fill search */
+	var joiInput = document.getElementById('du-joi-input');
+	root.querySelectorAll('.du-joi__chip').forEach(function (chip) {
+		chip.addEventListener('click', function () {
+			var q = chip.getAttribute('data-joi-q');
+			if (q && joiInput) {
+				joiInput.value = q;
+			}
+		});
+	});
+
+	/* —— Wishlist / favorites (XStore + Nexus, same as shop & library) —— */
+
+	function getNexusWishlist() {
+		try {
+			var raw = localStorage.getItem(WISH_KEY);
+			if (raw) {
+				var parsed = JSON.parse(raw);
+				if (Array.isArray(parsed)) {
+					return parsed;
+				}
+			}
+			var legacy = localStorage.getItem('dlu_favs');
+			if (legacy) {
+				var ids = JSON.parse(legacy);
+				if (Array.isArray(ids)) {
+					return ids.map(function (id) {
+						return { id: String(id) };
+					});
+				}
+			}
+		} catch (err) {
+			/* ignore */
+		}
+		return [];
+	}
+
+	function setNexusWishlist(items) {
+		try {
+			localStorage.setItem(WISH_KEY, JSON.stringify(items));
+			document.dispatchEvent(new CustomEvent('dejoiy-wishlist-updated', { detail: { items: items } }));
+		} catch (err) {
+			/* ignore */
+		}
+	}
+
+	function getXstoreWishlistIds() {
+		if (typeof xstore_wishlist_params === 'undefined' || !xstore_wishlist_params.wishlist_id) {
+			return [];
+		}
+		var key = xstore_wishlist_params.wishlist_id;
+		var raw = '';
+		if (typeof Cookies !== 'undefined' && Cookies.get) {
+			raw = Cookies.get(key) || '';
+		} else {
+			var escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			var match = document.cookie.match(new RegExp('(?:^|; )' + escaped + '=([^;]*)'));
+			raw = match ? decodeURIComponent(match[1]) : '';
+		}
+		if (!raw) {
+			return [];
+		}
+		return raw.split('|').map(function (entry) {
+			try {
+				return String(JSON.parse(entry).id);
+			} catch (e) {
+				return null;
+			}
+		}).filter(Boolean);
+	}
+
+	function isWishlisted(productId) {
+		var id = String(productId);
+		var xstore = getXstoreWishlistIds();
+		if (xstore.length) {
+			return xstore.indexOf(id) !== -1;
+		}
+		return getNexusWishlist().some(function (item) {
+			return String(item.id) === id;
+		});
+	}
+
+	function getCardMeta(btn) {
+		var card = btn.closest('.du-card-v2');
+		var link = card && card.querySelector('.du-card-v2__link');
+		var img = card && card.querySelector('.du-card-v2__img');
+		var titleEl = card && card.querySelector('.du-card-v2__title');
+		return {
+			id: String(btn.getAttribute('data-fav-id') || ''),
+			title: titleEl ? titleEl.textContent.trim() : '',
+			url: link ? link.getAttribute('href') : '',
+			cover: img ? img.getAttribute('src') : '',
+		};
+	}
+
+	function toggleNexusWishlist(meta) {
+		var list = getNexusWishlist();
+		var idx = -1;
+		for (var i = 0; i < list.length; i++) {
+			if (String(list[i].id) === meta.id) {
+				idx = i;
+				break;
+			}
+		}
+		if (idx === -1) {
+			list.push(meta);
+		} else {
+			list.splice(idx, 1);
+		}
+		setNexusWishlist(list);
+	}
+
+	function triggerXstoreWishlist(productId) {
+		var $ = window.jQuery;
+		if (!$ || typeof xstore_wishlist_params === 'undefined') {
+			return false;
+		}
+		var id = String(productId);
+		var action = isWishlisted(id) ? 'remove' : 'add';
+		var $target = $('.xstore-wishlist[data-id="' + id + '"]').first();
+
+		if ($target.length) {
+			$target.attr('data-action', action);
+			$target.trigger('click');
+			return true;
+		}
+
+		var $tmp = $(
+			'<a href="#" class="xstore-wishlist xstore-wishlist-icon" style="position:absolute;left:-9999px;opacity:0;pointer-events:none;"></a>'
+		);
+		$tmp.attr({
+			'data-action': action,
+			'data-id': id,
+			'data-settings': XSTORE_SETTINGS,
+		});
+		$('body').append($tmp);
+		$tmp.trigger('click');
+		setTimeout(function () {
+			$tmp.remove();
+		}, 900);
+		return true;
+	}
+
+	function migrateLegacyUniverseFavs() {
+		try {
+			var raw = localStorage.getItem(LEGACY_UNIVERSE_KEY);
+			if (!raw) {
+				return;
+			}
+			var ids = JSON.parse(raw);
+			if (!Array.isArray(ids) || !ids.length) {
+				localStorage.removeItem(LEGACY_UNIVERSE_KEY);
+				return;
+			}
+			ids.forEach(function (id) {
+				if (!isWishlisted(id)) {
+					triggerXstoreWishlist(id);
+				}
+			});
+			localStorage.removeItem(LEGACY_UNIVERSE_KEY);
+		} catch (err) {
+			/* ignore */
+		}
+	}
+
+	function setFavButtonState(btn, on) {
+		btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+		btn.classList.toggle('is-saved', on);
+		var icon = btn.querySelector('span');
+		if (icon) {
+			icon.textContent = on ? '♥' : '♡';
+		}
+	}
+
+	function syncFavs() {
+		root.querySelectorAll('.du-card-v2__fav').forEach(function (btn) {
+			var id = btn.getAttribute('data-fav-id');
+			if (!id) {
+				return;
+			}
+			setFavButtonState(btn, isWishlisted(id));
+		});
+	}
+
+	function onFavClick(e) {
+		var btn = e.currentTarget;
+		e.preventDefault();
+		e.stopPropagation();
+
+		var id = btn.getAttribute('data-fav-id');
+		if (!id) {
+			return;
+		}
+
+		var meta = getCardMeta(btn);
+		var usedXstore = triggerXstoreWishlist(id);
+		toggleNexusWishlist(meta);
+
+		if (!usedXstore) {
+			syncFavs();
+			return;
+		}
+
+		setTimeout(syncFavs, 120);
+		setTimeout(syncFavs, 400);
+	}
+
+	root.querySelectorAll('.du-card-v2__fav').forEach(function (btn) {
+		btn.addEventListener('click', onFavClick);
+	});
+
+	if (window.jQuery) {
+		jQuery(document).on(
+			'xstore_wishlist/added_product xstore_wishlist/removed_product xstore_wishlist_fragment_refresh',
+			function () {
+				setTimeout(syncFavs, 80);
+			}
+		);
+	}
+
+	window.addEventListener('pageshow', syncFavs);
+	syncFavs();
+
+	if (typeof window.jQuery !== 'undefined' && typeof xstore_wishlist_params !== 'undefined') {
+		setTimeout(migrateLegacyUniverseFavs, 600);
+	}
+
+	/* Scroll reveal */
+	if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		var reveals = root.querySelectorAll('.du-reveal');
+		if ('IntersectionObserver' in window && reveals.length) {
+			var io = new IntersectionObserver(
+				function (entries) {
+					entries.forEach(function (entry) {
+						if (entry.isIntersecting) {
+							entry.target.classList.add('du-visible');
+							io.unobserve(entry.target);
+						}
+					});
+				},
+				{ rootMargin: '0px 0px -8% 0px', threshold: 0.08 }
+			);
+			reveals.forEach(function (el) {
+				io.observe(el);
+			});
+		} else {
+			reveals.forEach(function (el) {
+				el.classList.add('du-visible');
+			});
+		}
+	} else {
+		root.querySelectorAll('.du-reveal').forEach(function (el) {
+			el.classList.add('du-visible');
+		});
+	}
+
+	/* Subtle antigravity parallax (hero only) */
+	var heroAg = root.querySelector('.du-hero__ag');
+	if (heroAg && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+		var floats = heroAg.querySelectorAll('.du-ag-float');
+		var onMove = function (e) {
+			var rect = heroAg.getBoundingClientRect();
+			if (!rect.width) {
+				return;
+			}
+			var x = (e.clientX - rect.left) / rect.width - 0.5;
+			var y = (e.clientY - rect.top) / rect.height - 0.5;
+			floats.forEach(function (el, i) {
+				var k = (i + 1) * 6;
+				el.style.transform = 'translate3d(' + x * k + 'px,' + y * k + 'px,0)';
+			});
+		};
+		heroAg.addEventListener('pointermove', onMove, { passive: true });
+	}
+})();

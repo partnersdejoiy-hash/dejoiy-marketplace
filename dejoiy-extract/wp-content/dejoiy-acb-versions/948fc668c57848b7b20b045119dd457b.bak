@@ -1,0 +1,418 @@
+<?php
+/**
+ * DEJOIY Nexus LMS-lite — purchase access, reading progress, My Nexus shelf.
+ *
+ * No external Moodle install; integrates with WooCommerce orders only.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * User meta key: owned Nexus book product IDs.
+ */
+define( 'DEJOIY_LIBRARY_LMS_BOOKS_META', 'dejoiy_library_lms_books' );
+
+/**
+ * User meta prefix for per-book progress (0–100).
+ */
+define( 'DEJOIY_LIBRARY_LMS_PROGRESS_PREFIX', 'dejoiy_library_lms_progress_' );
+
+/**
+ * Product meta: JSON array of chapter titles for Level-1 LMS (optional per book).
+ */
+define( 'DEJOIY_LIBRARY_LMS_CHAPTERS_META', '_dejoiy_lms_chapters' );
+
+/**
+ * @param int $product_id Product ID.
+ * @return string[]
+ */
+function dejoiy_library_lms_get_chapters( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return array();
+	}
+	$raw = get_post_meta( $product_id, DEJOIY_LIBRARY_LMS_CHAPTERS_META, true );
+	if ( is_string( $raw ) && '' !== $raw ) {
+		$decoded = json_decode( $raw, true );
+		if ( is_array( $decoded ) ) {
+			$raw = $decoded;
+		}
+	}
+	if ( ! is_array( $raw ) ) {
+		return array();
+	}
+	$titles = array();
+	foreach ( $raw as $row ) {
+		if ( is_string( $row ) && '' !== trim( $row ) ) {
+			$titles[] = sanitize_text_field( $row );
+		} elseif ( is_array( $row ) && ! empty( $row['title'] ) ) {
+			$titles[] = sanitize_text_field( (string) $row['title'] );
+		}
+	}
+	return array_values( array_filter( $titles ) );
+}
+
+/**
+ * Default chapter list when seller has not configured meta yet.
+ *
+ * @param int $product_id Product ID.
+ * @return string[]
+ */
+function dejoiy_library_lms_get_chapters_or_default( $product_id ) {
+	$chapters = dejoiy_library_lms_get_chapters( $product_id );
+	if ( ! empty( $chapters ) ) {
+		return $chapters;
+	}
+	return array(
+		__( 'Introduction', 'dejoiy' ),
+		__( 'Main reading', 'dejoiy' ),
+		__( 'Finish', 'dejoiy' ),
+	);
+}
+
+/**
+ * Map reading percent (0–100) to a chapter index for Level-1 progress UI.
+ *
+ * @param int $product_id Product ID.
+ * @param int $percent    Progress percent.
+ * @return int Zero-based chapter index.
+ */
+function dejoiy_library_lms_chapter_index_for_percent( $product_id, $percent ) {
+	$chapters = dejoiy_library_lms_get_chapters_or_default( $product_id );
+	$count    = count( $chapters );
+	if ( $count < 1 ) {
+		return 0;
+	}
+	$percent = max( 0, min( 100, (int) $percent ) );
+	$idx     = (int) floor( ( $percent / 100 ) * $count );
+	return min( $count - 1, max( 0, $idx ) );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return array{chapters:string[],chapter_count:int,current_chapter:int,current_title:string}
+ */
+function dejoiy_library_lms_get_reading_state( $user_id, $product_id ) {
+	$user_id    = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	$product_id = (int) $product_id;
+	$chapters   = dejoiy_library_lms_get_chapters_or_default( $product_id );
+	$percent    = dejoiy_library_lms_get_progress( $user_id, $product_id );
+	$idx        = dejoiy_library_lms_chapter_index_for_percent( $product_id, $percent );
+	return array(
+		'chapters'         => $chapters,
+		'chapter_count'    => count( $chapters ),
+		'current_chapter'  => $idx,
+		'current_title'    => isset( $chapters[ $idx ] ) ? $chapters[ $idx ] : '',
+		'percent'          => $percent,
+	);
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_lms_is_download_only_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || ! function_exists( 'wc_get_product' ) ) {
+		return false;
+	}
+	$product = wc_get_product( $product_id );
+	if ( ! $product || ! $product->is_downloadable() ) {
+		return false;
+	}
+	$files = $product->get_downloads();
+	return ! empty( $files );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_library_lms_is_free_read_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( function_exists( 'dejoiy_library_is_gutenberg_edition' ) && dejoiy_library_is_gutenberg_edition( $product_id ) ) {
+		return true;
+	}
+	if ( function_exists( 'wc_get_product' ) ) {
+		$product = wc_get_product( $product_id );
+		if ( $product && '' !== $product->get_price() && (float) $product->get_price() <= 0 ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @param int $user_id    User ID (0 = current).
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_library_lms_user_owns_book( $user_id, $product_id ) {
+	$user_id    = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	$product_id = (int) $product_id;
+	if ( $user_id < 1 || $product_id < 1 ) {
+		return false;
+	}
+	$owned = get_user_meta( $user_id, DEJOIY_LIBRARY_LMS_BOOKS_META, true );
+	if ( ! is_array( $owned ) ) {
+		return false;
+	}
+	return in_array( $product_id, array_map( 'intval', $owned ), true );
+}
+
+/**
+ * @param int $user_id User ID (0 = current).
+ * @return int[]
+ */
+function dejoiy_library_lms_get_owned_book_ids( $user_id = 0 ) {
+	$user_id = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	if ( $user_id < 1 ) {
+		return array();
+	}
+	$owned = get_user_meta( $user_id, DEJOIY_LIBRARY_LMS_BOOKS_META, true );
+	if ( ! is_array( $owned ) ) {
+		return array();
+	}
+	$ids = array_values( array_unique( array_filter( array_map( 'intval', $owned ) ) ) );
+	return $ids;
+}
+
+/**
+ * Grant LMS access for a product to a user.
+ *
+ * @param int $user_id    User ID.
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_lms_grant_book( $user_id, $product_id ) {
+	$user_id    = (int) $user_id;
+	$product_id = (int) $product_id;
+	if ( $user_id < 1 || $product_id < 1 ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_library_is_nexus_product' ) || ! dejoiy_library_is_nexus_product( $product_id ) ) {
+		return;
+	}
+	if ( dejoiy_library_lms_is_download_only_product( $product_id ) ) {
+		return;
+	}
+	$owned = dejoiy_library_lms_get_owned_book_ids( $user_id );
+	if ( in_array( $product_id, $owned, true ) ) {
+		return;
+	}
+	$owned[] = $product_id;
+	update_user_meta( $user_id, DEJOIY_LIBRARY_LMS_BOOKS_META, $owned );
+}
+
+/**
+ * @param int $user_id    User ID (0 = current).
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_library_user_can_read_book( $user_id, $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return false;
+	}
+	if ( dejoiy_library_lms_is_download_only_product( $product_id ) ) {
+		return false;
+	}
+	if ( dejoiy_library_lms_is_free_read_product( $product_id ) ) {
+		return true;
+	}
+	$user_id = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	if ( $user_id < 1 ) {
+		return false;
+	}
+	return dejoiy_library_lms_user_owns_book( $user_id, $product_id );
+}
+
+/**
+ * @param int $user_id    User ID (0 = current).
+ * @param int $product_id Product ID.
+ * @return int 0–100
+ */
+function dejoiy_library_lms_get_progress( $user_id, $product_id ) {
+	$user_id    = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	$product_id = (int) $product_id;
+	if ( $user_id < 1 || $product_id < 1 ) {
+		return 0;
+	}
+	$val = get_user_meta( $user_id, DEJOIY_LIBRARY_LMS_PROGRESS_PREFIX . $product_id, true );
+	return max( 0, min( 100, (int) $val ) );
+}
+
+/**
+ * @param int $user_id    User ID.
+ * @param int $product_id Product ID.
+ * @param int $percent    0–100.
+ */
+function dejoiy_library_lms_set_progress( $user_id, $product_id, $percent ) {
+	$user_id    = (int) $user_id;
+	$product_id = (int) $product_id;
+	$percent    = max( 0, min( 100, (int) $percent ) );
+	if ( $user_id < 1 || $product_id < 1 ) {
+		return;
+	}
+	if ( ! dejoiy_library_user_can_read_book( $user_id, $product_id ) ) {
+		return;
+	}
+	update_user_meta( $user_id, DEJOIY_LIBRARY_LMS_PROGRESS_PREFIX . $product_id, $percent );
+}
+
+/**
+ * Grant books when an order reaches a paid status.
+ *
+ * @param int $order_id Order ID.
+ */
+function dejoiy_library_lms_on_order_paid( $order_id ) {
+	$order = function_exists( 'wc_get_order' ) ? wc_get_order( $order_id ) : null;
+	if ( ! $order ) {
+		return;
+	}
+	$user_id = (int) $order->get_user_id();
+	if ( $user_id < 1 ) {
+		return;
+	}
+	foreach ( $order->get_items() as $item ) {
+		$product_id = (int) $item->get_product_id();
+		if ( $product_id ) {
+			dejoiy_library_lms_grant_book( $user_id, $product_id );
+		}
+	}
+}
+
+/**
+ * @param int $user_id User ID (0 = current).
+ * @return array<int, array<string, mixed>>
+ */
+function dejoiy_library_lms_get_shelf_entries( $user_id = 0 ) {
+	$user_id = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	$entries = array();
+	foreach ( dejoiy_library_lms_get_owned_book_ids( $user_id ) as $product_id ) {
+		if ( dejoiy_library_lms_is_download_only_product( $product_id ) ) {
+			continue;
+		}
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		if ( ! $product ) {
+			continue;
+		}
+		$reading = dejoiy_library_lms_get_reading_state( $user_id, $product_id );
+		$entries[] = array(
+			'id'              => $product_id,
+			'title'           => $product->get_name(),
+			'author'          => function_exists( 'dejoiy_library_get_author' ) ? dejoiy_library_get_author( $product_id ) : '',
+			'cover'           => function_exists( 'dejoiy_library_get_cover_url' ) ? dejoiy_library_get_cover_url( $product_id, 'medium' ) : '',
+			'progress'        => $reading['percent'],
+			'chapter_count'   => $reading['chapter_count'],
+			'current_chapter' => $reading['current_chapter'],
+			'current_title'   => $reading['current_title'],
+			'read_url'        => function_exists( 'dejoiy_library_reader_url' ) ? dejoiy_library_reader_url( $product_id ) : '',
+		);
+	}
+	usort(
+		$entries,
+		static function ( $a, $b ) {
+			return (int) $b['progress'] <=> (int) $a['progress'];
+		}
+	);
+	return $entries;
+}
+
+/**
+ * @param int $user_id User ID (0 = current).
+ * @return array<int, array<string, mixed>>
+ */
+function dejoiy_library_lms_get_download_entries( $user_id = 0 ) {
+	$user_id = $user_id > 0 ? (int) $user_id : get_current_user_id();
+	$entries = array();
+	foreach ( dejoiy_library_lms_get_owned_book_ids( $user_id ) as $product_id ) {
+		if ( ! dejoiy_library_lms_is_download_only_product( $product_id ) ) {
+			continue;
+		}
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		if ( ! $product ) {
+			continue;
+		}
+		$downloads = array();
+		foreach ( $product->get_downloads() as $dl ) {
+			$downloads[] = array(
+				'name' => $dl->get_name(),
+				'url'  => $dl->get_download_url(),
+			);
+		}
+		$entries[] = array(
+			'id'        => $product_id,
+			'title'     => $product->get_name(),
+			'cover'     => function_exists( 'dejoiy_library_get_cover_url' ) ? dejoiy_library_get_cover_url( $product_id, 'medium' ) : '',
+			'downloads' => $downloads,
+		);
+	}
+	return $entries;
+}
+
+/**
+ * AJAX: save reading progress (logged-in customers).
+ */
+function dejoiy_library_lms_ajax_save_progress() {
+	$book_id = isset( $_POST['book_id'] ) ? absint( $_POST['book_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$percent = isset( $_POST['percent'] ) ? absint( $_POST['percent'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	if ( ! $book_id || ! is_user_logged_in() ) {
+		wp_send_json_error( array( 'message' => 'Unauthorized' ), 403 );
+	}
+	check_ajax_referer( 'dejoiy_library_lms', 'nonce' );
+	if ( ! dejoiy_library_user_can_read_book( 0, $book_id ) ) {
+		wp_send_json_error( array( 'message' => 'No access' ), 403 );
+	}
+	dejoiy_library_lms_set_progress( get_current_user_id(), $book_id, $percent );
+	$state = dejoiy_library_lms_get_reading_state( get_current_user_id(), $book_id );
+	wp_send_json_success(
+		array(
+			'percent'         => $percent,
+			'chapter_count'   => $state['chapter_count'],
+			'current_chapter' => $state['current_chapter'],
+			'current_title'   => $state['current_title'],
+		)
+	);
+}
+
+/**
+ * AJAX: load reading progress.
+ */
+function dejoiy_library_lms_ajax_get_progress() {
+	$book_id = isset( $_GET['book_id'] ) ? absint( $_GET['book_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! $book_id || ! is_user_logged_in() ) {
+		wp_send_json_success( array( 'percent' => 0 ) );
+	}
+	if ( ! dejoiy_library_user_can_read_book( 0, $book_id ) ) {
+		wp_send_json_success( array( 'percent' => 0 ) );
+	}
+	$state = dejoiy_library_lms_get_reading_state( 0, $book_id );
+	wp_send_json_success(
+		array(
+			'percent'         => $state['percent'],
+			'chapter_count'   => $state['chapter_count'],
+			'current_chapter' => $state['current_chapter'],
+			'current_title'   => $state['current_title'],
+			'chapters'        => $state['chapters'],
+		)
+	);
+}
+
+/**
+ * Register LMS hooks (safe on front + AJAX only).
+ */
+function dejoiy_library_lms_init() {
+	static $done = false;
+	if ( $done || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	$done = true;
+
+	add_action( 'woocommerce_order_status_completed', 'dejoiy_library_lms_on_order_paid', 20 );
+	add_action( 'woocommerce_order_status_processing', 'dejoiy_library_lms_on_order_paid', 20 );
+	add_action( 'wp_ajax_dejoiy_library_lms_save_progress', 'dejoiy_library_lms_ajax_save_progress' );
+	add_action( 'wp_ajax_dejoiy_library_lms_get_progress', 'dejoiy_library_lms_ajax_get_progress' );
+}

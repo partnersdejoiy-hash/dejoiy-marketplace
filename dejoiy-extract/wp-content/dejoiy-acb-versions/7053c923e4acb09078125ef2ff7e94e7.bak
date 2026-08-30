@@ -1,0 +1,795 @@
+<?php
+/**
+ * Studio customization fields, mock products, isolated WC pages.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Boot studio customize module.
+ */
+function dejoiy_studio_customize_init() {
+	add_action( 'init', 'dejoiy_studio_seed_mock_products', 30 );
+	add_action( 'init', 'dejoiy_studio_refresh_mock_images', 31 );
+	add_filter( 'woocommerce_product_single_add_to_cart_attributes', 'dejoiy_studio_cart_form_attributes' );
+	add_filter( 'woocommerce_cart_item_visible', 'dejoiy_studio_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_checkout_cart_item_visible', 'dejoiy_studio_cart_item_visible', 10, 3 );
+	add_action( 'woocommerce_before_add_to_cart_button', 'dejoiy_studio_render_customize_fields', 15 );
+	add_filter( 'woocommerce_add_to_cart_validation', 'dejoiy_studio_validate_customize', 10, 3 );
+	add_filter( 'woocommerce_add_cart_item_data', 'dejoiy_studio_add_cart_item_data', 10, 3 );
+	add_filter( 'woocommerce_get_cart_item_from_session', 'dejoiy_studio_get_cart_item_from_session', 10, 3 );
+	add_filter( 'woocommerce_get_item_data', 'dejoiy_studio_cart_item_display', 10, 2 );
+	add_action( 'woocommerce_checkout_create_order_line_item', 'dejoiy_studio_order_line_item_meta', 10, 4 );
+	add_action( 'woocommerce_admin_order_item_headers', 'dejoiy_studio_admin_order_headers' );
+	add_action( 'woocommerce_admin_order_item_values', 'dejoiy_studio_admin_order_values', 10, 3 );
+	add_filter( 'body_class', 'dejoiy_studio_wc_body_class' );
+	add_action( 'wp_enqueue_scripts', 'dejoiy_studio_wc_assets', 1005 );
+	add_filter( 'woocommerce_add_to_cart_fragments', 'dejoiy_studio_cart_fragments' );
+	add_filter( 'woocommerce_add_to_cart_redirect', 'dejoiy_studio_ajax_add_to_cart_redirect', 20 );
+}
+add_action( 'after_setup_theme', 'dejoiy_studio_customize_init' );
+
+/**
+ * @param array $classes Classes.
+ * @return array
+ */
+function dejoiy_studio_wc_body_class( $classes ) {
+	if ( function_exists( 'dejoiy_studio_is_screen' ) && dejoiy_studio_is_screen() ) {
+		$classes[] = 'dejoiy-studio-screen';
+	} elseif ( is_page( 4399 ) ) {
+		$classes[] = 'dejoiy-studio-screen';
+	}
+	if (
+		dejoiy_studio_use_single_template()
+		|| ( function_exists( 'dejoiy_studio_use_cart_template' ) && dejoiy_studio_use_cart_template() )
+		|| ( function_exists( 'is_checkout' ) && is_checkout() && dejoiy_studio_is_flow() )
+	) {
+		$classes[] = 'dsu-studio-isolated';
+	}
+	return $classes;
+}
+
+/**
+ * Enqueue WC studio skin.
+ */
+function dejoiy_studio_wc_assets() {
+	if ( ! function_exists( 'dejoiy_studio_is_screen' ) || ! dejoiy_studio_is_screen() ) {
+		return;
+	}
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
+	$ver = '11.0.0';
+	wp_enqueue_style(
+		'dejoiy-studio-hf',
+		$uri . '/studio-hf.css',
+		array(),
+		(string) ( file_exists( $dir . '/studio-hf.css' ) ? filemtime( $dir . '/studio-hf.css' ) : $ver )
+	);
+	wp_enqueue_style(
+		'dejoiy-studio-single',
+		$uri . '/studio-single.css',
+		array( 'dejoiy-studio-hf' ),
+		(string) ( file_exists( $dir . '/studio-single.css' ) ? filemtime( $dir . '/studio-single.css' ) : $ver )
+	);
+
+	if ( dejoiy_studio_use_single_template() ) {
+		wp_enqueue_script( 'jquery' );
+		wp_enqueue_script( 'wc-add-to-cart' );
+		wp_enqueue_script(
+			'dejoiy-studio-wc',
+			$uri . '/studio-wc.js',
+			array( 'jquery', 'wc-add-to-cart' ),
+			(string) ( file_exists( $dir . '/studio-wc.js' ) ? filemtime( $dir . '/studio-wc.js' ) : $ver ),
+			true
+		);
+		$wc_ajax = class_exists( 'WC_AJAX' ) ? WC_AJAX::get_endpoint( '%%endpoint%%' ) : home_url( '/?wc-ajax=%%endpoint%%' );
+		wp_localize_script(
+			'dejoiy-studio-wc',
+			'DEJOIY_STUDIO_WC',
+			array(
+				'ajax_url'   => admin_url( 'admin-ajax.php' ),
+				'wc_ajax'    => $wc_ajax,
+				'cart_url'   => add_query_arg( 'dejoiy_studio', '1', wc_get_cart_url() ),
+				'i18n_added' => __( 'Added to studio cart', 'dejoiy' ),
+				'i18n_error' => __( 'Could not add to cart. Check customization fields.', 'dejoiy' ),
+			)
+		);
+	}
+}
+
+/**
+ * Minimal HTML document start (no theme header cards).
+ */
+function dejoiy_studio_document_start() {
+	?><!DOCTYPE html>
+	<html <?php language_attributes(); ?>>
+	<head>
+	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<?php wp_head(); ?>
+	</head>
+	<body <?php body_class( 'dsu-studio-isolated dejoiy-studio-flow' ); ?>>
+	<?php wp_body_open(); ?>
+	<?php
+}
+
+/**
+ * Minimal document end.
+ */
+function dejoiy_studio_document_end() {
+	wp_footer();
+	echo '</body></html>';
+}
+
+/**
+ * Create mock out-of-stock studio products once.
+ */
+function dejoiy_studio_seed_mock_products() {
+	if ( get_option( 'dejoiy_studio_mocks_v11' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	$mocks = array(
+		array(
+			'name'  => 'Studio Preview — Custom Tee',
+			'price' => '599',
+			'desc'  => 'Mock studio product for preview. Out of stock.',
+			'img'   => 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop',
+		),
+		array(
+			'name'  => 'Studio Preview — Premium Mug',
+			'price' => '349',
+			'desc'  => 'Mock studio mug — upload your art at checkout.',
+			'img'   => 'https://images.unsplash.com/photo-1514228742587-6b1558fcca0d?w=600&h=600&fit=crop',
+		),
+		array(
+			'name'  => 'Studio Preview — Phone Case',
+			'price' => '449',
+			'desc'  => 'Mock phone case for studio walkthrough.',
+			'img'   => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=600&h=600&fit=crop',
+		),
+		array(
+			'name'  => 'Studio Preview — Embroidered Cap',
+			'price' => '399',
+			'desc'  => 'Mock cap — text + logo customization.',
+			'img'   => 'https://images.unsplash.com/photo-1588850561407-ed78c282e80b?w=600&h=600&fit=crop',
+		),
+		array(
+			'name'  => 'Studio Preview — Tote Bag',
+			'price' => '499',
+			'desc'  => 'Mock tote for studio gallery display.',
+			'img'   => 'https://images.unsplash.com/photo-1544810906-1bf05ed9a42f?w=600&h=600&fit=crop',
+		),
+	);
+
+	$cat_ids = array();
+	$custom  = get_term_by( 'slug', 'customized-products', 'product_cat' );
+	if ( $custom && ! is_wp_error( $custom ) ) {
+		$cat_ids[] = (int) $custom->term_id;
+	}
+	if ( empty( $cat_ids ) && defined( 'DEJOIY_STUDIO_CAT_IDS' ) ) {
+		$cat_ids = DEJOIY_STUDIO_CAT_IDS;
+	}
+
+	foreach ( $mocks as $i => $mock ) {
+		$product = new WC_Product_Simple();
+		$product->set_name( $mock['name'] );
+		$product->set_status( 'publish' );
+		$product->set_regular_price( $mock['price'] );
+		$product->set_short_description( $mock['desc'] );
+		$product->set_catalog_visibility( 'visible' );
+		$product->set_manage_stock( true );
+		$product->set_stock_quantity( 0 );
+		$product->set_stock_status( 'outofstock' );
+		$product->set_sku( 'dejoiy-studio-mock-' . ( $i + 1 ) );
+		$id = $product->save();
+		if ( $id && ! empty( $cat_ids ) ) {
+			wp_set_object_terms( $id, $cat_ids, 'product_cat' );
+		}
+		if ( $id ) {
+			update_post_meta( $id, '_dejoiy_studio_mock', '1' );
+			dejoiy_studio_attach_image_from_url( $id, $mock['img'] );
+		}
+	}
+
+	update_option( 'dejoiy_studio_mocks_v11', '1' );
+}
+
+/**
+ * Fallback image URLs for studio mock products (used when sideload fails).
+ *
+ * @return array<string, string>
+ */
+function dejoiy_studio_mock_image_map() {
+	return array(
+		'dejoiy-studio-mock-1' => 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=800&fit=crop',
+		'dejoiy-studio-mock-2' => 'https://images.unsplash.com/photo-1514228742587-6b1558fcca0d?w=800&h=800&fit=crop',
+		'dejoiy-studio-mock-3' => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop',
+		'dejoiy-studio-mock-4' => 'https://images.unsplash.com/photo-1588850561407-ed78c282e80b?w=800&h=800&fit=crop',
+		'dejoiy-studio-mock-5' => 'https://images.unsplash.com/photo-1544810906-1bf05ed9a42f?w=800&h=800&fit=crop',
+		'5008'                 => 'https://images.unsplash.com/photo-1514228742587-6b1558fcca0d?w=800&h=800&fit=crop',
+		'5011'                 => 'https://images.unsplash.com/photo-1588850561407-ed78c282e80b?w=800&h=800&fit=crop',
+		'5012'                 => 'https://images.unsplash.com/photo-1544810906-1bf05ed9a42f?w=800&h=800&fit=crop',
+	);
+}
+
+/**
+ * Product image for studio UI (thumbnail, fallback meta, or mock map).
+ *
+ * @param int    $product_id Product ID.
+ * @param string $size       Image size.
+ * @return string
+ */
+function dejoiy_studio_get_product_image_url( $product_id, $size = 'medium_large' ) {
+	$product_id = (int) $product_id;
+	$url        = get_the_post_thumbnail_url( $product_id, $size );
+	if ( $url ) {
+		return $url;
+	}
+	$meta = get_post_meta( $product_id, '_dejoiy_studio_img_url', true );
+	if ( $meta ) {
+		return (string) $meta;
+	}
+	$map = dejoiy_studio_mock_image_map();
+	if ( isset( $map[ (string) $product_id ] ) ) {
+		return $map[ (string) $product_id ];
+	}
+	if ( function_exists( 'wc_get_product' ) ) {
+		$product = wc_get_product( $product_id );
+		if ( $product ) {
+			$sku = $product->get_sku();
+			if ( $sku && isset( $map[ $sku ] ) ) {
+				return $map[ $sku ];
+			}
+		}
+	}
+	if ( function_exists( 'wc_placeholder_img_src' ) ) {
+		return wc_placeholder_img_src();
+	}
+	return '';
+}
+
+/**
+ * Retry sideload for mock products missing thumbnails (hourly).
+ */
+function dejoiy_studio_refresh_mock_images() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	if ( get_transient( 'dejoiy_studio_img_sync' ) ) {
+		return;
+	}
+
+	$img_map = dejoiy_studio_mock_image_map();
+	$skip_id = 4906;
+
+	$mock_ids = get_posts(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			'posts_per_page' => 20,
+			'fields'         => 'ids',
+			'meta_key'       => '_dejoiy_studio_mock', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		)
+	);
+
+	$needs_retry = false;
+	foreach ( $mock_ids as $pid ) {
+		$pid = (int) $pid;
+		if ( $pid === $skip_id ) {
+			continue;
+		}
+		$product = wc_get_product( $pid );
+		if ( ! $product ) {
+			continue;
+		}
+		$sku = $product->get_sku();
+		$url = isset( $img_map[ $sku ] ) ? $img_map[ $sku ] : ( isset( $img_map[ (string) $pid ] ) ? $img_map[ (string) $pid ] : '' );
+		if ( ! $url ) {
+			continue;
+		}
+		update_post_meta( $pid, '_dejoiy_studio_img_url', esc_url_raw( $url ) );
+		if ( ! has_post_thumbnail( $pid ) ) {
+			$needs_retry = true;
+			dejoiy_studio_attach_image_from_url( $pid, $url );
+		}
+	}
+
+	set_transient( 'dejoiy_studio_img_sync', 1, $needs_retry ? 15 * MINUTE_IN_SECONDS : HOUR_IN_SECONDS );
+}
+
+/**
+ * Cart line is from the custom studio flow.
+ *
+ * @param array $cart_item Cart item.
+ * @return bool
+ */
+function dejoiy_studio_cart_item_is_studio( $cart_item ) {
+	if ( ! empty( $cart_item['dejoiy_studio_item'] ) ) {
+		return true;
+	}
+	$product_id = isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0;
+	if ( ! $product_id ) {
+		return false;
+	}
+	if ( get_post_meta( $product_id, '_dejoiy_studio_mock', true ) ) {
+		return true;
+	}
+	if (
+		dejoiy_studio_is_flow()
+		&& function_exists( 'dejoiy_studio_is_customizable_product' )
+		&& dejoiy_studio_is_customizable_product( $product_id )
+		&& ( ! empty( $cart_item['dejoiy_custom_text'] ) || ! empty( $cart_item['dejoiy_art_url'] ) )
+	) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Update header cart badges after AJAX add.
+ *
+ * @param array $fragments Fragments.
+ * @return array
+ */
+function dejoiy_studio_cart_fragments( $fragments ) {
+	if ( ! dejoiy_studio_is_flow() ) {
+		return $fragments;
+	}
+	$count = dejoiy_studio_cart_count();
+	$badge = $count > 0
+		? '<span class="dsu-hdr-badge" id="dsu-hdr-cart-count">' . (int) $count . '</span>'
+		: '<span class="dsu-hdr-badge" id="dsu-hdr-cart-count" hidden></span>';
+	$badge_mob = $count > 0
+		? '<span class="dsu-hdr-badge dsu-hdr-badge--mob" id="dsu-hdr-cart-count-mob">' . (int) $count . '</span>'
+		: '<span class="dsu-hdr-badge dsu-hdr-badge--mob" id="dsu-hdr-cart-count-mob" hidden></span>';
+
+	$fragments['#dsu-hdr-cart-count']    = $badge;
+	$fragments['#dsu-hdr-cart-count-mob'] = $badge_mob;
+	return $fragments;
+}
+
+/**
+ * Stay on product page after AJAX add (no slow redirect).
+ *
+ * @param string $url Redirect URL.
+ * @return string|false
+ */
+function dejoiy_studio_ajax_add_to_cart_redirect( $url ) {
+	if ( dejoiy_studio_is_flow() && ! empty( $_REQUEST['dejoiy_studio_ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return false;
+	}
+	return $url;
+}
+
+/**
+ * Studio cart badge count (studio items only).
+ *
+ * @return int
+ */
+function dejoiy_studio_cart_count() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return 0;
+	}
+	if ( ! dejoiy_studio_is_flow() ) {
+		return (int) WC()->cart->get_cart_contents_count();
+	}
+	$count = 0;
+	foreach ( dejoiy_studio_get_cart_studio_items() as $item ) {
+		$count += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
+	}
+	return $count;
+}
+
+/**
+ * Studio cart line items for templates (avoids filtered WC count recursion).
+ *
+ * @return array<string, array>
+ */
+function dejoiy_studio_get_cart_studio_items() {
+	$items = array();
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return $items;
+	}
+	foreach ( WC()->cart->get_cart() as $cart_key => $cart_item ) {
+		if ( dejoiy_studio_cart_item_is_studio( $cart_item ) ) {
+			$items[ $cart_key ] = $cart_item;
+		}
+	}
+	return $items;
+}
+
+/**
+ * Render studio cart table (safe — does not call woocommerce_cart()).
+ *
+ * @param array<string, array> $studio_items Cart items.
+ */
+function dejoiy_studio_render_cart_table( $studio_items ) {
+	if ( empty( $studio_items ) || ! function_exists( 'WC' ) ) {
+		return;
+	}
+
+	wc_print_notices();
+
+	$cart_url = wc_get_cart_url();
+	if ( dejoiy_studio_is_flow() ) {
+		$cart_url = add_query_arg( 'dejoiy_studio', '1', $cart_url );
+	}
+
+	$checkout_url = wc_get_checkout_url();
+	if ( dejoiy_studio_is_flow() ) {
+		$checkout_url = add_query_arg( 'dejoiy_studio', '1', $checkout_url );
+	}
+
+	$subtotal = 0.0;
+	?>
+	<form class="woocommerce-cart-form" action="<?php echo esc_url( $cart_url ); ?>" method="post">
+		<table class="shop_table shop_table_responsive cart woocommerce-cart-form__contents" cellspacing="0">
+			<thead>
+				<tr>
+					<th class="product-remove"><span class="screen-reader-text"><?php esc_html_e( 'Remove item', 'woocommerce' ); ?></span></th>
+					<th class="product-thumbnail"><span class="screen-reader-text"><?php esc_html_e( 'Thumbnail image', 'woocommerce' ); ?></span></th>
+					<th class="product-name"><?php esc_html_e( 'Product', 'woocommerce' ); ?></th>
+					<th class="product-price"><?php esc_html_e( 'Price', 'woocommerce' ); ?></th>
+					<th class="product-quantity"><?php esc_html_e( 'Quantity', 'woocommerce' ); ?></th>
+					<th class="product-subtotal"><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php
+				foreach ( $studio_items as $cart_key => $cart_item ) {
+					$_product   = isset( $cart_item['data'] ) ? $cart_item['data'] : false;
+					$product_id = isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0;
+					if ( ! $_product || ! $_product->exists() || $cart_item['quantity'] <= 0 ) {
+						continue;
+					}
+					$product_permalink = $_product->is_visible() ? $_product->get_permalink() : '';
+					if ( dejoiy_studio_is_flow() && $product_permalink ) {
+						$product_permalink = add_query_arg( 'dejoiy_studio', '1', $product_permalink );
+					}
+					$subtotal += (float) $cart_item['line_subtotal'];
+					?>
+					<tr class="woocommerce-cart-form__cart-item cart_item">
+						<td class="product-remove">
+							<a href="<?php echo esc_url( wc_get_cart_remove_url( $cart_key ) ); ?>" class="remove" aria-label="<?php esc_attr_e( 'Remove this item', 'woocommerce' ); ?>">&times;</a>
+						</td>
+						<td class="product-thumbnail">
+							<?php
+							$thumbnail = $_product->get_image();
+							if ( $product_permalink ) {
+								printf( '<a href="%s">%s</a>', esc_url( $product_permalink ), $thumbnail ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							} else {
+								echo $thumbnail; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							}
+							?>
+						</td>
+						<td class="product-name" data-title="<?php esc_attr_e( 'Product', 'woocommerce' ); ?>">
+							<?php
+							if ( $product_permalink ) {
+								printf( '<a href="%s">%s</a>', esc_url( $product_permalink ), wp_kses_post( $_product->get_name() ) );
+							} else {
+								echo wp_kses_post( $_product->get_name() );
+							}
+							echo wc_get_formatted_cart_item_data( $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							?>
+						</td>
+						<td class="product-price" data-title="<?php esc_attr_e( 'Price', 'woocommerce' ); ?>">
+							<?php echo wp_kses_post( WC()->cart->get_product_price( $_product ) ); ?>
+						</td>
+						<td class="product-quantity" data-title="<?php esc_attr_e( 'Quantity', 'woocommerce' ); ?>">
+							<?php
+							if ( $_product->is_sold_individually() ) {
+								$min_quantity = 1;
+								$max_quantity = 1;
+							} else {
+								$min_quantity = 0;
+								$max_quantity = $_product->get_max_purchase_quantity();
+							}
+							$product_quantity = woocommerce_quantity_input(
+								array(
+									'input_name'   => "cart[{$cart_key}][qty]",
+									'input_value'  => $cart_item['quantity'],
+									'max_value'    => $max_quantity,
+									'min_value'    => $min_quantity,
+									'product_name' => $_product->get_name(),
+								),
+								$_product,
+								false
+							);
+							echo apply_filters( 'woocommerce_cart_item_quantity', $product_quantity, $cart_key, $cart_item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							?>
+						</td>
+						<td class="product-subtotal" data-title="<?php esc_attr_e( 'Subtotal', 'woocommerce' ); ?>">
+							<?php echo wp_kses_post( WC()->cart->get_product_subtotal( $_product, $cart_item['quantity'] ) ); ?>
+						</td>
+					</tr>
+					<?php
+				}
+				?>
+			</tbody>
+		</table>
+		<button type="submit" class="button" name="update_cart" value="<?php esc_attr_e( 'Update cart', 'woocommerce' ); ?>"><?php esc_html_e( 'Update cart', 'woocommerce' ); ?></button>
+		<?php wp_nonce_field( 'woocommerce-cart', 'woocommerce-cart-nonce' ); ?>
+	</form>
+	<div class="cart-collaterals">
+		<div class="cart_totals">
+			<h2><?php esc_html_e( 'Cart totals', 'woocommerce' ); ?></h2>
+			<table cellspacing="0" class="shop_table shop_table_responsive">
+				<tr class="cart-subtotal">
+					<th><?php esc_html_e( 'Subtotal', 'woocommerce' ); ?></th>
+					<td data-title="<?php esc_attr_e( 'Subtotal', 'woocommerce' ); ?>"><?php echo wp_kses_post( wc_price( $subtotal ) ); ?></td>
+				</tr>
+			</table>
+			<div class="wc-proceed-to-checkout">
+				<a href="<?php echo esc_url( $checkout_url ); ?>" class="checkout-button button alt wc-forward"><?php esc_html_e( 'Proceed to checkout', 'woocommerce' ); ?></a>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Hide non-studio items on studio cart and checkout in flow.
+ *
+ * @param bool   $visible   Visible.
+ * @param array  $cart_item Item.
+ * @param string $cart_key  Key.
+ * @return bool
+ */
+function dejoiy_studio_cart_item_visible( $visible, $cart_item, $cart_key ) {
+	if ( ! dejoiy_studio_is_flow() ) {
+		return $visible;
+	}
+	if ( function_exists( 'dejoiy_studio_use_cart_template' ) && dejoiy_studio_use_cart_template() ) {
+		return dejoiy_studio_cart_item_is_studio( $cart_item );
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+		return dejoiy_studio_cart_item_is_studio( $cart_item );
+	}
+	return $visible;
+}
+
+/**
+ * Sideload image URL as product thumbnail.
+ *
+ * @param int    $post_id Post ID.
+ * @param string $url     Image URL.
+ */
+function dejoiy_studio_attach_image_from_url( $post_id, $url ) {
+	if ( ! $url ) {
+		return false;
+	}
+	update_post_meta( $post_id, '_dejoiy_studio_img_url', esc_url_raw( $url ) );
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	$filter = static function ( $args ) {
+		$args['user-agent'] = 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url();
+		$args['timeout']    = 30;
+		return $args;
+	};
+	add_filter( 'http_request_args', $filter, 10, 1 );
+
+	$tmp = download_url( $url, 30 );
+	remove_filter( 'http_request_args', $filter, 10 );
+
+	if ( is_wp_error( $tmp ) ) {
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout' => 30,
+				'headers' => array(
+					'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url(),
+				),
+			)
+		);
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return false;
+		}
+		$body = wp_remote_retrieve_body( $response );
+		if ( ! $body ) {
+			return false;
+		}
+		$tmp = wp_tempnam( 'studio-mock-' . $post_id . '.jpg' );
+		if ( ! $tmp ) {
+			return false;
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		file_put_contents( $tmp, $body );
+	}
+
+	$file = array(
+		'name'     => 'studio-mock-' . $post_id . '.jpg',
+		'tmp_name' => $tmp,
+	);
+	$attach_id = media_handle_sideload( $file, $post_id );
+	if ( ! is_wp_error( $attach_id ) ) {
+		set_post_thumbnail( $post_id, $attach_id );
+		return true;
+	}
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+	@unlink( $tmp );
+	return false;
+}
+
+/**
+ * @param array $attrs Form attributes.
+ * @return array
+ */
+function dejoiy_studio_cart_form_attributes( $attrs ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$attrs['enctype'] = 'multipart/form-data';
+	}
+	return $attrs;
+}
+
+/**
+ * Customization fields on single product.
+ */
+function dejoiy_studio_render_customize_fields() {
+	if ( ! dejoiy_studio_is_flow() ) {
+		return;
+	}
+	?>
+	<div class="dsu-customize" id="dsu-customize">
+		<h3 class="dsu-customize-title">Your customization</h3>
+		<p class="dsu-customize-hint">Add text and/or upload artwork. The seller receives these details with your order.</p>
+		<label class="dsu-field" for="dejoiy_custom_text">
+			<span>Custom text</span>
+			<textarea id="dejoiy_custom_text" name="dejoiy_custom_text" rows="3" maxlength="500" placeholder="Name, quote, or print instructions…"></textarea>
+		</label>
+		<label class="dsu-field" for="dejoiy_custom_art">
+			<span>Upload design image</span>
+			<input type="file" id="dejoiy_custom_art" name="dejoiy_custom_art" accept="image/jpeg,image/png,image/webp,image/gif" />
+		</label>
+		<p class="dsu-customize-note">PNG or JPG up to 5MB. At least one field is required.</p>
+	</div>
+	<?php
+}
+
+/**
+ * @param bool $passed   Passed.
+ * @param int  $product_id Product.
+ * @param int  $qty      Qty.
+ * @return bool
+ */
+function dejoiy_studio_validate_customize( $passed, $product_id, $qty ) {
+	if ( ! $passed || ! dejoiy_studio_is_flow() ) {
+		return $passed;
+	}
+	$text = isset( $_POST['dejoiy_custom_text'] ) ? trim( wp_unslash( $_POST['dejoiy_custom_text'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$file = isset( $_FILES['dejoiy_custom_art'] ) ? $_FILES['dejoiy_custom_art'] : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing
+	$has_file = ! empty( $file['name'] );
+	if ( '' === $text && ! $has_file ) {
+		wc_add_notice( __( 'Please add custom text or upload a design image for studio products.', 'dejoiy' ), 'error' );
+		return false;
+	}
+	if ( $has_file && ! empty( $file['size'] ) && (int) $file['size'] > 5 * 1024 * 1024 ) {
+		wc_add_notice( __( 'Design image must be 5MB or smaller.', 'dejoiy' ), 'error' );
+		return false;
+	}
+	return $passed;
+}
+
+/**
+ * @param array $cart_item_data Cart data.
+ * @param int   $product_id     Product.
+ * @param int   $variation_id   Variation.
+ * @return array
+ */
+function dejoiy_studio_add_cart_item_data( $cart_item_data, $product_id, $variation_id ) {
+	if ( ! dejoiy_studio_is_flow() ) {
+		return $cart_item_data;
+	}
+	$cart_item_data['dejoiy_studio_item'] = 1;
+	if ( isset( $_POST['dejoiy_custom_text'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$text = sanitize_textarea_field( wp_unslash( $_POST['dejoiy_custom_text'] ) );
+		if ( '' !== $text ) {
+			$cart_item_data['dejoiy_custom_text'] = $text;
+		}
+	}
+	if ( ! empty( $_FILES['dejoiy_custom_art']['name'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		$upload = wp_handle_upload(
+			$_FILES['dejoiy_custom_art'], // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			array( 'test_form' => false )
+		);
+		if ( empty( $upload['error'] ) && ! empty( $upload['url'] ) ) {
+			$cart_item_data['dejoiy_art_url'] = esc_url_raw( $upload['url'] );
+		}
+	}
+	return $cart_item_data;
+}
+
+/**
+ * Restore studio cart meta from session.
+ *
+ * @param array $cart_item     Cart item.
+ * @param array $values        Session values.
+ * @param string $cart_item_key Key.
+ * @return array
+ */
+function dejoiy_studio_get_cart_item_from_session( $cart_item, $values, $cart_item_key ) {
+	if ( isset( $values['dejoiy_studio_item'] ) ) {
+		$cart_item['dejoiy_studio_item'] = $values['dejoiy_studio_item'];
+	}
+	if ( isset( $values['dejoiy_custom_text'] ) ) {
+		$cart_item['dejoiy_custom_text'] = $values['dejoiy_custom_text'];
+	}
+	if ( isset( $values['dejoiy_art_url'] ) ) {
+		$cart_item['dejoiy_art_url'] = $values['dejoiy_art_url'];
+	}
+	return $cart_item;
+}
+
+/**
+ * @param array $item_data Item data.
+ * @param array $cart_item  Cart item.
+ * @return array
+ */
+function dejoiy_studio_cart_item_display( $item_data, $cart_item ) {
+	if ( ! empty( $cart_item['dejoiy_custom_text'] ) ) {
+		$item_data[] = array(
+			'key'   => __( 'Custom text', 'dejoiy' ),
+			'value' => wc_clean( $cart_item['dejoiy_custom_text'] ),
+		);
+	}
+	if ( ! empty( $cart_item['dejoiy_art_url'] ) ) {
+		$url = esc_url( $cart_item['dejoiy_art_url'] );
+		$item_data[] = array(
+			'key'   => __( 'Design file', 'dejoiy' ),
+			'value' => '<a href="' . $url . '" target="_blank" rel="noopener">' . esc_html__( 'View upload', 'dejoiy' ) . '</a>',
+		);
+	}
+	return $item_data;
+}
+
+/**
+ * @param WC_Order_Item_Product $item          Item.
+ * @param string                $cart_item_key Key.
+ * @param array                 $values        Values.
+ * @param WC_Order              $order         Order.
+ */
+function dejoiy_studio_order_line_item_meta( $item, $cart_item_key, $values, $order ) {
+	if ( ! empty( $values['dejoiy_custom_text'] ) ) {
+		$item->add_meta_data( __( 'Studio custom text', 'dejoiy' ), $values['dejoiy_custom_text'], true );
+	}
+	if ( ! empty( $values['dejoiy_art_url'] ) ) {
+		$item->add_meta_data( __( 'Studio design file', 'dejoiy' ), $values['dejoiy_art_url'], true );
+	}
+}
+
+/**
+ * Admin order table header.
+ */
+function dejoiy_studio_admin_order_headers() {
+	echo '<th>' . esc_html__( 'Studio customization', 'dejoiy' ) . '</th>';
+}
+
+/**
+ * @param WC_Product|null $product Product.
+ * @param WC_Order_Item   $item    Item.
+ * @param int             $item_id Item ID.
+ */
+function dejoiy_studio_admin_order_values( $product, $item, $item_id ) {
+	echo '<td>';
+	$text = $item->get_meta( __( 'Studio custom text', 'dejoiy' ) );
+	$file = $item->get_meta( __( 'Studio design file', 'dejoiy' ) );
+	if ( $text ) {
+		echo '<strong>' . esc_html__( 'Text:', 'dejoiy' ) . '</strong> ' . esc_html( $text ) . '<br>';
+	}
+	if ( $file ) {
+		echo '<strong>' . esc_html__( 'File:', 'dejoiy' ) . '</strong> <a href="' . esc_url( $file ) . '" target="_blank">' . esc_html__( 'Download', 'dejoiy' ) . '</a>';
+	}
+	if ( ! $text && ! $file ) {
+		echo '—';
+	}
+	echo '</td>';
+}

@@ -1,0 +1,267 @@
+/**
+ * DEJOIY Custom Studio Universe — Three.js core + GSAP motion
+ */
+(function () {
+  'use strict';
+
+  var root = document.getElementById('dsu');
+  if (!root) return;
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var tipEl = document.createElement('div');
+  tipEl.className = 'dsu-orbit-tip';
+  document.body.appendChild(tipEl);
+
+  /* ── Mouse parallax for hero UI ── */
+  root.addEventListener('pointermove', function (e) {
+    var r = root.getBoundingClientRect();
+    var x = (e.clientX - r.left) / r.width - 0.5;
+    var y = (e.clientY - r.top) / r.height - 0.5;
+    root.style.setProperty('--mx', String(x));
+    root.style.setProperty('--my', String(y));
+  });
+
+  /* ── Magnetic CTAs ── */
+  root.querySelectorAll('.dsu-mag').forEach(function (btn) {
+    btn.addEventListener('pointermove', function (e) {
+      var b = btn.getBoundingClientRect();
+      var dx = (e.clientX - b.left - b.width / 2) * 0.12;
+      var dy = (e.clientY - b.top - b.height / 2) * 0.12;
+      btn.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+    });
+    btn.addEventListener('pointerleave', function () {
+      btn.style.transform = '';
+    });
+  });
+
+  /* ── Three.js Creation Core ── */
+  function initCore() {
+    var canvas = document.getElementById('dsu-hero-canvas');
+    if (!canvas || typeof THREE === 'undefined') return null;
+
+    var scene = new THREE.Scene();
+    var w = canvas.clientWidth || window.innerWidth;
+    var h = canvas.clientHeight || window.innerHeight;
+    var camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 100);
+    camera.position.z = 14;
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(w, h, false);
+
+    /* Golden sphere */
+    var coreGeo = new THREE.SphereGeometry(2.2, 64, 64);
+    var coreMat = new THREE.MeshStandardMaterial({
+      color: 0xffd700,
+      emissive: 0xffa500,
+      emissiveIntensity: 0.85,
+      metalness: 0.9,
+      roughness: 0.15,
+    });
+    var core = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(core);
+
+    var glowGeo = new THREE.SphereGeometry(2.55, 32, 32);
+    var glowMat = new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.12 });
+    var glow = new THREE.Mesh(glowGeo, glowMat);
+    scene.add(glow);
+
+    var amb = new THREE.AmbientLight(0xffffff, 0.35);
+    var key = new THREE.PointLight(0xffd700, 2.2, 80);
+    key.position.set(6, 8, 10);
+    var rim = new THREE.PointLight(0x00ffb3, 0.6, 60);
+    rim.position.set(-8, -4, 6);
+    scene.add(amb, key, rim);
+
+    var orbitItems = [
+      { label: 'T-Shirt', emoji: '👕', r: 5.2, speed: 0.35, phase: 0 },
+      { label: 'Mug', emoji: '☕', r: 5.8, speed: 0.28, phase: 0.8 },
+      { label: 'Cap', emoji: '🧢', r: 5.4, speed: 0.32, phase: 1.6 },
+      { label: 'Shoes', emoji: '👟', r: 6.2, speed: 0.25, phase: 2.4 },
+      { label: 'Phone Case', emoji: '📱', r: 5.6, speed: 0.3, phase: 3.2 },
+      { label: 'Poster', emoji: '🖼', r: 6.4, speed: 0.22, phase: 4.0 },
+      { label: 'Backpack', emoji: '🎒', r: 5.9, speed: 0.27, phase: 4.8 },
+      { label: 'Notebook', emoji: '📚', r: 6.0, speed: 0.26, phase: 5.6 },
+    ];
+
+    var sprites = [];
+    var loader = new THREE.TextureLoader();
+    orbitItems.forEach(function (item) {
+      var c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = 'rgba(0,0,0,0.85)';
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(64, 64, 58, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = '52px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.emoji, 64, 68);
+      var tex = new THREE.CanvasTexture(c);
+      var mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+      var sp = new THREE.Sprite(mat);
+      sp.scale.set(1.1, 1.1, 1);
+      sp.userData = item;
+      scene.add(sp);
+      sprites.push(sp);
+    });
+
+    var raycaster = new THREE.Raycaster();
+    var pointer = new THREE.Vector2();
+    var hovered = null;
+    var t = 0;
+    var mx = 0;
+    var my = 0;
+
+    function onResize() {
+      w = canvas.clientWidth || window.innerWidth;
+      h = canvas.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+
+    window.addEventListener('resize', onResize, { passive: true });
+
+    canvas.addEventListener('pointermove', function (e) {
+      var rect = canvas.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      mx = pointer.x * 0.4;
+      my = pointer.y * 0.25;
+    });
+
+    canvas.addEventListener('pointerleave', function () {
+      hovered = null;
+      tipEl.classList.remove('is-on');
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      t += reduceMotion ? 0 : 0.016;
+
+      core.rotation.y += reduceMotion ? 0 : 0.004;
+      glow.scale.setScalar(1 + Math.sin(t * 2) * 0.04);
+
+      camera.position.x += (mx * 2 - camera.position.x) * 0.05;
+      camera.position.y += (my * 1.5 - camera.position.y) * 0.05;
+      camera.lookAt(0, 0, 0);
+
+      sprites.forEach(function (sp, i) {
+        var d = sp.userData;
+        var a = t * d.speed + d.phase;
+        sp.position.x = Math.cos(a) * d.r;
+        sp.position.z = Math.sin(a) * d.r;
+        sp.position.y = Math.sin(a * 1.3) * 0.8;
+        var base = 1.1;
+        if (hovered === sp) {
+          sp.scale.set(base * 1.35, base * 1.35, 1);
+          sp.material.opacity = 1;
+        } else {
+          sp.scale.set(base, base, 1);
+          sp.material.opacity = 0.95;
+        }
+      });
+
+      if (!reduceMotion) {
+        raycaster.setFromCamera(pointer, camera);
+        var hits = raycaster.intersectObjects(sprites);
+        if (hits.length) {
+          hovered = hits[0].object;
+          tipEl.textContent = hovered.userData.label;
+          tipEl.classList.add('is-on');
+          tipEl.style.left = (pointer.x * 0.5 + 0.5) * window.innerWidth + 'px';
+          tipEl.style.top = (-pointer.y * 0.5 + 0.5) * window.innerHeight + 'px';
+        } else if (hovered) {
+          hovered = null;
+          tipEl.classList.remove('is-on');
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+    return { destroy: function () { window.removeEventListener('resize', onResize); } };
+  }
+
+  /* ── GSAP scroll reveals ── */
+  function initScroll() {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.utils.toArray('[data-dsu-reveal]').forEach(function (el) {
+      gsap.to(el, {
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+        onStart: function () { el.classList.add('dsu-in'); },
+      });
+    });
+
+    gsap.from('.dsu-hero-ui > *', {
+      opacity: 0,
+      y: 36,
+      stagger: 0.12,
+      duration: 1.1,
+      ease: 'power3.out',
+      delay: 0.2,
+    });
+  }
+
+  /* ── AI terminal demo ── */
+  function initAiLog() {
+    var log = document.getElementById('dsu-ai-log');
+    if (!log) return;
+    var lines = [
+      '> Initializing JOI design engine…',
+      '> Parsing brief: "minimal gold monogram"',
+      '> Generating print zones… ████████░░ 82%',
+      '> Applying Pantone-matched gold #FFD700',
+      '> Preview mesh: READY ✓',
+    ];
+    var i = 0;
+    function tick() {
+      if (i < lines.length) {
+        log.textContent += (i ? '\n' : '') + lines[i];
+        i++;
+        setTimeout(tick, 900);
+      }
+    }
+    var obs = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) {
+        tick();
+        obs.disconnect();
+      }
+    }, { threshold: 0.3 });
+    obs.observe(log.closest('.dsu-ai-terminal') || log);
+  }
+
+  /* ── JOI click ── */
+  var joi = document.getElementById('dsu-joi');
+  if (joi) {
+    joi.addEventListener('click', function () {
+      var ai = document.getElementById('dsu-ai');
+      if (ai) ai.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+
+  function boot() {
+    initCore();
+    initScroll();
+    initAiLog();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();

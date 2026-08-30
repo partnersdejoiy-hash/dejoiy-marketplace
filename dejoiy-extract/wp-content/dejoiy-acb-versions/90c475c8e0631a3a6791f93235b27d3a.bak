@@ -1,0 +1,80 @@
+/**
+ * DEJOIY single product — mobile/tablet focus view (no site header/footer).
+ */
+
+@media (max-width: 1024px) {
+	body.dejoiy-mobile-product-view #dejoiy-mobile-os-chrome,
+	body.dejoiy-mobile-product-view #dejoiy-mobile-os-header,
+	body.dejoiy-mobile-product-view #dejoiy-mobile-os-mkt,
+	body.dejoiy-mobile-product-view #dejoiy-mobile-os-bottom,
+	body.dejoiy-mobile-product-view #dm-joi-search-sheet,
+	body.dejoiy-mobile-product-view .elementor-location-header,
+	body.dejoiy-mobile-product-view .etheme-elementor-header-sticky,
+	body.dejoiy-mobile-product-view .et-footers-wrapper,
+	body.dejoiy-mobile-product-view footer.site-footer,
+	body.dejoiy-mobile-product-view .elementor-location-footer,
+	body.dejoiy-mobile-product-view .prefooter,
+	body.dejoiy-mobile-product-view #back-top {
+		display: none !important;
+		visibility: hidden !important;
+		height: 0 !important;
+		overflow: hidden !important;
+		pointer-events: none !important;
+	}
+
+	body.dejoiy-mobile-product-view {
+		padding-top: 0 !important;
+		padding-bottom: env(safe-area-inset-bottom, 0) !important;
+		background: #fff;
+	}
+
+	body.dejoiy-mobile-product-view .page-wrapper,
+	body.dejoiy-mobile-product-view .template-content {
+		padding-top: 0 !important;
+		margin-top: 0 !important;
+	}
+
+	.dejoiy-mobile-product-bar {
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		display: flex;
+		align-items: center;
+		padding: 0.55rem 0.75rem;
+		background: rgba(255, 255, 255, 0.96);
+		border-bottom: 1px solid #e2e8f0;
+		backdrop-filter: blur(8px);
+	}
+
+	.dejoiy-mobile-product-bar__back {
+		font-size: 0.88rem;
+		font-weight: 700;
+		color: #2563eb;
+		text-decoration: none;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	body.dejoiy-mobile-product-view .woocommerce div.product {
+		padding: 0.5rem 0.75rem 1.5rem;
+		max-width: 100%;
+	}
+
+	body.dejoiy-mobile-product-view .woocommerce div.product .product_title {
+		font-size: 1.15rem;
+		line-height: 1.3;
+	}
+
+	body.dejoiy-mobile-product-view .woocommerce div.product p.price {
+		font-size: 1.25rem;
+		font-weight: 800;
+		color: #0f172a;
+	}
+}
+
+@media (min-width: 1025px) {
+	.dejoiy-mobile-product-bar {
+		display: none !important;
+	}
+}

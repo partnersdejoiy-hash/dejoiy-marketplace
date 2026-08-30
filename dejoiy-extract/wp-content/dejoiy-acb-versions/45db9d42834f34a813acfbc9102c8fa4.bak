@@ -1,0 +1,76 @@
+/**
+ * Studio WooCommerce — native add to cart / buy now (supports file uploads).
+ *
+ * WC AJAX add_to_cart cannot reliably process customization uploads; studio
+ * products always POST the cart form normally.
+ */
+(function ($) {
+  'use strict';
+
+  var BUY_NOW_SEL = '.et-single-buy-now, .buy-now-button, .buy_now_button, .button.buy-now';
+
+  function ensureFlowFields($form) {
+    if (!$form || !$form.length) return;
+    if (!$form.find('[name="dejoiy_studio"]').length) {
+      $form.append('<input type="hidden" name="dejoiy_studio" value="1" />');
+    }
+  }
+
+  function isBuyNowButton(el) {
+    return el && $(el).is(BUY_NOW_SEL);
+  }
+
+  function setBuyNowFields($form, enable) {
+    $form.find('[name="woocommerce-buy-now"], [name="dejoiy_studio_buy_now"]').remove();
+    if (!enable) return;
+    var pid = $form.find('[name="add-to-cart"]').val();
+    if (pid) {
+      $form.append('<input type="hidden" name="woocommerce-buy-now" value="' + pid + '" />');
+    }
+    $form.append('<input type="hidden" name="dejoiy_studio_buy_now" value="1" />');
+  }
+
+  function bindForm() {
+    var $form = $('form.cart');
+    if (!$form.length) return;
+
+    ensureFlowFields($form);
+
+    $form.on('click', BUY_NOW_SEL, function () {
+      ensureFlowFields($form);
+      setBuyNowFields($form, true);
+    });
+
+    $form.on('click', '.single_add_to_cart_button', function () {
+      if (!isBuyNowButton(this)) {
+        setBuyNowFields($form, false);
+      }
+    });
+
+    $form.on('submit', function (e) {
+      if (!$form.find('[name="add-to-cart"]').length) return;
+
+      var submitter = e.originalEvent && e.originalEvent.submitter;
+      var isBuyNow = isBuyNowButton(submitter);
+
+      ensureFlowFields($form);
+      if (isBuyNow) {
+        setBuyNowFields($form, true);
+      } else {
+        setBuyNowFields($form, false);
+      }
+
+      var $btn = isBuyNow
+        ? $form.find(BUY_NOW_SEL).first()
+        : $form.find('.single_add_to_cart_button').not(BUY_NOW_SEL).first();
+      if (!$btn.length) {
+        $btn = $form.find('.single_add_to_cart_button').first();
+      }
+      $btn.addClass('loading').prop('disabled', true);
+
+      /* Native POST — do not preventDefault (required for $_FILES + WC validation). */
+    });
+  }
+
+  $(bindForm);
+})(jQuery);

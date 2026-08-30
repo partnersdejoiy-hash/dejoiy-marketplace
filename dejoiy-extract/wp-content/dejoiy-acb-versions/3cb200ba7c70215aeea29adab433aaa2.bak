@@ -1,0 +1,237 @@
+/**
+ * DEJOIY Library Universe
+ */
+(function () {
+  'use strict';
+
+  var CFG = window.DEJOIY_LIBRARY || {};
+  var root = document.getElementById('dlu');
+  if (!root && !document.body.classList.contains('dejoiy-library-active')) return;
+
+  /* ── Galaxy hero ── */
+  function initGalaxy() {
+    var canvas = document.getElementById('dlu-galaxy');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var books = CFG.books || [];
+    var topics = CFG.topics || [];
+    var orbs = [];
+    var mx = 0;
+    var my = 0;
+
+    function resize() {
+      canvas.width = canvas.offsetWidth * (window.devicePixelRatio || 1);
+      canvas.height = canvas.offsetHeight * (window.devicePixelRatio || 1);
+      ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    }
+
+    var cx = function () { return canvas.offsetWidth / 2; };
+    var cy = function () { return canvas.offsetHeight / 2; };
+
+    topics.forEach(function (t, i) {
+      orbs.push({ type: 'topic', label: t, angle: (i / topics.length) * Math.PI * 2, dist: 120 + i * 8, speed: 0.0008 + i * 0.0001 });
+    });
+    books.slice(0, 8).forEach(function (b, i) {
+      orbs.push({ type: 'book', data: b, angle: (i / 8) * Math.PI * 2, dist: 200 + (i % 3) * 30, speed: 0.0012 + i * 0.00015 });
+    });
+
+    root.addEventListener('mousemove', function (e) {
+      var r = canvas.getBoundingClientRect();
+      mx = (e.clientX - r.left) / r.width - 0.5;
+      my = (e.clientY - r.top) / r.height - 0.5;
+    });
+
+    function draw() {
+      var w = canvas.offsetWidth;
+      var h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      for (var s = 0; s < 80; s++) {
+        ctx.fillStyle = 'rgba(201,162,39,' + (0.1 + Math.random() * 0.3) + ')';
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1, 1);
+      }
+      var centerX = cx() + mx * 24;
+      var centerY = cy() + my * 24;
+      orbs.forEach(function (o) {
+        o.angle += o.speed;
+        var x = centerX + Math.cos(o.angle) * o.dist;
+        var y = centerY + Math.sin(o.angle) * o.dist * 0.55;
+        if (o.type === 'topic') {
+          ctx.fillStyle = 'rgba(201,162,39,0.9)';
+          ctx.font = '11px system-ui,sans-serif';
+          ctx.fillText(o.label, x - 20, y);
+        } else if (o.data && o.data.cover) {
+          ctx.strokeStyle = 'rgba(201,162,39,0.4)';
+          ctx.strokeRect(x - 14, y - 20, 28, 40);
+        }
+      });
+      requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    draw();
+  }
+
+  /* ── JOI Librarian ── */
+  function initJoi() {
+    var input = document.getElementById('dlu-joi-input');
+    var btn = document.getElementById('dlu-joi-go');
+    var out = document.getElementById('dlu-joi-result');
+    if (!input || !btn || !out) return;
+
+    function run() {
+      var q = input.value.trim();
+      if (q.length < 2) return;
+      btn.disabled = true;
+      fetch((CFG.joi || CFG.ajax) + '&q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.success || !res.data) return;
+          var html = '<p><strong>' + (res.data.message || '') + '</strong></p><div class="dlu-joi-books">';
+          (res.data.books || []).forEach(function (b) {
+            html += '<a href="' + b.url + '"><img src="' + (b.cover || '') + '" alt="" /><span>' + b.title + '</span></a>';
+          });
+          html += '</div>';
+          out.innerHTML = html;
+          out.hidden = false;
+        })
+        .catch(function () { btn.disabled = false; });
+    }
+
+    btn.addEventListener('click', run);
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') run(); });
+  }
+
+  /* ── Library cart panel ── */
+  function initCartPanel() {
+    var toggle = document.getElementById('dlu-cart-toggle');
+    var panel = document.getElementById('dlu-cart-panel');
+    var close = document.getElementById('dlu-cart-close');
+    var backdrop = document.getElementById('dlu-cart-backdrop');
+    if (!toggle || !panel) return;
+
+    function open() {
+      panel.hidden = false;
+      panel.classList.add('is-open');
+      if (backdrop) { backdrop.hidden = false; backdrop.classList.add('is-open'); }
+      refreshCart();
+    }
+    function shut() {
+      panel.classList.remove('is-open');
+      if (backdrop) backdrop.classList.remove('open');
+      setTimeout(function () {
+        panel.hidden = true;
+        if (backdrop) backdrop.hidden = true;
+      }, 350);
+    }
+
+    toggle.addEventListener('click', open);
+    if (close) close.addEventListener('click', shut);
+    if (backdrop) backdrop.addEventListener('click', shut);
+
+    function refreshCart() {
+      var body = document.getElementById('dlu-cart-body');
+      if (!body || !CFG.cart_count) return;
+      fetch(CFG.cart_count, { credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var n = d.data && d.data.count ? d.data.count : 0;
+          var badge = toggle.querySelector('.dlu-cart-badge');
+          if (badge) {
+            badge.textContent = String(n);
+            badge.hidden = n < 1;
+          }
+        });
+    }
+  }
+
+  /* ── Save favorites (local) ── */
+  function initSaves() {
+    document.querySelectorAll('.dlu-book-save').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        var favs = JSON.parse(localStorage.getItem('dlu_favs') || '[]');
+        if (favs.indexOf(id) === -1) favs.push(id);
+        else favs = favs.filter(function (x) { return x !== id; });
+        localStorage.setItem('dlu_favs', JSON.stringify(favs));
+        btn.textContent = favs.indexOf(id) !== -1 ? '♥' : '♡';
+      });
+    });
+  }
+
+  /* ── Reveal on scroll ── */
+  function initReveal() {
+    var els = document.querySelectorAll('[data-dlu-reveal]');
+    if (!els.length || !('IntersectionObserver' in window)) {
+      els.forEach(function (el) { el.classList.add('is-visible'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) en.target.classList.add('is-visible');
+      });
+    }, { threshold: 0.12 });
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  /* ── Reader modes + progress ── */
+  function initReader() {
+    var reader = document.getElementById('dlu-reader');
+    if (!reader) return;
+    var bookId = reader.getAttribute('data-book-id');
+    var prog = document.getElementById('dlu-read-progress');
+    var key = 'dlu_progress_' + bookId;
+    var saved = parseInt(localStorage.getItem(key) || '0', 10);
+    if (prog) prog.value = saved;
+
+    reader.querySelectorAll('.dlu-reader-modes button').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var mode = btn.getAttribute('data-mode');
+        var body = reader.querySelector('.dlu-reader-body');
+        if (body) body.setAttribute('data-mode', mode);
+        reader.querySelectorAll('.dlu-reader-modes button').forEach(function (b) { b.classList.remove('is-on'); });
+        btn.classList.add('is-on');
+      });
+    });
+
+    var content = document.getElementById('dlu-reader-content');
+    if (content) {
+      content.addEventListener('scroll', function () {
+        var pct = Math.min(100, Math.round((content.scrollTop / (content.scrollHeight - content.clientHeight)) * 100) || 0);
+        if (prog) prog.value = pct;
+        localStorage.setItem(key, String(pct));
+      });
+    }
+  }
+
+  /* ── Footer starfield ── */
+  function initStars() {
+    var c = document.getElementById('dlu-ft-stars');
+    if (!c) return;
+    var ctx = c.getContext('2d');
+    function resize() {
+      c.width = c.offsetWidth;
+      c.height = c.offsetHeight;
+      ctx.clearRect(0, 0, c.width, c.height);
+      for (var i = 0; i < 120; i++) {
+        ctx.fillStyle = 'rgba(255,255,255,' + (Math.random() * 0.5 + 0.2) + ')';
+        ctx.beginPath();
+        ctx.arc(Math.random() * c.width, Math.random() * c.height, Math.random() * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    resize();
+    window.addEventListener('resize', resize);
+  }
+
+  initGalaxy();
+  initJoi();
+  initCartPanel();
+  initSaves();
+  initReveal();
+  initReader();
+  initStars();
+})();

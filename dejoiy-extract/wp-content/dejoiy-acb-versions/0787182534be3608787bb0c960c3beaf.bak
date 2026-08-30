@@ -1,0 +1,467 @@
+<?php
+/**
+ * Keep DEJOIY Nexus library products off the main WooCommerce shop/catalog.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! defined( 'DEJOIY_LIBRARY_FLOW' ) ) {
+	define( 'DEJOIY_LIBRARY_FLOW', 'dejoiy_library' );
+}
+
+if ( ! function_exists( 'dejoiy_library_get_landing_url' ) ) {
+	/**
+	 * @return string Nexus landing URL (available before library-customize.php loads).
+	 */
+	function dejoiy_library_get_landing_url() {
+		static $url = null;
+		if ( null !== $url ) {
+			return $url;
+		}
+		if ( defined( 'DEJOIY_LIBRARY_PAGE_ID' ) && DEJOIY_LIBRARY_PAGE_ID > 0 ) {
+			$permalink = get_permalink( (int) DEJOIY_LIBRARY_PAGE_ID );
+			if ( $permalink ) {
+				$url = $permalink;
+				return $url;
+			}
+		}
+		$page = get_page_by_path( 'dejoiy-library' );
+		$url  = $page ? get_permalink( $page ) : home_url( '/dejoiy-library/' );
+		return $url ? $url : home_url( '/dejoiy-library/' );
+	}
+}
+
+if ( ! function_exists( 'dejoiy_library_is_book_product' ) ) {
+	/**
+	 * @param int $product_id Product ID.
+	 * @return bool
+	 */
+	function dejoiy_library_is_book_product( $product_id ) {
+		return (bool) get_post_meta( (int) $product_id, '_dejoiy_library_book', true );
+	}
+}
+
+/**
+ * Term IDs for DEJOIY Nexus category tree (parent + children).
+ *
+ * @return int[]
+ */
+function dejoiy_library_get_nexus_category_term_ids() {
+	static $ids = null;
+	if ( null !== $ids ) {
+		return $ids;
+	}
+
+	$ids    = array();
+	$parent = get_term_by( 'slug', 'dejoiy-library', 'product_cat' );
+	if ( ! $parent || is_wp_error( $parent ) ) {
+		return $ids;
+	}
+
+	$ids[] = (int) $parent->term_id;
+	$kids  = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'child_of'   => (int) $parent->term_id,
+			'hide_empty' => false,
+			'fields'     => 'ids',
+		)
+	);
+	if ( ! is_wp_error( $kids ) && ! empty( $kids ) ) {
+		$ids = array_merge( $ids, array_map( 'intval', $kids ) );
+	}
+
+	$ids = array_values( array_unique( $ids ) );
+	return $ids;
+}
+
+/**
+ * Whether a product category term belongs to the Nexus library tree.
+ *
+ * @param int $term_id Term ID.
+ * @return bool
+ */
+function dejoiy_library_is_nexus_category_term( $term_id ) {
+	$term_id = (int) $term_id;
+	if ( $term_id < 1 ) {
+		return false;
+	}
+	return in_array( $term_id, dejoiy_library_get_nexus_category_term_ids(), true );
+}
+
+/**
+ * Apply WC catalog filters only on real storefront product views (not during Elementor render bootstrap).
+ *
+ * @return bool
+ */
+function dejoiy_library_should_apply_shop_catalog_filters() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( dejoiy_library_has_nexus_flow_request() ) {
+		return false;
+	}
+	if ( ! did_action( 'wp' ) ) {
+		return false;
+	}
+	if ( function_exists( 'is_shop' ) && ( is_shop() || is_product_taxonomy() || is_product_category() || is_product_tag() ) ) {
+		return true;
+	}
+	if ( is_search() ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Safe check: Nexus flow query flag only (no conditional tags).
+ *
+ * @return bool
+ */
+function dejoiy_library_has_nexus_flow_request() {
+	return function_exists( 'dejoiy_library_request_has_flow_flag' ) && dejoiy_library_request_has_flow_flag();
+}
+
+/**
+ * Contexts where Nexus books should appear in WooCommerce queries.
+ * Never call is_page() / is_shop() before the main query (wp).
+ *
+ * @return bool
+ */
+function dejoiy_library_is_nexus_catalog_context() {
+	if ( dejoiy_library_has_nexus_flow_request() ) {
+		return true;
+	}
+	if ( ! did_action( 'wp' ) ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_library_is_landing' ) && dejoiy_library_is_landing() ) {
+		return true;
+	}
+	if ( function_exists( 'dejoiy_library_is_screen' ) && dejoiy_library_is_screen() ) {
+		return true;
+	}
+	if ( wp_doing_ajax() && ! empty( $_REQUEST['action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$action = (string) $_REQUEST['action']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( 0 === strpos( $action, 'dejoiy_library_' ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Append NOT IN tax_query for Nexus categories.
+ *
+ * @param array $tax_query Tax query.
+ * @return array
+ */
+function dejoiy_library_append_nexus_tax_exclusion( $tax_query ) {
+	if ( ! is_array( $tax_query ) ) {
+		$tax_query = array();
+	}
+
+	$term_ids = dejoiy_library_get_nexus_category_term_ids();
+	if ( empty( $term_ids ) ) {
+		return $tax_query;
+	}
+
+	$exclude = array(
+		'taxonomy'         => 'product_cat',
+		'field'            => 'term_id',
+		'terms'            => $term_ids,
+		'operator'         => 'NOT IN',
+		'include_children' => false,
+	);
+
+	if ( empty( $tax_query ) ) {
+		return array( $exclude );
+	}
+
+	if ( isset( $tax_query['relation'] ) ) {
+		$tax_query[] = $exclude;
+		return $tax_query;
+	}
+
+	$clauses = array();
+	foreach ( $tax_query as $key => $clause ) {
+		if ( 'relation' === $key ) {
+			continue;
+		}
+		if ( is_array( $clause ) ) {
+			$clauses[] = $clause;
+		}
+	}
+
+	if ( empty( $clauses ) ) {
+		return array( $exclude );
+	}
+
+	return array_merge(
+		array( 'relation' => 'AND' ),
+		$clauses,
+		array( $exclude )
+	);
+}
+
+/**
+ * WooCommerce shop loops — do not use conditional tags here (runs inside WC_Product_Query).
+ *
+ * @param array    $tax_query Tax query.
+ * @param WC_Query $wc_query  WC query.
+ * @return array
+ */
+function dejoiy_library_wc_product_query_tax_query( $tax_query, $wc_query ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! dejoiy_library_should_apply_shop_catalog_filters() ) {
+		return $tax_query;
+	}
+	return dejoiy_library_append_nexus_tax_exclusion( $tax_query );
+}
+
+/**
+ * Product shortcodes and blocks on the main store.
+ *
+ * @param array $args Query args.
+ * @return array
+ */
+function dejoiy_library_shortcode_products_query( $args ) {
+	if ( ! dejoiy_library_should_apply_shop_catalog_filters() && ! dejoiy_library_is_nexus_catalog_context() ) {
+		return $args;
+	}
+	if ( dejoiy_library_is_nexus_catalog_context() ) {
+		return $args;
+	}
+	if ( ! isset( $args['tax_query'] ) ) {
+		$args['tax_query'] = array();
+	}
+	$args['tax_query'] = dejoiy_library_append_nexus_tax_exclusion( $args['tax_query'] );
+	return $args;
+}
+
+/**
+ * Site search: hide library products outside Nexus.
+ *
+ * @param WP_Query $query Query.
+ */
+function dejoiy_library_exclude_from_search( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
+		return;
+	}
+	if ( dejoiy_library_has_nexus_flow_request() || dejoiy_library_is_nexus_catalog_context() ) {
+		return;
+	}
+
+	$post_type = $query->get( 'post_type' );
+	if ( $post_type && 'product' !== $post_type && ( ! is_array( $post_type ) || ! in_array( 'product', $post_type, true ) ) ) {
+		return;
+	}
+
+	$tax_query  = $query->get( 'tax_query' );
+	$tax_query  = dejoiy_library_append_nexus_tax_exclusion( is_array( $tax_query ) ? $tax_query : array() );
+	$meta_query = $query->get( 'meta_query' );
+	$meta_query = is_array( $meta_query ) ? $meta_query : array();
+	$meta_query[] = array(
+		'relation' => 'OR',
+		array(
+			'key'     => '_dejoiy_library_book',
+			'compare' => 'NOT EXISTS',
+		),
+		array(
+			'key'     => '_dejoiy_library_book',
+			'value'   => '1',
+			'compare' => '!=',
+		),
+	);
+
+	$query->set( 'tax_query', $tax_query );
+	$query->set( 'meta_query', $meta_query );
+}
+
+/**
+ * Redirect library category archives on the main store to Nexus.
+ */
+function dejoiy_library_redirect_nexus_category_archives() {
+	if ( ! did_action( 'wp' ) || ! function_exists( 'is_product_category' ) || ! is_product_category() ) {
+		return;
+	}
+	if ( dejoiy_library_is_nexus_catalog_context() ) {
+		return;
+	}
+
+	$term = get_queried_object();
+	if ( ! $term || ! isset( $term->term_id ) || ! dejoiy_library_is_nexus_category_term( (int) $term->term_id ) ) {
+		return;
+	}
+
+	$slug = isset( $term->slug ) ? (string) $term->slug : 'business';
+	$url  = add_query_arg( DEJOIY_LIBRARY_FLOW, '1', dejoiy_library_get_landing_url() );
+	if ( 'dejoiy-library' !== $slug ) {
+		$url .= '#dlu-cat-' . rawurlencode( $slug );
+	} else {
+		$url .= '#dlu-discover';
+	}
+
+	wp_safe_redirect( $url );
+	exit;
+}
+
+/**
+ * Single product pages for Nexus books open in the Nexus reader only.
+ */
+function dejoiy_library_redirect_nexus_product_permalink() {
+	if ( ! did_action( 'wp' ) || ! is_singular( 'product' ) ) {
+		return;
+	}
+	if ( dejoiy_library_is_nexus_catalog_context() ) {
+		return;
+	}
+
+	$product_id = get_queried_object_id();
+	if ( ! $product_id || ! dejoiy_library_is_book_product( $product_id ) ) {
+		return;
+	}
+
+	$reader_url = function_exists( 'dejoiy_library_reader_url' )
+		? dejoiy_library_reader_url( $product_id )
+		: add_query_arg(
+			array(
+				DEJOIY_LIBRARY_FLOW => '1',
+				'dejoiy_reader'     => (int) $product_id,
+			),
+			dejoiy_library_get_landing_url()
+		);
+	wp_safe_redirect( $reader_url );
+	exit;
+}
+
+/**
+ * Hide from WooCommerce catalog visibility on the storefront.
+ *
+ * @param bool       $visible Visible.
+ * @param int        $product_id Product ID.
+ * @param WC_Product $product Product object.
+ * @return bool
+ */
+function dejoiy_library_product_is_visible( $visible, $product_id, $product ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! dejoiy_library_should_apply_shop_catalog_filters() ) {
+		return $visible;
+	}
+	if ( dejoiy_library_has_nexus_flow_request() ) {
+		return $visible;
+	}
+	if ( dejoiy_library_is_book_product( $product_id ) ) {
+		return false;
+	}
+	return $visible;
+}
+
+/**
+ * Set catalog visibility hidden for one Nexus product.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_set_product_catalog_hidden( $product_id ) {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+	$product = wc_get_product( (int) $product_id );
+	if ( ! $product ) {
+		return;
+	}
+	$product->set_catalog_visibility( 'hidden' );
+	$product->save();
+}
+
+/**
+ * One-time: hide all library books from the main WooCommerce catalog (admin/cron only).
+ */
+function dejoiy_library_upgrade_shop_visibility() {
+	if ( get_option( 'dejoiy_library_shop_hidden_v1' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	// Avoid heavy product saves during public storefront requests.
+	if ( ! is_admin() && ! wp_doing_cron() && ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
+		return;
+	}
+
+	if ( function_exists( 'dejoiy_library_ensure_customize_loaded' ) ) {
+		dejoiy_library_ensure_customize_loaded();
+	}
+
+	$page = max( 1, (int) get_option( 'dejoiy_library_shop_hidden_page', 1 ) );
+	if ( ! function_exists( 'dejoiy_library_query_books' ) ) {
+		return;
+	}
+	$q = dejoiy_library_query_books(
+		array(
+			'posts_per_page' => 25,
+			'paged'          => $page,
+			'fields'         => 'ids',
+		)
+	);
+
+	if ( empty( $q->posts ) ) {
+		update_option( 'dejoiy_library_shop_hidden_v1', '1' );
+		delete_option( 'dejoiy_library_shop_hidden_page' );
+		return;
+	}
+
+	foreach ( $q->posts as $product_id ) {
+		dejoiy_library_set_product_catalog_hidden( (int) $product_id );
+	}
+	wp_reset_postdata();
+
+	if ( $page >= (int) $q->max_num_pages ) {
+		update_option( 'dejoiy_library_shop_hidden_v1', '1' );
+		delete_option( 'dejoiy_library_shop_hidden_page' );
+	} else {
+		update_option( 'dejoiy_library_shop_hidden_page', $page + 1 );
+	}
+}
+
+/**
+ * Related products on the main store should not surface Nexus titles.
+ *
+ * @param array $related_ids Related product IDs.
+ * @return array
+ */
+function dejoiy_library_filter_related_products( $related_ids ) {
+	if ( ! dejoiy_library_should_apply_shop_catalog_filters() || dejoiy_library_is_nexus_catalog_context() || ! is_array( $related_ids ) ) {
+		return $related_ids;
+	}
+	return array_values(
+		array_filter(
+			$related_ids,
+			static function ( $id ) {
+				return ! dejoiy_library_is_book_product( (int) $id );
+			}
+		)
+	);
+}
+
+/**
+ * Register shop exclusion hooks.
+ */
+function dejoiy_library_shop_exclusion_init() {
+	static $registered = false;
+	if ( $registered || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	$registered = true;
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return;
+	}
+	add_filter( 'woocommerce_product_query_tax_query', 'dejoiy_library_wc_product_query_tax_query', 10, 2 );
+	add_filter( 'woocommerce_shortcode_products_query', 'dejoiy_library_shortcode_products_query', 10, 1 );
+	add_filter( 'woocommerce_products_widget_query_args', 'dejoiy_library_shortcode_products_query', 10, 1 );
+	add_action( 'pre_get_posts', 'dejoiy_library_exclude_from_search', 20 );
+	add_filter( 'woocommerce_product_is_visible', 'dejoiy_library_product_is_visible', 10, 3 );
+	add_action( 'template_redirect', 'dejoiy_library_redirect_nexus_category_archives', 8 );
+	add_action( 'template_redirect', 'dejoiy_library_redirect_nexus_product_permalink', 9 );
+}
+
+// Registered from library-universe.php on wp (after main query) via dejoiy_library_register_shop_exclusion_hooks().

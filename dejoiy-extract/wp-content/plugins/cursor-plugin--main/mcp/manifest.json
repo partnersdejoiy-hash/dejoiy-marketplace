@@ -1,0 +1,20 @@
+{
+  "name": "dejoiy-ai-control-bridge",
+  "version": "1.0.0",
+  "description": "DEJOIY AI Control Bridge — WordPress AI Operating Layer for the DEJOIY ecosystem",
+  "protocol": "mcp-compatible-rest",
+  "vendor": "DEJOIY",
+  "website": "https://dejoiy.tech",
+  "authentication": {
+    "methods": ["api_key", "jwt"],
+    "headers": {
+      "api_key": "X-Dejoiy-API-Key",
+      "bearer": "Authorization: Bearer <token>"
+    }
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  }
+}

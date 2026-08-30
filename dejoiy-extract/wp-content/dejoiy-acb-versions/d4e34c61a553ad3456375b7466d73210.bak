@@ -1,0 +1,39 @@
+<?php
+/**
+ * My Nexus — personal library dashboard (content partial).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require get_stylesheet_directory() . '/library-header.php';
+?>
+<main class="dlu-page dlu-my-universe" id="dlu-my-universe">
+	<div class="dlu-page-in">
+		<p class="dlu-crumb"><a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>">← DEJOIY Nexus</a></p>
+		<h1>My Nexus</h1>
+		<p class="dlu-page-sub">Your living knowledge collection.</p>
+
+		<section class="dlu-dash-sec">
+			<h2>Continue Reading</h2>
+			<div class="dlu-books-grid dlu-books-grid--compact" id="dlu-continue-reading"></div>
+			<p class="dlu-empty-inline">Open any book in the reader to track progress on this device.</p>
+		</section>
+
+		<section class="dlu-dash-sec">
+			<h2>Purchased Books</h2>
+			<p class="dlu-empty-inline">Purchased editions appear here after checkout. <a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>#dlu-discover">Discover titles</a>.</p>
+		</section>
+
+		<section class="dlu-dash-sec">
+			<h2>Nexus Wishlist</h2>
+			<p class="dlu-empty-inline">Save books with ♡ on the Nexus home page.</p>
+			<div id="dlu-favorites" class="dlu-fav-grid"></div>
+		</section>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';

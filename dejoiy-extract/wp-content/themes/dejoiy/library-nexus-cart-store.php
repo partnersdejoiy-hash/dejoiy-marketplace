@@ -1,0 +1,175 @@
+<?php
+/**
+ * Nexus “sub-site” cart channel — separate shelf from marketplace (same WooCommerce cart, isolated by session).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! defined( 'DEJOIY_NEXUS_ACTIVE_CART' ) ) {
+	define( 'DEJOIY_NEXUS_ACTIVE_CART', 'dejoiy_active_cart' );
+}
+
+/**
+ * Mark this browser session as using the Nexus shelf (not marketplace cart).
+ */
+function dejoiy_library_set_active_cart_nexus() {
+	if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+		return;
+	}
+	WC()->session->set( DEJOIY_NEXUS_ACTIVE_CART, 'nexus' );
+	if ( function_exists( 'dejoiy_library_set_nexus_flow_session' ) ) {
+		dejoiy_library_set_nexus_flow_session();
+	}
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_is_active_cart_nexus() {
+	return function_exists( 'WC' )
+		&& WC()->session
+		&& 'nexus' === (string) WC()->session->get( DEJOIY_NEXUS_ACTIVE_CART );
+}
+
+/**
+ * Restore real product prices on all Nexus lines (fixes ₹0 after marketplace total pass).
+ */
+function dejoiy_library_nexus_restore_line_prices() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return;
+	}
+	foreach ( WC()->cart->get_cart() as $key => $item ) {
+		if ( ! function_exists( 'dejoiy_library_cart_line_is_nexus' ) || ! dejoiy_library_cart_line_is_nexus( $item ) ) {
+			continue;
+		}
+		if ( ! isset( $item['data'] ) || ! is_a( $item['data'], 'WC_Product' ) ) {
+			continue;
+		}
+		$held = isset( WC()->cart->cart_contents[ $key ]['dejoiy_library_price_hold'] )
+			? WC()->cart->cart_contents[ $key ]['dejoiy_library_price_hold']
+			: null;
+		if ( null !== $held && '' !== $held ) {
+			$item['data']->set_price( $held );
+			unset( WC()->cart->cart_contents[ $key ]['dejoiy_library_price_hold'] );
+			continue;
+		}
+		$product_id = isset( $item['product_id'] ) ? (int) $item['product_id'] : 0;
+		if ( $product_id > 0 ) {
+			$fresh = wc_get_product( $product_id );
+			if ( $fresh ) {
+				$item['data']->set_price( $fresh->get_price( 'edit' ) );
+			}
+		}
+	}
+}
+
+/**
+ * Sum of Nexus line subtotals in cart.
+ *
+ * @return float
+ */
+function dejoiy_library_get_nexus_cart_subtotal() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return 0.0;
+	}
+	$sum = 0.0;
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( function_exists( 'dejoiy_library_cart_line_is_nexus' ) && dejoiy_library_cart_line_is_nexus( $item ) ) {
+			$sum += isset( $item['line_subtotal'] ) ? (float) $item['line_subtotal'] : 0.0;
+		}
+	}
+	return $sum;
+}
+
+/**
+ * Marketplace cart total should not include Nexus shelf lines.
+ *
+ * @param float $total Total.
+ * @return float
+ */
+function dejoiy_library_marketplace_cart_total_exclude_nexus( $total ) {
+	if ( function_exists( 'dejoiy_library_is_nexus_cart_context' ) && dejoiy_library_is_nexus_cart_context() ) {
+		return $total;
+	}
+	$nexus = dejoiy_library_get_nexus_cart_subtotal();
+	if ( $nexus <= 0 ) {
+		return $total;
+	}
+	return max( 0.0, (float) $total - $nexus );
+}
+
+/**
+ * Prepare Nexus cart/checkout: active channel + real prices (no line removal on page view).
+ */
+function dejoiy_library_nexus_prepare_shelf() {
+	dejoiy_library_set_active_cart_nexus();
+	if ( function_exists( 'WC' ) && WC()->cart ) {
+		foreach ( WC()->cart->get_cart() as $item ) {
+			$pid = isset( $item['product_id'] ) ? (int) $item['product_id'] : 0;
+			if ( $pid < 1 || ! function_exists( 'dejoiy_library_cart_line_is_nexus' ) || ! dejoiy_library_cart_line_is_nexus( $item ) ) {
+				continue;
+			}
+			if ( function_exists( 'dejoiy_library_maybe_adopt_product' ) ) {
+				dejoiy_library_maybe_adopt_product( $pid );
+			}
+			if ( function_exists( 'dejoiy_library_ensure_nexus_product_sellable' ) ) {
+				dejoiy_library_ensure_nexus_product_sellable( $pid );
+			}
+		}
+	}
+	dejoiy_library_nexus_restore_line_prices();
+	if ( function_exists( 'WC' ) && WC()->cart ) {
+		WC()->cart->calculate_totals();
+	}
+}
+
+/**
+ * Only when placing an order: drop lines that do not belong in this channel.
+ */
+function dejoiy_library_nexus_prune_on_checkout() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return;
+	}
+	if ( function_exists( 'dejoiy_library_is_nexus_cart_context' ) && dejoiy_library_is_nexus_cart_context() ) {
+		foreach ( WC()->cart->get_cart() as $key => $item ) {
+			if ( ! dejoiy_library_cart_line_is_nexus( $item ) ) {
+				WC()->cart->remove_cart_item( $key );
+			}
+		}
+		dejoiy_library_nexus_restore_line_prices();
+		return;
+	}
+	foreach ( WC()->cart->get_cart() as $key => $item ) {
+		if ( dejoiy_library_cart_line_is_nexus( $item ) ) {
+			WC()->cart->remove_cart_item( $key );
+		}
+	}
+}
+
+/**
+ * @return void
+ */
+/**
+ * Keep Nexus shelf valid during WooCommerce cart validation (prevents AUTO-DRAFT removal).
+ */
+function dejoiy_library_nexus_validate_cart_items() {
+	if ( ! function_exists( 'dejoiy_library_is_nexus_cart_context' ) || ! dejoiy_library_is_nexus_cart_context() ) {
+		return;
+	}
+	dejoiy_library_nexus_prepare_shelf();
+}
+
+/**
+ * @return void
+ */
+function dejoiy_library_nexus_cart_store_init() {
+	add_filter( 'woocommerce_cart_get_total', 'dejoiy_library_marketplace_cart_total_exclude_nexus', 99 );
+	add_filter( 'woocommerce_cart_get_cart_contents_total', 'dejoiy_library_marketplace_cart_total_exclude_nexus', 99 );
+	add_action( 'woocommerce_check_cart_items', 'dejoiy_library_nexus_validate_cart_items', 1 );
+	add_action( 'woocommerce_checkout_process', 'dejoiy_library_nexus_prune_on_checkout', 1 );
+	add_action( 'woocommerce_before_calculate_totals', 'dejoiy_library_nexus_restore_line_prices', 1 );
+}

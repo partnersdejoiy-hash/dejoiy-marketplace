@@ -1,0 +1,45 @@
+<?php
+/**
+ * Studio cart — isolated layout, studio-line items only.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_studio_maybe_set_cookie();
+
+if ( function_exists( 'dejoiy_studio_document_start' ) ) {
+	dejoiy_studio_document_start();
+} else {
+	get_header( 'shop' );
+}
+?>
+<div class="dsu-wc-wrap">
+	<?php require get_stylesheet_directory() . '/studio-header.php'; ?>
+	<main class="dsu-wc-main dsu-cart woocommerce">
+		<div class="dsu-wc-breadcrumb">
+			<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>">← Custom Studio</a>
+		</div>
+		<h1 class="dsu-cart-title">Studio Cart</h1>
+		<p class="dsu-cart-sub">Your custom studio creations only — add more from the studio or proceed to checkout.</p>
+		<div class="dsu-cart-shell">
+			<?php
+			if ( function_exists( 'woocommerce_content' ) ) {
+				woocommerce_content();
+			} else {
+				echo do_shortcode( '[woocommerce_cart]' );
+			}
+			?>
+		</div>
+	</main>
+	<?php require get_stylesheet_directory() . '/studio-footer.php'; ?>
+</div>
+<?php
+if ( function_exists( 'dejoiy_studio_document_end' ) ) {
+	dejoiy_studio_document_end();
+} else {
+	get_footer( 'shop' );
+}

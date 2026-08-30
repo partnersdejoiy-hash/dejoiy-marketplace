@@ -1,0 +1,77 @@
+/* DEJOIY Universal Checkout — works with Nexus, Studio, and marketplace themes */
+
+body.dejoiy-universal-checkout .dejoiy-uc-wrap {
+  max-width: 960px;
+  margin: 0 auto 2rem;
+  padding: 0 1rem;
+}
+
+body.dejoiy-universal-checkout .dejoiy-uc-hero {
+  text-align: center;
+  margin: 0 0 1.75rem;
+  padding: 1.5rem 1rem 1.25rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.08));
+  border: 1px solid rgba(37, 99, 235, 0.15);
+}
+
+body.dejoiy-universal-checkout .dejoiy-uc-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+body.dejoiy-universal-checkout .dejoiy-uc-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #475569;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Hide duplicate section titles when our hero is present */
+body.dejoiy-universal-checkout .dlu-checkout-page > .dlu-page-in > h1,
+body.dejoiy-universal-checkout .dsu-checkout-title {
+  display: none !important;
+}
+
+/* Map / delivery plugins — keep checkout calm */
+body.dejoiy-universal-checkout .wcfmmp-store-map,
+body.dejoiy-universal-checkout .wcfm-delivery-time,
+body.dejoiy-universal-checkout #dejoiy-delivery-map,
+body.dejoiy-universal-checkout .dejoiy-delivery-map,
+body.dejoiy-universal-checkout .gm-style,
+body.dejoiy-universal-checkout iframe[src*="google.com/maps"],
+body.dejoiy-universal-checkout .pac-container,
+body.dejoiy-universal-checkout [class*="delivery-map"],
+body.dejoiy-universal-checkout [id*="delivery-map"],
+body.dejoiy-universal-checkout [class*="location-picker"],
+body.dejoiy-universal-checkout.dejoiy-universal-checkout--virtual .woocommerce-shipping-fields,
+body.dejoiy-universal-checkout.dejoiy-universal-checkout--virtual .woocommerce-shipping-fields__field-wrapper {
+  display: none !important;
+}
+
+/* When shipping is required, still hide map widgets only */
+body.dejoiy-universal-checkout [data-dejoiy-map],
+body.dejoiy-universal-checkout .leaflet-container {
+  display: none !important;
+}
+
+body.dejoiy-universal-checkout .woocommerce-checkout {
+  border-radius: 12px;
+}
+
+body.dejoiy-universal-checkout .woocommerce-billing-fields h3,
+body.dejoiy-universal-checkout #order_review_heading {
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+body.dejoiy-universal-checkout .woocommerce-error,
+body.dejoiy-universal-checkout .woocommerce-message,
+body.dejoiy-universal-checkout .woocommerce-info {
+  border-radius: 8px;
+}

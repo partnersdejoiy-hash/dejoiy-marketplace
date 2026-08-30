@@ -1,0 +1,47 @@
+<?php
+/**
+ * Plugin Name:       DEJOIY AI Control Bridge
+ * Plugin URI:        https://dejoiy.tech/ai-control-bridge
+ * Description:       Enterprise AI operating layer for WordPress — secure APIs for Cursor, Claude, OpenAI Agents, and MCP clients.
+ * Version:           1.0.0
+ * Requires at least: 6.0
+ * Requires PHP:      7.4
+ * Author:            DEJOIY
+ * Author URI:        https://dejoiy.tech
+ * License:           GPL-2.0-or-later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       dejoiy-ai-control-bridge
+ *
+ * @package Dejoiy\AiControlBridge
+ */
+
+declare(strict_types=1);
+
+namespace Dejoiy\AiControlBridge;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'DEJOIY_ACB_VERSION', '1.0.0' );
+define( 'DEJOIY_ACB_PLUGIN_FILE', __FILE__ );
+define( 'DEJOIY_ACB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'DEJOIY_ACB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'DEJOIY_ACB_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+define( 'DEJOIY_ACB_REST_NAMESPACE', 'dejoiy-ai/v1' );
+
+require_once DEJOIY_ACB_PLUGIN_DIR . 'includes/autoload.php';
+
+/**
+ * Returns the plugin singleton instance.
+ *
+ * @return Plugin
+ */
+function dejoiy_acb(): Plugin {
+	return Plugin::instance();
+}
+
+register_activation_hook( __FILE__, array( Activator::class, 'activate' ) );
+register_deactivation_hook( __FILE__, array( Deactivator::class, 'deactivate' ) );
+
+dejoiy_acb()->boot();

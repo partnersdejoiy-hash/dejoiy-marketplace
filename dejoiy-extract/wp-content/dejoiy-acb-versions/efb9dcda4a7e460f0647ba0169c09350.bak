@@ -1,0 +1,341 @@
+<?php
+/**
+ * DEJOIY Header OS V4 — Elementor header #4228 (Header Fix Phase).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Seller hub URL (WCFM / fallback).
+ */
+function dejoiy_header_os_v4_seller_hub_url() {
+	if ( function_exists( 'wcfm_get_dashboard_url' ) ) {
+		return wcfm_get_dashboard_url();
+	}
+	if ( function_exists( 'get_wcfm_page' ) ) {
+		return get_wcfm_page();
+	}
+	return home_url( '/store-manager/' );
+}
+
+/**
+ * Current customer display name for header greeting.
+ */
+function dejoiy_header_os_v4_customer_name() {
+	if ( ! is_user_logged_in() ) {
+		return '';
+	}
+	$user = wp_get_current_user();
+	$name = trim( (string) $user->first_name );
+	if ( '' === $name ) {
+		$name = trim( (string) $user->display_name );
+	}
+	if ( '' === $name ) {
+		$name = trim( (string) $user->user_login );
+	}
+	return $name;
+}
+
+/**
+ * @return array<int, array{label: string, url: string, key: string}>
+ */
+function dejoiy_header_os_v4_account_menu() {
+	$account = home_url( '/my-account/' );
+	$items   = array(
+		array(
+			'key'   => 'account',
+			'label' => 'My Account',
+			'url'   => $account,
+		),
+		array(
+			'key'   => 'orders',
+			'label' => 'My Orders',
+			'url'   => function_exists( 'wc_get_account_endpoint_url' )
+				? wc_get_account_endpoint_url( 'orders' )
+				: $account,
+		),
+		array(
+			'key'   => 'favorites',
+			'label' => 'Favorites',
+			'url'   => home_url( '/my-account/?et-wishlist-page' ),
+		),
+		array(
+			'key'   => 'seller',
+			'label' => 'Seller Hub',
+			'url'   => dejoiy_header_os_v4_seller_hub_url(),
+		),
+		array(
+			'key'   => 'settings',
+			'label' => 'Settings',
+			'url'   => function_exists( 'wc_get_account_endpoint_url' )
+				? wc_get_account_endpoint_url( 'edit-account' )
+				: $account,
+		),
+	);
+
+	if ( is_user_logged_in() ) {
+		$items[] = array(
+			'key'   => 'logout',
+			'label' => 'Logout',
+			'url'   => wp_logout_url( home_url( '/' ) ),
+		);
+	} else {
+		$items[] = array(
+			'key'   => 'login',
+			'label' => 'Sign In',
+			'url'   => $account,
+		);
+	}
+
+	return $items;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function dejoiy_header_os_v4_config() {
+	$home = home_url( '/' );
+
+	return array(
+		'headerId'         => 4228,
+		'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+		'storeApiUrl'      => rest_url( 'wc/store/v1/products' ),
+		'nonce'            => wp_create_nonce( 'dejoiy_header_os_v4' ),
+		'isLoggedIn'       => is_user_logged_in() ? 1 : 0,
+		'customerName'     => dejoiy_header_os_v4_customer_name(),
+		'joiPlaceholder'   => __( 'Looking for Joy? Try DEJOIY ✨', 'dejoiy' ),
+		'joiSuggestions'   => array(
+			__( 'Find your next favorite book 📚', 'dejoiy' ),
+			__( 'Need a custom t-shirt? 🎨', 'dejoiy' ),
+			__( 'Looking for services? 💼', 'dejoiy' ),
+			__( 'Discover something amazing 🚀', 'dejoiy' ),
+			__( 'Explore DEJOIY Universe 🌎', 'dejoiy' ),
+		),
+		'searchScopes'     => array(
+			array( 'id' => 'all', 'label' => __( 'All', 'dejoiy' ) ),
+			array( 'id' => 'products', 'label' => __( 'Products', 'dejoiy' ) ),
+			array( 'id' => 'nexus', 'label' => __( 'Nexus', 'dejoiy' ) ),
+			array( 'id' => 'services', 'label' => __( 'Services', 'dejoiy' ) ),
+			array( 'id' => 'quickmart', 'label' => __( 'QuickMart', 'dejoiy' ) ),
+		),
+		'accountMenu'      => dejoiy_header_os_v4_account_menu(),
+		'universeNav'      => array(
+			array( 'id' => 'marketplace', 'label' => 'Marketplace', 'url' => $home, 'color' => '#2563EB' ),
+			array( 'id' => 'nexus', 'label' => 'Nexus', 'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'color' => '#7C3AED' ),
+			array( 'id' => 'studio', 'label' => 'Custom Studio', 'url' => home_url( '/dejoiy-custom-studio/' ), 'color' => '#EC4899' ),
+			array( 'id' => 'quickmart', 'label' => 'QuickMart', 'url' => home_url( '/dejoiy-quick-mart/' ), 'color' => '#16A34A' ),
+			array( 'id' => 'refurbished', 'label' => 'Refurbished', 'url' => home_url( '/dejoiy-refurbished/' ), 'color' => '#0D9488' ),
+			array( 'id' => 'services', 'label' => 'Services', 'url' => home_url( '/dejoiy-services/' ), 'color' => '#EA580C' ),
+			array( 'id' => 'business', 'label' => 'Business', 'url' => home_url( '/dejoiy-library/?dejoiy_library=1#dlu-cat-business' ), 'color' => '#312E81' ),
+		),
+		'mobileChips'      => array(
+			array( 'label' => 'Marketplace', 'url' => $home, 'color' => '#2563EB' ),
+			array( 'label' => 'Nexus', 'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'color' => '#7C3AED' ),
+			array( 'label' => 'QuickMart', 'url' => home_url( '/dejoiy-quick-mart/' ), 'color' => '#16A34A' ),
+			array( 'label' => 'Studio', 'url' => home_url( '/dejoiy-custom-studio/' ), 'color' => '#EC4899' ),
+		),
+		'launcher'         => array(
+			array( 'id' => 'marketplace', 'label' => 'Marketplace', 'description' => __( 'Shop products from verified sellers.', 'dejoiy' ), 'url' => $home, 'color' => '#2563EB', 'icon' => 'marketplace' ),
+			array( 'id' => 'nexus', 'label' => 'Nexus', 'description' => __( 'Books, courses, and knowledge.', 'dejoiy' ), 'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'color' => '#7C3AED', 'icon' => 'nexus' ),
+			array( 'id' => 'studio', 'label' => 'Custom Studio', 'description' => __( 'Personalized products with live previews.', 'dejoiy' ), 'url' => home_url( '/dejoiy-custom-studio/' ), 'color' => '#EC4899', 'icon' => 'studio' ),
+			array( 'id' => 'quickmart', 'label' => 'QuickMart', 'description' => __( 'Fast essentials and groceries.', 'dejoiy' ), 'url' => home_url( '/dejoiy-quick-mart/' ), 'color' => '#16A34A', 'icon' => 'quickmart' ),
+			array( 'id' => 'refurbished', 'label' => 'Refurbished', 'description' => __( 'Certified renewed tech.', 'dejoiy' ), 'url' => home_url( '/dejoiy-refurbished/' ), 'color' => '#0D9488', 'icon' => 'refurbished' ),
+			array( 'id' => 'services', 'label' => 'Services', 'description' => __( 'Hire experts across categories.', 'dejoiy' ), 'url' => home_url( '/dejoiy-services/' ), 'color' => '#EA580C', 'icon' => 'services' ),
+			array( 'id' => 'business', 'label' => 'Business', 'description' => __( 'B2B and enterprise partnerships.', 'dejoiy' ), 'url' => home_url( '/dejoiy-library/?dejoiy_library=1#dlu-cat-business' ), 'color' => '#312E81', 'icon' => 'business' ),
+		),
+		'links'            => array(
+			'logo'      => $home,
+			'account'   => home_url( '/my-account/' ),
+			'favorites' => home_url( '/my-account/?et-wishlist-page' ),
+			'compare'   => home_url( '/my-account/?et-compare-page' ),
+			'cart'      => home_url( '/cart/' ),
+		),
+	);
+}
+
+/**
+ * AJAX: JOI multi-scope search.
+ */
+function dejoiy_header_os_v4_ajax_search() {
+	check_ajax_referer( 'dejoiy_header_os_v4', 'nonce' );
+
+	$term  = isset( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '';
+	$scope = isset( $_REQUEST['scope'] ) ? sanitize_key( wp_unslash( $_REQUEST['scope'] ) ) : 'all';
+
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json( array( 'results' => array() ) );
+	}
+
+	$cat_map = array(
+		'nexus'     => array( 'dejoiy-library', 'e-books', 'courses' ),
+		'services'  => array( 'services-marketplace' ),
+		'quickmart' => array( 'quick-products' ),
+	);
+
+	$tax_query = array();
+	if ( isset( $cat_map[ $scope ] ) ) {
+		$tax_query[] = array(
+			'taxonomy' => 'product_cat',
+			'field'    => 'slug',
+			'terms'    => $cat_map[ $scope ],
+		);
+	}
+
+	$args = array(
+		'post_type'      => 'product',
+		'post_status'    => 'publish',
+		's'              => $term,
+		'posts_per_page' => 8,
+		'no_found_rows'  => true,
+	);
+	if ( $tax_query ) {
+		$args['tax_query'] = $tax_query;
+	} elseif ( 'products' === $scope ) {
+		/* default product search */
+	} elseif ( 'all' !== $scope && 'products' !== $scope ) {
+		$args['tax_query'] = $tax_query;
+	}
+
+	$out    = array();
+	$query  = new WP_Query( $args );
+	$registry = function_exists( 'dejoiy_ecosystem_registry' ) ? dejoiy_ecosystem_registry() : array();
+
+	foreach ( $query->posts as $post ) {
+		$pid   = $post->ID;
+		$eco   = function_exists( 'dejoiy_get_product_ecosystem' ) ? dejoiy_get_product_ecosystem( $pid ) : 'marketplace';
+		$label = isset( $registry[ $eco ]['label'] ) ? $registry[ $eco ]['label'] : 'DEJOIY';
+		$url   = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $pid ) : get_permalink( $pid );
+		$thumb = get_the_post_thumbnail_url( $pid, 'thumbnail' );
+		$price = '';
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $pid );
+			if ( $product ) {
+				$price = wp_strip_all_tags( $product->get_price_html() );
+			}
+		}
+		$out[] = array(
+			'type'  => 'product',
+			'eco'   => $eco,
+			'badge' => $label,
+			'title' => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
+			'url'   => $url,
+			'thumb' => $thumb ? $thumb : '',
+			'price' => $price,
+		);
+	}
+	wp_reset_postdata();
+
+	if ( 'all' === $scope || 'nexus' === $scope ) {
+		$pages = new WP_Query(
+			array(
+				'post_type'      => 'page',
+				'post_status'    => 'publish',
+				's'              => $term,
+				'posts_per_page' => 3,
+				'no_found_rows'  => true,
+			)
+		);
+		foreach ( $pages->posts as $page ) {
+			$out[] = array(
+				'type'  => 'page',
+				'eco'   => 'page',
+				'badge' => __( 'Page', 'dejoiy' ),
+				'title' => html_entity_decode( get_the_title( $page->ID ), ENT_QUOTES, 'UTF-8' ),
+				'url'   => get_permalink( $page->ID ),
+				'thumb' => '',
+				'price' => '',
+			);
+		}
+		wp_reset_postdata();
+	}
+
+	wp_send_json( array( 'results' => $out ) );
+}
+add_action( 'wp_ajax_dejoiy_joi_search', 'dejoiy_header_os_v4_ajax_search' );
+add_action( 'wp_ajax_nopriv_dejoiy_joi_search', 'dejoiy_header_os_v4_ajax_search' );
+
+function dejoiy_header_os_v4_enqueue() {
+	if ( is_admin() ) {
+		return;
+	}
+
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-header-os-v4.css';
+	$js  = $dir . '/dejoiy-header-os-v4.js';
+
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style( 'dejoiy-header-os-v4', $uri . '/dejoiy-header-os-v4.css', array(), (string) filemtime( $css ) );
+	}
+
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script( 'dejoiy-header-os-v4', $uri . '/dejoiy-header-os-v4.js', array(), (string) filemtime( $js ), true );
+		wp_localize_script( 'dejoiy-header-os-v4', 'dejoiyHeaderOsV4', dejoiy_header_os_v4_config() );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_header_os_v4_enqueue', 10055 );
+
+function dejoiy_header_os_v4_body_class( $classes ) {
+	$classes[] = 'dejoiy-header-os-v4';
+	if ( is_user_logged_in() ) {
+		$classes[] = 'dejoiy-header-os-v4--logged-in';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_header_os_v4_body_class', 20 );
+
+function dejoiy_header_os_v4_footer_templates() {
+	if ( is_admin() ) {
+		return;
+	}
+	?>
+	<div id="dh-os-v4-root" hidden aria-hidden="true">
+		<div class="dh-os-v4-launcher" id="dh-os-v4-launcher" role="dialog" aria-modal="true" aria-labelledby="dh-os-v4-launcher-title" hidden>
+			<div class="dh-os-v4-launcher__backdrop" data-dh-close></div>
+			<div class="dh-os-v4-launcher__panel">
+				<header class="dh-os-v4-launcher__head">
+					<h2 id="dh-os-v4-launcher-title"><?php esc_html_e( 'Explore Universe', 'dejoiy' ); ?></h2>
+					<p><?php esc_html_e( 'One platform. Many worlds.', 'dejoiy' ); ?></p>
+					<button type="button" class="dh-os-v4-launcher__close" data-dh-close aria-label="<?php esc_attr_e( 'Close', 'dejoiy' ); ?>">&times;</button>
+				</header>
+				<div class="dh-os-v4-launcher__grid" id="dh-os-v4-launcher-grid"></div>
+			</div>
+		</div>
+		<template id="dh-os-v4-universe-nav-tpl">
+			<nav class="dh-os-v4-universe" aria-label="<?php esc_attr_e( 'DEJOIY Universe', 'dejoiy' ); ?>">
+				<div class="dh-os-v4-universe__inner" id="dh-os-v4-universe-inner"></div>
+				<button type="button" class="dh-os-v4-explore" id="dh-os-v4-explore-btn">
+					<span class="dh-os-v4-explore__icon" aria-hidden="true">&#9670;</span>
+					<span><?php esc_html_e( 'Explore Universe', 'dejoiy' ); ?></span>
+				</button>
+			</nav>
+		</template>
+		<template id="dh-os-v4-mobile-chips-tpl">
+			<div class="dh-os-v4-mobile-chips" id="dh-os-v4-mobile-chips" aria-label="<?php esc_attr_e( 'Quick worlds', 'dejoiy' ); ?>"></div>
+		</template>
+	</div>
+	<?php
+}
+add_action( 'wp_footer', 'dejoiy_header_os_v4_footer_templates', 5 );
+
+
+/**
+ * After logout, return to DEJOIY home (no WordPress branded interstitial).
+ *
+ * @param string  $redirect_to Redirect target.
+ * @param string  $requested   Requested redirect.
+ * @param WP_User $user        User.
+ * @return string
+ */
+function dejoiy_header_os_v4_logout_redirect( $redirect_to, $requested, $user ) {
+	unset( $user );
+	if ( $requested ) {
+		return $requested;
+	}
+	return home_url( '/' );
+}
+add_filter( 'logout_redirect', 'dejoiy_header_os_v4_logout_redirect', 20, 3 );

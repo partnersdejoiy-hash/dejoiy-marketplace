@@ -1,0 +1,174 @@
+/**
+ * DEJOIY mobile single product — product → description/reviews → suggestions last.
+ */
+(function () {
+	'use strict';
+
+	var isProduct = document.body.classList.contains('dejoiy-mobile-product-view');
+	var isCheckout = document.body.classList.contains('dejoiy-mobile-checkout-view');
+
+	if (!isProduct && !isCheckout) {
+		return;
+	}
+
+	function paintBrandButtons() {
+		var gradient = 'linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%)';
+		var nodes = document.querySelectorAll(
+			'.single_add_to_cart_button, .et-single-buy-now, .buy_now_button, .button.buy-now, .etheme_custom_add_to_cart_toggle, #place_order'
+		);
+		nodes.forEach(function (btn) {
+			btn.style.setProperty('background', gradient, 'important');
+			btn.style.setProperty('background-color', 'transparent', 'important');
+			btn.style.setProperty('background-image', gradient, 'important');
+			btn.style.setProperty('color', '#fff', 'important');
+			btn.style.setProperty('border', 'none', 'important');
+		});
+	}
+
+	/**
+	 * Move "You may also like" after description, reviews, and all product sections.
+	 */
+	
+
+\tvar CART_SVG_HTML = '<span class="dm-sticky-cart-ico" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l.4 2M7 13h10l3-8H6.4M7 13L5.4 5M7 13l-1.2 6.2a1 1 0 001 .8h9.6a1 1 0 001-.8L17 13"/><circle cx="10" cy="19" r="1"/><circle cx="18" cy="19" r="1"/></svg></span><span class="screen-reader-text">Add to cart</span>';
+\tvar BUY_LABEL = 'Own me now \u2728';
+
+\tfunction formatStickyBuyBar() {
+\t\tif (!isProduct) {
+\t\t\treturn;
+\t\t}
+\t\tvar sticky = document.querySelector('.etheme-sticky-cart.etheme-sticky-panel');
+\t\tif (!sticky) {
+\t\t\treturn;
+\t\t}
+
+\t\tsticky.querySelectorAll('.price, p.price, .woocommerce-Price-amount.amount').forEach(function (el) {
+\t\t\tif (el.closest('.etheme-sticky-cart')) {
+\t\t\t\tel.style.setProperty('display', 'none', 'important');
+\t\t\t}
+\t\t});
+
+\t\tvar cartBtn = sticky.querySelector(
+\t\t\t'.single_add_to_cart_button:not(.et-single-buy-now):not(.buy_now_button):not(.buy-now)'
+\t\t);
+\t\tif (cartBtn) {
+\t\t\tcartBtn.classList.add('dm-sticky-cart-icon-btn');
+\t\t\tcartBtn.setAttribute('aria-label', 'Add to cart');
+\t\t\tcartBtn.setAttribute('title', 'Add to cart');
+\t\t\tif (!cartBtn.querySelector('.dm-sticky-cart-ico')) {
+\t\t\t\tcartBtn.innerHTML = CART_SVG_HTML;
+\t\t\t}
+\t\t}
+
+\t\tvar buyBtns = sticky.querySelectorAll('.et-single-buy-now, .buy_now_button, .button.buy-now');
+\t\tbuyBtns.forEach(function (btn) {
+\t\t\tbtn.classList.add('dm-sticky-buy-btn');
+\t\t\tbtn.classList.remove('elementor-hidden-mobile', 'elementor-hidden-tablet', 'hidden');
+\t\t\tbtn.style.setProperty('display', 'inline-flex', 'important');
+\t\t\tbtn.style.setProperty('color', '#fff', 'important');
+\t\t\tvar labelEl = btn.querySelector('.dm-sticky-buy-label');
+\t\t\tif (!labelEl) {
+\t\t\t\tbtn.innerHTML = '<span class="dm-sticky-buy-label">' + BUY_LABEL + '</span>';
+\t\t\t} else if (!(labelEl.textContent || '').trim()) {
+\t\t\t\tlabelEl.textContent = BUY_LABEL;
+\t\t\t}
+\t\t});
+\t}
+
+	function adjustStickyPadding() {
+		var sticky = document.querySelector('.etheme-sticky-cart.etheme-sticky-panel');
+		if (!sticky) {
+			return;
+		}
+		var h = Math.ceil(sticky.getBoundingClientRect().height);
+		var pad = Math.max(h + 20, 120);
+		document.body.style.setProperty('padding-bottom', pad + 'px');
+	}
+
+	function placeSections() {
+		if (!isProduct) {
+			return;
+		}
+
+		var reco = document.querySelector('.dejoiy-mobile-product-reco');
+		if (!reco) {
+			return;
+		}
+
+		var insertBefore =
+			document.querySelector('.et-mobile-panel-wrapper') ||
+			document.querySelector('.et-footers-wrapper') ||
+			document.querySelector('footer.site-footer') ||
+			document.querySelector('.elementor-location-footer') ||
+			document.querySelector('.prefooter');
+
+		if (insertBefore && insertBefore.parentNode) {
+			insertBefore.parentNode.insertBefore(reco, insertBefore);
+		} else {
+			var tabs = document.querySelector(
+				'.woocommerce-tabs.wc-tabs-wrapper, .woocommerce-tabs.et-clearfix'
+			);
+			var anchor = tabs;
+			if (tabs) {
+				var section = tabs.closest('section.elementor-top-section');
+				if (section) {
+					anchor = section;
+				}
+			} else {
+				anchor = document.querySelector('.elementor-location-single');
+			}
+
+			if (anchor) {
+				var parent = anchor.parentElement;
+				if (parent && reco.parentElement !== parent) {
+					parent.appendChild(reco);
+				} else if (anchor.nextElementSibling !== reco) {
+					anchor.insertAdjacentElement('afterend', reco);
+					var node = reco.nextElementSibling;
+					while (node) {
+						var next = node.nextElementSibling;
+						if (
+							node.classList &&
+							(node.classList.contains('elementor-top-section') ||
+								node.classList.contains('woocommerce-tabs') ||
+								node.matches('section.elementor-section'))
+						) {
+							reco.insertAdjacentElement('afterend', node);
+						}
+						node = next;
+					}
+				}
+			}
+		}
+
+		reco.classList.add('is-placed');
+	}
+
+	function run() {
+		placeSections();
+		formatStickyBuyBar();
+		adjustStickyPadding();
+		paintBrandButtons();
+		formatStickyBuyBar();
+		setTimeout(placeSections, 350);
+		setTimeout(placeSections, 1200);
+		setTimeout(formatStickyBuyBar, 100);
+		setTimeout(adjustStickyPadding, 100);
+		setTimeout(formatStickyBuyBar, 400);
+		setTimeout(adjustStickyPadding, 400);
+		setTimeout(formatStickyBuyBar, 1200);
+		setTimeout(adjustStickyPadding, 1200);
+		setTimeout(paintBrandButtons, 100);
+		setTimeout(formatStickyBuyBar, 120);
+		setTimeout(paintBrandButtons, 600);
+		setTimeout(formatStickyBuyBar, 650);
+		setTimeout(paintBrandButtons, 1500);
+		setTimeout(formatStickyBuyBar, 1550);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', run);
+	} else {
+		run();
+	}
+})();

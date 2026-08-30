@@ -1,0 +1,248 @@
+#dcs *,#dcs *:before,#dcs *:after{box-sizing:border-box;margin:0;padding:0}
+  #dcs{--g:#7C5CE4;--gl:#A88BF5;--pk:#E8609A;--tl:#00C9A7;--d:#07080F;--d2:#0C0A1C;--d3:#131224;--gb:rgba(255,255,255,.06);--t:#F5F5F0;--m:rgba(245,245,240,.78);font-family:"Inter","Segoe UI",sans-serif;background:var(--d);color:var(--t);overflow-x:hidden;position:relative}
+  #dcs-cursor{position:fixed;width:36px;height:36px;border:1.5px solid var(--g);border-radius:50%;pointer-events:none;z-index:9999;mix-blend-mode:exclusion;top:0;left:0;transition:transform .15s,border-color .2s}
+  #dcs-cursor-dot{position:fixed;width:5px;height:5px;background:var(--g);border-radius:50%;pointer-events:none;z-index:9999;top:0;left:0}
+  #dcs-cv{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  #dcs-pb{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--g),var(--pk));z-index:9998}
+  #dcs-tt{position:fixed;bottom:2rem;right:2rem;z-index:9997;width:46px;height:46px;border-radius:50%;background:rgba(124,92,228,.14);border:1px solid var(--g);color:var(--g);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(20px);transition:all .4s}
+  #dcs-tt.on{opacity:1;transform:translateY(0)}
+  #dcs-tt:hover{background:var(--g);color:#fff}
+  #dcs section{position:relative;z-index:1;padding:7rem 1.5rem}
+  #dcs-hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:0 1.5rem;text-align:center;overflow:visible;position:relative}
+  .dcs-vid-wrap{position:absolute;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+  #dcs-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+  .dcs-blur-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:984px;height:527px;background:#030712;opacity:.9;filter:blur(82px);border-radius:50%;pointer-events:none;z-index:1}
+  .dcs-bg-w{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .dcs-o1,.dcs-o2,.dcs-o3,.dcs-o4,.dcs-o5{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22}
+  .dcs-o1{width:680px;height:680px;background:radial-gradient(circle,rgba(124,92,228,.8),transparent);top:-220px;left:-180px;animation:dOrb 9s ease-in-out infinite}
+  .dcs-o2{width:560px;height:560px;background:radial-gradient(circle,rgba(232,96,154,.7),transparent);bottom:-120px;right:-120px;animation:dOrb 11s ease-in-out infinite reverse}
+  .dcs-o3{width:400px;height:400px;background:radial-gradient(circle,rgba(0,201,167,.35),transparent);top:45%;left:48%;transform:translate(-50%,-50%);animation:dPulse 7s ease-in-out infinite}
+  .dcs-o4{width:300px;height:300px;background:radial-gradient(circle,rgba(124,92,228,.5),transparent);top:18%;right:9%;animation:dOrb 13s ease-in-out infinite}
+  .dcs-o5{width:240px;height:240px;background:radial-gradient(circle,rgba(232,96,154,.45),transparent);bottom:24%;left:7%;animation:dOrb 15s ease-in-out infinite reverse}
+  @keyframes dOrb{0%,100%{transform:translateY(0)}50%{transform:translateY(-32px)}}
+  @keyframes dPulse{0%,100%{opacity:.18;transform:translate(-50%,-50%) scale(1)}50%{opacity:.38;transform:translate(-50%,-50%) scale(1.15)}}
+  .dcs-hc{position:relative;z-index:2;max-width:920px;margin:0 auto}
+  .dcs-eyebrow{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem 1rem;border:1px solid rgba(124,92,228,.4);border-radius:100px;font-size:.65rem;letter-spacing:.22em;color:var(--gl);margin-bottom:2rem;text-transform:uppercase;background:rgba(124,92,228,.08);backdrop-filter:blur(10px)}
+  .dcs-eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--pk);box-shadow:0 0 8px var(--pk);animation:dPulse 2s infinite}
+  .dcs-h1{font-size:clamp(2.8rem,8vw,6rem);font-weight:800;line-height:1.04;letter-spacing:-.04em;margin-bottom:1.8rem}
+  .dcs-gr{background:linear-gradient(135deg,#7C5CE4 0%,#E8609A 55%,#FF9BC4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .dcs-sub{font-size:clamp(1rem,2.2vw,1.2rem);color:var(--m);line-height:1.85;max-width:580px;margin:0 auto 3rem}
+  .dcs-ctas{display:flex;gap:1.2rem;justify-content:center;flex-wrap:wrap}
+  .dcs-pb-btn{display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 2rem;border-radius:100px;background:linear-gradient(135deg,#7C5CE4,#5D3FD3);color:#fff;font-weight:700;font-size:.92rem;text-decoration:none;transition:all .4s;border:none;cursor:pointer}
+  .dcs-pb-btn:hover{transform:translateY(-3px);box-shadow:0 16px 48px rgba(124,92,228,.45)}
+  .dcs-gb{display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 2rem;border-radius:100px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);color:var(--t);font-weight:500;font-size:.92rem;text-decoration:none;transition:all .4s;backdrop-filter:blur(8px)}
+  .dcs-gb:hover{border-color:var(--g);color:var(--gl)}
+  .dcs-hero-float{position:absolute;z-index:2;backdrop-filter:blur(14px);background:rgba(19,18,36,.78);border:1px solid rgba(124,92,228,.22);border-radius:1rem;padding:.85rem 1.15rem;pointer-events:none}
+  .dcs-hf1{top:18%;left:5%;animation:dFloat 6s ease-in-out infinite}
+  .dcs-hf2{top:35%;right:4%;animation:dFloat 8s ease-in-out infinite reverse}
+  .dcs-hf3{bottom:22%;left:8%;animation:dFloat 7s ease-in-out infinite .5s}
+  @keyframes dFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+  .dcs-hf-label{font-size:.58rem;letter-spacing:.12em;color:var(--gl);text-transform:uppercase;margin-bottom:.3rem}
+  .dcs-hf-val{font-weight:700;font-size:1.1rem}
+  .dcs-hf-sub{font-size:.66rem;color:var(--m);margin-top:.1rem}
+  .dcs-scroll-hint{position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.45rem;font-size:.6rem;letter-spacing:.18em;color:rgba(245,245,240,.38);text-transform:uppercase}
+  .dcs-sl{width:1px;height:52px;background:linear-gradient(to bottom,var(--g),transparent);animation:dScroll 2.2s ease-in-out infinite}
+  @keyframes dScroll{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+  .dcs-mq-wrap{overflow:hidden;padding:.85rem 0;background:rgba(124,92,228,.07);border-top:1px solid rgba(124,92,228,.18);border-bottom:1px solid rgba(124,92,228,.18);position:relative;z-index:1}
+  .dcs-mq{display:flex;white-space:nowrap;animation:dMq 30s linear infinite}
+  @keyframes dMq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .dcs-mq-item{padding:0 2.5rem;font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gl);display:inline-flex;align-items:center;gap:.8rem}
+  .dcs-mq-dot{width:4px;height:4px;border-radius:50%;background:var(--pk);flex-shrink:0}
+  .dcs-sec-head{text-align:center;max-width:700px;margin:0 auto 5rem}
+  .dcs-lbl{font-size:.63rem;letter-spacing:.28em;color:var(--pk);text-transform:uppercase;margin-bottom:.9rem;display:block}
+  .dcs-sec-head h2{font-size:clamp(2rem,4.5vw,3.2rem);font-weight:800;line-height:1.12;letter-spacing:-.03em;margin-bottom:.9rem}
+  .dcs-sec-head p{font-size:.97rem;color:var(--m);line-height:1.78}
+  #dcs-bento{background:var(--d2)}
+  .dcs-bt-grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(12,1fr);grid-auto-rows:minmax(220px,auto);gap:1rem}
+  .dcs-bt-card{position:relative;overflow:hidden;border-radius:1.4rem;background:var(--d3);border:1px solid rgba(255,255,255,.06);transition:border-color .4s,box-shadow .4s;cursor:pointer;min-height:220px}
+  .dcs-bt-card:hover{border-color:rgba(124,92,228,.45);box-shadow:0 24px 60px rgba(124,92,228,.18)}
+  .dcs-bt-card.bt-xl{grid-column:span 7;grid-row:span 2;min-height:460px}
+  .dcs-bt-card.bt-lg{grid-column:span 5}
+  .dcs-bt-card.bt-md{grid-column:span 4}
+  .dcs-bt-card.bt-sm{grid-column:span 3}
+  .dcs-bt-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .7s}
+  .dcs-bt-card:hover .dcs-bt-img{transform:scale(1.08)}
+  .dcs-bt-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(7,8,15,.94) 0%,rgba(7,8,15,.28) 55%,transparent 100%)}
+  .dcs-bt-body{position:absolute;bottom:0;left:0;right:0;padding:1.4rem 1.5rem}
+  .dcs-bt-badge{display:inline-block;padding:.2rem .65rem;border-radius:100px;background:rgba(124,92,228,.2);border:1px solid rgba(124,92,228,.35);font-size:.58rem;letter-spacing:.1em;color:var(--gl);text-transform:uppercase;margin-bottom:.6rem}
+  .dcs-bt-title{font-size:.95rem;font-weight:700;line-height:1.3;margin-bottom:.5rem}
+  .dcs-bt-card.bt-xl .dcs-bt-title{font-size:1.55rem}
+  .dcs-bt-meta{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+  .dcs-bt-price{font-size:.9rem;color:var(--g);font-weight:700}
+  .dcs-bt-cta{padding:.38rem .9rem;border-radius:100px;background:linear-gradient(135deg,var(--g),#5D3FD3);color:#fff;font-size:.72rem;font-weight:600;text-decoration:none;transition:transform .3s}
+  .dcs-bt-cta:hover{transform:scale(1.07)}
+  .dcs-bt-gov{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(124,92,228,.13),transparent 70%);opacity:0;transition:opacity .4s;pointer-events:none}
+  .dcs-bt-card:hover .dcs-bt-gov{opacity:1}
+  #dcs-ai{background:var(--d)}
+  .dcs-ai-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+  .dcs-ai-tag{display:inline-flex;align-items:center;gap:.45rem;padding:.28rem .85rem;border-radius:100px;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.25);font-size:.62rem;letter-spacing:.16em;color:var(--tl);text-transform:uppercase;margin-bottom:1.4rem}
+  .dcs-ai-left h2{font-size:clamp(1.9rem,3.8vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.12;margin-bottom:1.1rem}
+  .dcs-ai-desc{font-size:.97rem;color:var(--m);line-height:1.8;margin-bottom:2rem}
+  .dcs-ai-feats{display:flex;flex-direction:column;gap:.9rem}
+  .dcs-ai-feat{display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.1rem;border-radius:1rem;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);transition:border-color .3s}
+  .dcs-ai-feat:hover{border-color:rgba(124,92,228,.3)}
+  .dcs-ai-ico{flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(124,92,228,.1);border:1px solid rgba(124,92,228,.2);display:flex;align-items:center;justify-content:center;color:var(--g)}
+  .dcs-ai-feat h4{font-size:.87rem;font-weight:700;margin-bottom:.2rem}
+  .dcs-ai-feat p{font-size:.8rem;color:var(--m)}
+  .dcs-terminal{background:rgba(12,10,28,.92);border:1px solid rgba(124,92,228,.25);border-radius:1.4rem;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+  .dcs-term-bar{display:flex;align-items:center;gap:.4rem;padding:.75rem 1.1rem;border-bottom:1px solid rgba(124,92,228,.15);background:rgba(19,18,36,.85)}
+  .dcs-tb-dot{width:9px;height:9px;border-radius:50%}
+  .dcs-tb-dot.r{background:#FF5F56}.dcs-tb-dot.y{background:#FFBD2E}.dcs-tb-dot.g{background:#27C93F}
+  .dcs-term-bar span{margin-left:.5rem;font-size:.68rem;color:var(--m)}
+  .dcs-term-body{padding:1.4rem;font-family:"JetBrains Mono","Courier New",monospace;font-size:.74rem;line-height:1.9;color:rgba(245,245,240,.65)}
+  .dcs-term-line{display:block;margin-bottom:.1rem}
+  .dcs-term-prompt{color:var(--g)}
+  .dcs-term-cmd{color:#E8F0FE}
+  .dcs-term-out{color:rgba(245,245,240,.45);padding-left:1.2rem;display:block}
+  .dcs-term-hi{color:var(--pk)}
+  .dcs-term-hi2{color:var(--tl)}
+  .dcs-term-cursor{display:inline-block;width:8px;height:1em;background:var(--g);vertical-align:text-bottom;animation:dCur .9s step-end infinite}
+  @keyframes dCur{0%,100%{opacity:1}50%{opacity:0}}
+  #dcs-stats{background:var(--d2);padding:5rem 1.5rem}
+  .dcs-stats-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+  .dcs-stat-box{text-align:center;padding:2.2rem 1.2rem;border-radius:1.4rem;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);position:relative;overflow:hidden;transition:border-color .4s,transform .4s}
+  .dcs-stat-box:hover{border-color:rgba(124,92,228,.38);transform:translateY(-4px)}
+  .dcs-stat-glow{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:150px;height:80px;background:radial-gradient(circle,rgba(124,92,228,.18),transparent 70%)}
+  .dcs-stat-n{font-size:clamp(2.4rem,5vw,3.8rem);font-weight:900;letter-spacing:-.04em;color:var(--t);line-height:1;margin-bottom:.2rem}
+  .dcs-stat-box em{font-size:1.6rem;color:var(--pk);font-weight:700;font-style:normal}
+  .dcs-stat-label{font-size:.7rem;color:var(--m);text-transform:uppercase;letter-spacing:.14em;margin-top:.6rem}
+  #dcs-process{background:var(--d)}
+  .dcs-proc-wrap{max-width:880px;margin:0 auto;position:relative}
+  .dcs-proc-line{position:absolute;left:50%;top:40px;bottom:40px;width:1px;background:linear-gradient(to bottom,transparent,rgba(124,92,228,.4) 10%,rgba(124,92,228,.4) 90%,transparent);transform:translateX(-50%)}
+  .dcs-proc-step{display:grid;grid-template-columns:1fr 64px 1fr;align-items:center;margin-bottom:4rem}
+  .dcs-proc-step:last-child{margin-bottom:0}
+  .dcs-proc-content{padding:1.8rem 2rem;background:rgba(19,18,36,.7);border:1px solid rgba(255,255,255,.06);border-radius:1.4rem;backdrop-filter:blur(10px);transition:border-color .4s}
+  .dcs-proc-content:hover{border-color:rgba(124,92,228,.32)}
+  .dcs-proc-step.left .dcs-proc-content{grid-column:1}
+  .dcs-proc-step.right .dcs-proc-content{grid-column:3}
+  .dcs-proc-empty{grid-column:auto}
+  .dcs-proc-node{grid-column:2;display:flex;justify-content:center;z-index:2}
+  .dcs-proc-num{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--g),#5D3FD3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:#fff;box-shadow:0 0 28px rgba(124,92,228,.5)}
+  .dcs-proc-ico{width:42px;height:42px;border-radius:12px;background:rgba(124,92,228,.1);border:1px solid rgba(124,92,228,.22);display:flex;align-items:center;justify-content:center;color:var(--g);margin-bottom:.85rem}
+  .dcs-proc-content h3{font-size:1.02rem;font-weight:700;margin-bottom:.4rem}
+  .dcs-proc-content p{font-size:.82rem;color:var(--m);line-height:1.7}
+  #dcs-carousel{background:var(--d2);overflow:hidden;padding:7rem 0}
+  .dcs-car-head{max-width:1240px;margin:0 auto 2.5rem;padding:0 1.5rem;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+  .dcs-car-head h2{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;letter-spacing:-.03em}
+  .dcs-car-hint{font-size:.72rem;color:var(--m);display:flex;align-items:center;gap:.4rem}
+  .dcs-car-wrap{overflow-x:auto;overflow-y:visible;cursor:grab;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1rem}
+  .dcs-car-wrap::-webkit-scrollbar{display:none}
+  .dcs-car-wrap.grabbing{cursor:grabbing;user-select:none}
+  .dcs-car-track{display:flex;gap:1.2rem;padding:0 1.5rem;width:max-content}
+  .dcs-car-card{flex-shrink:0;width:272px;background:var(--d3);border:1px solid rgba(255,255,255,.06);border-radius:1.3rem;overflow:hidden;transition:border-color .4s,transform .4s}
+  .dcs-car-card:hover{border-color:rgba(124,92,228,.4);transform:translateY(-6px)}
+  .dcs-car-img{width:100%;aspect-ratio:1;object-fit:cover;transition:transform .6s;display:block}
+  .dcs-car-card:hover .dcs-car-img{transform:scale(1.06)}
+  .dcs-car-body{padding:1.1rem}
+  .dcs-car-cat{font-size:.6rem;letter-spacing:.12em;color:var(--pk);text-transform:uppercase;margin-bottom:.4rem}
+  .dcs-car-body h3{font-size:.87rem;font-weight:600;line-height:1.35;margin-bottom:.55rem}
+  .dcs-car-footer{display:flex;align-items:center;justify-content:space-between}
+  .dcs-car-price{font-size:.9rem;color:var(--g);font-weight:700}
+  .dcs-car-btn{padding:.34rem .8rem;border-radius:100px;background:rgba(124,92,228,.12);border:1px solid rgba(124,92,228,.28);color:var(--g);font-size:.7rem;font-weight:600;text-decoration:none;transition:all .3s}
+  .dcs-car-btn:hover{background:var(--g);color:#fff}
+  #dcs-creators{background:var(--d)}
+  .dcs-cr-grid{max-width:1160px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+  .dcs-cr-card{padding:2.2rem;border-radius:1.6rem;background:rgba(19,18,36,.62);border:1px solid rgba(255,255,255,.06);backdrop-filter:blur(20px);position:relative;overflow:hidden;transition:border-color .4s,transform .4s}
+  .dcs-cr-card:hover{border-color:rgba(124,92,228,.35);transform:translateY(-5px)}
+  .dcs-cr-glow{position:absolute;top:-60px;right:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,228,.22),transparent 70%);pointer-events:none}
+  .dcs-cr-quote{font-size:2.5rem;color:var(--g);line-height:1;margin-bottom:.8rem;opacity:.5;font-family:Georgia,serif}
+  .dcs-cr-text{font-size:.87rem;color:var(--m);line-height:1.8;margin-bottom:1.5rem;font-style:italic}
+  .dcs-cr-author{display:flex;align-items:center;gap:.85rem}
+  .dcs-cr-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--pk));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0}
+  .dcs-cr-info h4{font-size:.84rem;font-weight:700}
+  .dcs-cr-info p{font-size:.72rem;color:var(--m)}
+  .dcs-cr-stars{display:flex;gap:.15rem;margin-bottom:.9rem}
+  .dcs-cr-stars span{color:#FFB800;font-size:.82rem}
+  #dcs-cta{text-align:center;overflow:hidden;background:var(--d);border-top:1px solid rgba(255,255,255,.06);padding:8rem 1.5rem;position:relative}
+  .dcs-cta-mesh{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0,rgba(124,92,228,.14),transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(232,96,154,.09),transparent 50%);pointer-events:none}
+  .dcs-ctac{position:relative;z-index:2;max-width:700px;margin:0 auto}
+  #dcs-cta h2{font-size:clamp(2.2rem,5.5vw,4rem);font-weight:900;letter-spacing:-.04em;line-height:1.05;margin-bottom:1.5rem}
+  #dcs-cta p{font-size:1.05rem;color:var(--m);line-height:1.75;margin-bottom:2.5rem}
+  .dcs-ob{display:inline-flex;align-items:center;padding:.9rem 2rem;border-radius:100px;border:1px solid var(--g);color:var(--g);font-weight:600;font-size:.92rem;text-decoration:none;transition:all .4s}
+  .dcs-ob:hover{background:var(--g);color:#fff}
+  #dcs-mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:8999;background:rgba(7,8,15,.97);border-top:1px solid rgba(124,92,228,.22);backdrop-filter:blur(14px);padding:.35rem 0 calc(.35rem + env(safe-area-inset-bottom,0px))}
+  @media(max-width:767px){#dcs-mob-nav{display:flex;align-items:stretch}}
+  .dcs-mn-a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;color:rgba(245,245,240,.4);text-decoration:none;font-size:.55rem;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .2rem;transition:color .25s;border:none;background:none;cursor:pointer;font-family:"Inter","Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+  .dcs-mn-a svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .dcs-mn-a.active,.dcs-mn-a:hover{color:var(--g)}
+  .dcs-mn-a.active svg{filter:drop-shadow(0 0 5px rgba(124,92,228,.5))}
+  @media(max-width:1024px){
+  .dcs-bt-grid{grid-template-columns:repeat(6,1fr)}
+  .dcs-bt-card.bt-xl{grid-column:span 6;grid-row:span 1;min-height:260px}
+  .dcs-bt-card.bt-lg{grid-column:span 6;min-height:220px}
+  .dcs-bt-card.bt-md{grid-column:span 3;min-height:200px}
+  .dcs-bt-card.bt-sm{grid-column:span 3;min-height:180px}
+  .dcs-ai-grid{grid-template-columns:1fr;gap:3rem}
+  .dcs-stats-grid{grid-template-columns:repeat(2,1fr)}
+  .dcs-cr-grid{grid-template-columns:1fr 1fr}
+  .dcs-proc-line{display:none}
+  .dcs-proc-step{grid-template-columns:60px 1fr;gap:1rem;margin-bottom:2rem}
+  .dcs-proc-step.left .dcs-proc-content,.dcs-proc-step.right .dcs-proc-content{grid-column:2}
+  .dcs-proc-node{grid-column:1;grid-row:1}
+  .dcs-proc-empty{display:none}
+  }
+  @media(max-width:767px){
+  #dcs section{padding:5rem 1.2rem}
+  .dcs-h1{font-size:clamp(2rem,7vw,3rem)!important}
+  .dcs-hero-float{display:none}
+  .dcs-stats-grid{grid-template-columns:repeat(2,1fr);gap:1rem}
+  .dcs-cr-grid{grid-template-columns:1fr}
+  .dcs-bt-grid{grid-template-columns:1fr 1fr;gap:.7rem}
+  .dcs-bt-card.bt-xl,.dcs-bt-card.bt-lg{grid-column:span 2;min-height:200px}
+  .dcs-bt-card.bt-md,.dcs-bt-card.bt-sm{grid-column:span 1;min-height:160px}
+  #dcs-cursor,#dcs-cursor-dot{display:none}
+  #dcs-tt{bottom:5.5rem;right:1rem}
+  .dcs-ctas{flex-direction:column;align-items:stretch;max-width:280px;margin:0 auto}
+  .dcs-proc-step{grid-template-columns:48px 1fr}
+  }
+
+  /* ═══ DCS CUSTOM HEADER (page-4900) ═══ */
+  body.page-id-4900{background:#07080F!important}
+  body.page-id-4900 header:not(#dcs-hdr),body.page-id-4900 #masthead,body.page-id-4900 .site-header,body.page-id-4900 .eth-header,body.page-id-4900 .etheme-header,body.page-id-4900 [class*="eth-header"],body.page-id-4900 [id*="masthead"]{display:none!important}
+  #dcs-hdr{position:fixed;top:0;left:0;right:0;z-index:99999;height:64px;background:rgba(7,8,15,.8);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);border-bottom:1px solid rgba(124,92,228,.18);box-shadow:0 2px 40px rgba(0,0,0,.45);transition:background .35s,box-shadow .35s}
+  #dcs-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 0%,#7C5CE4 25%,#E8609A 75%,transparent 100%);opacity:.9}
+  #dcs-hdr.scrolled{background:rgba(7,8,15,.97);box-shadow:0 8px 56px rgba(0,0,0,.7)}
+  #dcs-hdr-inner{max-width:1440px;margin:0 auto;height:100%;display:flex;align-items:center;gap:1.5rem;padding:0 clamp(1rem,3vw,2.5rem)}
+  #dcs-hdr-logo{display:flex;align-items:center;flex-shrink:0;text-decoration:none;transition:filter .35s,transform .3s}
+  #dcs-hdr-logo img{height:34px;width:auto;display:block}
+  #dcs-hdr-wordmark{font-size:1.3rem;font-weight:900;letter-spacing:.08em;background:linear-gradient(135deg,#A88BF5 0%,#E8609A 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  #dcs-hdr-logo:hover{filter:drop-shadow(0 0 12px rgba(124,92,228,.65));transform:scale(1.04)}
+  #dcs-hdr-nav{flex:1;display:flex;justify-content:center}
+  #dcs-hdr-list{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:clamp(.3rem,1.3vw,1.2rem)}
+  #dcs-hdr-list > li{position:relative}
+  #dcs-hdr-list > li > a{font-size:.77rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;color:rgba(245,245,240,.76);text-decoration:none;padding:.3rem .05rem;display:inline-flex;align-items:center;gap:.28rem;position:relative;transition:color .25s,text-shadow .25s}
+  #dcs-hdr-list > li > a::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:1.5px;background:linear-gradient(90deg,#7C5CE4,#E8609A);border-radius:2px;transition:width .3s cubic-bezier(.4,0,.2,1)}
+  #dcs-hdr-list > li > a:hover{color:#B8A0F8;text-shadow:0 0 16px rgba(124,92,228,.45)}
+  #dcs-hdr-list > li > a:hover::after{width:100%}
+  #dcs-hdr-list > li.dcs-active > a{color:#7C5CE4}
+  #dcs-hdr-list > li.dcs-active > a::after{width:100%}
+  a.dcs-nav-studio{color:#E8609A!important;text-shadow:0 0 10px rgba(232,96,154,.28)!important}
+  a.dcs-nav-studio:hover{color:#FF9BC4!important;text-shadow:0 0 20px rgba(232,96,154,.6)!important}
+  .dcs-sub{list-style:none;margin:0;padding:.5rem;position:absolute;top:calc(100% + .75rem);left:50%;transform:translateX(-50%) translateY(-6px);min-width:170px;background:rgba(9,8,24,.97);backdrop-filter:blur(20px);border:1px solid rgba(124,92,228,.2);box-shadow:0 20px 56px rgba(0,0,0,.65);border-radius:.8rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .has-sub:hover .dcs-sub{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .dcs-sub li a{display:block;padding:.5rem .9rem;border-radius:.5rem;color:rgba(245,245,240,.72);text-decoration:none;font-size:.79rem;font-weight:400;transition:color .2s,background .2s}
+  .dcs-sub li a:hover{color:#B8A0F8;background:rgba(124,92,228,.1)}
+  #dcs-hdr-right{display:flex;align-items:center;gap:.9rem;flex-shrink:0}
+  #dcs-hdr-sale{font-size:.72rem;font-weight:700;letter-spacing:.05em;background:linear-gradient(135deg,#7C5CE4,#E8609A);color:#fff!important;text-decoration:none;padding:.32rem .72rem;border-radius:.5rem;box-shadow:0 0 18px rgba(124,92,228,.3);transition:box-shadow .3s,transform .25s;white-space:nowrap}
+  #dcs-hdr-sale:hover{box-shadow:0 0 28px rgba(232,96,154,.55);transform:translateY(-1px)}
+  #dcs-hdr-cart{position:relative;color:rgba(245,245,240,.76);text-decoration:none;display:flex;align-items:center;transition:color .25s,filter .25s}
+  #dcs-hdr-cart:hover{color:#B8A0F8;filter:drop-shadow(0 0 8px rgba(124,92,228,.55))}
+  #dcs-cart-badge{position:absolute;top:-7px;right:-8px;background:linear-gradient(135deg,#7C5CE4,#E8609A);color:#fff;font-size:.62rem;font-weight:700;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+  #dcs-burger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:4px}
+  #dcs-burger span{display:block;width:22px;height:1.5px;background:#B8A0F8;border-radius:2px;transition:transform .3s,opacity .3s}
+  #dcs-drawer{position:fixed;top:0;right:0;bottom:0;width:min(300px,85vw);z-index:999998;background:rgba(8,6,22,.98);backdrop-filter:blur(24px);border-left:1px solid rgba(124,92,228,.18);transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);padding:4.5rem 1.5rem 2rem;overflow-y:auto}
+  #dcs-drawer.open{transform:translateX(0)}
+  #dcs-drawer-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(245,245,240,.55);font-size:1.2rem;cursor:pointer;padding:.3rem;transition:color .2s}
+  #dcs-drawer-close:hover{color:#B8A0F8}
+  #dcs-drawer-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.15rem}
+  #dcs-drawer-list a{display:block;padding:.7rem 1rem;border-radius:.6rem;color:rgba(245,245,240,.78);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .2s,background .2s}
+  #dcs-drawer-list a:hover{color:#B8A0F8;background:rgba(124,92,228,.1)}
+  #dcs-overlay{position:fixed;inset:0;z-index:999997;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .28s}
+  #dcs-overlay.open{opacity:1;pointer-events:auto}
+  body.page-id-4900 #dcs-hero{padding-top:96px!important}
+  body.page-id-4900 .site-content,body.page-id-4900 #content,body.page-id-4900 .page-wrap,body.page-id-4900 .content-area,body.page-id-4900 .dcs-fullpage,body.page-id-4900 #primary{padding:0!important;margin:0!important;background:transparent!important;max-width:100%!important}
+  body.page-id-4900 footer,body.page-id-4900 .site-footer,body.page-id-4900 [class*="site-footer"]{background:#07080F!important;border-top:1px solid rgba(124,92,228,.15)!important}
+  body.page-id-4900 footer a,body.page-id-4900 .site-footer a{color:rgba(245,245,240,.5)!important;transition:color .25s!important}
+  body.page-id-4900 footer a:hover{color:#B8A0F8!important}
+  @media(max-width:960px){#dcs-hdr-nav{display:none}#dcs-burger{display:flex}#dcs-hdr-sale{display:none}}
+  @media(max-width:767px){body.page-id-4900{padding-bottom:64px}}

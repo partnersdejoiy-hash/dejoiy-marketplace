@@ -1,0 +1,303 @@
+<?php
+/**
+ * DEJOIY Mobile / tablet single product — no marketplace header or footer.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Single product focus view (mobile/tablet).
+ *
+ * @return bool
+ */
+function dejoiy_mobile_product_is_product_focus() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	return function_exists( 'is_product' ) && is_product();
+}
+
+/**
+ * Checkout chromeless layout — never during AJAX or payment return endpoints.
+ *
+ * @return bool
+ */
+function dejoiy_mobile_checkout_is_chromeless() {
+	if ( is_admin() || wp_doing_ajax() ) {
+		return false;
+	}
+	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+		return false;
+	}
+	if ( is_wc_endpoint_url( 'order-received' ) || is_wc_endpoint_url( 'order-pay' ) ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_mobile_product_is_focus_view() {
+	return dejoiy_mobile_product_is_product_focus() || dejoiy_mobile_checkout_is_chromeless();
+}
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_mobile_product_body_class( $classes ) {
+	if ( dejoiy_mobile_product_is_focus_view() ) {
+		$classes[] = 'dejoiy-mobile-product-view';
+		$classes[] = 'dejoiy-mobile-os-off';
+		if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+			$classes[] = 'dejoiy-mobile-checkout-view';
+		}
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_mobile_product_body_class', 22 );
+
+
+
+/**
+ * High-specificity brand button overrides (beats XStore green active color).
+ *
+ * @return string
+ */
+function dejoiy_mobile_product_inline_css() {
+	$g = 'linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%)';
+	$h = 'linear-gradient(135deg, #1d4ed8 0%, #e11dff 100%)';
+	$sel = 'body.dejoiy-mobile-product-view .single_add_to_cart_button, body.dejoiy-mobile-product-view .et-single-buy-now, body.dejoiy-mobile-product-view .buy_now_button, body.dejoiy-mobile-product-view .button.buy-now, body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle, body.dejoiy-mobile-product-view .etheme-sticky-cart .single_add_to_cart_button, body.dejoiy-mobile-product-view .etheme-sticky-cart .et-single-buy-now, body.dejoiy-mobile-checkout-view #place_order';
+	return "
+	body.dejoiy-mobile-product-view, body.dejoiy-mobile-checkout-view { --et_active-color: #2f6bff !important; }
+	{$sel} {
+		background: {$g} !important;
+		background-color: transparent !important;
+		background-image: {$g} !important;
+		color: #fff !important;
+		border: none !important;
+		box-shadow: 0 10px 28px rgba(47, 107, 255, 0.28) !important;
+	}
+	{$sel}:hover, {$sel}:focus, {$sel}:active {
+		background: {$h} !important;
+		background-color: transparent !important;
+		background-image: {$h} !important;
+		color: #fff !important;
+	}
+	";
+}
+
+/**
+ * Enqueue minimal product view styles.
+ */
+function dejoiy_mobile_product_assets() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-mobile-product.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-product',
+			$uri . '/dejoiy-mobile-product.css',
+			array(),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+		wp_add_inline_style( 'dejoiy-mobile-product', dejoiy_mobile_product_inline_css() );
+	}
+
+	// Checkout: WooCommerce scripts only — no custom JS (breaks payment redirect).
+	if ( dejoiy_mobile_checkout_is_chromeless() ) {
+		if ( function_exists( 'WC' ) ) {
+			wp_enqueue_script( 'wc-checkout' );
+			wp_enqueue_script( 'woocommerce' );
+		}
+		return;
+	}
+
+	if ( dejoiy_mobile_product_is_product_focus() ) {
+		$js = $dir . '/dejoiy-mobile-product.js';
+		if ( is_readable( $js ) ) {
+			wp_enqueue_script(
+				'dejoiy-mobile-product',
+				$uri . '/dejoiy-mobile-product.js',
+				array(),
+				(string) filemtime( $js ),
+				true
+			);
+		}
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_product_assets', 1011 );
+
+/**
+ * Minimal back bar (not full header).
+ */
+function dejoiy_mobile_product_print_bar() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	$back = wp_get_referer();
+	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+		$back = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	} elseif ( ! $back ) {
+		$back = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
+	}
+	?>
+	<div class="dejoiy-mobile-product-bar" role="navigation" aria-label="<?php esc_attr_e( 'Product navigation', 'dejoiy' ); ?>">
+		<a class="dejoiy-mobile-product-bar__back" href="<?php echo esc_url( $back ); ?>">← <?php esc_html_e( 'Back', 'dejoiy' ); ?></a>
+	</div>
+	<?php
+}
+add_action( 'wp_body_open', 'dejoiy_mobile_product_print_bar', 3 );
+
+/**
+ * Related / recommended product IDs for single product view.
+ *
+ * @param int $product_id Product ID.
+ * @param int $limit      Max products.
+ * @return array<int, int>
+ */
+function dejoiy_mobile_product_recommendation_ids( $product_id, $limit = 12 ) {
+	$product_id = (int) $product_id;
+	$limit      = max( 4, min( 16, (int) $limit ) );
+	$ids        = array();
+
+	if ( function_exists( 'wc_get_related_products' ) ) {
+		$ids = wc_get_related_products( $product_id, $limit );
+	}
+
+	if ( count( $ids ) < 4 ) {
+		$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			$q = new WP_Query(
+				array(
+					'post_type'      => 'product',
+					'post_status'    => 'publish',
+					'posts_per_page' => $limit,
+					'post__not_in'   => array_merge( array( $product_id ), $ids ),
+					'tax_query'      => array(
+						array(
+							'taxonomy' => 'product_cat',
+							'field'    => 'term_id',
+							'terms'    => array_slice( array_map( 'intval', $terms ), 0, 3 ),
+						),
+					),
+					'orderby'        => 'rand',
+					'fields'         => 'ids',
+				)
+			);
+			if ( ! empty( $q->posts ) ) {
+				$ids = array_merge( $ids, array_map( 'intval', $q->posts ) );
+			}
+		}
+	}
+
+	if ( count( $ids ) < 4 && function_exists( 'dejoiy_universe_get_products' ) ) {
+		$posts = dejoiy_universe_get_products(
+			array(
+				'posts_per_page' => $limit,
+				'post__not_in'   => array_merge( array( $product_id ), $ids ),
+				'meta_key'       => 'total_sales',
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+			)
+		);
+		foreach ( $posts as $p ) {
+			$ids[] = (int) $p->ID;
+		}
+	}
+
+	$ids = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+	return array_slice( $ids, 0, $limit );
+}
+
+/**
+ * Remove default WooCommerce related/upsell blocks on mobile focus view (custom shelf below).
+ */
+function dejoiy_mobile_product_trim_default_related() {
+	if ( ! dejoiy_mobile_product_is_product_focus() ) {
+		return;
+	}
+	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_related_products', 20 );
+	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_upsell_display', 15 );
+}
+add_action( 'wp', 'dejoiy_mobile_product_trim_default_related', 20 );
+
+/**
+ * Flipkart / Amazon style horizontal recommendations.
+ */
+function dejoiy_mobile_product_render_recommendations() {
+	if ( ! dejoiy_mobile_product_is_product_focus() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+
+	global $product;
+	if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+		return;
+	}
+
+	$ids = dejoiy_mobile_product_recommendation_ids( $product->get_id(), 12 );
+	if ( count( $ids ) < 2 ) {
+		return;
+	}
+
+	$done = true;
+	?>
+	<section class="dejoiy-mobile-product-reco" aria-label="<?php esc_attr_e( 'You may also like', 'dejoiy' ); ?>">
+		<h2 class="dejoiy-mobile-product-reco__title"><?php esc_html_e( 'You may also like', 'dejoiy' ); ?></h2>
+		<div class="dejoiy-mobile-product-reco__track" tabindex="0">
+			<?php
+			foreach ( $ids as $pid ) {
+				if ( function_exists( 'dejoiy_mobile_home_render_card' ) ) {
+					dejoiy_mobile_home_render_card( $pid, 'market' );
+				}
+			}
+			?>
+		</div>
+	</section>
+	<?php
+}
+add_action( 'wp_footer', 'dejoiy_mobile_product_render_recommendations', 99 );
+
+/**
+ * Load product card styles for recommendations shelf.
+ */
+function dejoiy_mobile_product_enqueue_card_styles() {
+	if ( ! dejoiy_mobile_product_is_product_focus() ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_mobile_home_render_card' ) ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-mobile-home-v2.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-home-v2-cards',
+			$uri . '/dejoiy-mobile-home-v2.css',
+			array( 'dejoiy-mobile-product' ),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_product_enqueue_card_styles', 1012 );

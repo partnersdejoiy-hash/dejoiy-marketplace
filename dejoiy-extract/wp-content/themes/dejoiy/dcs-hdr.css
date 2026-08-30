@@ -1,0 +1,200 @@
+/* ── Override old single-row header CSS in dcs.css ── */
+  body.page-id-4900 #dcs-hdr{height:auto!important;min-height:0!important;background:transparent!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:none!important;box-shadow:none!important;padding:0!important}
+  body.page-id-4900 header:not(#dcs-hdr),body.page-id-4900 #masthead,body.page-id-4900 .site-header,body.page-id-4900 .eth-header,body.page-id-4900 .etheme-header,body.page-id-4900 [class*="eth-header"],body.page-id-4900 [id*="masthead"]{display:none!important}
+  body.page-id-4900{background:#07080F!important}
+
+  /* ── TOP BAR ── */
+  #dcs-hdr-top{background:rgba(7,8,15,.96)!important;backdrop-filter:blur(22px) saturate(1.5)!important;-webkit-backdrop-filter:blur(22px) saturate(1.5)!important;border-bottom:1px solid rgba(124,92,228,.12)!important}
+  #dcs-hdr-top-in{max-width:1440px!important;margin:0 auto!important;height:72px!important;display:flex!important;align-items:center!important;gap:1.2rem!important;padding:0 clamp(1rem,2.5vw,2rem)!important;box-sizing:border-box!important}
+
+  /* Logo */
+  #dcs-logo{display:flex!important;align-items:center!important;flex-shrink:0!important;text-decoration:none!important;transition:filter .3s,transform .28s}
+  #dcs-logo img{height:44px!important;width:auto!important;max-width:none!important;max-height:44px!important;min-height:0!important;display:block!important;object-fit:contain!important}
+  #dcs-wordmark{font-size:1.35rem;font-weight:900;letter-spacing:.07em;background:linear-gradient(135deg,#A88BF5,#E8609A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  #dcs-logo:hover{filter:drop-shadow(0 0 10px rgba(124,92,228,.6));transform:scale(1.03)}
+
+  /* Search */
+  #dcs-search-form{flex:1!important;max-width:540px!important;min-width:0!important}
+  #dcs-search-wrap{position:relative!important;display:flex!important;align-items:center!important;width:100%!important}
+  #dcs-search-in{-webkit-appearance:none!important;appearance:none!important;width:100%!important;height:44px!important;background:rgba(30,22,58,.8)!important;border:1.5px solid rgba(124,92,228,.28)!important;border-radius:.6rem!important;color:rgba(245,245,240,.9)!important;font-size:.88rem!important;padding:0 52px 0 1rem!important;outline:none!important;box-shadow:none!important;box-sizing:border-box!important;transition:border-color .25s,background .25s}
+  #dcs-search-in::placeholder{color:rgba(245,245,240,.38)!important}
+  #dcs-search-in:focus{border-color:rgba(124,92,228,.6)!important;background:rgba(40,26,72,.9)!important}
+  #dcs-search-btn{position:absolute!important;right:0!important;top:0!important;bottom:0!important;width:48px!important;background:linear-gradient(135deg,#7C5CE4,#5D3FD3)!important;border:none!important;border-radius:0 .6rem .6rem 0!important;color:#fff!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:center!important;flex-shrink:0!important;z-index:1!important}
+  #dcs-search-btn:hover{opacity:.85!important}
+  #dcs-search-drop{position:absolute!important;top:calc(100% + 5px)!important;left:0!important;right:0!important;background:rgba(10,8,26,.98)!important;border:1px solid rgba(124,92,228,.22)!important;border-radius:.65rem!important;box-shadow:0 20px 56px rgba(0,0,0,.6)!important;z-index:200!important;overflow:hidden;max-height:380px;overflow-y:auto}
+  .dcs-sd-item{display:flex;align-items:center;gap:.75rem;padding:.6rem 1rem;cursor:pointer;text-decoration:none;color:rgba(245,245,240,.82);transition:background .15s}
+  .dcs-sd-item:hover{background:rgba(124,92,228,.1)}
+  .dcs-sd-thumb{width:36px;height:36px;border-radius:.4rem;object-fit:cover;flex-shrink:0;background:rgba(124,92,228,.12)}
+  .dcs-sd-name{font-size:.82rem;font-weight:500;color:rgba(245,245,240,.88)}
+  .dcs-sd-type{font-size:.67rem;color:rgba(168,139,245,.85);margin-top:.1rem}
+  .dcs-sd-hd{padding:.38rem 1rem .2rem;font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;color:rgba(245,245,240,.32);border-top:1px solid rgba(255,255,255,.05)}
+  .dcs-sd-hd:first-child{border-top:none}
+  .dcs-sd-all{display:block;padding:.6rem 1rem;text-align:center;font-size:.78rem;color:#A88BF5;border-top:1px solid rgba(124,92,228,.14);transition:background .15s;text-decoration:none}
+  .dcs-sd-all:hover{background:rgba(124,92,228,.1)}
+  .dcs-sd-msg,.dcs-sd-spin{padding:1rem;text-align:center;font-size:.8rem;color:rgba(245,245,240,.4)}
+  .dcs-sd-spin{color:#A88BF5}
+
+  /* Icons */
+  #dcs-hdr-icons{display:flex!important;align-items:center!important;gap:.05rem!important;flex-shrink:0!important;margin-left:auto!important}
+  .dcs-icon-link{display:flex!important;flex-direction:column!important;align-items:center!important;gap:.15rem!important;padding:.26rem .44rem!important;text-decoration:none!important;color:rgba(245,245,240,.78)!important;transition:color .22s!important;cursor:pointer!important;white-space:nowrap!important;background:none!important;border:none!important}
+  .dcs-icon-link:hover{color:#B8A0F8!important}
+  .dcs-icon-link svg{display:block}
+  .dcs-icon-link .lbl{font-size:.6rem!important;font-weight:500!important;color:rgba(245,245,240,.7)!important}
+  .dcs-icon-link:hover .lbl{color:#B8A0F8!important}
+  .dcs-icon-wrap{position:relative;display:flex}
+  .dcs-icon-badge{position:absolute;top:-6px;right:-7px;background:linear-gradient(135deg,#7C5CE4,#E8609A);color:#fff;font-size:.56rem;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1}
+  #dcs-burger{display:none!important;flex-direction:column!important;gap:5px!important;background:none!important;border:none!important;cursor:pointer!important;padding:5px!important;margin-left:.4rem!important}
+  #dcs-burger span{display:block;width:22px;height:1.5px;background:#B8A0F8;border-radius:2px;transition:transform .3s,opacity .3s}
+
+  /* ── BOTTOM BAR ── */
+  #dcs-hdr-bot{background:rgba(16,9,38,.94)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;border-bottom:1px solid rgba(124,92,228,.18)!important;position:relative!important}
+  #dcs-hdr-bot::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,#7C5CE4 28%,#E8609A 72%,transparent);opacity:.75}
+  #dcs-hdr-bot-in{max-width:1440px!important;margin:0 auto!important;height:48px!important;display:flex!important;align-items:center!important;gap:.7rem!important;padding:0 clamp(1rem,2.5vw,2rem)!important;box-sizing:border-box!important}
+  #dcs-explore-btn{display:flex!important;align-items:center!important;gap:.4rem!important;padding:.28rem .75rem!important;background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:.42rem!important;color:rgba(245,245,240,.85)!important;font-size:.75rem!important;font-weight:600!important;cursor:pointer!important;white-space:nowrap!important;flex-shrink:0!important;transition:background .2s,border-color .2s}
+  #dcs-explore-btn:hover{background:rgba(124,92,228,.18)!important;border-color:rgba(124,92,228,.4)!important}
+  #dcs-hdr-nav{flex:1!important;overflow:hidden!important;min-width:0!important}
+  #dcs-hdr-list{list-style:none!important;margin:0!important;padding:0!important;display:flex!important;align-items:center!important;gap:clamp(.1rem,1.1vw,.9rem)!important}
+  #dcs-hdr-list > li{position:relative!important;flex-shrink:0!important}
+  #dcs-hdr-list > li > a{font-size:.75rem!important;font-weight:500!important;letter-spacing:.03em!important;white-space:nowrap!important;color:rgba(245,245,240,.85)!important;text-decoration:none!important;padding:.22rem .05rem!important;display:inline-flex!important;align-items:center!important;gap:.22rem!important;position:relative!important;transition:color .22s,text-shadow .22s}
+  #dcs-hdr-list > li > a::after{content:'';position:absolute;bottom:-1px;left:0;width:0;height:1.5px;background:linear-gradient(90deg,#7C5CE4,#E8609A);border-radius:2px;transition:width .28s cubic-bezier(.4,0,.2,1)}
+  #dcs-hdr-list > li > a:hover,#dcs-hdr-list > li > a:hover *{color:#B8A0F8!important;text-shadow:0 0 14px rgba(124,92,228,.4)!important}
+  #dcs-hdr-list > li > a:hover::after,#dcs-hdr-list > li.dcs-active > a::after{width:100%}
+  #dcs-hdr-list > li.dcs-active > a{color:#A88BF5!important}
+  a.dcs-nav-studio{color:#E8609A!important;text-shadow:0 0 9px rgba(232,96,154,.22)!important}
+  a.dcs-nav-studio:hover{color:#FF9BC4!important;text-shadow:0 0 18px rgba(232,96,154,.6)!important}
+  .dcs-sub{list-style:none;margin:0;padding:.45rem;position:absolute;top:calc(100% + .45rem);left:0;min-width:185px;background:rgba(9,8,24,.98);backdrop-filter:blur(20px);border:1px solid rgba(124,92,228,.18);box-shadow:0 20px 56px rgba(0,0,0,.65);border-radius:.7rem;opacity:0;pointer-events:none;transition:opacity .17s,transform .17s;transform:translateY(-5px);z-index:200}
+  .has-sub:hover .dcs-sub{opacity:1;pointer-events:auto;transform:translateY(0)}
+  .dcs-sub li a{display:block!important;padding:.46rem .82rem!important;border-radius:.42rem!important;color:rgba(245,245,240,.75)!important;text-decoration:none!important;font-size:.78rem!important;transition:color .17s,background .17s}
+  .dcs-sub li a:hover{color:#B8A0F8!important;background:rgba(124,92,228,.1)!important}
+  #dcs-sale-badge{font-size:.7rem!important;font-weight:700!important;letter-spacing:.04em!important;background:linear-gradient(135deg,#7C5CE4,#E8609A)!important;color:#fff!important;text-decoration:none!important;padding:.26rem .68rem!important;border-radius:.42rem!important;white-space:nowrap!important;flex-shrink:0!important;transition:box-shadow .28s,transform .2s!important;margin-left:auto!important;box-shadow:0 0 14px rgba(124,92,228,.25)}
+  #dcs-sale-badge:hover{box-shadow:0 0 24px rgba(232,96,154,.5)!important;transform:translateY(-1px)!important}
+
+/* ── Mobile drawer ── */
+  #dcs-drawer{position:fixed!important;top:0!important;right:0!important;bottom:0!important;width:min(320px,88vw)!important;z-index:999998!important;background:rgba(8,6,22,.99)!important;backdrop-filter:blur(24px)!important;border-left:1px solid rgba(124,92,228,.16)!important;transform:translateX(100%)!important;transition:transform .32s cubic-bezier(.4,0,.2,1)!important;padding:5rem 1.5rem 2rem!important;overflow-y:auto!important}
+  #dcs-drawer.open{transform:translateX(0)!important}
+  #dcs-drawer-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:rgba(245,245,240,.5);font-size:1.2rem;cursor:pointer;padding:.3rem;transition:color .2s}
+  #dcs-drawer-close:hover{color:#B8A0F8}
+  .dcs-drawer-search{display:flex;gap:.5rem;margin-bottom:1.1rem}
+  .dcs-drawer-search input{flex:1;padding:.5rem .8rem;background:rgba(40,22,80,.8)!important;border:1px solid rgba(124,92,228,.22)!important;border-radius:.5rem;color:rgba(245,245,240,.88)!important;font-size:.84rem;outline:none}
+  .dcs-drawer-search input::placeholder{color:rgba(245,245,240,.3)!important}
+  .dcs-drawer-search button{padding:.5rem .8rem;background:linear-gradient(135deg,#7C5CE4,#5D3FD3);border:none;border-radius:.5rem;color:#fff;cursor:pointer}
+  #dcs-drawer-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.1rem}
+  #dcs-drawer-list a{display:block!important;padding:.62rem 1rem!important;border-radius:.5rem!important;color:rgba(245,245,240,.82)!important;text-decoration:none!important;font-size:.88rem!important;font-weight:500!important;transition:color .18s,background .18s}
+  #dcs-drawer-list a:hover{color:#B8A0F8!important;background:rgba(124,92,228,.1)!important}
+  #dcs-overlay{position:fixed;inset:0;z-index:999997;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .26s}
+  #dcs-overlay.open{opacity:1;pointer-events:auto}
+
+  /* ── Content offset ── */
+  body.page-id-4900 #dcs-hero{padding-top:124px!important}
+  body.page-id-4900 .site-content,body.page-id-4900 #content,body.page-id-4900 .page-wrap,body.page-id-4900 .content-area,body.page-id-4900 .dcs-fullpage,body.page-id-4900 #primary{padding:0!important;margin:0!important;background:transparent!important;max-width:100%!important}
+  body.page-id-4900 footer,body.page-id-4900 .site-footer{background:#07080F!important;border-top:1px solid rgba(124,92,228,.13)!important}
+  body.page-id-4900 footer a,body.page-id-4900 .site-footer a{color:rgba(245,245,240,.48)!important}
+  body.page-id-4900 footer a:hover{color:#B8A0F8!important}
+
+  /* ── Responsive ── */
+  @media(max-width:960px){#dcs-hdr-nav{display:none!important}#dcs-burger{display:flex!important}#dcs-sale-badge{display:none!important}#dcs-hdr-icons .lbl{display:none!important}}
+  @media(max-width:640px){.dcs-icon-link:not(.dcs-cart-link){display:none!important}#dcs-search-form{max-width:none!important}}
+  /* ── Mobile body bottom padding updated in bottom-nav block below ── */
+  /* ── Fix Shop dropdown: nav must allow overflow ── */
+  #dcs-hdr-nav{overflow:visible!important}
+  #dcs-hdr-bot{overflow:visible!important}
+  #dcs-hdr-bot-in{overflow:visible!important;position:relative}
+  #dcs-hdr{overflow:visible!important}
+
+  /* ── Hide xStore-injected WC badge circles ── */
+  body.page-id-4900 .et-cart-info,body.page-id-4900 .et-badge,body.page-id-4900 [class*="etheme-cart-count"],body.page-id-4900 [class*="etheme-wishlist-count"],body.page-id-4900 [class*="etheme-compare-count"]{display:none!important}
+
+  /* ── Explore dropdown panel ── */
+  #dcs-explore-panel{position:absolute!important;top:100%!important;left:0!important;right:0!important;background:rgba(9,6,26,.98)!important;backdrop-filter:blur(24px)!important;-webkit-backdrop-filter:blur(24px)!important;border-bottom:1px solid rgba(124,92,228,.2)!important;z-index:200!important;box-shadow:0 24px 56px rgba(0,0,0,.65)!important;transition:opacity .22s ease,transform .22s ease!important;transform:translateY(-6px);opacity:0;pointer-events:none}
+  #dcs-explore-panel[hidden]{display:block!important;visibility:hidden}
+  #dcs-explore-panel.dcs-exp-open{opacity:1!important;transform:translateY(0)!important;visibility:visible!important;pointer-events:auto!important}
+  .dcs-exp-in{max-width:1440px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);padding:1.4rem clamp(1rem,2.5vw,2rem);gap:0}
+  .dcs-exp-col{padding:0 1.5rem 1rem;border-right:1px solid rgba(124,92,228,.12)}
+  .dcs-exp-col:last-child{border-right:none}
+  .dcs-exp-title{font-size:.65rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(124,92,228,.75);margin-bottom:.7rem;padding-bottom:.35rem;border-bottom:1px solid rgba(124,92,228,.12)}
+  .dcs-exp-link{display:block;padding:.32rem 0;font-size:.82rem;color:rgba(245,245,240,.7)!important;text-decoration:none!important;transition:color .16s,padding-left .16s}
+  .dcs-exp-link:hover{color:#B8A0F8!important;padding-left:.45rem}
+  .dcs-exp-sale{color:#E8609A!important;font-weight:600}
+  .dcs-exp-sale:hover{color:#FF9BC4!important}
+  #dcs-explore-btn.dcs-exp-active{background:rgba(124,92,228,.22)!important;border-color:rgba(124,92,228,.5)!important;color:#fff!important}
+  #dcs-explore-btn svg:last-child{transition:transform .22s ease}
+  #dcs-explore-btn.dcs-exp-active svg:last-child{transform:rotate(180deg)}
+
+  /* ── Desktop header: hide on mobile/tablet ── */
+  @media(max-width:1024px){#dcs-hdr{display:none!important}}
+
+  /* ── Desktop header: hide mobile elements on desktop ── */
+  @media(min-width:1025px){#dcs-mhdr{display:none!important}.dejoiy-nav-wrapper{display:none!important}}
+
+  /* ── MOBILE HEADER ── */
+  #dcs-mhdr{position:fixed!important;top:0!important;left:0!important;right:0!important;z-index:99999!important;background:rgba(7,8,15,.97)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important;border-bottom:1px solid rgba(124,92,228,.15)!important;box-shadow:0 2px 24px rgba(0,0,0,.5)!important}
+  #dcs-mhdr-top{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 .9rem}
+  #dcs-mlogo{display:flex;align-items:center;text-decoration:none!important;flex-shrink:0}
+  #dcs-mlogo img{height:38px;width:auto;max-height:38px;display:block;object-fit:contain}
+  .dcs-mwordmark{font-size:1.2rem;font-weight:900;background:linear-gradient(135deg,#A88BF5,#E8609A);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .dcs-micons{display:flex;align-items:center;gap:0}
+  .dcs-micon{display:flex;align-items:center;justify-content:center;padding:.44rem .38rem;color:rgba(245,245,240,.78)!important;text-decoration:none!important;transition:color .2s;position:relative;line-height:1}
+  .dcs-micon:hover,.dcs-micon:active{color:#B8A0F8!important}
+  .dcs-mbadge{position:absolute;top:3px;right:3px;background:linear-gradient(135deg,#7C5CE4,#E8609A);color:#fff;font-size:.52rem;font-weight:700;min-width:14px;height:14px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 2px}
+  #dcs-mhdr-search{padding:.35rem .9rem .5rem}
+  .dcs-ms-wrap{position:relative;display:flex;align-items:center}
+  .dcs-ms-wrap input[type=search]{width:100%!important;height:40px!important;background:rgba(28,18,54,.85)!important;border:1.5px solid rgba(124,92,228,.25)!important;border-radius:.55rem!important;color:rgba(245,245,240,.9)!important;font-size:.86rem!important;padding:0 44px 0 .9rem!important;outline:none!important;box-shadow:none!important;-webkit-appearance:none!important;appearance:none!important;box-sizing:border-box!important}
+  .dcs-ms-wrap input[type=search]::placeholder{color:rgba(245,245,240,.35)!important}
+  .dcs-ms-btn{position:absolute;right:0;top:0;bottom:0;width:42px;background:linear-gradient(135deg,#7C5CE4,#5D3FD3)!important;border:none!important;border-radius:0 .55rem .55rem 0!important;color:#fff!important;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s}
+  .dcs-ms-btn:hover{opacity:.85}
+
+  /* ── Mobile nav BASE layout + animations (from DEJOIY nav system) ── */
+    .dejoiy-nav-scroll{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scrollbar-width:none}
+    .dejoiy-nav-scroll::-webkit-scrollbar{display:none}
+    .dejoiy-nav-scroll.show-hint{animation:swHint 1.2s ease-in-out}
+    @keyframes swHint{0%{transform:translateX(0)}30%{transform:translateX(-30px)}60%{transform:translateX(10px)}100%{transform:translateX(0)}}
+    .dejoiy-nav-card{flex:0 0 auto!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;scroll-snap-align:start;transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;cursor:pointer;text-decoration:none;position:relative}
+    .dejoiy-nav-card::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(124,92,228,.08),rgba(232,96,154,.08));opacity:0;transition:opacity .3s}
+    .dejoiy-nav-card:active::before,.dejoiy-nav-card.active::before{opacity:1}
+    .dejoiy-nav-icon{width:32px;height:32px;display:flex!important;align-items:center;justify-content:center;margin-bottom:5px}
+    .dejoiy-nav-icon svg{width:26px;height:26px;transition:transform .3s;display:block}
+    .dejoiy-nav-label{font-size:10.5px;font-weight:600;letter-spacing:.2px;text-align:center;line-height:1.2;white-space:nowrap}
+    /* ── Per-card tap animations ── */
+    .dejoiy-nav-card[data-nav=shop]:active .dejoiy-nav-icon svg{animation:sBounce .5s}
+    @keyframes sBounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}50%{transform:translateY(2px)}70%{transform:translateY(-3px)}}
+    .dejoiy-nav-card[data-nav=library]:active .dejoiy-nav-icon svg{animation:bOpen .5s}
+    @keyframes bOpen{0%,100%{transform:rotateY(0)}50%{transform:rotateY(-25deg) scale(1.05)}}
+    .dejoiy-nav-card[data-nav=studio]:active .dejoiy-nav-icon svg{animation:spRot .6s}
+    @keyframes spRot{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(1)}}
+    .dejoiy-nav-card[data-nav=quick]:active .dejoiy-nav-icon svg{animation:ePulse .4s}
+    @keyframes ePulse{0%,100%{opacity:1;transform:scale(1)}25%{opacity:.4;transform:scale(1.15)}50%{opacity:1;transform:scale(.95)}75%{opacity:.5;transform:scale(1.1)}}
+    .dejoiy-nav-card[data-nav=refurbished]:active .dejoiy-nav-icon svg{animation:sSpin .6s}
+    @keyframes sSpin{to{transform:rotate(360deg)}}
+    .dejoiy-nav-card[data-nav=services]:active .dejoiy-nav-icon svg{animation:gShake .4s}
+    @keyframes gShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(10deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(5deg)}}
+    .dejoiy-nav-card[data-nav=support]:active .dejoiy-nav-icon svg{animation:hPulse .5s}
+    @keyframes hPulse{0%,100%{transform:scale(1)}25%{transform:scale(1.15)}50%{transform:scale(.95)}75%{transform:scale(1.08)}}
+    .dejoiy-nav-card[data-nav=deals]:active .dejoiy-nav-icon svg{animation:spRot .5s}
+    /* ── Overlay (transition animation) ── */
+    .dj-overlay{position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+    .dj-overlay.active{opacity:1;visibility:visible}
+    .dj-logo{font-size:38px;font-weight:800;letter-spacing:2px;margin-bottom:6px;animation:lFS .6s ease forwards;opacity:0;transform:scale(.8)}
+    @keyframes lFS{to{opacity:1;transform:scale(1)}}
+    .dj-sub{font-size:14px;font-weight:600;letter-spacing:4px;margin-bottom:22px;opacity:0;animation:lFS .6s .2s ease forwards}
+    .dj-spin{width:36px;height:36px;border-radius:50%;border:3px solid transparent;animation:djSp .8s linear infinite}
+    @keyframes djSp{to{transform:rotate(360deg)}}
+
+    /* ── MOBILE NAV CARDS (dark-themed) ── */
+  body.page-id-4900 .dejoiy-nav-wrapper{position:fixed!important;top:102px!important;left:0!important;right:0!important;z-index:99998!important;background:linear-gradient(135deg,rgba(10,6,24,.98),rgba(16,9,36,.98))!important;border-bottom:1px solid rgba(124,92,228,.14)!important;padding:8px 0 10px!important}
+  body.page-id-4900 .dejoiy-nav-scroll{padding:4px 12px 4px!important;gap:8px!important}
+  body.page-id-4900 .dejoiy-nav-card{background:rgba(255,255,255,.05)!important;color:rgba(245,245,240,.8)!important;border-radius:14px!important;width:80px!important;min-height:76px!important;box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)!important;border:1px solid rgba(124,92,228,.13)!important}
+  body.page-id-4900 .dejoiy-nav-card::before{background:linear-gradient(135deg,rgba(124,92,228,.12),rgba(232,96,154,.1))!important}
+  body.page-id-4900 .dejoiy-nav-card:active{box-shadow:0 4px 20px rgba(124,92,228,.3),0 0 12px rgba(232,96,154,.15)!important;border-color:rgba(124,92,228,.35)!important;background:rgba(124,92,228,.12)!important}
+  body.page-id-4900 .dejoiy-nav-card.active,body.page-id-4900 .dejoiy-nav-card.dcs-active-card{border-color:rgba(232,96,154,.32)!important;background:rgba(232,96,154,.08)!important;box-shadow:0 4px 20px rgba(232,96,154,.2)!important}
+  body.page-id-4900 .dejoiy-nav-label{color:rgba(245,245,240,.7)!important;font-size:9.5px!important}
+  body.page-id-4900 .dj-overlay{background:rgba(7,8,15,.97)!important;backdrop-filter:blur(16px)!important}
+  body.page-id-4900 .dj-logo .y{color:#A88BF5!important;text-shadow:0 0 20px rgba(124,92,228,.4)!important}
+  body.page-id-4900 .dj-logo .j{color:#E8609A!important;text-shadow:0 0 20px rgba(232,96,154,.4)!important}
+  body.page-id-4900 .dj-spin{border-color:rgba(124,92,228,.15)!important;border-top-color:#7C5CE4!important;border-right-color:#E8609A!important}
+
+  /* ── Mobile content offset: push hero below fixed headers ── */
+  @media(max-width:1024px){
+    body.page-id-4900 #content.dcs-fullpage{padding-top:0!important;margin-top:0!important}
+    body.page-id-4900 .dcs-hero-wrap,body.page-id-4900 .dcs-section:first-child,body.page-id-4900 section:first-of-type{padding-top:215px!important}
+  }
+

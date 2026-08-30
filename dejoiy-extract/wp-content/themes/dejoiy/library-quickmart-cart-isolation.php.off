@@ -1,0 +1,253 @@
+<?php
+/**
+ * QuickMart cart — isolated from marketplace (Flipkart / Minutes pattern).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! defined( 'DEJOIY_QUICKMART_FLOW' ) ) {
+	define( 'DEJOIY_QUICKMART_FLOW', 'dejoiy_quickmart' );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_quickmart_is_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_get_product_ecosystem' ) && 'quickmart' === dejoiy_get_product_ecosystem( $product_id ) ) {
+		return true;
+	}
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
+	return ! is_wp_error( $terms ) && in_array( 'quick-products', $terms, true );
+}
+
+/**
+ * @param array $cart_item Cart line.
+ * @return bool
+ */
+function dejoiy_quickmart_cart_line_is_quickmart( $cart_item ) {
+	if ( ! empty( $cart_item['dejoiy_quickmart_item'] ) ) {
+		return true;
+	}
+	$product_id = isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0;
+	return $product_id && dejoiy_quickmart_is_product( $product_id );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_quickmart_has_flow_request() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	return isset( $_GET[ DEJOIY_QUICKMART_FLOW ] ) && '1' === (string) wp_unslash( $_GET[ DEJOIY_QUICKMART_FLOW ] );
+}
+
+/**
+ * @return bool QuickMart cart, checkout, or app pages.
+ */
+function dejoiy_quickmart_is_cart_context() {
+	if ( dejoiy_quickmart_has_flow_request() ) {
+		return true;
+	}
+	if ( function_exists( 'is_cart' ) && is_cart() ) {
+		return dejoiy_quickmart_has_flow_request();
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
+		return dejoiy_quickmart_has_flow_request();
+	}
+	return false;
+}
+
+/**
+ * @return bool Adding from QuickMart UI.
+ */
+function dejoiy_quickmart_is_add_request() {
+	if ( function_exists( 'dejoiy_quickmart_is_app_page' ) && dejoiy_quickmart_is_app_page() ) {
+		return true;
+	}
+	if ( dejoiy_quickmart_has_flow_request() ) {
+		return true;
+	}
+	$referer = wp_get_referer();
+	return $referer && false !== strpos( $referer, 'dejoiy-quick-mart' );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_get_cart_url() {
+	$url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	return add_query_arg( DEJOIY_QUICKMART_FLOW, '1', $url );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_quickmart_get_checkout_url() {
+	$url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' );
+	return add_query_arg( DEJOIY_QUICKMART_FLOW, '1', $url );
+}
+
+/**
+ * @param bool   $visible   Visible.
+ * @param array  $cart_item Item.
+ * @param string $cart_key  Key.
+ * @return bool
+ */
+function dejoiy_quickmart_cart_item_visible( $visible, $cart_item, $cart_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! $visible ) {
+		return false;
+	}
+	$is_qm = dejoiy_quickmart_cart_line_is_quickmart( $cart_item );
+	if ( dejoiy_quickmart_is_cart_context() ) {
+		return $is_qm;
+	}
+	return ! $is_qm;
+}
+add_filter( 'woocommerce_cart_item_visible', 'dejoiy_quickmart_cart_item_visible', 11, 3 );
+
+/**
+ * @param array $cart_item_data Data.
+ * @param int   $product_id     Product.
+ * @param int   $variation_id   Variation.
+ * @return array
+ */
+function dejoiy_quickmart_add_cart_item_data( $cart_item_data, $product_id, $variation_id ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! dejoiy_quickmart_is_product( $product_id ) ) {
+		return $cart_item_data;
+	}
+	if ( dejoiy_quickmart_is_add_request() || dejoiy_quickmart_is_cart_context() ) {
+		$cart_item_data['dejoiy_quickmart_item'] = 1;
+	}
+	return $cart_item_data;
+}
+add_filter( 'woocommerce_add_cart_item_data', 'dejoiy_quickmart_add_cart_item_data', 15, 3 );
+
+/**
+ * @param array  $cart_item     Item.
+ * @param array  $values        Session.
+ * @param string $cart_item_key Key.
+ * @return array
+ */
+function dejoiy_quickmart_get_cart_item_from_session( $cart_item, $values, $cart_item_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( isset( $values['dejoiy_quickmart_item'] ) ) {
+		$cart_item['dejoiy_quickmart_item'] = $values['dejoiy_quickmart_item'];
+	}
+	return $cart_item;
+}
+add_filter( 'woocommerce_get_cart_item_from_session', 'dejoiy_quickmart_get_cart_item_from_session', 15, 3 );
+
+/**
+ * @param bool $passed     Passed.
+ * @param int  $product_id Product.
+ * @param int  $quantity   Qty.
+ * @return bool
+ */
+function dejoiy_quickmart_add_to_cart_validation( $passed, $product_id, $quantity ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! $passed ) {
+		return false;
+	}
+	$is_qm  = dejoiy_quickmart_is_product( $product_id );
+	$qm_ctx = dejoiy_quickmart_is_cart_context() || dejoiy_quickmart_is_add_request();
+
+	if ( $is_qm && ! $qm_ctx && ! dejoiy_quickmart_is_app_page() ) {
+		wc_add_notice(
+			__( 'This item is available on QuickMart. Open QuickMart to add it to your quick cart.', 'dejoiy' ),
+			'error'
+		);
+		return false;
+	}
+
+	if ( ! $is_qm && dejoiy_quickmart_is_cart_context() ) {
+		wc_add_notice(
+			__( 'Only QuickMart items can be added here. Marketplace products use the main cart.', 'dejoiy' ),
+			'error'
+		);
+		return false;
+	}
+
+	return $passed;
+}
+add_filter( 'woocommerce_add_to_cart_validation', 'dejoiy_quickmart_add_to_cart_validation', 15, 3 );
+
+/**
+ * @return int
+ */
+function dejoiy_quickmart_get_cart_count() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return 0;
+	}
+	$qty = 0;
+	foreach ( WC()->cart->get_cart() as $key => $item ) {
+		$visible = apply_filters( 'woocommerce_cart_item_visible', true, $item, $key );
+		if ( $visible && dejoiy_quickmart_cart_line_is_quickmart( $item ) ) {
+			$qty += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
+		}
+	}
+	return max( 0, $qty );
+}
+
+/**
+ * Redirect QuickMart cart when shelf has quick lines but URL lacks flag.
+ */
+function dejoiy_quickmart_redirect_cart() {
+	if ( is_admin() || wp_doing_ajax() || 'GET' !== strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) ) {
+		return;
+	}
+	if ( ! function_exists( 'is_cart' ) || ! is_cart() || is_wc_endpoint_url() ) {
+		return;
+	}
+	if ( dejoiy_quickmart_has_flow_request() ) {
+		return;
+	}
+	if ( ! dejoiy_quickmart_cart_has_items() ) {
+		return;
+	}
+	wp_safe_redirect( dejoiy_quickmart_get_cart_url() );
+	exit;
+}
+add_action( 'template_redirect', 'dejoiy_quickmart_redirect_cart', 12 );
+
+/**
+ * @return bool
+ */
+function dejoiy_quickmart_cart_has_items() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return false;
+	}
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( dejoiy_quickmart_cart_line_is_quickmart( $item ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Marketplace mini-cart count excludes QuickMart lines.
+ *
+ * @param int $count Count.
+ * @return int
+ */
+function dejoiy_quickmart_filter_cart_contents_count( $count ) {
+	if ( dejoiy_quickmart_is_cart_context() ) {
+		return dejoiy_quickmart_get_cart_count();
+	}
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return $count;
+	}
+	$qm = 0;
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( dejoiy_quickmart_cart_line_is_quickmart( $item ) ) {
+			$qm += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
+		}
+	}
+	return max( 0, (int) $count - $qm );
+}
+add_filter( 'woocommerce_cart_contents_count', 'dejoiy_quickmart_filter_cart_contents_count', 18 );

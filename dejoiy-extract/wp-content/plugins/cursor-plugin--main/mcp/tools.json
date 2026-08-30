@@ -1,0 +1,154 @@
+[
+  {
+    "name": "read_file",
+    "description": "Read a file from wp-content zones (themes, plugins, uploads, mu-plugins).",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "zone": { "type": "string", "enum": ["wp-content", "themes", "plugins", "uploads", "mu-plugins"] },
+        "path": { "type": "string" }
+      },
+      "required": ["zone", "path"]
+    }
+  },
+  {
+    "name": "write_file",
+    "description": "Write content to a file in an allowed zone.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "zone": { "type": "string" },
+        "path": { "type": "string" },
+        "content": { "type": "string" }
+      },
+      "required": ["zone", "path", "content"]
+    }
+  },
+  {
+    "name": "list_files",
+    "description": "List directory tree in a zone.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "zone": { "type": "string" },
+        "path": { "type": "string" },
+        "depth": { "type": "integer" }
+      }
+    }
+  },
+  {
+    "name": "search_files",
+    "description": "Search files by glob pattern.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "zone": { "type": "string" },
+        "pattern": { "type": "string" },
+        "limit": { "type": "integer" }
+      }
+    }
+  },
+  {
+    "name": "install_plugin",
+    "description": "Install a plugin from WordPress.org slug or ZIP URL.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "source": { "type": "string" } },
+      "required": ["source"]
+    }
+  },
+  {
+    "name": "update_plugin",
+    "description": "Update an installed plugin.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "file": { "type": "string" } },
+      "required": ["file"]
+    }
+  },
+  {
+    "name": "activate_plugin",
+    "description": "Activate a plugin.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "file": { "type": "string" } },
+      "required": ["file"]
+    }
+  },
+  {
+    "name": "deactivate_plugin",
+    "description": "Deactivate a plugin.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "file": { "type": "string" } },
+      "required": ["file"]
+    }
+  },
+  {
+    "name": "create_page",
+    "description": "Create a WordPress page.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "post_title": { "type": "string" },
+        "post_content": { "type": "string" },
+        "post_status": { "type": "string" }
+      },
+      "required": ["post_title"]
+    }
+  },
+  {
+    "name": "create_product",
+    "description": "Create a WooCommerce product.",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "regular_price": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name"]
+    }
+  },
+  {
+    "name": "run_query",
+    "description": "Execute a SELECT SQL query (read-only by default).",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "sql": { "type": "string" } },
+      "required": ["sql"]
+    }
+  },
+  {
+    "name": "create_backup",
+    "description": "Create a backup (full, database, theme, or plugin).",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["full", "database", "theme", "plugin"] }
+      }
+    }
+  },
+  {
+    "name": "restore_backup",
+    "description": "Restore from a backup (requires approval).",
+    "endpoint": "POST /mcp/execute",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "backup_id": { "type": "integer" } },
+      "required": ["backup_id"]
+    }
+  }
+]

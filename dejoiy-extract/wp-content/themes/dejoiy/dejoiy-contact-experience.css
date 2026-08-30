@@ -1,0 +1,310 @@
+/* DEJOIY Contact Experience — /contact-us */
+
+body.dejoiy-contact-xp .content-page,
+body.dejoiy-contact-xp .page-content,
+body.dejoiy-contact-xp .container.content-page {
+	max-width: none;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.dcu-shell {
+	--dcu-purple: #7c3aed;
+	--dcu-cyan: #06b6d4;
+	--dcu-teal: #006d5b;
+	--dcu-ink: #0f172a;
+	--dcu-muted: #64748b;
+	--dcu-line: #e2e8f0;
+	--dcu-radius: 14px;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 0 20px 56px;
+	font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+	color: var(--dcu-ink);
+}
+
+.dcu-hero {
+	position: relative;
+	margin: 8px 0 28px;
+	padding: 28px 24px;
+	border-radius: 20px;
+	overflow: hidden;
+	background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(6, 182, 212, 0.08));
+	border: 1px solid rgba(124, 58, 237, 0.12);
+}
+
+.dcu-hero__glow {
+	position: absolute;
+	inset: -40% auto auto -10%;
+	width: 280px;
+	height: 280px;
+	background: radial-gradient(circle, rgba(124, 58, 237, 0.18), transparent 70%);
+	pointer-events: none;
+}
+
+.dcu-hero__inner {
+	position: relative;
+	z-index: 1;
+}
+
+.dcu-hero__logo {
+	display: block;
+	width: auto;
+	max-width: 132px;
+	height: auto;
+	margin: 0 0 10px;
+}
+
+.dcu-hero__kicker {
+	margin: 0 0 8px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--dcu-purple);
+}
+
+.dcu-hero__title {
+	margin: 0 0 10px;
+	font-size: clamp(1.5rem, 2.4vw, 2rem);
+	line-height: 1.2;
+	font-weight: 700;
+}
+
+.dcu-hero__sub {
+	margin: 0;
+	max-width: 62ch;
+	color: var(--dcu-muted);
+	font-size: 1rem;
+	line-height: 1.6;
+}
+
+.dcu-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 28px;
+	align-items: start;
+}
+
+.dcu-map {
+	display: block;
+	width: 100%;
+	min-height: 420px;
+	border: 0;
+	border-radius: var(--dcu-radius);
+	box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.dcu-info-cards {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.dcu-info-card {
+	display: flex;
+	gap: 12px;
+	padding: 18px;
+	border: 1px solid var(--dcu-line);
+	border-radius: var(--dcu-radius);
+	background: #fff;
+}
+
+.dcu-info-card__icon {
+	font-size: 1.25rem;
+	line-height: 1;
+	margin-top: 2px;
+}
+
+.dcu-info-card__title {
+	margin: 0 0 8px;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.dcu-info-card__text {
+	margin: 0 0 6px;
+	font-size: 0.95rem;
+	line-height: 1.5;
+	color: var(--dcu-muted);
+}
+
+.dcu-info-card__text a {
+	color: var(--dcu-purple);
+	text-decoration: none;
+}
+
+.dcu-info-card__text a:hover {
+	text-decoration: underline;
+}
+
+.dcu-form-wrap,
+.dcu-grid__info,
+.dcu-field {
+	overflow: visible;
+}
+
+.dcu-form-wrap {
+	padding: 4px 0 0;
+}
+
+.dcu-form__title {
+	margin: 0 0 18px;
+	font-size: 1.35rem;
+	font-weight: 700;
+}
+
+.dcu-form {
+	display: grid;
+	gap: 14px;
+}
+
+.dcu-honeypot {
+	position: absolute;
+	left: -9999px;
+	opacity: 0;
+	height: 0;
+	width: 0;
+	pointer-events: none;
+}
+
+.dcu-field--icon {
+	position: relative;
+}
+
+.dcu-input--icon {
+	padding-left: 46px;
+	background-image: var(--dcu-favicon);
+	background-repeat: no-repeat;
+	background-position: 14px center;
+	background-size: 22px 22px;
+}
+
+.dcu-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 14px 16px;
+	border: 1px solid #d1d5db;
+	border-radius: 10px;
+	background: #fff;
+	font: inherit;
+	color: var(--dcu-ink);
+	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dcu-input::placeholder {
+	color: #9ca3af;
+}
+
+.dcu-input:focus {
+	outline: none;
+	border-color: var(--dcu-purple);
+	box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.dcu-field--select {
+	position: relative;
+	z-index: 2;
+}
+
+.dcu-select {
+	appearance: none;
+	-webkit-appearance: none;
+	min-height: 52px;
+	line-height: 1.4;
+	padding-top: 14px;
+	padding-bottom: 14px;
+	white-space: normal;
+	text-overflow: clip;
+	overflow: visible;
+	background-color: #fff;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239ca3af' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 16px center;
+	padding-right: 44px;
+}
+
+.dcu-select option {
+	padding: 10px 12px;
+	line-height: 1.4;
+	color: var(--dcu-ink);
+	background: #fff;
+}
+
+.dcu-textarea {
+	resize: vertical;
+	min-height: 140px;
+}
+
+.dcu-submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-width: 132px;
+	padding: 14px 28px;
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(135deg, var(--dcu-purple) 0%, #6d28d9 100%);
+	color: #fff;
+	font: inherit;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+	transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.dcu-submit:hover:not(:disabled) {
+	transform: translateY(-1px);
+	box-shadow: 0 8px 24px rgba(124, 58, 237, 0.32);
+}
+
+.dcu-submit:disabled {
+	opacity: 0.7;
+	cursor: wait;
+}
+
+.dcu-submit__spinner {
+	width: 16px;
+	height: 16px;
+	border: 2px solid rgba(255, 255, 255, 0.35);
+	border-top-color: #fff;
+	border-radius: 50%;
+	animation: dcu-spin 0.7s linear infinite;
+}
+
+@keyframes dcu-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.dcu-form__status {
+	margin: 4px 0 0;
+	min-height: 1.25em;
+	font-size: 0.92rem;
+}
+
+.dcu-form__status.is-success {
+	color: var(--dcu-purple);
+}
+
+.dcu-form__status.is-error {
+	color: #dc2626;
+}
+
+@media (max-width: 1024px) {
+	.dcu-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.dcu-map {
+		min-height: 300px;
+	}
+
+	.dcu-info-cards {
+		grid-template-columns: 1fr;
+	}
+}

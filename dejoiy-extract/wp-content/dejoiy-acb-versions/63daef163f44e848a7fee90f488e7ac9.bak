@@ -1,0 +1,33 @@
+/**
+ * Hide Mobile OS chrome on laptop/desktop (min-width: 1025px).
+ * Loaded separately because dejoiy-mobile-os.css is scoped to max-width: 1024px.
+ */
+@media (min-width: 1025px) {
+	#dejoiy-mobile-os-chrome,
+	#dejoiy-mobile-os-cart-bar,
+	.dejoiy-mobile-os-bottom,
+	#dm-joi-search-sheet {
+		display: none !important;
+		visibility: hidden !important;
+		height: 0 !important;
+		overflow: hidden !important;
+		pointer-events: none !important;
+	}
+
+	body.dejoiy-mobile-os,
+	body.dejoiy-mobile-home-v2-active.dejoiy-mobile-os,
+	body.dejoiy-mobile-cart-view {
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+	}
+
+	body.dejoiy-mobile-os .elementor-location-header,
+	body.dejoiy-mobile-os header.elementor-4228,
+	body.dejoiy-mobile-os header[data-elementor-id="4228"] {
+		display: block !important;
+		visibility: visible !important;
+		height: auto !important;
+		overflow: visible !important;
+		pointer-events: auto !important;
+	}
+}

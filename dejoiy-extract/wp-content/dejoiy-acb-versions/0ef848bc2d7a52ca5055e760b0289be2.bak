@@ -1,0 +1,62 @@
+/* Main shop — Nexus / Custom Studio product cards keep section personality */
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-channel .product-inner,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-channel .product-image,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-channel .product-wrapper,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-channel > .product {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-nexus .product-inner,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-nexus .product-image,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-nexus > .product {
+  background: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 45%, #faf5ff 100%);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.08);
+}
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-nexus .woocommerce-loop-product__title,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-nexus .product-title {
+  color: #4c1d95;
+}
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio .product-inner,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio .product-image,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio > .product {
+  background: linear-gradient(160deg, #0f0f0f 0%, #1a1a1a 50%, #262626 100%);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio .woocommerce-loop-product__title,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio .product-title,
+body.dejoiy-universal-shop .products .dejoiy-shop-product-studio .price {
+  color: #fef3c7 !important;
+}
+
+body.dejoiy-universal-shop .products .dejoiy-shop-product-channel .product-image img {
+  object-fit: contain;
+  background: transparent;
+}
+
+/* Marketplace cart channel labels */
+body.dejoiy-universal-cart .dejoiy-uc-from {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+body.dejoiy-universal-cart .dejoiy-uc-from--nexus {
+  color: #7c3aed;
+}
+
+body.dejoiy-universal-cart .dejoiy-uc-from--studio {
+  color: #b45309;
+}
+
+body.dejoiy-universal-cart .dejoiy-uc-channel {
+  font-weight: 600;
+}

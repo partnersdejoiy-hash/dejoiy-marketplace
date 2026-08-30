@@ -1,0 +1,92 @@
+/* DEJOIY Custom Studio — Elementor motion & responsive layer */
+.elementor-page-4399,
+.elementor-page-4399 .elementor {
+  --dj-gold: #d4af37;
+  --dj-gold-soft: rgba(212, 175, 55, 0.22);
+  --dj-ink: #050505;
+  --dj-muted: #9aa8bf;
+  background: var(--dj-ink);
+  overflow-x: clip;
+}
+
+.elementor-page-4399 .elementor-widget-wrap {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.dejoiy-studio-hero .elementor-heading-title {
+  background: linear-gradient(135deg, #fff 0%, #f7d774 55%, #d4af37 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+.dejoiy-studio-stats .elementor-icon-box-wrapper,
+.dejoiy-studio-features .elementor-icon-box-wrapper,
+.dejoiy-studio-process .e-con,
+.dejoiy-studio-products .product {
+  will-change: transform;
+}
+
+.dejoiy-studio-tilt {
+  transition: transform 0.35s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.35s ease;
+  transform-style: preserve-3d;
+}
+
+.dejoiy-studio-tilt.is-hover {
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 0 32px var(--dj-gold-soft);
+}
+
+.dejoiy-studio-features .elementor-widget-icon-box {
+  flex: 1 1 calc(33.333% - 20px);
+  min-width: min(100%, 280px);
+}
+
+.dejoiy-studio-process .e-con {
+  border: 1px solid rgba(212, 175, 55, 0.12);
+}
+
+.dejoiy-studio-cta {
+  margin-inline: auto;
+  max-width: min(960px, 92vw);
+}
+
+/* Fluid typography & spacing */
+@media (max-width: 1024px) {
+  .dejoiy-studio-features .elementor-widget-icon-box {
+    flex: 1 1 calc(50% - 16px);
+  }
+}
+
+@media (max-width: 767px) {
+  .elementor-page-4399 .e-con {
+    --container-default-padding-inline: 16px;
+  }
+
+  .dejoiy-studio-hero {
+    min-height: 78vh !important;
+  }
+
+  .dejoiy-studio-features .elementor-widget-icon-box {
+    flex: 1 1 100%;
+  }
+
+  .dejoiy-studio-stats .elementor-icon-box-wrapper {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1920px) {
+  .elementor-page-4399 .e-con-boxed > .e-con-inner {
+    max-width: 1440px;
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dejoiy-studio-tilt,
+  .dj-track {
+    animation: none !important;
+    transition: none !important;
+  }
+}

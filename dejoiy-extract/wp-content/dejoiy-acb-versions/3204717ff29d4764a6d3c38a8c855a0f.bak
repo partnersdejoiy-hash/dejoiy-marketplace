@@ -1,0 +1,202 @@
+<?php
+/**
+ * Cross-ecosystem product routing — preserve section identity on click.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Ecosystem registry.
+ *
+ * @return array<string, array{label: string, page: string}>
+ */
+function dejoiy_ecosystem_registry() {
+	return array(
+		'marketplace' => array(
+			'label' => __( 'DEJOIY Marketplace', 'dejoiy' ),
+			'page'  => '',
+		),
+		'nexus'       => array(
+			'label' => __( 'DEJOIY Nexus', 'dejoiy' ),
+			'page'  => 'dejoiy-library',
+		),
+		'refurbished' => array(
+			'label' => __( 'DEJOIY Refurbished', 'dejoiy' ),
+			'page'  => 'dejoiy-refurbished',
+		),
+		'quickmart'   => array(
+			'label' => __( 'DEJOIY QuickMart', 'dejoiy' ),
+			'page'  => 'dejoiy-quick-mart',
+		),
+		'services'    => array(
+			'label' => __( 'DEJOIY Services', 'dejoiy' ),
+			'page'  => 'dejoiy-services',
+		),
+		'studio'      => array(
+			'label' => __( 'DEJOIY Custom Studio', 'dejoiy' ),
+			'page'  => 'dejoiy-custom-studio',
+		),
+		'business'    => array(
+			'label' => __( 'DEJOIY Business', 'dejoiy' ),
+			'page'  => '',
+		),
+	);
+}
+
+/**
+ * Category slug → ecosystem key.
+ *
+ * @return array<string, string>
+ */
+function dejoiy_ecosystem_category_map() {
+	return array(
+		'dejoiy-library'       => 'nexus',
+		'renewed-refurbished'  => 'refurbished',
+		'quick-products'         => 'quickmart',
+		'services-marketplace' => 'services',
+		'customized-products'  => 'studio',
+		'custom-t-shirts'      => 'studio',
+		'business'             => 'business',
+		'e-books'              => 'nexus',
+		'courses'              => 'nexus',
+	);
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string Ecosystem key.
+ */
+function dejoiy_get_product_ecosystem( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return 'marketplace';
+	}
+
+	$stored = sanitize_key( (string) get_post_meta( $product_id, '_dejoiy_ecosystem', true ) );
+	if ( $stored && isset( dejoiy_ecosystem_registry()[ $stored ] ) ) {
+		return $stored;
+	}
+
+	if ( get_post_meta( $product_id, '_dejoiy_library_book', true ) ) {
+		return 'nexus';
+	}
+
+	$map = dejoiy_ecosystem_category_map();
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
+	if ( ! is_wp_error( $terms ) ) {
+		foreach ( $terms as $slug ) {
+			if ( isset( $map[ $slug ] ) ) {
+				update_post_meta( $product_id, '_dejoiy_ecosystem', $map[ $slug ] );
+				return $map[ $slug ];
+			}
+		}
+	}
+
+	return 'marketplace';
+}
+
+/**
+ * Canonical customer URL for a product within its ecosystem.
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_ecosystem_product_url( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return '';
+	}
+
+	$eco = dejoiy_get_product_ecosystem( $product_id );
+
+	switch ( $eco ) {
+		case 'nexus':
+			if ( function_exists( 'dejoiy_library_product_url' ) ) {
+				return dejoiy_library_product_url( $product_id );
+			}
+			return add_query_arg(
+				array(
+					'dejoiy_library' => '1',
+					'dejoiy_book'    => $product_id,
+				),
+				home_url( '/dejoiy-library/' )
+			);
+
+		case 'refurbished':
+		case 'quickmart':
+		case 'services':
+		case 'studio':
+			$reg  = dejoiy_ecosystem_registry();
+			$page = isset( $reg[ $eco ]['page'] ) ? $reg[ $eco ]['page'] : '';
+			if ( '' === $page ) {
+				break;
+			}
+			return add_query_arg(
+				array(
+					'dejoiy_ecosystem' => $eco,
+					'dejoiy_product'   => $product_id,
+				),
+				home_url( '/' . $page . '/' )
+			);
+
+		case 'business':
+			return add_query_arg(
+				array(
+					'dejoiy_ecosystem' => 'business',
+					'dejoiy_product'   => $product_id,
+				),
+				function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' )
+			);
+	}
+
+	return get_permalink( $product_id );
+}
+
+/**
+ * Route loop / card links on shop and home intelligence grids.
+ *
+ * @param string     $permalink Permalink.
+ * @param WC_Product $product   Product.
+ * @return string
+ */
+function dejoiy_ecosystem_filter_permalink( $permalink, $product ) {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return $permalink;
+	}
+	if ( ! $product ) {
+		return $permalink;
+	}
+	$url = dejoiy_ecosystem_product_url( $product->get_id() );
+	return $url ? $url : $permalink;
+}
+add_filter( 'woocommerce_product_get_permalink', 'dejoiy_ecosystem_filter_permalink', 15, 2 );
+
+/**
+ * Persist ecosystem on save.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_ecosystem_sync_meta( $product_id ) {
+	if ( 'product' !== get_post_type( $product_id ) ) {
+		return;
+	}
+	$eco = dejoiy_get_product_ecosystem( $product_id );
+	update_post_meta( $product_id, '_dejoiy_ecosystem', $eco );
+}
+add_action( 'save_post_product', 'dejoiy_ecosystem_sync_meta', 40 );
+
+/**
+ * Badge class on product cards in intelligence grids.
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_ecosystem_badge_label( $product_id ) {
+	$eco = dejoiy_get_product_ecosystem( $product_id );
+	$reg = dejoiy_ecosystem_registry();
+	return isset( $reg[ $eco ]['label'] ) ? $reg[ $eco ]['label'] : $reg['marketplace']['label'];
+}

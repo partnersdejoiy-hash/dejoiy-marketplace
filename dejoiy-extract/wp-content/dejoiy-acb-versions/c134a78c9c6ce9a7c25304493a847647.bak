@@ -1,0 +1,71 @@
+<?php
+/**
+ * My Universe — personal library dashboard.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_library_document_start();
+require get_stylesheet_directory() . '/library-header.php';
+
+$purchased = array();
+if ( is_user_logged_in() && function_exists( 'wc_get_orders' ) ) {
+	$orders = wc_get_orders(
+		array(
+			'customer_id' => get_current_user_id(),
+			'status'      => array( 'completed', 'processing' ),
+			'limit'       => 20,
+		)
+	);
+	foreach ( $orders as $order ) {
+		foreach ( $order->get_items() as $item ) {
+			$pid = $item->get_product_id();
+			if ( $pid && dejoiy_library_is_book_product( $pid ) ) {
+				$purchased[ $pid ] = wc_get_product( $pid );
+			}
+		}
+	}
+}
+?>
+<main class="dlu-page dlu-my-universe" id="dlu-my-universe">
+	<div class="dlu-page-in">
+		<h1>My Universe</h1>
+		<p class="dlu-page-sub">Your living knowledge collection.</p>
+
+		<section class="dlu-dash-sec">
+			<h2>Continue Reading</h2>
+			<div class="dlu-books-grid dlu-books-grid--compact" id="dlu-continue-reading"></div>
+		</section>
+
+		<section class="dlu-dash-sec">
+			<h2>Purchased Books</h2>
+			<?php if ( empty( $purchased ) ) : ?>
+				<p class="dlu-empty-inline">No purchased books yet. <a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>#dlu-discover">Discover titles</a>.</p>
+			<?php else : ?>
+				<div class="dlu-books-grid dlu-books-grid--compact">
+					<?php
+					foreach ( $purchased as $pid => $product ) {
+						$post = get_post( $pid );
+						if ( $post ) {
+							echo dejoiy_library_render_book_card( $post ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+					}
+					?>
+				</div>
+			<?php endif; ?>
+		</section>
+
+		<section class="dlu-dash-sec">
+			<h2>Favorites &amp; Collections</h2>
+			<p class="dlu-empty-inline">Saved from the ♡ button — stored on this device until you sign in.</p>
+			<div id="dlu-favorites" class="dlu-fav-grid"></div>
+		</section>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';
+dejoiy_library_document_end();

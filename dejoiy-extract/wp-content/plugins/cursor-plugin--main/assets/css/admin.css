@@ -1,0 +1,40 @@
+.dejoiy-acb-wrap h1 {
+	margin-bottom: 1.5rem;
+}
+
+.dejoiy-acb-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
+
+.dejoiy-acb-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	padding: 1.25rem;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.dejoiy-acb-card h2 {
+	margin-top: 0;
+	font-size: 14px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #646970;
+}
+
+.dejoiy-acb-stat {
+	font-size: 2.5rem;
+	font-weight: 600;
+	margin: 0.5rem 0 1rem;
+	color: #1d2327;
+}
+
+.dejoiy-acb-wrap code {
+	background: #f0f0f1;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-size: 12px;
+}

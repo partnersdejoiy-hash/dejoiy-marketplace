@@ -1,0 +1,64 @@
+/**
+ * DEJOIY mobile single product — section order: product → recommendations → reviews.
+ */
+(function () {
+
+	function paintBrandButtons() {
+		var gradient = 'linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%)';
+		var nodes = document.querySelectorAll(
+			'.single_add_to_cart_button, .et-single-buy-now, .buy_now_button, .button.buy-now, .etheme_custom_add_to_cart_toggle, #place_order'
+		);
+		nodes.forEach(function (btn) {
+			btn.style.setProperty('background', gradient, 'important');
+			btn.style.setProperty('background-color', 'transparent', 'important');
+			btn.style.setProperty('background-image', gradient, 'important');
+			btn.style.setProperty('color', '#fff', 'important');
+			btn.style.setProperty('border', 'none', 'important');
+		});
+	}
+
+	'use strict';
+
+	if (!document.body.classList.contains('dejoiy-mobile-product-view') && !document.body.classList.contains('dejoiy-mobile-checkout-view')) {
+		return;
+	}
+
+	function placeSections() {
+		var product = document.querySelector('.elementor-location-single');
+		var reco = document.querySelector('.dejoiy-mobile-product-reco');
+		if (!product || !reco) {
+			return;
+		}
+
+		if (product.nextElementSibling !== reco) {
+			product.insertAdjacentElement('afterend', reco);
+		}
+
+		var tabs = document.querySelector(
+			'.woocommerce-tabs.wc-tabs-wrapper, .woocommerce-tabs.et-clearfix'
+		);
+		if (tabs && tabs !== reco && tabs !== product) {
+			if (reco.nextElementSibling !== tabs) {
+				reco.insertAdjacentElement('afterend', tabs);
+			}
+		}
+
+		reco.classList.add('is-placed');
+	}
+
+	function run() {
+		placeSections();
+		paintBrandButtons();
+		setTimeout(placeSections, 350);
+		setTimeout(placeSections, 1200);
+		setTimeout(paintBrandButtons, 100);
+		setTimeout(paintBrandButtons, 600);
+		setTimeout(paintBrandButtons, 1500);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', run);
+	} else {
+		run();
+	}
+})();

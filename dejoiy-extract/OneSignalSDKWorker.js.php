@@ -1,0 +1,13 @@
+<?php
+header("Content-Type: application/javascript");echo"importScripts( 'https://dejoiy.tech/wp-content/plugins/onesignal-free-web-push-notifications/sdk_files/OneSignalSDKWorker.js.php' );";?>'use strict';const cacheName='http://dejoiy.tech-superpwa-2.2.45';const startPage='https://dejoiy.tech/';const offlinePage='https://dejoiy.tech';const filesToCache=[startPage,offlinePage];const neverCacheUrls=[/\/wp-admin/,/\/wp-login/,/preview=true/];self.addEventListener('install',function(e){e.waitUntil(caches.open(cacheName).then(function(cache){filesToCache.map(function(url){return cache.add(url).catch(function(reason){return;});});}));});self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(keyList){return Promise.all(keyList.map(function(key){if(key!==cacheName){return caches.delete(key);}}));}));return self.clients.claim();});var fetchRangeData=function(event){var pos=Number(/^bytes\=(\d+)\-$/g.exec(event.request.headers.get('range'))[1]);event.respondWith(caches.open(cacheName).then(function(cache){return cache.match(event.request.url);}).then(function(res){if(!res){return fetch(event.request).then(res=>{return res.arrayBuffer();});}
+return res.arrayBuffer();}).then(function(ab){return new Response(ab.slice(pos),{status:206,statusText:'Partial Content',headers:[['Content-Range','bytes '+pos+'-'+
+(ab.byteLength-1)+'/'+ab.byteLength]]});}));}
+self.addEventListener('fetch',function(e){if(!neverCacheUrls.every(checkNeverCacheList,e.request.url)){return;}
+if(!e.request.url.match(/^(http|https):\/\//i))
+return;if(new URL(e.request.url).origin!==location.origin)
+return;if(e.request.headers.has('range')){return;}
+if((e.request.mode==='navigate'||e.request.mode==='cors')&&navigator.onLine){if(e.request.method==='GET'){e.respondWith(fetch(e.request).then(function(response){return caches.open(cacheName).then(function(cache){cache.put(e.request,response.clone());return response;});}).catch(function(){return caches.match(e.request.url);}));}else{e.respondWith(fetch(e.request));}
+return;}
+e.respondWith(caches.match(e.request).then(function(response){return response||fetch(e.request).then(function(response){return caches.open(cacheName).then(function(cache){cache.put(e.request,response.clone());return response;});});}).catch(function(){return caches.match(offlinePage);}));});function checkNeverCacheList(url){if(this.match(url)){return false;}
+return true;}
+importScripts("https://storage.googleapis.com/workbox-cdn/releases/6.0.2/workbox-sw.js");if(workbox.googleAnalytics){try{workbox.googleAnalytics.initialize();}catch(e){console.log(e.message);}}

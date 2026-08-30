@@ -1,0 +1,36 @@
+<?php
+/**
+ * Studio single product template.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_studio_maybe_set_cookie();
+
+get_header( 'shop' );
+?>
+<div class="dsu-wc-wrap">
+	<?php
+	require get_stylesheet_directory() . '/studio-header.php';
+	?>
+	<main class="dsu-wc-main dsu-single-product">
+		<div class="dsu-wc-breadcrumb">
+			<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>">← Custom Studio</a>
+		</div>
+		<div class="dsu-single-shell">
+			<?php
+			while ( have_posts() ) :
+				the_post();
+				wc_get_template_part( 'content', 'single-product' );
+			endwhile;
+			?>
+		</div>
+	</main>
+	<?php require get_stylesheet_directory() . '/studio-footer.php'; ?>
+</div>
+<?php
+get_footer( 'shop' );

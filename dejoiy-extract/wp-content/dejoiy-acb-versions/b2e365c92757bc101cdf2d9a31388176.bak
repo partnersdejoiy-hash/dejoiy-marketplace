@@ -1,0 +1,71 @@
+/* Studio WooCommerce single + checkout */
+body.dejoiy-studio-flow .site-header,
+body.dejoiy-studio-flow .page-heading,
+body.dejoiy-studio-flow .etheme-page-heading { display: none !important; }
+
+.dsu-wc-wrap {
+  background: #000;
+  min-height: 100vh;
+  color: #fff;
+}
+
+.dsu-wc-main {
+  padding: 88px 20px 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.dsu-wc-breadcrumb a {
+  color: #ffd700 !important;
+  font-weight: 700;
+  text-decoration: none !important;
+  font-size: 14px;
+}
+
+.dsu-single-shell,
+.dsu-checkout-shell {
+  margin-top: 24px;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  background: linear-gradient(160deg, #0a0a0a, #000);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.dsu-single-shell .product_title,
+.dsu-single-shell .woocommerce-product-details__short-description,
+.dsu-single-shell label { color: #fff !important; }
+
+.dsu-single-shell .price,
+.dsu-single-shell .amount { color: #ffd700 !important; font-weight: 800; }
+
+.dsu-single-shell .single_add_to_cart_button,
+.dsu-checkout-shell .button.alt {
+  background: linear-gradient(135deg, #f5c542, #ffd700) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  padding: 14px 28px !important;
+}
+
+.dsu-checkout-title {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900;
+  color: #fff;
+  margin: 16px 0 8px;
+}
+
+.dsu-checkout-sub {
+  color: #fff;
+  margin: 0 0 24px;
+  font-size: 16px;
+}
+
+.dsu-checkout-shell input,
+.dsu-checkout-shell select,
+.dsu-checkout-shell textarea {
+  background: #111 !important;
+  border-color: rgba(255, 215, 0, 0.35) !important;
+  color: #fff !important;
+}

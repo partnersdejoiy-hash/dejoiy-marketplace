@@ -1,0 +1,51 @@
+<?php
+/**
+ * DEJOIY Reader — custom reading shell.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$book_id = isset( $_GET['dejoiy_reader'] ) ? absint( $_GET['dejoiy_reader'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$product = $book_id && function_exists( 'wc_get_product' ) ? wc_get_product( $book_id ) : null;
+
+if ( ! $product || ! dejoiy_library_is_book_product( $book_id ) ) {
+	wp_safe_redirect( dejoiy_library_get_landing_url() );
+	exit;
+}
+
+dejoiy_library_document_start();
+require get_stylesheet_directory() . '/library-header.php';
+$cover = dejoiy_library_get_cover_url( $book_id, 'large' );
+?>
+<main class="dlu-reader" id="dlu-reader" data-book-id="<?php echo esc_attr( (string) $book_id ); ?>">
+	<div class="dlu-reader-toolbar">
+		<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-btn-ghost">← My Nexus</a>
+		<h1><?php echo esc_html( $product->get_name() ); ?></h1>
+		<div class="dlu-reader-modes">
+			<button type="button" data-mode="dark" class="is-on">Dark</button>
+			<button type="button" data-mode="light">Light</button>
+		</div>
+	</div>
+	<div class="dlu-reader-body" data-mode="dark">
+		<aside class="dlu-reader-side">
+			<img src="<?php echo esc_url( $cover ); ?>" alt="" class="dlu-reader-cover" />
+			<p class="dlu-reader-author"><?php echo esc_html( dejoiy_library_get_author( $book_id ) ); ?></p>
+			<div class="dlu-reader-progress">
+				<label>Progress</label>
+				<progress id="dlu-read-progress" value="0" max="100">0%</progress>
+			</div>
+			<button type="button" class="dlu-btn-ghost" id="dlu-add-bookmark">Add bookmark</button>
+		</aside>
+		<article class="dlu-reader-content" id="dlu-reader-content">
+			<?php echo wp_kses_post( wpautop( $product->get_description() ?: $product->get_short_description() ) ); ?>
+			<p class="dlu-reader-note">Reading experience opens here when your licensed edition file is attached. Highlights, notes, and streaks sync to My Nexus.</p>
+		</article>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';
+dejoiy_library_document_end();

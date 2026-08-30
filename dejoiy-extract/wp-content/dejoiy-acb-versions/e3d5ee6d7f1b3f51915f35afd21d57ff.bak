@@ -1,0 +1,31 @@
+<?php
+/**
+ * Library Checkout — Complete Your Collection.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_library_document_start();
+require get_stylesheet_directory() . '/library-header.php';
+?>
+<main class="dlu-page dlu-checkout-page">
+	<div class="dlu-page-in">
+		<p class="dlu-crumb"><a href="<?php echo esc_url( dejoiy_library_get_cart_url() ); ?>">← DEJOIY Nexus</a></p>
+		<h1>Complete Your Collection</h1>
+		<p class="dlu-page-sub">You're one step from expanding your universe.</p>
+		<div class="dlu-checkout-shell woocommerce">
+			<?php
+			if ( function_exists( 'woocommerce_checkout' ) ) {
+				echo do_shortcode( '[woocommerce_checkout]' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			}
+			?>
+		</div>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';
+dejoiy_library_document_end();

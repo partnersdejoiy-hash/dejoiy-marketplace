@@ -1,0 +1,26 @@
+{
+    "open sans": {
+        "normal": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/OpenSans-Normal",
+        "bold": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/OpenSans-Bold",
+        "italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/OpenSans-Italic",
+        "bold_italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/OpenSans-BoldItalic"
+    },
+    "segoe": {
+        "normal": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/Segoe-Normal",
+        "bold": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/Segoe-Bold",
+        "italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/Segoe-Italic",
+        "bold_italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/Segoe-BoldItalic"
+    },
+    "roboto slab": {
+        "normal": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/RobotoSlab-Normal",
+        "bold": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/RobotoSlab-Bold",
+        "italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/RobotoSlab-Italic",
+        "bold_italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/RobotoSlab-BoldItalic"
+    },
+    "currencies": {
+        "normal": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/currencies",
+        "bold": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/currencies",
+        "italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/currencies",
+        "bold_italic": "\/home\/u101086720\/domains\/dejoiy.com\/public_html\/wp-content\/uploads\/wpo_wcpdf_41453311487e86177cc39a735e83a440\/fonts\/currencies"
+    }
+}

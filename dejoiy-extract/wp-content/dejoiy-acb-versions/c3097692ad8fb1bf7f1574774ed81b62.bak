@@ -1,0 +1,42 @@
+<?php
+/**
+ * DEJOIY Marketplace Evolution — module bootstrap.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( defined( 'DEJOIY_EVOLUTION_DISABLED' ) && DEJOIY_EVOLUTION_DISABLED ) {
+	return;
+}
+
+/**
+ * Load evolution modules once.
+ */
+function dejoiy_evolution_boot() {
+	static $loaded = false;
+	if ( $loaded ) {
+		return;
+	}
+	$loaded = true;
+
+	$dir  = get_stylesheet_directory();
+	$mods = array(
+		'dejoiy-sellerhub-bridge.php',
+	);
+
+	foreach ( $mods as $file ) {
+		if ( 'dejoiy-sellerhub-bridge.php' === $file && defined( 'DEJOIY_SELLERHUB_DISABLED' ) && DEJOIY_SELLERHUB_DISABLED ) {
+			continue;
+		}
+		$path = $dir . '/' . $file;
+		if ( is_readable( $path ) ) {
+			require_once $path;
+		}
+	}
+}
+
+add_action( 'after_setup_theme', 'dejoiy_evolution_boot', 5 );

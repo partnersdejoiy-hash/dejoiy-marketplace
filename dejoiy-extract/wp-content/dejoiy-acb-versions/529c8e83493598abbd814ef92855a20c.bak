@@ -1,0 +1,727 @@
+<?php
+/**
+ * DEJOIY Custom Studio Universe v10 — landing, header/footer, WC flow.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'DEJOIY_STUDIO_PAGE_ID', 4399 );
+define( 'DEJOIY_STUDIO_HERO_VIDEO', 'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260328_065045_c44942da-53c6-4804-b734-f9e07fc22e08.mp4' );
+
+define( 'DEJOIY_STUDIO_CAT_IDS', array( 143, 153, 154, 155, 156 ) );
+
+$dejoiy_customize = get_stylesheet_directory() . '/studio-customize.php';
+if ( is_readable( $dejoiy_customize ) ) {
+	require_once $dejoiy_customize;
+}
+
+/**
+ * Set studio flow cookie.
+ */
+function dejoiy_studio_maybe_set_cookie() {
+	if ( is_page( 4399 ) || ( isset( $_GET['dejoiy_studio'] ) && '1' === $_GET['dejoiy_studio'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! headers_sent() ) {
+			setcookie( 'dejoiy_studio_flow', '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		}
+		$_COOKIE['dejoiy_studio_flow'] = '1';
+	}
+}
+add_action( 'template_redirect', 'dejoiy_studio_maybe_set_cookie', 1 );
+
+/**
+ * Is customer in studio flow?
+ *
+ * @return bool
+ */
+function dejoiy_studio_is_flow() {
+	if ( isset( $_GET['dejoiy_studio'] ) && '1' === $_GET['dejoiy_studio'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
+	}
+	return isset( $_COOKIE['dejoiy_studio_flow'] ) && '1' === $_COOKIE['dejoiy_studio_flow'];
+}
+
+/**
+ * Product in customizable categories?
+ *
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_studio_is_customizable_product( $product_id ) {
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return false;
+	}
+	return (bool) array_intersect( array_map( 'intval', $terms ), DEJOIY_STUDIO_CAT_IDS );
+}
+
+/**
+ * Studio product URL (custom view when customizable).
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_studio_product_url( $product_id ) {
+	$url = get_permalink( $product_id );
+	if ( dejoiy_studio_is_customizable_product( $product_id ) ) {
+		return add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+
+/**
+ * Use studio single template?
+ *
+ * @return bool
+ */
+function dejoiy_studio_use_single_template() {
+	if ( ! is_singular( 'product' ) || ! dejoiy_studio_is_flow() ) {
+		return false;
+	}
+	$id = get_queried_object_id();
+	return dejoiy_studio_is_customizable_product( $id );
+}
+
+/**
+ * Template swap: single product + checkout.
+ *
+ * @param string $template Path.
+ * @return string
+ */
+function dejoiy_studio_template_include( $template ) {
+	if ( dejoiy_studio_use_single_template() ) {
+		$custom = get_stylesheet_directory() . '/studio-single-product.php';
+		if ( file_exists( $custom ) ) {
+			return $custom;
+		}
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url() && dejoiy_studio_is_flow() ) {
+		$checkout = get_stylesheet_directory() . '/studio-checkout.php';
+		if ( file_exists( $checkout ) ) {
+			return $checkout;
+		}
+	}
+	return $template;
+}
+add_filter( 'template_include', 'dejoiy_studio_template_include', 99 );
+
+/**
+ * Persist studio param in add-to-cart.
+ *
+ * @param string $url Add to cart URL.
+ * @return string
+ */
+function dejoiy_studio_add_to_cart_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_product_add_to_cart_url', 'dejoiy_studio_add_to_cart_url' );
+
+/**
+ * Checkout URL in studio flow.
+ *
+ * @param string $url Checkout URL.
+ * @return string
+ */
+function dejoiy_studio_checkout_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_get_checkout_url', 'dejoiy_studio_checkout_url' );
+
+/**
+ * Cart URL in studio flow.
+ *
+ * @param string $url Cart URL.
+ * @return string
+ */
+function dejoiy_studio_cart_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_get_cart_url', 'dejoiy_studio_cart_url' );
+
+/**
+ * Keep studio flow after add to cart.
+ *
+ * @param string $url Redirect URL.
+ * @return string
+ */
+function dejoiy_studio_add_to_cart_redirect( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		return add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_add_to_cart_redirect', 'dejoiy_studio_add_to_cart_redirect' );
+
+/**
+ * AJAX search — studio products first, then all marketplace products + pages.
+ */
+function dejoiy_studio_search_handler() {
+	$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json( array() );
+	}
+
+	$out   = array();
+	$seen  = array();
+	$push  = function ( $row ) use ( &$out, &$seen ) {
+		$key = $row['type'] . '-' . $row['id'];
+		if ( isset( $seen[ $key ] ) ) {
+			return;
+		}
+		$seen[ $key ] = true;
+		$out[]        = $row;
+	};
+
+	$studio_q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 10,
+			'no_found_rows'  => true,
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy' => 'product_cat',
+					'field'    => 'term_id',
+					'terms'    => DEJOIY_STUDIO_CAT_IDS,
+					'operator' => 'IN',
+				),
+			),
+		)
+	);
+
+	foreach ( $studio_q->posts as $p ) {
+		$pr = function_exists( 'wc_get_product' ) ? wc_get_product( $p->ID ) : null;
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => dejoiy_studio_product_url( $p->ID ),
+				'thumb' => (string) ( get_the_post_thumbnail_url( $p->ID, 'thumbnail' ) ?: '' ),
+				'price' => $pr ? wp_strip_all_tags( $pr->get_price_html() ) : '',
+				'type'  => 'studio-product',
+				'badge' => 'Studio',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	$all_q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 6,
+			'no_found_rows'  => true,
+		)
+	);
+	foreach ( $all_q->posts as $p ) {
+		$pr = function_exists( 'wc_get_product' ) ? wc_get_product( $p->ID ) : null;
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => get_permalink( $p->ID ),
+				'thumb' => (string) ( get_the_post_thumbnail_url( $p->ID, 'thumbnail' ) ?: '' ),
+				'price' => $pr ? wp_strip_all_tags( $pr->get_price_html() ) : '',
+				'type'  => 'product',
+				'badge' => '',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	$page_q = new WP_Query(
+		array(
+			'post_type'      => 'page',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 4,
+			'no_found_rows'  => true,
+		)
+	);
+	foreach ( $page_q->posts as $p ) {
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => get_permalink( $p->ID ),
+				'thumb' => '',
+				'price' => '',
+				'type'  => 'page',
+				'badge' => 'Page',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	wp_send_json( $out );
+}
+add_action( 'wp_ajax_dsu_search', 'dejoiy_studio_search_handler' );
+add_action( 'wp_ajax_nopriv_dsu_search', 'dejoiy_studio_search_handler' );
+
+
+/**
+ * Register shortcode.
+ */
+function dejoiy_studio_universe_register() {
+	add_shortcode( 'dejoiy_studio_universe', 'dejoiy_studio_universe_render' );
+}
+add_action( 'init', 'dejoiy_studio_universe_register' );
+
+/**
+ * Is studio landing or flow page?
+ *
+ * @return bool
+ */
+function dejoiy_studio_universe_screen() {
+	return is_page( DEJOIY_STUDIO_PAGE_ID )
+		|| dejoiy_studio_use_single_template()
+		|| ( function_exists( 'is_checkout' ) && is_checkout() && dejoiy_studio_is_flow() );
+}
+
+/**
+ * Enqueue assets.
+ */
+function dejoiy_studio_universe_enqueue() {
+	if ( ! is_page( DEJOIY_STUDIO_PAGE_ID ) && DEJOIY_STUDIO_PAGE_ID !== (int) get_queried_object_id() ) {
+		return;
+	}
+
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
+	$ver = '11.0.0';
+
+	wp_enqueue_style( 'dejoiy-studio-hf', $uri . '/studio-hf.css', array(), $ver );
+	wp_enqueue_style(
+		'dejoiy-studio-universe',
+		$uri . '/studio-universe.css',
+		array( 'dejoiy-studio-hf' ),
+		(string) ( file_exists( $dir . '/studio-universe.css' ) ? filemtime( $dir . '/studio-universe.css' ) : $ver )
+	);
+
+	wp_register_script( 'three-js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', array(), 'r128', true );
+	wp_register_script( 'gsap', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', array(), '3.12.5', true );
+	wp_register_script( 'gsap-st', 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js', array( 'gsap' ), '3.12.5', true );
+
+	$products = dejoiy_studio_universe_products();
+	$orbit    = array();
+	foreach ( array_slice( $products, 0, 8 ) as $p ) {
+		$orbit[] = array(
+			'id'    => $p->ID,
+			'title' => get_the_title( $p->ID ),
+			'img'   => get_the_post_thumbnail_url( $p->ID, 'medium' ) ?: '',
+			'url'   => dejoiy_studio_product_url( $p->ID ),
+		);
+	}
+
+	wp_enqueue_script(
+		'dejoiy-studio-universe',
+		$uri . '/studio-universe.js',
+		array( 'three-js', 'gsap', 'gsap-st' ),
+		(string) ( file_exists( $dir . '/studio-universe.js' ) ? filemtime( $dir . '/studio-universe.js' ) : $ver ),
+		true
+	);
+
+	wp_localize_script(
+		'dejoiy-studio-universe',
+		'DEJOIY_STUDIO',
+		array(
+			'home'     => home_url( '/' ),
+			'shop'     => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' ),
+			'studio'   => home_url( '/dejoiy-custom-studio/' ),
+			'ajax'     => admin_url( 'admin-ajax.php' ),
+			'video'    => DEJOIY_STUDIO_HERO_VIDEO,
+			'products' => $orbit,
+		)
+	);
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_studio_universe_enqueue', 1003 );
+
+/**
+ * Force universe shortcode on landing page.
+ *
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_studio_universe_force_content( $content ) {
+	global $post;
+	if ( ! empty( $post ) && DEJOIY_STUDIO_PAGE_ID === (int) $post->ID ) {
+		return do_shortcode( '[dejoiy_studio_universe]' );
+	}
+	return $content;
+}
+add_filter( 'the_content', 'dejoiy_studio_universe_force_content', 9999 );
+add_filter( 'elementor/frontend/the_content', 'dejoiy_studio_universe_force_content', 9999 );
+
+/**
+ * Body classes.
+ *
+ * @param array $classes Classes.
+ * @return array
+ */
+function dejoiy_studio_universe_body_class( $classes ) {
+	if ( is_page( DEJOIY_STUDIO_PAGE_ID ) ) {
+		$classes[] = 'dejoiy-studio-universe-active';
+	}
+	if ( dejoiy_studio_is_flow() ) {
+		$classes[] = 'dejoiy-studio-flow';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_studio_universe_body_class' );
+
+/**
+ * Render landing.
+ *
+ * @return string
+ */
+function dejoiy_studio_universe_render() {
+	dejoiy_studio_maybe_set_cookie();
+
+	$products = dejoiy_studio_universe_products();
+	$wall     = dejoiy_studio_universe_product_wall( $products );
+	$showcase = dejoiy_studio_universe_showcase( $products );
+	$mockups  = dejoiy_studio_universe_mockups( $products );
+	$vr_wall  = dejoiy_studio_universe_vr_wall( $products );
+
+	ob_start();
+	require get_stylesheet_directory() . '/studio-header.php';
+	?>
+	<div id="dsu" class="dsu-root" role="main">
+		<div class="dsu-noise" aria-hidden="true"></div>
+
+		<section id="dsu-hero" class="dsu-hero" aria-label="Enter the DEJOIY customization universe">
+			<div class="dsu-hero-media" aria-hidden="true">
+				<video class="dsu-hero-video" autoplay muted playsinline loop preload="metadata" poster="">
+					<source src="<?php echo esc_url( DEJOIY_STUDIO_HERO_VIDEO ); ?>" type="video/mp4" />
+				</video>
+				<div class="dsu-hero-vignette"></div>
+				<div class="dsu-vr-tunnel">
+					<div class="dsu-vr-wall dsu-vr-wall-left"><?php echo $vr_wall; // phpcs:ignore ?></div>
+					<div class="dsu-vr-wall dsu-vr-wall-right"><?php echo $vr_wall; // phpcs:ignore ?></div>
+					<div class="dsu-vr-floor"></div>
+				</div>
+				<canvas id="dsu-hero-canvas" aria-hidden="true"></canvas>
+			</div>
+
+			<div class="dsu-hero-ui">
+				<p class="dsu-eyebrow"><span class="dsu-pulse-dot"></span>DEJOIY CUSTOM STUDIO</p>
+				<h1 class="dsu-h1">
+					<span class="dsu-h1-line">Create Something</span>
+					<span class="dsu-h1-line dsu-h1-gold">That's Truly Yours</span>
+				</h1>
+				<p class="dsu-sub">Create products powered by AI, real-time previews, and immersive customization tools.</p>
+				<div class="dsu-ctas">
+					<a href="#dsu-products" class="dsu-btn dsu-btn-primary dsu-mag"><span>Start Creating</span></a>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="dsu-btn dsu-btn-ghost dsu-mag dsu-home-cta">Take Me Home</a>
+				</div>
+			</div>
+		</section>
+
+		<nav class="dsu-dock" aria-label="Product categories">
+			<div class="dsu-dock-track"><?php echo dejoiy_studio_universe_dock_items(); // phpcs:ignore ?></div>
+		</nav>
+
+		<button type="button" id="dsu-joi" class="dsu-joi" aria-label="JOI AI Assistant">
+			<span class="dsu-joi-ring dsu-joi-ring-1"></span>
+			<span class="dsu-joi-ring dsu-joi-ring-2"></span>
+			<span class="dsu-joi-core"></span>
+			<span class="dsu-joi-pulse"></span>
+		</button>
+
+		<section id="dsu-products" class="dsu-sec">
+			<div class="dsu-sec-in">
+				<h2 class="dsu-sec-title">Choose Your Product</h2>
+				<p class="dsu-sec-desc">Tap any canvas. Enter the studio. Build in real time.</p>
+				<div class="dsu-wall"><?php echo $wall; // phpcs:ignore ?></div>
+			</div>
+		</section>
+
+		<section id="dsu-ai" class="dsu-sec dsu-sec-ai">
+			<div class="dsu-sec-in dsu-ai-grid">
+				<div class="dsu-ai-copy" data-dsu-reveal>
+					<h2 class="dsu-sec-title">Customize With AI</h2>
+					<p class="dsu-sec-desc">Watch designs generate live — colors, layouts, and print zones adapt as you describe your vision.</p>
+				</div>
+				<div class="dsu-ai-stage" data-dsu-reveal>
+					<div class="dsu-ai-terminal">
+						<div class="dsu-ai-bar"><span></span><span></span><span></span></div>
+						<pre class="dsu-ai-log" id="dsu-ai-log"></pre>
+						<div class="dsu-ai-preview" id="dsu-ai-preview"></div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="dsu-preview" class="dsu-sec">
+			<div class="dsu-sec-in">
+				<h2 class="dsu-sec-title">Real-Time Studio Preview</h2>
+				<p class="dsu-sec-desc">Live product mockups with studio lighting — every angle, every device.</p>
+				<div class="dsu-mockup-stage"><?php echo $mockups; // phpcs:ignore ?></div>
+			</div>
+		</section>
+
+		<section id="dsu-why" class="dsu-sec">
+			<div class="dsu-sec-in">
+				<h2 class="dsu-sec-title">Why DEJOIY</h2>
+				<div class="dsu-why-grid">
+					<?php
+					$cards = array(
+						array( 'AI Personalization', 'Neural-assisted layouts and smart print zones.' ),
+						array( 'Premium Quality', 'Studio-grade materials and color fidelity.' ),
+						array( 'Instant Preview', 'See every angle before you commit.' ),
+						array( 'Made In India', 'Crafted and fulfilled with local excellence.' ),
+						array( 'Fast Delivery', 'Express lanes to metro cities nationwide.' ),
+					);
+					foreach ( $cards as $card ) :
+						?>
+						<article class="dsu-why-card" data-dsu-reveal>
+							<h3><?php echo esc_html( $card[0] ); ?></h3>
+							<p><?php echo esc_html( $card[1] ); ?></p>
+						</article>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
+
+		<section id="dsu-showcase" class="dsu-sec">
+			<div class="dsu-sec-in">
+				<h2 class="dsu-sec-title">Creator Showcase</h2>
+				<div class="dsu-showcase-track"><?php echo $showcase; // phpcs:ignore ?></div>
+			</div>
+		</section>
+
+		<section id="dsu-final-cta" class="dsu-sec dsu-sec-final">
+			<div class="dsu-sec-in dsu-final-in" data-dsu-reveal>
+				<h2 class="dsu-sec-title dsu-final-title">Ready To Build Something Unique?</h2>
+				<p class="dsu-sec-desc">Step into the universe where products are created — not just purchased.</p>
+				<div class="dsu-ctas dsu-ctas-center">
+					<a href="#dsu-products" class="dsu-btn dsu-btn-primary dsu-mag"><span>Start Creating</span></a>
+					<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="dsu-btn dsu-btn-ghost dsu-mag dsu-home-cta">Take Me Home</a>
+				</div>
+			</div>
+		</section>
+	</div>
+	<?php
+	require get_stylesheet_directory() . '/studio-footer.php';
+	return (string) ob_get_clean();
+}
+
+/**
+ * VR tunnel wall tiles.
+ *
+ * @param array<int, WP_Post> $posts Posts.
+ * @return string
+ */
+function dejoiy_studio_universe_vr_wall( $posts ) {
+	$html = '';
+	$imgs = array();
+	foreach ( $posts as $p ) {
+		$img = get_the_post_thumbnail_url( $p->ID, 'medium' );
+		if ( $img ) {
+			$imgs[] = $img;
+		}
+	}
+	if ( empty( $imgs ) ) {
+		return '';
+	}
+	while ( count( $imgs ) < 12 ) {
+		$imgs = array_merge( $imgs, $imgs );
+	}
+	foreach ( array_slice( $imgs, 0, 12 ) as $img ) {
+		$html .= '<div class="dsu-vr-tile" style="background-image:url(' . esc_url( $img ) . ')"></div>';
+	}
+	return $html;
+}
+
+/**
+ * Device mockups with product images.
+ *
+ * @param array<int, WP_Post> $posts Posts.
+ * @return string
+ */
+function dejoiy_studio_universe_mockups( $posts ) {
+	$html  = '';
+	$index = 0;
+	foreach ( array_slice( $posts, 0, 3 ) as $p ) {
+		$img = get_the_post_thumbnail_url( $p->ID, 'large' );
+		if ( ! $img && function_exists( 'wc_placeholder_img_src' ) ) {
+			$img = wc_placeholder_img_src();
+		}
+		$cls = array( 'dsu-mockup-a', 'dsu-mockup-b', 'dsu-mockup-c' )[ $index ] ?? 'dsu-mockup-a';
+		$html .= sprintf(
+			'<a href="%s" class="dsu-mockup %s" data-dsu-mockup style="--dsu-mock-img:url(%s)"><span class="dsu-mockup-frame"></span><img src="%s" alt="%s" loading="lazy" /></a>',
+			esc_url( dejoiy_studio_product_url( $p->ID ) ),
+			esc_attr( $cls ),
+			esc_url( $img ),
+			esc_url( $img ),
+			esc_attr( get_the_title( $p->ID ) )
+		);
+		++$index;
+	}
+	return $html;
+}
+
+/**
+ * Dock items.
+ *
+ * @return string
+ */
+function dejoiy_studio_universe_dock_items() {
+	$items = array(
+		array( '🖼', 'Posters', 'https://dejoiy.tech/product-category/customized-products/' ),
+		array( '🎁', 'Gift Boxes', 'https://dejoiy.tech/product-category/customized-products/corporate-gifts/' ),
+		array( '🧢', 'Caps', 'https://dejoiy.tech/product-category/customized-products/' ),
+		array( '👕', 'Custom T-Shirts', 'https://dejoiy.tech/product-category/customized-products/custom-t-shirts/' ),
+		array( '📱', 'Phone Cases', 'https://dejoiy.tech/product-category/customized-products/phone-cases/' ),
+		array( '☕', 'Mugs', 'https://dejoiy.tech/product-category/customized-products/mugs/' ),
+		array( '🎒', 'Backpacks', 'https://dejoiy.tech/product-category/customized-products/' ),
+		array( '📚', 'Notebooks', 'https://dejoiy.tech/product-category/customized-products/' ),
+	);
+	$html = '';
+	foreach ( $items as $item ) {
+		$html .= sprintf(
+			'<a href="%s" class="dsu-dock-item"><span class="dsu-dock-ico">%s</span><span class="dsu-dock-txt">%s</span></a>',
+			esc_url( $item[2] ),
+			esc_html( $item[0] ),
+			esc_html( $item[1] )
+		);
+	}
+	return $html . $html;
+}
+
+/**
+ * Query products.
+ *
+ * @return array<int, WP_Post>
+ */
+function dejoiy_studio_universe_products() {
+	if ( function_exists( 'dejoiy_studio_seed_mock_products' ) ) {
+		dejoiy_studio_seed_mock_products();
+	}
+
+	$merged = array();
+	$seen   = array();
+
+	$mock_q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'posts_per_page' => 5,
+			'post_status'    => 'publish',
+			'meta_key'       => '_dejoiy_studio_mock', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value'     => '1',
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		)
+	);
+	foreach ( $mock_q->posts as $p ) {
+		$merged[]        = $p;
+		$seen[ $p->ID ] = true;
+	}
+	wp_reset_postdata();
+
+	$args = array(
+		'post_type'      => 'product',
+		'posts_per_page' => 12,
+		'post_status'    => 'publish',
+		'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+			array(
+				'taxonomy' => 'product_cat',
+				'field'    => 'term_id',
+				'terms'    => DEJOIY_STUDIO_CAT_IDS,
+				'operator' => 'IN',
+			),
+		),
+	);
+	$q = new WP_Query( $args );
+	if ( ! $q->have_posts() ) {
+		$q = new WP_Query(
+			array(
+				'post_type'      => 'product',
+				'posts_per_page' => 12,
+				'post_status'    => 'publish',
+			)
+		);
+	}
+	foreach ( $q->posts as $p ) {
+		if ( ! isset( $seen[ $p->ID ] ) ) {
+			$merged[] = $p;
+		}
+	}
+	wp_reset_postdata();
+
+	return $merged;
+}
+
+/**
+ * Product wall.
+ *
+ * @param array<int, WP_Post> $posts Posts.
+ * @return string
+ */
+function dejoiy_studio_universe_product_wall( $posts ) {
+	$html = '';
+	foreach ( $posts as $p ) {
+		$id      = $p->ID;
+		$title   = get_the_title( $id );
+		$link    = dejoiy_studio_product_url( $id );
+		$img     = get_the_post_thumbnail_url( $id, 'medium_large' );
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null;
+		if ( ! $img && function_exists( 'wc_placeholder_img_src' ) ) {
+			$img = wc_placeholder_img_src();
+		}
+		$badge = '';
+		if ( $product && ! $product->is_in_stock() ) {
+			$badge = '<span class="dsu-stock-badge">Preview · Out of stock</span>';
+		} elseif ( get_post_meta( $id, '_dejoiy_studio_mock', true ) ) {
+			$badge = '<span class="dsu-stock-badge">Studio preview</span>';
+		}
+		$html .= sprintf(
+			'<a href="%s" class="dsu-wall-card" data-dsu-reveal><div class="dsu-wall-img" style="background-image:url(%s)">%s</div><div class="dsu-wall-meta"><h3>%s</h3><span>View &amp; customize →</span></div></a>',
+			esc_url( $link ),
+			esc_url( $img ),
+			$badge,
+			esc_html( $title )
+		);
+	}
+	return $html;
+}
+
+/**
+ * Showcase strip.
+ *
+ * @param array<int, WP_Post> $posts Posts.
+ * @return string
+ */
+function dejoiy_studio_universe_showcase( $posts ) {
+	$html = '';
+	foreach ( array_slice( $posts, 0, 8 ) as $p ) {
+		$id    = $p->ID;
+		$title = get_the_title( $id );
+		$img   = get_the_post_thumbnail_url( $id, 'thumbnail' );
+		if ( ! $img && function_exists( 'wc_placeholder_img_src' ) ) {
+			$img = wc_placeholder_img_src();
+		}
+		$html .= sprintf(
+			'<a href="%s" class="dsu-show-card"><img src="%s" alt="%s" loading="lazy" width="120" height="120"><p>%s</p></a>',
+			esc_url( dejoiy_studio_product_url( $id ) ),
+			esc_url( $img ),
+			esc_attr( $title ),
+			esc_html( $title )
+		);
+	}
+	return $html . $html;
+}

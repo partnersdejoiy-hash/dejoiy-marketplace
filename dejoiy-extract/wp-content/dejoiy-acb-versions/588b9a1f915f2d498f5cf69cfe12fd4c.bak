@@ -1,0 +1,244 @@
+/**
+ * DEJOIY OS Design System — platform layer (not theme styling).
+ * Scoped under .dejoiy-os-shell for safe coexistence with XStore/WooCommerce.
+ */
+
+.dejoiy-os-shell {
+  --dejoiy-violet: #7c3aed;
+  --dejoiy-pink: #ec4899;
+  --dejoiy-cyan: #06b6d4;
+  --dejoiy-ink: #0f172a;
+  --dejoiy-muted: #64748b;
+  --dejoiy-surface: #ffffff;
+  --dejoiy-surface-2: #f8fafc;
+  --dejoiy-border: rgba(15, 23, 42, 0.08);
+  --dejoiy-radius: 14px;
+  --dejoiy-radius-lg: 20px;
+  --dejoiy-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+  --dejoiy-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --dejoiy-space: clamp(0.75rem, 2.5vw, 1.25rem);
+}
+
+/* Buttons */
+.dejoiy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  font-family: var(--dejoiy-font);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dejoiy-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--dejoiy-violet), var(--dejoiy-pink));
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+}
+
+.dejoiy-btn--ghost {
+  color: var(--dejoiy-ink);
+  background: var(--dejoiy-surface);
+  border: 1px solid var(--dejoiy-border);
+}
+
+.dejoiy-btn:focus-visible {
+  outline: 2px solid var(--dejoiy-cyan);
+  outline-offset: 2px;
+}
+
+.dejoiy-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Cards */
+.dejoiy-card {
+  position: relative;
+  display: block;
+  background: var(--dejoiy-surface);
+  border: 1px solid var(--dejoiy-border);
+  border-radius: var(--dejoiy-radius);
+  box-shadow: var(--dejoiy-shadow);
+  overflow: hidden;
+}
+
+.dejoiy-card__link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: var(--dejoiy-space);
+  color: inherit;
+  text-decoration: none;
+}
+
+.dejoiy-card__img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: calc(var(--dejoiy-radius) - 4px);
+}
+
+.dejoiy-card__ph {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(6, 182, 212, 0.08));
+  border-radius: calc(var(--dejoiy-radius) - 4px);
+}
+
+.dejoiy-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--dejoiy-ink);
+}
+
+.dejoiy-card__price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--dejoiy-violet);
+}
+
+.dejoiy-card__dpin {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--dejoiy-muted);
+  font-family: ui-monospace, monospace;
+}
+
+/* Product grid */
+.dejoiy-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dejoiy-space);
+}
+
+@media (min-width: 480px) {
+  .dejoiy-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .dejoiy-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .dejoiy-product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* Badges */
+.dejoiy-badge {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.75);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+}
+
+/* Sections */
+.dejoiy-section {
+  margin: 0 auto 2rem;
+  padding: 0 clamp(0.75rem, 4vw, 1.5rem);
+  max-width: 1440px;
+}
+
+.dejoiy-section__title {
+  margin: 0 0 1rem;
+  font-size: clamp(1.1rem, 3vw, 1.45rem);
+  color: var(--dejoiy-ink);
+}
+
+/* DPIN display */
+.dejoiy-os-dpin,
+.dejoiy-dpin {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--dejoiy-muted);
+}
+
+.dejoiy-dpin-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--dejoiy-ink);
+  background: var(--dejoiy-surface-2);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+/* White-label: soften visible WooCommerce/XStore chrome on OS shell pages */
+.dejoiy-os-shell .woocommerce-breadcrumb a[href*="woocommerce"],
+.dejoiy-os-shell .powered-by-woocommerce {
+  display: none !important;
+}
+
+/* Search */
+.dejoiy-search {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.dejoiy-search__input { flex: 1; min-width: 0; }
+
+/* Input */
+.dejoiy-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--dejoiy-border);
+  border-radius: 10px;
+  font-family: var(--dejoiy-font);
+  font-size: 0.9rem;
+}
+
+/* Modal / Drawer */
+.dejoiy-modal[hidden],
+.dejoiy-drawer[hidden] { display: none !important; }
+.dejoiy-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 9998;
+}
+.dejoiy-modal__panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background: var(--dejoiy-surface);
+  border-radius: var(--dejoiy-radius-lg);
+  padding: var(--dejoiy-space);
+  max-width: min(92vw, 480px);
+}
+.dejoiy-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(92vw, 380px);
+  background: var(--dejoiy-surface);
+  box-shadow: var(--dejoiy-shadow);
+  z-index: 9999;
+  padding: var(--dejoiy-space);
+}
+.dejoiy-seller-card .dejoiy-badge--seller { position: static; margin-top: 0.35rem; }

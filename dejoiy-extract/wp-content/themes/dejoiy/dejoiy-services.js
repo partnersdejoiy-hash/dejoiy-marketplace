@@ -1,0 +1,448 @@
+/**
+ * DEJOIY Services — sticky header, search, scroll reveal, filters
+ */
+(function () {
+	'use strict';
+
+	var cfg = window.dejoiyServices || {};
+	var app = document.getElementById('dejoiy-services-app') || document.getElementById('dejoiy-services-viewer');
+	if (!app) {
+		return;
+	}
+
+	var header = document.getElementById('dsv-header');
+	var searchInput = document.getElementById('dsv-search-input');
+	var searchResults = document.getElementById('dsv-search-results');
+	var filterToggle = document.getElementById('dsv-filter-toggle');
+	var filterSheet = document.getElementById('dsv-filter-sheet');
+	var filterClose = document.getElementById('dsv-filter-close');
+	var searchTimer = null;
+
+	/* Sticky shrink */
+	if (header) {
+		var onScroll = function () {
+			if (window.scrollY > 24) {
+				document.body.classList.add('dsv-header--shrink');
+			} else {
+				document.body.classList.remove('dsv-header--shrink');
+			}
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		onScroll();
+	}
+
+	/* Parallax hero orbs */
+	var hero = document.querySelector('.dsv-hero');
+	if (hero && !window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(min-width: 768px)').matches) {
+		window.addEventListener(
+			'scroll',
+			function () {
+				var y = window.scrollY * 0.15;
+				hero.style.setProperty('--dsv-parallax', y + 'px');
+			},
+			{ passive: true }
+		);
+	}
+
+	/* Scroll reveal */
+	var revealEls = document.querySelectorAll('[data-reveal]');
+	if (revealEls.length && 'IntersectionObserver' in window) {
+		var io = new IntersectionObserver(
+			function (entries) {
+				entries.forEach(function (entry) {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('is-visible');
+						io.unobserve(entry.target);
+					}
+				});
+			},
+			{ rootMargin: '0px 0px -40px 0px', threshold: 0.08 }
+		);
+		revealEls.forEach(function (el) {
+			io.observe(el);
+		});
+	} else {
+		revealEls.forEach(function (el) {
+			el.classList.add('is-visible');
+		});
+	}
+
+	/* Services + pages AJAX search */
+	function renderResultItem(item) {
+		var media = '';
+		if (item.thumb) {
+			media = '<img src="' + item.thumb + '" alt="" width="40" height="40" loading="lazy" />';
+		} else if (item.type === 'page') {
+			media = '<span class="dsv-search-result__icon" aria-hidden="true">📄</span>';
+		}
+		var sub = item.price || (item.type === 'page' ? '' : item.badge || '');
+		return (
+			'<a class="dsv-search-result dsv-search-result--' +
+			(item.type || 'service') +
+			'" href="' +
+			item.url +
+			'">' +
+			media +
+			'<span><span class="dsv-search-result__badge">' +
+			(item.badge || '') +
+			'</span><strong>' +
+			item.title +
+			'</strong>' +
+			(sub ? '<br><small>' + sub + '</small>' : '') +
+			'</span></a>'
+		);
+	}
+
+	function renderResults(data) {
+		if (!searchResults) {
+			return;
+		}
+		var services = (data && data.services) || [];
+		var pages = (data && data.pages) || [];
+		if ((!data || !data.services) && data && data.results) {
+			data.results.forEach(function (item) {
+				if (item.type === 'page') {
+					pages.push(item);
+				} else {
+					services.push(item);
+				}
+			});
+		}
+		if (!services.length && !pages.length) {
+			searchResults.innerHTML = '<p class="dsv-search-empty">' + 'No services or pages found.' + '</p>';
+			searchResults.hidden = false;
+			return;
+		}
+		var html = '';
+		if (services.length) {
+			html += '<div class="dsv-search-group"><span class="dsv-search-group__label">Services</span>';
+			services.forEach(function (item) {
+				html += renderResultItem(item);
+			});
+			html += '</div>';
+		}
+		if (pages.length) {
+			html += '<div class="dsv-search-group"><span class="dsv-search-group__label">Pages</span>';
+			pages.forEach(function (item) {
+				html += renderResultItem(item);
+			});
+			html += '</div>';
+		}
+		searchResults.innerHTML = html;
+		searchResults.hidden = false;
+	}
+
+	function runSearch(q) {
+		if (!cfg.ajaxUrl || !cfg.nonce || q.length < 2) {
+			if (searchResults) {
+				searchResults.hidden = true;
+			}
+			return;
+		}
+		var body = new URLSearchParams();
+		body.append('action', 'dejoiy_services_search');
+		body.append('nonce', cfg.nonce);
+		body.append('q', q);
+
+		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body })
+			.then(function (r) {
+				return r.json();
+			})
+			.then(function (data) {
+				renderResults(data || {});
+			})
+			.catch(function () {
+				if (searchResults) {
+					searchResults.hidden = true;
+				}
+			});
+	}
+
+	if (searchInput) {
+		searchInput.addEventListener('input', function () {
+			clearTimeout(searchTimer);
+			var q = searchInput.value.trim();
+			searchTimer = setTimeout(function () {
+				runSearch(q);
+			}, 280);
+		});
+		document.addEventListener('click', function (e) {
+			if (searchResults && !searchResults.contains(e.target) && e.target !== searchInput) {
+				searchResults.hidden = true;
+			}
+		});
+	}
+
+	/* Mobile filter sheet */
+	function openSheet() {
+		if (!filterSheet) {
+			return;
+		}
+		filterSheet.hidden = false;
+		document.body.style.overflow = 'hidden';
+		if (filterToggle) {
+			filterToggle.setAttribute('aria-expanded', 'true');
+		}
+	}
+
+	function closeSheet() {
+		if (!filterSheet) {
+			return;
+		}
+		filterSheet.hidden = true;
+		document.body.style.overflow = '';
+		if (filterToggle) {
+			filterToggle.setAttribute('aria-expanded', 'false');
+		}
+	}
+
+	if (filterToggle) {
+		filterToggle.addEventListener('click', openSheet);
+	}
+	if (filterClose) {
+		filterClose.addEventListener('click', closeSheet);
+	}
+	if (filterSheet) {
+		filterSheet.addEventListener('click', function (e) {
+			if (e.target === filterSheet) {
+				closeSheet();
+			}
+		});
+	}
+
+	/* Button ripple */
+	document.querySelectorAll('.dsv-btn').forEach(function (btn) {
+		btn.addEventListener('click', function (e) {
+			if (btn.closest('.dsv-booking') || btn.hasAttribute('data-dsv-book')) {
+				return;
+			}
+			if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				return;
+			}
+			var rect = btn.getBoundingClientRect();
+			var ripple = document.createElement('span');
+			ripple.className = 'dsv-ripple';
+			ripple.style.left = e.clientX - rect.left + 'px';
+			ripple.style.top = e.clientY - rect.top + 'px';
+			btn.appendChild(ripple);
+			setTimeout(function () {
+				ripple.remove();
+			}, 500);
+		});
+	});
+
+	/* —— Service booking modal —— */
+	var bookingEl = document.getElementById('dsv-booking');
+	if (bookingEl && cfg.bookingNonce) {
+
+	var bookingForm = document.getElementById('dsv-booking-form');
+	var bookingLoader = document.getElementById('dsv-booking-loader');
+	var bookingSummary = document.getElementById('dsv-booking-summary');
+	var bookingError = document.getElementById('dsv-booking-error');
+	var bookingSubmit = document.getElementById('dsv-booking-submit');
+	var productIdInput = document.getElementById('dsv-booking-product-id');
+	var serviceTypeInput = document.getElementById('dsv-booking-service-type');
+	var priceTypeInput = document.getElementById('dsv-booking-price-type');
+
+	function openBooking() {
+		bookingEl.hidden = false;
+		bookingEl.setAttribute('aria-hidden', 'false');
+		document.body.style.overflow = 'hidden';
+	}
+
+	function closeBooking() {
+		bookingEl.hidden = true;
+		bookingEl.setAttribute('aria-hidden', 'true');
+		document.body.style.overflow = '';
+		if (bookingForm) {
+			bookingForm.hidden = true;
+			bookingForm.reset();
+		}
+		if (bookingLoader) {
+			bookingLoader.hidden = true;
+		}
+		if (bookingError) {
+			bookingError.hidden = true;
+		}
+	}
+
+	function showBookingError(msg) {
+		if (!bookingError) {
+			return;
+		}
+		bookingError.textContent = msg || '';
+		bookingError.hidden = !msg;
+	}
+
+	function showTypeFields(type) {
+		document.querySelectorAll('.dsv-booking__fields').forEach(function (block) {
+			block.hidden = true;
+			block.querySelectorAll('input, textarea, select').forEach(function (input) {
+				input.disabled = true;
+			});
+		});
+		var panel = null;
+		if (type === 'design' || type === 'development') {
+			panel = document.querySelector('.dsv-booking__fields[data-type="' + type + '"]');
+		} else {
+			panel = document.querySelector('.dsv-booking__fields--business');
+		}
+		if (panel) {
+			panel.hidden = false;
+			panel.querySelectorAll('input, textarea, select').forEach(function (input) {
+				input.disabled = false;
+			});
+		}
+	}
+
+	function fillSummary(data) {
+		if (!bookingSummary) {
+			return;
+		}
+		var img = data.image
+			? '<img class="dsv-booking__thumb" src="' + data.image + '" alt="" width="72" height="72" loading="lazy" />'
+			: '';
+		bookingSummary.innerHTML =
+			'<div class="dsv-booking__summary-in">' +
+			img +
+			'<div><h3>' +
+			data.title +
+			'</h3><p class="dsv-booking__price">' +
+			data.price_html +
+			'</p><p class="dsv-booking__seller">' +
+			data.seller +
+			'</p><p class="dsv-booking__delivery">' +
+			data.delivery +
+			'</p></div></div>';
+	}
+
+	function loadBookingProduct(productId) {
+		openBooking();
+		if (bookingForm) {
+			bookingForm.hidden = true;
+		}
+		if (bookingLoader) {
+			bookingLoader.hidden = false;
+		}
+		showBookingError('');
+
+		var body = new URLSearchParams();
+		body.append('action', 'dejoiy_services_booking_product');
+		body.append('nonce', cfg.bookingNonce);
+		body.append('product_id', productId);
+
+		fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body })
+			.then(function (r) {
+				return r.json();
+			})
+			.then(function (res) {
+				if (bookingLoader) {
+					bookingLoader.hidden = true;
+				}
+				if (!res.success || !res.data) {
+					showBookingError((res.data && res.data.message) || 'Could not load service.');
+					return;
+				}
+				var data = res.data;
+				if (!data.is_logged_in && !cfg.isLoggedIn) {
+					showBookingError(cfg.i18n && cfg.i18n.loginRequired ? cfg.i18n.loginRequired : 'Please sign in.');
+					if (bookingForm) {
+						bookingForm.hidden = true;
+					}
+					return;
+				}
+				if (productIdInput) {
+					productIdInput.value = data.product_id;
+				}
+				if (serviceTypeInput) {
+					serviceTypeInput.value = data.service_type;
+				}
+				if (priceTypeInput) {
+					priceTypeInput.value = data.price_type;
+				}
+				fillSummary(data);
+				showTypeFields(data.service_type);
+				if (bookingForm) {
+					bookingForm.hidden = false;
+				}
+			})
+			.catch(function () {
+				if (bookingLoader) {
+					bookingLoader.hidden = true;
+				}
+				showBookingError('Network error. Please try again.');
+			});
+	}
+
+	document.addEventListener('click', function (e) {
+		var bookBtn = e.target.closest('[data-dsv-book]');
+		if (bookBtn) {
+			e.preventDefault();
+			e.stopPropagation();
+			var pid = bookBtn.getAttribute('data-dsv-book');
+			if (pid) {
+				loadBookingProduct(pid);
+			}
+			return;
+		}
+		if (e.target.closest('[data-dsv-booking-close]')) {
+			closeBooking();
+		}
+	});
+
+	document.addEventListener('keydown', function (e) {
+		if (e.key === 'Escape' && !bookingEl.hidden) {
+			closeBooking();
+		}
+	});
+
+	if (bookingForm) {
+		bookingForm.addEventListener('submit', function (e) {
+			e.preventDefault();
+			if (!cfg.isLoggedIn) {
+				window.location.href = cfg.loginUrl || '/my-account/';
+				return;
+			}
+			showBookingError('');
+			if (bookingSubmit) {
+				bookingSubmit.disabled = true;
+				bookingSubmit.textContent = cfg.i18n && cfg.i18n.submitting ? cfg.i18n.submitting : 'Submitting…';
+			}
+
+			var formData = new FormData(bookingForm);
+			formData.append('action', 'dejoiy_services_booking_submit');
+			formData.append('nonce', cfg.bookingNonce);
+
+			fetch(cfg.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: formData })
+				.then(function (r) {
+					return r.json();
+				})
+				.then(function (res) {
+					if (bookingSubmit) {
+						bookingSubmit.disabled = false;
+						bookingSubmit.textContent = cfg.i18n && cfg.i18n.confirmBooking ? cfg.i18n.confirmBooking : 'Confirm booking';
+					}
+					if (!res.success) {
+						if (res.data && res.data.login_url && !cfg.isLoggedIn) {
+							window.location.href = res.data.login_url;
+							return;
+						}
+						showBookingError((res.data && res.data.message) || 'Booking failed.');
+						return;
+					}
+					closeBooking();
+					if (res.data && res.data.checkout_url) {
+						window.location.href = res.data.checkout_url;
+					}
+				})
+				.catch(function () {
+					if (bookingSubmit) {
+						bookingSubmit.disabled = false;
+						bookingSubmit.textContent = cfg.i18n && cfg.i18n.confirmBooking ? cfg.i18n.confirmBooking : 'Confirm booking';
+					}
+					showBookingError('Network error. Please try again.');
+				});
+		});
+	}
+	}
+})();

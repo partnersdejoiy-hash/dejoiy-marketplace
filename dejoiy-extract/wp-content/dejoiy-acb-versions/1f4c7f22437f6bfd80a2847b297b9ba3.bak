@@ -1,0 +1,34 @@
+<?php
+/**
+ * Nexus search AJAX — always registered (does not depend on customize load timing).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Register Nexus search AJAX (handlers live in library-customize.php).
+ */
+function dejoiy_library_nexus_search_register_ajax() {
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_library_nexus_search_handler' ) ) {
+		return;
+	}
+	$done = true;
+	add_action( 'wp_ajax_dejoiy_library_nexus_search', 'dejoiy_library_nexus_search_handler' );
+	add_action( 'wp_ajax_nopriv_dejoiy_library_nexus_search', 'dejoiy_library_nexus_search_handler' );
+	add_action( 'wp_ajax_dejoiy_library_joi', 'dejoiy_library_joi_recommend_handler' );
+	add_action( 'wp_ajax_nopriv_dejoiy_library_joi', 'dejoiy_library_joi_recommend_handler' );
+}
+
+if ( did_action( 'init' ) ) {
+	dejoiy_library_nexus_search_register_ajax();
+} else {
+	add_action( 'init', 'dejoiy_library_nexus_search_register_ajax', 99 );
+}

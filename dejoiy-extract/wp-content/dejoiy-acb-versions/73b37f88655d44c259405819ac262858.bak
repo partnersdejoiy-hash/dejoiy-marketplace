@@ -1,0 +1,40 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+function dejoiy_site_chrome_should_restore() {
+  if ( is_admin() && ! wp_doing_ajax() ) return false;
+  if ( ! is_front_page() ) return false;
+  if ( function_exists( 'dejoiy_universe_home_is_active' ) && ! dejoiy_universe_home_is_active() ) return false;
+  return true;
+}
+function dejoiy_site_chrome_elementor_html( $location ) {
+  $ids = ( 'header' === $location ) ? array( 4228 ) : array( 4225 );
+  if ( ! class_exists( '\Elementor\Plugin' ) ) return '';
+  $frontend = \Elementor\Plugin::$instance->frontend;
+  $html = '';
+  foreach ( $ids as $id ) {
+    if ( 'publish' !== get_post_status( $id ) ) continue;
+    $chunk = $frontend->get_builder_content_for_display( (int) $id, true );
+    if ( is_string( $chunk ) && strlen( trim( $chunk ) ) > 0 ) $html .= $chunk;
+  }
+  return $html;
+}
+function dejoiy_site_chrome_render_header() {
+  if ( ! dejoiy_site_chrome_should_restore() ) return;
+  static $done = false; if ( $done ) return; $done = true;
+  $html = dejoiy_site_chrome_elementor_html( 'header' );
+  if ( strlen( $html ) < 20 ) return;
+  echo '<div class="dejoiy-site-chrome-header">'; echo $html; echo '</div>';
+}
+add_action( 'dejoiy_universe_home_before', 'dejoiy_site_chrome_render_header', 5 );
+function dejoiy_site_chrome_render_footer() {
+  if ( ! dejoiy_site_chrome_should_restore() ) return;
+  static $done = false; if ( $done ) return; $done = true;
+  $html = dejoiy_site_chrome_elementor_html( 'footer' );
+  if ( strlen( $html ) < 20 ) return;
+  echo '<div class="et-footers-wrapper dejoiy-site-chrome-footer">'; echo $html; echo '</div>';
+}
+add_action( 'wp_footer', 'dejoiy_site_chrome_render_footer', 1 );
+add_filter( 'body_class', function( $c ) {
+  if ( dejoiy_site_chrome_should_restore() ) $c[] = 'dejoiy-site-chrome-on';
+  return $c;
+}, 25 );

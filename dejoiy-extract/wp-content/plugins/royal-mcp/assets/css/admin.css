@@ -1,0 +1,1519 @@
+/* Royal MCP Admin Styles */
+
+/* ==========================================
+   1.4.25 — Universal Button + Icon Polish
+   (Foundation: every Royal MCP button is a flex
+   container so dashicons center visually instead
+   of sitting on the text baseline. color: inherit
+   on dashicons fixes the blue-on-blue invisible
+   icon on .button-primary.)
+   ========================================== */
+
+.royal-mcp-settings .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    vertical-align: middle;
+    padding: 6px 14px;
+    min-height: 34px;
+    line-height: 1.4;
+}
+
+.royal-mcp-settings .button .dashicons {
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    margin: 0;
+}
+
+/* Icon-only buttons (no text label) collapse to clean squares */
+.royal-mcp-settings .platform-actions .button,
+.royal-mcp-settings .platform-fields .toggle-password,
+.royal-mcp-settings .advanced-content .button.copy-btn,
+.royal-mcp-settings .advanced-content .toggle-password {
+    padding: 6px 8px;
+    min-width: 36px;
+    min-height: 34px;
+    gap: 0;
+}
+
+/* Platform card footer buttons (Get API Key, Documentation, Test Connection)
+   need a touch more breathing room — they sit at the visual base of each card. */
+.royal-mcp-settings .platform-links .button,
+.royal-mcp-settings .platform-test .button {
+    padding: 7px 16px;
+    min-height: 36px;
+    gap: 8px;
+}
+
+/* Add Provider button — primary CTA, slightly weightier */
+.royal-mcp-settings #add-platform-btn {
+    padding: 8px 18px;
+    min-height: 36px;
+}
+
+/* Visible focus ring for keyboard navigation */
+.royal-mcp-settings .button:focus-visible {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+    outline: 0;
+}
+
+/* Description text contrast: bump from #646970 to #50575e and drop italic
+   (italic at 13px on f9f9f9 grey backgrounds was hard to scan). */
+.royal-mcp-settings .description,
+.royal-mcp-settings p.description {
+    color: #50575e;
+    font-style: normal;
+    line-height: 1.5;
+}
+
+.royal-mcp-settings .royal-mcp-settings-container {
+    max-width: 1200px;
+}
+
+.royal-mcp-settings .postbox {
+    margin-bottom: 20px;
+}
+
+.royal-mcp-settings .postbox-header h2 {
+    margin: 0;
+    padding: 12px;
+}
+
+.royal-mcp-settings .inside {
+    padding: 12px;
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch.small {
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.switch.small .slider:before {
+    height: 14px;
+    width: 14px;
+}
+
+input:checked + .slider {
+    background-color: #2271b1;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2271b1;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.switch.small input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* ==========================================
+   Platform Items
+   ========================================== */
+
+#platforms-list {
+    margin: 20px 0;
+}
+
+.platform-item {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s ease;
+}
+
+.platform-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.platform-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+}
+
+.platform-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.platform-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.platform-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.platform-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.platform-description {
+    font-size: 13px;
+    color: #646970;
+}
+
+.platform-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.platform-actions .button {
+    padding: 4px 8px;
+    min-height: 30px;
+}
+
+.platform-actions .button .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+}
+
+.platform-toggle .dashicons {
+    transition: transform 0.2s ease;
+}
+
+.remove-platform:hover {
+    color: #d63638;
+    border-color: #d63638;
+}
+
+.platform-config {
+    padding: 20px;
+    background: #fff;
+}
+
+.platform-fields {
+    margin: 0 0 20px 0;
+}
+
+.platform-fields th {
+    width: 180px;
+    padding: 12px 10px 12px 0;
+    vertical-align: top;
+}
+
+.platform-fields td {
+    padding: 12px 10px 12px 0;
+}
+
+.platform-fields .required {
+    color: #d63638;
+    margin-left: 2px;
+}
+
+.platform-fields input[type="text"],
+.platform-fields input[type="password"],
+.platform-fields input[type="url"],
+.platform-fields select {
+    width: 100%;
+    max-width: 400px;
+}
+
+.platform-fields .toggle-password {
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
+.platform-fields .toggle-password .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.platform-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+}
+
+.platform-links {
+    display: flex;
+    gap: 10px;
+}
+
+.platform-links .button-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    color: #2271b1;
+}
+
+.platform-links .button-link:hover {
+    color: #135e96;
+}
+
+.platform-links .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.platform-test {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.test-connection {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.test-connection .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.test-connection .dashicons.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.connection-status {
+    font-size: 13px;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.connection-status.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.connection-status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Empty State */
+.platform-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9f9f9;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.platform-empty-state .empty-icon {
+    margin-bottom: 15px;
+}
+
+.platform-empty-state .empty-icon .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #c3c4c7;
+}
+
+.platform-empty-state h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: #1d2327;
+}
+
+.platform-empty-state p {
+    margin: 0;
+    color: #646970;
+}
+
+/* Add Platform Section */
+.add-platform-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.add-platform-dropdown {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+#add-platform-select {
+    min-width: 280px;
+    padding: 8px 12px;
+}
+
+#add-platform-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#add-platform-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================
+   Legacy MCP Servers (Backward Compatibility)
+   ========================================== */
+
+#mcp-servers-list {
+    margin: 20px 0;
+}
+
+.mcp-server-item {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.mcp-server-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.mcp-server-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.mcp-server-item .form-table {
+    margin: 0;
+}
+
+.mcp-server-item .form-table th {
+    width: 200px;
+    padding: 10px 10px 10px 0;
+}
+
+.mcp-server-item .form-table td {
+    padding: 10px 10px 10px 0;
+}
+
+#add-server {
+    margin-top: 10px;
+}
+
+/* ==========================================
+   API Endpoints Reference
+   ========================================== */
+
+.api-endpoints-reference h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.api-endpoints-reference h3:first-child {
+    margin-top: 0;
+}
+
+.api-endpoints-reference ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0;
+}
+
+.api-endpoints-reference li {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.api-endpoints-reference li:last-child {
+    border-bottom: none;
+}
+
+.api-endpoints-reference code {
+    background: #f0f0f0;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #c7254e;
+    min-width: 180px;
+    display: inline-block;
+}
+
+/* ==========================================
+   Logs Page
+   ========================================== */
+
+.royal-mcp-logs .column-timestamp {
+    width: 180px;
+}
+
+.royal-mcp-logs .column-server {
+    width: 150px;
+}
+
+.royal-mcp-logs .column-action {
+    width: 250px;
+}
+
+.royal-mcp-logs .column-status {
+    width: 100px;
+}
+
+.royal-mcp-logs .column-details {
+    width: 120px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Log Details Modal */
+.log-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.log-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 900px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.log-modal-close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.log-modal-close:hover,
+.log-modal-close:focus {
+    color: #000;
+}
+
+.log-details-container h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.log-details-container pre {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 15px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ==========================================
+   Responsive Styles
+   ========================================== */
+
+@media screen and (max-width: 782px) {
+    .platform-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .platform-info {
+        width: 100%;
+    }
+
+    .platform-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .platform-footer {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .platform-links {
+        flex-wrap: wrap;
+    }
+
+    .platform-fields th {
+        width: 100%;
+        display: block;
+        padding-bottom: 5px;
+    }
+
+    .platform-fields td {
+        display: block;
+        padding-top: 0;
+    }
+
+    .add-platform-dropdown {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #add-platform-select {
+        min-width: 100%;
+    }
+
+    .mcp-server-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mcp-server-header .button {
+        margin-top: 10px;
+    }
+
+    .api-endpoints-reference li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .api-endpoints-reference code {
+        min-width: auto;
+    }
+
+    .log-modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+}
+
+/* ==========================================
+   Utility Classes
+   ========================================== */
+
+.code {
+    font-family: Consolas, Monaco, monospace;
+}
+
+.regular-text {
+    width: 25em;
+}
+
+.description {
+    font-style: italic;
+    color: #646970;
+}
+
+.required {
+    color: #d63638;
+}
+
+/* ==========================================
+   Claude Connector Settings
+   ========================================== */
+
+.connector-settings-box {
+    border-left: 4px solid #6B4C9A;
+}
+
+.connector-settings-box .postbox-header h2 {
+    display: flex;
+    align-items: center;
+}
+
+.connector-settings-box .beta-badge {
+    background: #6B4C9A;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 10px;
+    text-transform: uppercase;
+}
+
+.connector-intro {
+    font-size: 14px;
+    margin-bottom: 20px;
+    font-style: normal !important;
+}
+
+.connector-fields {
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.connector-field {
+    margin-bottom: 20px;
+}
+
+.connector-field:last-child {
+    margin-bottom: 0;
+}
+
+.connector-field > label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1d2327;
+}
+
+.connector-field .optional {
+    font-weight: 400;
+    color: #646970;
+}
+
+.connector-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.connector-input-group input {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.connector-input-group .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.connector-input-group .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.connector-advanced {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #ddd;
+}
+
+.toggle-advanced {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2271b1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.toggle-advanced:hover {
+    color: #135e96;
+}
+
+.toggle-advanced .dashicons {
+    transition: transform 0.2s ease;
+}
+
+.toggle-advanced.open .dashicons {
+    transform: rotate(180deg);
+}
+
+.advanced-fields {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+}
+
+.connector-help {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.connector-help h4 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.connector-help ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.connector-help li {
+    margin-bottom: 8px;
+    color: #50575e;
+}
+
+.connector-help li:last-child {
+    margin-bottom: 0;
+}
+
+.connector-help a {
+    color: #2271b1;
+}
+
+.copy-btn.copied {
+    background: #00a32a;
+    border-color: #00a32a;
+    color: #fff;
+}
+
+.copy-btn.copied .dashicons {
+    color: #fff;
+}
+
+/* ==========================================
+   Documentation Banner
+   ========================================== */
+
+.royal-mcp-docs-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #e7f3ff;
+    border: 1px solid #c8e1ff;
+    color: #1d2327;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin: 15px 0 20px 0;
+}
+
+.royal-mcp-docs-banner .dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #2271b1;
+}
+
+.royal-mcp-docs-banner span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.royal-mcp-docs-banner .button {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.royal-mcp-docs-banner .button .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* ==========================================
+   Founders Bundle Banner — hero with 6-card grid
+   ========================================== */
+
+.royal-mcp-founders-banner {
+    position: relative;
+    background: linear-gradient(135deg, #14102e 0%, #241a52 50%, #3a1f6b 100%);
+    border-radius: 12px;
+    padding: 32px 36px;
+    margin: 32px 0 0 0;
+    overflow: hidden;
+    color: #fff;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 36px;
+    align-items: center;
+    box-shadow: 0 8px 24px rgba(20, 16, 46, 0.18);
+}
+
+.royal-mcp-founders-banner::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -8%;
+    width: 60%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(201, 162, 39, 0.12) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.royal-mcp-founders-banner::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -10%;
+    width: 50%;
+    height: 200%;
+    background: radial-gradient(ellipse at center, rgba(107, 45, 184, 0.18) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.royal-mcp-founders-left {
+    position: relative;
+    z-index: 1;
+}
+
+.royal-mcp-founders-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #f0c83a;
+    margin-bottom: 12px;
+    padding: 4px 10px;
+    background: rgba(240, 200, 58, 0.1);
+    border: 1px solid rgba(240, 200, 58, 0.25);
+    border-radius: 100px;
+}
+
+.royal-mcp-founders-eyebrow .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+    line-height: 1;
+}
+
+.royal-mcp-founders-title {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0 0 10px 0;
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+.royal-mcp-founders-subtitle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.55;
+    margin: 0 0 20px 0;
+    max-width: 440px;
+}
+
+.royal-mcp-founders-banner .royal-mcp-founders-cta-primary {
+    background: linear-gradient(135deg, #f0c83a, #d4a517);
+    color: #1a1438;
+    border: 0;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 4px 12px rgba(212, 165, 23, 0.3);
+}
+
+.royal-mcp-founders-banner .royal-mcp-founders-cta-primary:hover,
+.royal-mcp-founders-banner .royal-mcp-founders-cta-primary:focus {
+    transform: translateY(-1px);
+    color: #1a1438;
+    box-shadow: 0 6px 16px rgba(212, 165, 23, 0.45);
+}
+
+.royal-mcp-founders-banner .royal-mcp-founders-cta-primary .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.royal-mcp-founders-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    position: relative;
+    z-index: 1;
+}
+
+.royal-mcp-founders-grid-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    text-decoration: none;
+}
+
+.royal-mcp-founders-grid-item:hover,
+.royal-mcp-founders-grid-item:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(240, 200, 58, 0.35);
+    transform: translateY(-2px);
+    color: #fff;
+}
+
+.royal-mcp-founders-grid-item .dashicons {
+    color: #f0c83a;
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    line-height: 1;
+}
+
+.royal-mcp-founders-grid-item-name {
+    line-height: 1.3;
+}
+
+.royal-mcp-founders-dismiss {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    color: rgba(255, 255, 255, 0.55);
+    text-decoration: none;
+    padding: 6px;
+    line-height: 1;
+    border-radius: 4px;
+    z-index: 2;
+    display: inline-flex;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.royal-mcp-founders-dismiss:hover,
+.royal-mcp-founders-dismiss:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.royal-mcp-founders-dismiss .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 900px) {
+    .royal-mcp-founders-banner {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+    .royal-mcp-founders-subtitle {
+        max-width: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .royal-mcp-founders-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .royal-mcp-founders-title {
+        font-size: 20px;
+    }
+}
+
+/* ==========================================
+   1.4.25 — New layout elements
+   (MCP URL block, Cloudflare warning, Advanced toggle,
+    Setup Guides accordion, Outbound banner)
+   ========================================== */
+
+/* --- MCP Server URL prominent block --- */
+.mcp-url-block {
+    background: linear-gradient(135deg, #f0f6ff 0%, #f8fafc 100%);
+    border: 1px solid #c3d4e8;
+    border-left: 4px solid #2271b1;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 8px 0 4px;
+}
+
+.mcp-url-block .mcp-url-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #1d2327;
+    margin: 0 0 10px;
+}
+
+.mcp-url-block .mcp-url-label .dashicons {
+    color: #2271b1;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.mcp-url-block .mcp-url-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.mcp-url-block .mcp-url-input-group input {
+    flex: 1;
+    min-width: 280px;
+    background: #fff;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    padding: 8px 12px;
+    border: 1px solid #c3d4e8;
+}
+
+.mcp-url-block .mcp-url-hint {
+    margin: 0 0 12px;
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.55;
+    font-style: normal;
+}
+
+/* --- Cloudflare / localhost warning callouts --- */
+.cloudflare-warning {
+    background: #fff8e1;
+    border-left: 4px solid #f0c83a;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.cloudflare-warning.warning-error {
+    background: #fbeaea;
+    border-left-color: #d63638;
+}
+
+.cloudflare-warning .dashicons {
+    color: #c19200;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.cloudflare-warning.warning-error .dashicons {
+    color: #d63638;
+}
+
+.cloudflare-warning p {
+    margin: 0;
+    color: #50575e;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.cloudflare-warning strong {
+    color: #1d2327;
+}
+
+/* --- Advanced (REST + OAuth) collapsible --- */
+.advanced-toggle {
+    background: none;
+    border: 0;
+    color: #2271b1;
+    cursor: pointer;
+    padding: 10px 0 6px;
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.advanced-toggle:hover,
+.advanced-toggle:focus {
+    color: #135e96;
+    outline: none;
+}
+
+.advanced-toggle:focus-visible {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2271b1;
+    border-radius: 4px;
+}
+
+.advanced-toggle .dashicons {
+    transition: transform 0.2s ease;
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.advanced-toggle.open .dashicons {
+    transform: rotate(180deg);
+}
+
+.advanced-content {
+    margin-top: 12px;
+    padding: 4px 16px 16px;
+    background: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+}
+
+.advanced-content .form-table {
+    margin: 0;
+}
+
+.advanced-content .optional {
+    font-weight: 400;
+    color: #646970;
+    font-size: 12px;
+}
+
+/* --- MCP Client Setup Guides --- */
+.setup-guides-intro {
+    margin: 0 0 16px !important;
+    font-size: 14px !important;
+}
+
+.setup-guides-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.setup-guide-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.setup-guide-item:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border-color: #c3d4e8;
+}
+
+.setup-guide-item.open {
+    border-color: #2271b1;
+}
+
+.setup-guide-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    cursor: pointer;
+    background: #fafafa;
+    border: 0;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    font-size: 15px;
+    color: #1d2327;
+    transition: background 0.15s ease;
+}
+
+.setup-guide-header:hover {
+    background: #f5f5f5;
+}
+
+.setup-guide-header:focus-visible {
+    outline: 0;
+    background: #f0f6ff;
+}
+
+.setup-guide-item.open .setup-guide-header {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.setup-guide-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+    letter-spacing: 0;
+}
+
+.setup-guide-icon.icon-claude         { background: #6B4C9A; }
+.setup-guide-icon.icon-chatgpt        { background: #10a37f; }
+.setup-guide-icon.icon-claude-desktop { background: #4a2d6b; }
+.setup-guide-icon.icon-cursor         { background: #1f1f1f; }
+
+.setup-guide-name {
+    flex: 1;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.setup-guide-name small {
+    display: block;
+    font-weight: 400;
+    color: #646970;
+    font-size: 12.5px;
+    margin-top: 2px;
+}
+
+.setup-guide-chevron {
+    transition: transform 0.2s ease;
+    color: #646970;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.setup-guide-item.open .setup-guide-chevron {
+    transform: rotate(180deg);
+    color: #2271b1;
+}
+
+.setup-guide-body {
+    display: none;
+    padding: 16px 18px 18px 66px;
+    color: #50575e;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.setup-guide-item.open .setup-guide-body {
+    display: block;
+}
+
+.setup-guide-body p {
+    margin: 0 0 12px;
+}
+
+.setup-guide-body ol {
+    margin: 0 0 14px;
+    padding-left: 20px;
+}
+
+.setup-guide-body ol > li {
+    margin-bottom: 10px;
+}
+
+.setup-guide-body ol > li:last-child {
+    margin-bottom: 0;
+}
+
+.setup-guide-body code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 13px;
+    color: #c7254e;
+    font-family: Consolas, Monaco, monospace;
+}
+
+.setup-guide-code-block {
+    background: #1d2327;
+    color: #f6f7f7;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    overflow-x: auto;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.setup-guide-code-block code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+.setup-guide-full-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2271b1;
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.setup-guide-full-link:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.setup-guide-full-link .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+/* --- Outbound disambiguation banner --- */
+.outbound-banner {
+    background: #f0f6ff;
+    border: 1px solid #c3d4e8;
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 4px 0 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.outbound-banner .dashicons {
+    color: #2271b1;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.outbound-banner p {
+    margin: 0;
+    color: #50575e;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.outbound-banner strong {
+    color: #1d2327;
+}
+
+/* --- Misc 1.4.25 fixes --- */
+.warning-text {
+    color: #d63638 !important;
+}
+
+/* Responsive overrides for new layout */
+@media screen and (max-width: 782px) {
+    .mcp-url-block {
+        padding: 14px 16px;
+    }
+    .mcp-url-block .mcp-url-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .mcp-url-block .mcp-url-input-group input {
+        min-width: 0;
+        width: 100%;
+    }
+    .setup-guide-body {
+        padding: 14px 16px 16px;
+    }
+    .setup-guide-code-block {
+        font-size: 11.5px;
+    }
+    .outbound-banner {
+        padding: 12px 14px;
+    }
+    .advanced-content {
+        padding: 4px 12px 12px;
+    }
+}
+

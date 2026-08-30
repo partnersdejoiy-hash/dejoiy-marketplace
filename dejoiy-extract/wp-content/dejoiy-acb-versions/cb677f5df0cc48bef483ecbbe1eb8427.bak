@@ -1,0 +1,321 @@
+/**
+ * DEJOIY Custom Studio Universe v10
+ * VR hero video + product orbit (no blocking sphere) + search + motion
+ */
+(function () {
+  'use strict';
+
+  var root = document.getElementById('dsu');
+  if (!root) return;
+
+  var CFG = window.DEJOIY_STUDIO || {};
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Header search: studio products + marketplace pages only ── */
+  function initSearch() {
+    var form = document.getElementById('dsu-search-form');
+    var input = document.getElementById('dsu-search-in');
+    var drop = document.getElementById('dsu-search-drop');
+    if (!form || !input || !drop) return;
+
+    var timer;
+    var lastItems = [];
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = input.value.trim();
+      if (q.length < 2) {
+        return;
+      }
+      var first = drop.querySelector('a.dsu-hdr-search-item');
+      if (first && first.href) {
+        window.location.href = first.href;
+        return;
+      }
+      if (lastItems.length && lastItems[0].url) {
+        window.location.href = lastItems[0].url;
+      }
+    });
+
+    input.addEventListener('input', function () {
+      clearTimeout(timer);
+      var q = input.value.trim();
+      if (q.length < 2) {
+        drop.hidden = true;
+        return;
+      }
+      timer = setTimeout(function () {
+        fetch(CFG.ajax + '?action=dsu_search&term=' + encodeURIComponent(q), { credentials: 'same-origin' })
+          .then(function (r) { return r.json(); })
+          .then(function (items) {
+            drop.innerHTML = '';
+            lastItems = items && items.length ? items : [];
+            if (!lastItems.length) {
+              drop.hidden = true;
+              return;
+            }
+            lastItems.forEach(function (it) {
+              var a = document.createElement('a');
+              a.className = 'dsu-hdr-search-item';
+              a.href = it.url;
+              var badge = it.badge ? '<small>' + it.badge + '</small>' : '';
+              a.innerHTML =
+                (it.thumb ? '<img src="' + it.thumb + '" alt="" />' : '') +
+                '<div><strong>' + it.title + '</strong>' + badge + (it.price ? '<small>' + it.price + '</small>' : '') + '</div>';
+              drop.appendChild(a);
+            });
+            drop.hidden = false;
+          })
+          .catch(function () { drop.hidden = true; });
+      }, 280);
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!form.contains(e.target)) drop.hidden = true;
+    });
+  }
+
+  /* ── Mobile drawer ── */
+  function initDrawer() {
+    var btn = document.getElementById('dsu-hdr-burger');
+    var drawer = document.getElementById('dsu-hdr-drawer');
+    if (!btn || !drawer) return;
+    btn.addEventListener('click', function () {
+      var open = drawer.hasAttribute('hidden');
+      if (open) drawer.removeAttribute('hidden');
+      else drawer.setAttribute('hidden', '');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
+
+  /* ── Parallax UI ── */
+  root.addEventListener('pointermove', function (e) {
+    var r = root.getBoundingClientRect();
+    root.style.setProperty('--mx', String((e.clientX - r.left) / r.width - 0.5));
+    root.style.setProperty('--my', String((e.clientY - r.top) / r.height - 0.5));
+  });
+
+  root.querySelectorAll('.dsu-mag').forEach(function (btn) {
+    btn.addEventListener('pointermove', function (e) {
+      var b = btn.getBoundingClientRect();
+      btn.style.transform =
+        'translate(' + ((e.clientX - b.left - b.width / 2) * 0.1) + 'px,' + ((e.clientY - b.top - b.height / 2) * 0.1) + 'px)';
+    });
+    btn.addEventListener('pointerleave', function () { btn.style.transform = ''; });
+  });
+
+  /* ── Light particle field only (NO giant sphere) ── */
+  function initParticles() {
+    var canvas = document.getElementById('dsu-hero-canvas');
+    if (!canvas || typeof THREE === 'undefined' || reduceMotion) return;
+
+    var w = canvas.clientWidth || window.innerWidth;
+    var h = canvas.clientHeight || window.innerHeight;
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+    camera.position.z = 8;
+
+    var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setSize(w, h, false);
+
+    var products = CFG.products || [];
+    var group = new THREE.Group();
+    scene.add(group);
+
+    var tipEl = document.createElement('div');
+    tipEl.className = 'dsu-orbit-tip';
+    document.body.appendChild(tipEl);
+
+    function makeSprite(item, index) {
+      var size = 128;
+      var c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      var ctx = c.getContext('2d');
+      ctx.fillStyle = 'rgba(0,0,0,0.9)';
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      if (item.img) {
+        var img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function () {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(size / 2, size / 2, size / 2 - 8, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(img, 8, 8, size - 16, size - 16);
+          ctx.restore();
+          tex.needsUpdate = true;
+        };
+        img.src = item.img;
+      }
+
+      var tex = new THREE.CanvasTexture(c);
+      var mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+      var sp = new THREE.Sprite(mat);
+      sp.scale.set(0.85, 0.85, 1);
+      sp.userData = item;
+      sp.userData.idx = index;
+      group.add(sp);
+      return sp;
+    }
+
+    var sprites = products.map(makeSprite);
+
+    var amb = new THREE.AmbientLight(0xffffff, 0.65);
+    var key = new THREE.PointLight(0xffffff, 0.9, 30);
+    key.position.set(0, 2, 6);
+    scene.add(amb, key);
+
+    var t = 0;
+    var mx = 0;
+    var my = 0;
+    var raycaster = new THREE.Raycaster();
+    var pointer = new THREE.Vector2();
+    var hovered = null;
+
+    canvas.style.pointerEvents = 'auto';
+
+    canvas.addEventListener('pointermove', function (e) {
+      var rect = canvas.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      mx = pointer.x * 0.15;
+      my = pointer.y * 0.1;
+    });
+
+    canvas.addEventListener('click', function () {
+      if (hovered && hovered.userData.url) {
+        window.location.href = hovered.userData.url;
+      }
+    });
+
+    function onResize() {
+      w = canvas.clientWidth || window.innerWidth;
+      h = canvas.clientHeight || window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h, false);
+    }
+    window.addEventListener('resize', onResize, { passive: true });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      t += 0.012;
+
+      group.position.y = -1.2;
+      group.rotation.y = mx * 0.3;
+
+      sprites.forEach(function (sp, i) {
+        var r = 3.8 + (i % 3) * 0.35;
+        var a = t * (0.22 + i * 0.02) + i * 0.9;
+        sp.position.x = Math.cos(a) * r;
+        sp.position.z = Math.sin(a) * r - 2;
+        sp.position.y = Math.sin(a * 1.2) * 0.35 - 0.5;
+        var sc = hovered === sp ? 1.15 : 0.85;
+        sp.scale.set(sc, sc, 1);
+      });
+
+      raycaster.setFromCamera(pointer, camera);
+      var hits = raycaster.intersectObjects(sprites);
+      if (hits.length) {
+        hovered = hits[0].object;
+        tipEl.textContent = hovered.userData.title || 'Product';
+        tipEl.classList.add('is-on');
+        tipEl.style.left = ((pointer.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+        tipEl.style.top = ((-pointer.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+        canvas.style.cursor = 'pointer';
+      } else {
+        hovered = null;
+        tipEl.classList.remove('is-on');
+        canvas.style.cursor = 'default';
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  }
+
+  /* ── Hero video play ── */
+  function initVideo() {
+    var v = root.querySelector('.dsu-hero-video');
+    if (!v) return;
+    v.muted = true;
+    v.play().catch(function () {});
+  }
+
+  /* ── GSAP ── */
+  function initScroll() {
+    if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.utils.toArray('[data-dsu-reveal]').forEach(function (el) {
+      gsap.to(el, {
+        scrollTrigger: { trigger: el, start: 'top 88%' },
+        opacity: 1,
+        y: 0,
+        duration: 0.85,
+        ease: 'power3.out',
+        onStart: function () { el.classList.add('dsu-in'); },
+      });
+    });
+
+    gsap.from('.dsu-hero-ui > *', {
+      opacity: 0,
+      y: 32,
+      stagger: 0.1,
+      duration: 1,
+      ease: 'power3.out',
+      delay: 0.15,
+    });
+
+    gsap.to('.dsu-vr-tunnel', {
+      scrollTrigger: { trigger: '#dsu-hero', start: 'top top', end: 'bottom top', scrub: true },
+      scale: 1.08,
+      opacity: 0.4,
+    });
+  }
+
+  function initAiLog() {
+    var log = document.getElementById('dsu-ai-log');
+    if (!log) return;
+    var lines = [
+      '> JOI engine online',
+      '> Brief: premium gold monogram tee',
+      '> Generating print zones… 100%',
+      '> Preview: READY',
+    ];
+    var i = 0;
+    function tick() {
+      if (i < lines.length) {
+        log.textContent += (i ? '\n' : '') + lines[i++];
+        setTimeout(tick, 800);
+      }
+    }
+    var obs = new IntersectionObserver(function (en) {
+      if (en[0].isIntersecting) { tick(); obs.disconnect(); }
+    }, { threshold: 0.25 });
+    obs.observe(log.closest('.dsu-ai-terminal') || log);
+  }
+
+  function boot() {
+    initSearch();
+    initDrawer();
+    initVideo();
+    initParticles();
+    initScroll();
+    initAiLog();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();

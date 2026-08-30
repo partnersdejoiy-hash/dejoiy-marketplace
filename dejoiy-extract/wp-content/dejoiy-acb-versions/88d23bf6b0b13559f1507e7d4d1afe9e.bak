@@ -1,0 +1,187 @@
+<?php
+/**
+ * DEJOIY Universal Marketplace Cart — show all channels with “from Nexus / Custom Studio” labels.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Main WooCommerce cart page (not Nexus shelf or Studio flow cart).
+ *
+ * @return bool
+ */
+function dejoiy_universal_is_marketplace_cart_context() {
+	if ( ! did_action( 'wp' ) || ! function_exists( 'is_cart' ) || ! is_cart() || is_wc_endpoint_url() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_library_use_cart_template' ) && dejoiy_library_use_cart_template() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_studio_use_cart_template' ) && dejoiy_studio_use_cart_template() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_library_is_nexus_cart_context' ) && dejoiy_library_is_nexus_cart_context() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_studio_request_has_flow_flag' ) && dejoiy_studio_request_has_flow_flag() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @param array $cart_item Cart line.
+ * @return array{slug:string,label:string}|null
+ */
+function dejoiy_universal_get_cart_line_channel( $cart_item ) {
+	if ( ! is_array( $cart_item ) ) {
+		return null;
+	}
+	if ( function_exists( 'dejoiy_library_cart_line_is_nexus' ) && dejoiy_library_cart_line_is_nexus( $cart_item ) ) {
+		return array(
+			'slug'  => 'nexus',
+			'label' => __( 'Nexus', 'dejoiy' ),
+		);
+	}
+	if ( function_exists( 'dejoiy_studio_cart_item_is_studio' ) && dejoiy_studio_cart_item_is_studio( $cart_item ) ) {
+		return array(
+			'slug'  => 'studio',
+			'label' => __( 'Custom Studio', 'dejoiy' ),
+		);
+	}
+	return null;
+}
+
+/**
+ * Show Nexus / Studio lines on the marketplace cart (dedicated carts stay isolated).
+ *
+ * @param bool   $visible   Visible.
+ * @param array  $cart_item Item.
+ * @param string $cart_key  Key.
+ * @return bool
+ */
+function dejoiy_universal_marketplace_cart_item_visible( $visible, $cart_item, $cart_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! dejoiy_universal_is_marketplace_cart_context() ) {
+		return $visible;
+	}
+	return true;
+}
+
+/**
+ * Include Nexus shelf value in marketplace cart totals when all lines are shown.
+ *
+ * @param float $total Total.
+ * @return float
+ */
+function dejoiy_universal_marketplace_cart_total_include_nexus( $total ) {
+	if ( ! dejoiy_universal_is_marketplace_cart_context() ) {
+		return $total;
+	}
+	if ( function_exists( 'dejoiy_library_get_nexus_cart_subtotal' ) ) {
+		$nexus = (float) dejoiy_library_get_nexus_cart_subtotal();
+		if ( $nexus > 0 ) {
+			return (float) $total + $nexus;
+		}
+	}
+	return $total;
+}
+
+/**
+ * Append “from Nexus” / “from Custom Studio” under product title (marketplace cart only).
+ *
+ * @param string $name      Product name HTML.
+ * @param array  $cart_item Cart item.
+ * @param string $cart_key  Cart key.
+ * @return string
+ */
+function dejoiy_universal_cart_item_name( $name, $cart_item, $cart_key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	if ( ! dejoiy_universal_is_marketplace_cart_context() ) {
+		return $name;
+	}
+	$channel = dejoiy_universal_get_cart_line_channel( $cart_item );
+	if ( ! $channel ) {
+		return $name;
+	}
+	$from = sprintf(
+		/* translators: %s: channel name e.g. Nexus, Custom Studio */
+		__( 'from %s', 'dejoiy' ),
+		$channel['label']
+	);
+	return $name . ' <span class="dejoiy-uc-from dejoiy-uc-from--' . esc_attr( $channel['slug'] ) . '">' . esc_html( $from ) . '</span>';
+}
+
+/**
+ * Secondary line in cart item meta list.
+ *
+ * @param array $item_data Item data rows.
+ * @param array $cart_item Cart item.
+ * @return array
+ */
+function dejoiy_universal_cart_channel_item_data( $item_data, $cart_item ) {
+	if ( ! dejoiy_universal_is_marketplace_cart_context() ) {
+		return $item_data;
+	}
+	$channel = dejoiy_universal_get_cart_line_channel( $cart_item );
+	if ( ! $channel ) {
+		return $item_data;
+	}
+	$item_data[] = array(
+		'key'     => __( 'Section', 'dejoiy' ),
+		'value'   => $channel['label'],
+		'display' => '<span class="dejoiy-uc-channel dejoiy-uc-channel--' . esc_attr( $channel['slug'] ) . '">' . esc_html( $channel['label'] ) . '</span>',
+	);
+	return $item_data;
+}
+
+/**
+ * @param array $classes Body classes.
+ * @return array
+ */
+function dejoiy_universal_cart_body_class( $classes ) {
+	if ( dejoiy_universal_is_marketplace_cart_context() ) {
+		$classes[] = 'dejoiy-universal-cart';
+	}
+	return $classes;
+}
+
+/**
+ * Enqueue small cart label styles on marketplace cart.
+ */
+function dejoiy_universal_cart_assets() {
+	if ( ! dejoiy_universal_is_marketplace_cart_context() ) {
+		return;
+	}
+	$path = get_stylesheet_directory() . '/dejoiy-universal-checkout.css';
+	if ( ! is_readable( $path ) ) {
+		return;
+	}
+	wp_enqueue_style(
+		'dejoiy-universal-cart',
+		get_stylesheet_directory_uri() . '/dejoiy-universal-checkout.css',
+		array(),
+		(string) filemtime( $path )
+	);
+}
+
+/**
+ * Register universal marketplace cart hooks.
+ */
+function dejoiy_universal_cart_init() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	add_filter( 'woocommerce_cart_item_visible', 'dejoiy_universal_marketplace_cart_item_visible', 25, 3 );
+	add_filter( 'woocommerce_checkout_cart_item_visible', 'dejoiy_universal_marketplace_cart_item_visible', 25, 3 );
+	add_filter( 'woocommerce_widget_cart_item_visible', 'dejoiy_universal_marketplace_cart_item_visible', 25, 3 );
+	add_filter( 'woocommerce_cart_get_total', 'dejoiy_universal_marketplace_cart_total_include_nexus', 100 );
+	add_filter( 'woocommerce_cart_get_cart_contents_total', 'dejoiy_universal_marketplace_cart_total_include_nexus', 100 );
+	add_filter( 'woocommerce_cart_item_name', 'dejoiy_universal_cart_item_name', 20, 3 );
+	add_filter( 'woocommerce_get_item_data', 'dejoiy_universal_cart_channel_item_data', 5, 2 );
+	add_filter( 'body_class', 'dejoiy_universal_cart_body_class' );
+	add_action( 'wp_enqueue_scripts', 'dejoiy_universal_cart_assets', 1014 );
+}

@@ -1,0 +1,850 @@
+<?php
+/**
+ * DEJOIY Marketplace — pretty URLs (landing / category / product / DPIN).
+ *
+ * Pages:     dejoiy.tech/{landing-page}
+ * Categories: dejoiy.tech/{landing-page}/{category-slug}
+ * Products:  dejoiy.tech/{landing-page}/{category-slug}/{product-slug}/{dpin}
+ *
+ * Disable via wp-config: define( 'DEJOIY_MARKETPLACE_URLS_DISABLED', true );
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/** @var string */
+define( 'DEJOIY_MARKETPLACE_URLS_VERSION', '1.0.3' );
+
+/** @var string Last URL segment: D + 10 or legacy 11-char alphanumeric DPIN. */
+define( 'DEJOIY_MARKETPLACE_DPIN_REGEX', '(D[A-Z0-9]{10}|[A-Z0-9]{11})' );
+
+/**
+ * WooCommerce product permalink without re-entering marketplace/ecosystem filters.
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_marketplace_native_product_permalink( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return '';
+	}
+	remove_filter( 'woocommerce_product_get_permalink', 'dejoiy_marketplace_filter_product_permalink', 25 );
+	if ( function_exists( 'dejoiy_ecosystem_filter_permalink' ) ) {
+		remove_filter( 'woocommerce_product_get_permalink', 'dejoiy_ecosystem_filter_permalink', 15 );
+	}
+	$link = get_permalink( $product_id );
+	if ( function_exists( 'dejoiy_ecosystem_filter_permalink' ) ) {
+		add_filter( 'woocommerce_product_get_permalink', 'dejoiy_ecosystem_filter_permalink', 15, 2 );
+	}
+	add_filter( 'woocommerce_product_get_permalink', 'dejoiy_marketplace_filter_product_permalink', 25, 2 );
+	return $link ? $link : '';
+}
+
+/**
+ * product_cat term link without re-entering dejoiy_marketplace_filter_term_link.
+ *
+ * @param WP_Term|int $term Term or term ID.
+ * @return string
+ */
+function dejoiy_marketplace_native_term_link( $term ) {
+	if ( is_numeric( $term ) ) {
+		$term = get_term( (int) $term, 'product_cat' );
+	}
+	if ( ! $term || is_wp_error( $term ) ) {
+		return '';
+	}
+	remove_filter( 'term_link', 'dejoiy_marketplace_filter_term_link', 25 );
+	$link = get_term_link( $term );
+	add_filter( 'term_link', 'dejoiy_marketplace_filter_term_link', 25, 2 );
+	if ( is_wp_error( $link ) ) {
+		return '';
+	}
+	return $link ? (string) $link : '';
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_marketplace_urls_enabled() {
+	if ( defined( 'DEJOIY_MARKETPLACE_URLS_DISABLED' ) && DEJOIY_MARKETPLACE_URLS_DISABLED ) {
+		return false;
+	}
+	return (bool) apply_filters( 'dejoiy_marketplace_urls_enabled', true );
+}
+
+/**
+ * Paths that must never be handled as marketplace landing/category routes.
+ *
+ * @return array<int, string>
+ */
+function dejoiy_marketplace_reserved_slugs() {
+	$reserved = array(
+		'wp-admin',
+		'wp-json',
+		'wp-content',
+		'wp-includes',
+		'feed',
+		'cart',
+		'checkout',
+		'my-account',
+		'shop',
+		'product',
+		'product-category',
+		'product-tag',
+		'store',
+		'store-manager',
+		'author',
+		'category',
+		'tag',
+		'page',
+		'attachment',
+		'search',
+		'dejoiy-library',
+		'dejoiy-quick-mart',
+		'dejoiy-custom-studio',
+		'dejoiy-services',
+		'dejoiy-refurbished',
+		'dejoiy-universe',
+		'wishlist',
+		'compare',
+		'elementor',
+	);
+
+	return array_unique( array_map( 'sanitize_title', apply_filters( 'dejoiy_marketplace_reserved_slugs', $reserved ) ) );
+}
+
+/**
+ * @param string $slug Slug.
+ * @return bool
+ */
+function dejoiy_marketplace_is_reserved_slug( $slug ) {
+	$slug = sanitize_title( (string) $slug );
+	if ( '' === $slug ) {
+		return true;
+	}
+	return in_array( $slug, dejoiy_marketplace_reserved_slugs(), true );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_marketplace_product_uses_pretty_urls( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return false;
+	}
+	if ( ! function_exists( 'dejoiy_get_product_ecosystem' ) ) {
+		return true;
+	}
+	return 'marketplace' === dejoiy_get_product_ecosystem( $product_id );
+}
+
+/**
+ * Primary product_cat term for URL building.
+ *
+ * @param int $product_id Product ID.
+ * @return WP_Term|null
+ */
+function dejoiy_marketplace_primary_category_term( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return null;
+	}
+
+	$term_id = (int) get_post_meta( $product_id, '_yoast_wpseo_primary_product_cat', true );
+	if ( $term_id > 0 ) {
+		$term = get_term( $term_id, 'product_cat' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			return $term;
+		}
+	}
+
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'orderby' => 'parent' ) );
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return null;
+	}
+
+	// Prefer deepest category (child over parent).
+	usort(
+		$terms,
+		static function ( $a, $b ) {
+			return (int) $b->parent - (int) $a->parent;
+		}
+	);
+
+	foreach ( $terms as $term ) {
+		if ( function_exists( 'dejoiy_marketplace_is_reserved_slug' ) && dejoiy_marketplace_is_reserved_slug( $term->slug ) ) {
+			continue;
+		}
+		$map = function_exists( 'dejoiy_ecosystem_category_map' ) ? dejoiy_ecosystem_category_map() : array();
+		if ( isset( $map[ $term->slug ] ) && 'marketplace' !== $map[ $term->slug ] ) {
+			continue;
+		}
+		return $term;
+	}
+
+	return $terms[0];
+}
+
+/**
+ * Landing + category slugs for a product.
+ *
+ * @param int $product_id Product ID.
+ * @return array{landing: string, category: string}|null
+ */
+function dejoiy_marketplace_product_path_segments( $product_id ) {
+	$term = dejoiy_marketplace_primary_category_term( $product_id );
+	if ( ! $term ) {
+		$fallback = apply_filters( 'dejoiy_marketplace_default_landing_slug', 'shop' );
+		return array(
+			'landing'  => sanitize_title( (string) $fallback ),
+			'category' => 'all',
+		);
+	}
+
+	$ancestors = get_ancestors( $term->term_id, 'product_cat', 'taxonomy' );
+	$ancestors = array_reverse( array_map( 'intval', $ancestors ) );
+
+	if ( empty( $ancestors ) ) {
+		return array(
+			'landing'  => $term->slug,
+			'category' => $term->slug,
+		);
+	}
+
+	$root = get_term( (int) $ancestors[0], 'product_cat' );
+	if ( ! $root || is_wp_error( $root ) ) {
+		return array(
+			'landing'  => $term->slug,
+			'category' => $term->slug,
+		);
+	}
+
+	return array(
+		'landing'  => $root->slug,
+		'category' => $term->slug,
+	);
+}
+
+/**
+ * Canonical marketplace product URL.
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_marketplace_product_url( $product_id ) {
+	static $building = array();
+
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || ! dejoiy_marketplace_urls_enabled() ) {
+		return '';
+	}
+	if ( isset( $building[ $product_id ] ) ) {
+		return dejoiy_marketplace_native_product_permalink( $product_id );
+	}
+
+	if ( ! dejoiy_marketplace_product_uses_pretty_urls( $product_id ) ) {
+		return function_exists( 'dejoiy_ecosystem_native_product_permalink' )
+			? dejoiy_ecosystem_native_product_permalink( $product_id )
+			: dejoiy_marketplace_native_product_permalink( $product_id );
+	}
+
+	$building[ $product_id ] = true;
+
+	$product = get_post( $product_id );
+	if ( ! $product || 'product' !== $product->post_type ) {
+		unset( $building[ $product_id ] );
+		return '';
+	}
+
+	$dpin = dejoiy_marketplace_ensure_valid_dpin( $product_id );
+	if ( '' === $dpin ) {
+		unset( $building[ $product_id ] );
+		return dejoiy_marketplace_native_product_permalink( $product_id );
+	}
+
+	$segments = dejoiy_marketplace_product_path_segments( $product_id );
+	if ( ! $segments ) {
+		unset( $building[ $product_id ] );
+		return dejoiy_marketplace_native_product_permalink( $product_id );
+	}
+
+	$path = sprintf(
+		'%s/%s/%s/%s/',
+		rawurlencode( $segments['landing'] ),
+		rawurlencode( $segments['category'] ),
+		rawurlencode( $product->post_name ),
+		rawurlencode( $dpin )
+	);
+
+	$url = home_url( user_trailingslashit( $path ) );
+	unset( $building[ $product_id ] );
+	return $url;
+}
+
+/**
+ * Category archive URL under a landing slug.
+ *
+ * @param WP_Term|int|string $term Term, ID, or slug.
+ * @param string             $landing_slug Optional landing override.
+ * @return string
+ */
+function dejoiy_marketplace_category_url( $term, $landing_slug = '' ) {
+	static $building = array();
+
+	if ( ! dejoiy_marketplace_urls_enabled() ) {
+		return is_object( $term ) && isset( $term->term_id ) ? dejoiy_marketplace_native_term_link( $term ) : '';
+	}
+
+	if ( is_numeric( $term ) ) {
+		$term = get_term( (int) $term, 'product_cat' );
+	} elseif ( is_string( $term ) ) {
+		$term = get_term_by( 'slug', sanitize_title( $term ), 'product_cat' );
+	}
+
+	if ( ! $term || is_wp_error( $term ) ) {
+		return '';
+	}
+
+	$term_key = (int) $term->term_id;
+	if ( isset( $building[ $term_key ] ) ) {
+		return dejoiy_marketplace_native_term_link( $term );
+	}
+	$building[ $term_key ] = true;
+
+	$landing = $landing_slug ? sanitize_title( $landing_slug ) : '';
+	if ( '' === $landing ) {
+		$ancestors = get_ancestors( $term->term_id, 'product_cat', 'taxonomy' );
+		if ( empty( $ancestors ) ) {
+			$landing = $term->slug;
+		} else {
+			$root = get_term( (int) $ancestors[0], 'product_cat' );
+			$landing = ( $root && ! is_wp_error( $root ) ) ? $root->slug : $term->slug;
+		}
+	}
+
+	if ( dejoiy_marketplace_is_reserved_slug( $landing ) || dejoiy_marketplace_is_reserved_slug( $term->slug ) ) {
+		unset( $building[ $term_key ] );
+		return dejoiy_marketplace_native_term_link( $term );
+	}
+
+	$path = $landing . '/' . $term->slug . '/';
+	$url  = home_url( user_trailingslashit( $path ) );
+	unset( $building[ $term_key ] );
+	return $url;
+}
+
+/**
+ * Top-level landing URL (product_cat parent or self).
+ *
+ * @param WP_Term|int|string $term Term, ID, or slug.
+ * @return string
+ */
+function dejoiy_marketplace_landing_url( $term ) {
+	if ( ! dejoiy_marketplace_urls_enabled() ) {
+		return '';
+	}
+
+	if ( is_numeric( $term ) ) {
+		$term = get_term( (int) $term, 'product_cat' );
+	} elseif ( is_string( $term ) ) {
+		$term = get_term_by( 'slug', sanitize_title( $term ), 'product_cat' );
+	}
+
+	if ( ! $term || is_wp_error( $term ) ) {
+		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+		return $shop ? $shop : home_url( '/' );
+	}
+
+	$ancestors = get_ancestors( $term->term_id, 'product_cat', 'taxonomy' );
+	$landing   = empty( $ancestors ) ? $term : get_term( (int) $ancestors[0], 'product_cat' );
+	if ( ! $landing || is_wp_error( $landing ) ) {
+		return home_url( '/' );
+	}
+
+	if ( dejoiy_marketplace_is_reserved_slug( $landing->slug ) ) {
+		return dejoiy_marketplace_native_term_link( $landing );
+	}
+
+	return home_url( user_trailingslashit( $landing->slug ) );
+}
+
+/**
+ * @param string $url Target URL.
+ * @return bool
+ */
+function dejoiy_marketplace_current_url_matches( $url ) {
+	$current = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$target  = wp_parse_url( $url, PHP_URL_PATH );
+	if ( ! $target ) {
+		return false;
+	}
+	$current_path = wp_parse_url( home_url( $current ), PHP_URL_PATH );
+	return untrailingslashit( (string) $current_path ) === untrailingslashit( $target );
+}
+
+/**
+ * Published WooCommerce product ID from post slug.
+ *
+ * @param string $slug Product post_name.
+ * @return int
+ */
+function dejoiy_marketplace_product_id_from_slug( $slug ) {
+	$slug = sanitize_title( (string) $slug );
+	if ( '' === $slug ) {
+		return 0;
+	}
+
+	static $cache = array();
+	if ( isset( $cache[ $slug ] ) ) {
+		return (int) $cache[ $slug ];
+	}
+
+	$posts = get_posts(
+		array(
+			'post_type'              => 'product',
+			'name'                   => $slug,
+			'post_status'            => 'publish',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$cache[ $slug ] = $posts ? (int) $posts[0] : 0;
+	return (int) $cache[ $slug ];
+}
+
+/**
+ * Valid D-prefix DPIN for a product (migrates legacy meta when needed).
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_marketplace_ensure_valid_dpin( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || ! function_exists( 'dejoiy_ensure_product_dpin' ) ) {
+		return '';
+	}
+	$dpin = dejoiy_ensure_product_dpin( $product_id );
+	if (
+		$dpin
+		&& 'D' === $dpin[0]
+		&& function_exists( 'dejoiy_dpin_is_valid_format' )
+		&& dejoiy_dpin_is_valid_format( $dpin )
+	) {
+		return $dpin;
+	}
+	if ( function_exists( 'dejoiy_dpin_maybe_assign' ) ) {
+		dejoiy_dpin_maybe_assign( $product_id, true );
+	}
+	return function_exists( 'dejoiy_get_product_dpin' ) ? dejoiy_get_product_dpin( $product_id ) : '';
+}
+
+/**
+ * Canonical URL for a product (marketplace pretty URL or ecosystem fallback).
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_marketplace_canonical_product_url( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return '';
+	}
+	dejoiy_marketplace_ensure_valid_dpin( $product_id );
+	if ( dejoiy_marketplace_product_uses_pretty_urls( $product_id ) ) {
+		$url = dejoiy_marketplace_product_url( $product_id );
+		if ( $url ) {
+			return $url;
+		}
+	}
+	if ( function_exists( 'dejoiy_ecosystem_product_url' ) ) {
+		$url = dejoiy_ecosystem_product_url( $product_id );
+		if ( $url ) {
+			return $url;
+		}
+	}
+	return dejoiy_marketplace_native_product_permalink( $product_id );
+}
+
+/**
+ * Regex fragment: do not treat reserved path segments as marketplace landing slugs.
+ *
+ * @return string
+ */
+function dejoiy_marketplace_reserved_path_negative_lookahead() {
+	static $fragment = null;
+	if ( null !== $fragment ) {
+		return $fragment;
+	}
+	$slugs = array_filter(
+		dejoiy_marketplace_reserved_slugs(),
+		static function ( $slug ) {
+			return '' !== $slug && false === strpos( $slug, '/' );
+		}
+	);
+	$quoted = array_map(
+		static function ( $slug ) {
+			return preg_quote( $slug, '/' );
+		},
+		$slugs
+	);
+	$fragment = $quoted ? '(?!' . implode( '|', $quoted ) . ')' : '';
+	return $fragment;
+}
+
+/**
+ * Strip marketplace rewrite query vars from a request.
+ *
+ * @param array<string, mixed> $query_vars Query vars.
+ * @return array<string, mixed>
+ */
+function dejoiy_marketplace_clear_route_query_vars( $query_vars ) {
+	unset(
+		$query_vars['dejoiy_mkt_view'],
+		$query_vars['dejoiy_landing'],
+		$query_vars['dejoiy_mkt_cat'],
+		$query_vars['dejoiy_product_slug'],
+		$query_vars['dejoiy_dpin']
+	);
+	return $query_vars;
+}
+
+/**
+ * Register rewrite rules + query vars.
+ */
+function dejoiy_marketplace_register_rewrites() {
+	if ( ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+
+	add_rewrite_tag( '%dejoiy_mkt_view%', '([^&]+)' );
+	add_rewrite_tag( '%dejoiy_landing%', '([^&]+)' );
+	add_rewrite_tag( '%dejoiy_mkt_cat%', '([^&]+)' );
+	add_rewrite_tag( '%dejoiy_product_slug%', '([^&]+)' );
+	add_rewrite_tag( '%dejoiy_dpin%', DEJOIY_MARKETPLACE_DPIN_REGEX );
+
+	add_rewrite_rule(
+		'^([^/]+)/([^/]+)/([^/]+)/' . DEJOIY_MARKETPLACE_DPIN_REGEX . '/?$',
+		'index.php?dejoiy_mkt_view=product&dejoiy_landing=$matches[1]&dejoiy_mkt_cat=$matches[2]&dejoiy_product_slug=$matches[3]&dejoiy_dpin=$matches[4]',
+		'top'
+	);
+
+	$skip_reserved = dejoiy_marketplace_reserved_path_negative_lookahead();
+	add_rewrite_rule(
+		'^' . $skip_reserved . '([^/]+)/([^/]+)/?$',
+		'index.php?dejoiy_mkt_view=category&dejoiy_landing=$matches[1]&dejoiy_mkt_cat=$matches[2]',
+		'top'
+	);
+
+	// Reinforce native WooCommerce /product/{slug}/ when category rule no longer matches.
+	add_rewrite_rule(
+		'^product/([^/]+)/?$',
+		'index.php?product=$matches[1]',
+		'top'
+	);
+}
+add_action( 'init', 'dejoiy_marketplace_register_rewrites', 12 );
+
+/**
+ * Flush rewrites once per version.
+ */
+function dejoiy_marketplace_maybe_flush_rewrites() {
+	if ( ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+	if ( get_option( 'dejoiy_marketplace_urls_rewrite_ver' ) === DEJOIY_MARKETPLACE_URLS_VERSION ) {
+		return;
+	}
+	dejoiy_marketplace_register_rewrites();
+	flush_rewrite_rules( false );
+	update_option( 'dejoiy_marketplace_urls_rewrite_ver', DEJOIY_MARKETPLACE_URLS_VERSION, false );
+}
+add_action( 'init', 'dejoiy_marketplace_maybe_flush_rewrites', 99 );
+
+/**
+ * @param array<string, string> $vars Query vars.
+ * @return array<string, string>
+ */
+function dejoiy_marketplace_query_vars( $vars ) {
+	$vars[] = 'dejoiy_mkt_view';
+	$vars[] = 'dejoiy_landing';
+	$vars[] = 'dejoiy_mkt_cat';
+	$vars[] = 'dejoiy_product_slug';
+	$vars[] = 'dejoiy_dpin';
+	return $vars;
+}
+add_filter( 'query_vars', 'dejoiy_marketplace_query_vars' );
+
+/**
+ * Resolve marketplace routes to WooCommerce queries.
+ *
+ * @param array<string, mixed> $query_vars Query vars.
+ * @return array<string, mixed>
+ */
+function dejoiy_marketplace_parse_request( $query_vars ) {
+	if ( ! dejoiy_marketplace_urls_enabled() || empty( $query_vars['dejoiy_mkt_view'] ) ) {
+		return $query_vars;
+	}
+
+	$view    = sanitize_key( (string) $query_vars['dejoiy_mkt_view'] );
+	$landing = isset( $query_vars['dejoiy_landing'] ) ? sanitize_title( (string) $query_vars['dejoiy_landing'] ) : '';
+
+	if ( dejoiy_marketplace_is_reserved_slug( $landing ) ) {
+		if ( 'product' === $landing && 'category' === $view ) {
+			$slug = isset( $query_vars['dejoiy_mkt_cat'] ) ? sanitize_title( (string) $query_vars['dejoiy_mkt_cat'] ) : '';
+			$pid  = dejoiy_marketplace_product_id_from_slug( $slug );
+			if ( $pid > 0 ) {
+				$query_vars = dejoiy_marketplace_clear_route_query_vars( $query_vars );
+				$query_vars['post_type'] = 'product';
+				$query_vars['product']   = $slug;
+				$query_vars['p']         = $pid;
+				return $query_vars;
+			}
+		}
+		return dejoiy_marketplace_clear_route_query_vars( $query_vars );
+	}
+
+	if ( 'product' === $view ) {
+		$dpin = isset( $query_vars['dejoiy_dpin'] ) ? strtoupper( (string) $query_vars['dejoiy_dpin'] ) : '';
+		$pid  = function_exists( 'dejoiy_dpin_resolve_product_id' ) ? dejoiy_dpin_resolve_product_id( $dpin, true ) : 0;
+		if ( $pid < 1 ) {
+			return $query_vars;
+		}
+
+		unset( $query_vars['dejoiy_mkt_view'], $query_vars['dejoiy_landing'], $query_vars['dejoiy_mkt_cat'], $query_vars['dejoiy_product_slug'], $query_vars['dejoiy_dpin'] );
+		$query_vars['post_type'] = 'product';
+		$query_vars['p']         = $pid;
+		return $query_vars;
+	}
+
+	if ( 'category' === $view ) {
+		$cat_slug = isset( $query_vars['dejoiy_mkt_cat'] ) ? sanitize_title( (string) $query_vars['dejoiy_mkt_cat'] ) : '';
+		if ( dejoiy_marketplace_is_reserved_slug( $cat_slug ) ) {
+			return $query_vars;
+		}
+
+		// Do not hijack existing WordPress pages (e.g. /about/team/).
+		if ( get_page_by_path( $landing . '/' . $cat_slug ) ) {
+			return $query_vars;
+		}
+		if ( get_page_by_path( $landing ) && $landing === $cat_slug ) {
+			return $query_vars;
+		}
+
+		$term = get_term_by( 'slug', $cat_slug, 'product_cat' );
+		if ( ! $term || is_wp_error( $term ) ) {
+			return $query_vars;
+		}
+
+		$ancestors = get_ancestors( $term->term_id, 'product_cat', 'taxonomy' );
+		if ( ! empty( $ancestors ) ) {
+			$root = get_term( (int) $ancestors[0], 'product_cat' );
+			if ( ! $root || is_wp_error( $root ) || $root->slug !== $landing ) {
+				return $query_vars;
+			}
+		} elseif ( $term->slug !== $cat_slug || $landing !== $term->slug ) {
+			return $query_vars;
+		}
+
+		unset( $query_vars['dejoiy_mkt_view'], $query_vars['dejoiy_landing'], $query_vars['dejoiy_mkt_cat'] );
+		$query_vars['taxonomy']   = 'product_cat';
+		$query_vars['term']       = $term->slug;
+		$query_vars['product_cat'] = $term->slug;
+		return $query_vars;
+	}
+
+	return $query_vars;
+}
+add_filter( 'request', 'dejoiy_marketplace_parse_request', 5 );
+
+/**
+ * 301 redirect legacy /product/{slug}/ URLs to canonical DPIN path (or ecosystem URL).
+ */
+function dejoiy_marketplace_redirect_legacy_product_path() {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+
+	$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	if ( ! preg_match( '#^/product/([^/?#]+)/?#i', $uri, $matches ) ) {
+		return;
+	}
+
+	$slug = sanitize_title( $matches[1] );
+	if ( '' === $slug ) {
+		return;
+	}
+
+	$pid = dejoiy_marketplace_product_id_from_slug( $slug );
+	if ( $pid < 1 ) {
+		return;
+	}
+
+	$canonical = dejoiy_marketplace_canonical_product_url( $pid );
+	if ( $canonical && ! dejoiy_marketplace_current_url_matches( $canonical ) ) {
+		wp_safe_redirect( $canonical, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_marketplace_redirect_legacy_product_path', 1 );
+
+/**
+ * Redirect pretty URLs that use a legacy (non-D) DPIN segment to the canonical D-prefix URL.
+ */
+function dejoiy_marketplace_redirect_legacy_dpin_segment() {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+	$segment = strtoupper( (string) get_query_var( 'dejoiy_dpin' ) );
+	if ( '' === $segment ) {
+		$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+		if ( preg_match( '#/([A-Z0-9]{11})/?$#', $uri, $matches ) ) {
+			$segment = strtoupper( $matches[1] );
+		}
+	}
+	if ( '' === $segment ) {
+		return;
+	}
+	if ( function_exists( 'dejoiy_dpin_is_valid_format' ) && dejoiy_dpin_is_valid_format( $segment ) ) {
+		return;
+	}
+
+	$pid = function_exists( 'dejoiy_dpin_resolve_product_id' )
+		? dejoiy_dpin_resolve_product_id( $segment, true )
+		: 0;
+	if ( $pid < 1 ) {
+		return;
+	}
+
+	if ( function_exists( 'dejoiy_dpin_maybe_assign' ) ) {
+		dejoiy_dpin_maybe_assign( $pid, true );
+	}
+
+	$canonical = dejoiy_marketplace_product_url( $pid );
+	if ( ! $canonical ) {
+		$canonical = dejoiy_marketplace_canonical_product_url( $pid );
+	}
+	if ( $canonical && ! dejoiy_marketplace_current_url_matches( $canonical ) ) {
+		wp_safe_redirect( $canonical, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_marketplace_redirect_legacy_dpin_segment', 2 );
+
+/**
+ * Redirect native product permalinks to marketplace pretty URLs.
+ */
+function dejoiy_marketplace_redirect_legacy_product_url() {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	$pid = get_queried_object_id();
+	if ( $pid < 1 || ! dejoiy_marketplace_product_uses_pretty_urls( $pid ) ) {
+		return;
+	}
+	$canonical = dejoiy_marketplace_canonical_product_url( $pid );
+	if ( $canonical && ! dejoiy_marketplace_current_url_matches( $canonical ) ) {
+		wp_safe_redirect( $canonical, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_marketplace_redirect_legacy_product_url', 8 );
+
+/**
+ * Redirect WooCommerce product-category archives to /{landing}/{category}/.
+ */
+function dejoiy_marketplace_redirect_product_category_archive() {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+	if ( ! function_exists( 'is_product_taxonomy' ) || ! is_product_taxonomy() ) {
+		return;
+	}
+	$term = get_queried_object();
+	if ( ! $term || ! isset( $term->taxonomy ) || 'product_cat' !== $term->taxonomy ) {
+		return;
+	}
+	$url = dejoiy_marketplace_category_url( $term );
+	if ( $url && ! dejoiy_marketplace_current_url_matches( $url ) ) {
+		wp_safe_redirect( $url, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_marketplace_redirect_product_category_archive', 9 );
+
+/**
+ * Redirect ?dpin= on marketplace products to path URL.
+ */
+function dejoiy_marketplace_redirect_query_dpin() {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return;
+	}
+	if ( empty( $_GET['dpin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+	$pid = function_exists( 'dejoiy_dpin_resolve_product_id' )
+		? dejoiy_dpin_resolve_product_id( sanitize_text_field( wp_unslash( $_GET['dpin'] ) ), true ) // phpcs:ignore
+		: 0;
+	if ( $pid < 1 || ! dejoiy_marketplace_product_uses_pretty_urls( $pid ) ) {
+		return;
+	}
+	$canonical = dejoiy_marketplace_canonical_product_url( $pid );
+	if ( $canonical && ! dejoiy_marketplace_current_url_matches( $canonical ) ) {
+		wp_safe_redirect( $canonical, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_marketplace_redirect_query_dpin', 4 );
+
+/**
+ * WooCommerce permalink filter for marketplace listings.
+ *
+ * @param string     $permalink Permalink.
+ * @param WC_Product $product   Product.
+ * @return string
+ */
+function dejoiy_marketplace_filter_product_permalink( $permalink, $product ) {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return $permalink;
+	}
+	if ( ! $product || ! dejoiy_marketplace_urls_enabled() ) {
+		return $permalink;
+	}
+	if ( function_exists( 'dejoiy_ecosystem_use_purchase_permalinks' ) && dejoiy_ecosystem_use_purchase_permalinks() ) {
+		return $permalink;
+	}
+	$url = dejoiy_marketplace_product_url( $product->get_id() );
+	return $url ? $url : $permalink;
+}
+add_filter( 'woocommerce_product_get_permalink', 'dejoiy_marketplace_filter_product_permalink', 25, 2 );
+
+/**
+ * product_cat term links → /landing/category/
+ *
+ * @param string  $termlink Term link.
+ * @param WP_Term $term     Term.
+ * @return string
+ */
+function dejoiy_marketplace_filter_term_link( $termlink, $term ) {
+	if ( is_admin() || ! dejoiy_marketplace_urls_enabled() ) {
+		return $termlink;
+	}
+	if ( ! $term || 'product_cat' !== $term->taxonomy ) {
+		return $termlink;
+	}
+	$url = dejoiy_marketplace_category_url( $term );
+	return $url ? $url : $termlink;
+}
+add_filter( 'term_link', 'dejoiy_marketplace_filter_term_link', 25, 2 );

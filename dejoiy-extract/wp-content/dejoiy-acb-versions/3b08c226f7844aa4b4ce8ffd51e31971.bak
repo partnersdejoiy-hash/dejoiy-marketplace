@@ -1,0 +1,66 @@
+<?php
+/**
+ * Library Cart — glass shelf collection view.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+dejoiy_library_document_start();
+require get_stylesheet_directory() . '/library-header.php';
+
+$items = array();
+if ( function_exists( 'WC' ) && WC()->cart ) {
+	foreach ( WC()->cart->get_cart() as $key => $item ) {
+		if ( dejoiy_library_cart_item_is_book( $item ) ) {
+			$items[ $key ] = $item;
+		}
+	}
+}
+?>
+<main class="dlu-page dlu-cart-page">
+	<div class="dlu-page-in">
+		<p class="dlu-crumb"><a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>">← DEJOIY Nexus</a></p>
+		<h1>Your Nexus Shelf</h1>
+		<p class="dlu-page-sub">Books waiting to join your collection.</p>
+		<?php if ( empty( $items ) ) : ?>
+			<div class="dlu-empty">
+				<p>No books on your shelf yet.</p>
+				<a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>#dlu-discover" class="dlu-btn-primary">Discover books</a>
+			</div>
+		<?php else : ?>
+			<div class="dlu-shelf-list">
+				<?php
+				foreach ( $items as $key => $item ) {
+					$product = $item['data'];
+					if ( ! $product ) {
+						continue;
+					}
+					$id    = $product->get_id();
+					$cover = dejoiy_library_get_cover_url( $id, 'medium' );
+					?>
+					<div class="dlu-shelf-item">
+						<div class="dlu-shelf-stack" style="background-image:url(<?php echo esc_url( $cover ); ?>)"></div>
+						<div class="dlu-shelf-meta">
+							<h2><?php echo esc_html( $product->get_name() ); ?></h2>
+							<p><?php echo esc_html( dejoiy_library_get_author( $id ) ); ?> · Digital</p>
+							<p class="dlu-shelf-price"><?php echo wp_kses_post( $product->get_price_html() ); ?></p>
+							<a href="<?php echo esc_url( dejoiy_library_get_remove_item_url( $key ) ); ?>" class="dlu-shelf-remove">Remove</a>
+						</div>
+					</div>
+					<?php
+				}
+				?>
+			</div>
+			<div class="dlu-shelf-actions">
+				<a href="<?php echo esc_url( dejoiy_library_get_checkout_url() ); ?>" class="dlu-btn-primary">Complete Your Collection</a>
+			</div>
+		<?php endif; ?>
+	</div>
+</main>
+<?php
+require get_stylesheet_directory() . '/library-footer.php';
+dejoiy_library_document_end();

@@ -1,0 +1,37 @@
+<?php
+/**
+ * Temporary Nexus diagnostics — delete after debugging.
+ *
+ * @package Dejoiy
+ */
+
+$wp_load = dirname( __DIR__, 3 ) . '/wp-load.php';
+if ( ! is_readable( $wp_load ) ) {
+	$wp_load = dirname( __DIR__, 4 ) . '/wp-load.php';
+}
+require_once $wp_load;
+
+header( 'Content-Type: text/plain; charset=utf-8' );
+
+$checks = array();
+
+try {
+	$checks['render_book_card'] = function_exists( 'dejoiy_library_render_book_card' ) ? 'yes' : 'no';
+	$checks['reader_url']       = function_exists( 'dejoiy_library_reader_url' ) ? dejoiy_library_reader_url( 1 ) : 'missing';
+	$q                          = dejoiy_library_query_books( array( 'posts_per_page' => 1 ) );
+	$checks['query_count']      = $q instanceof WP_Query ? (string) $q->post_count : 'bad query';
+	if ( ! empty( $q->posts[0] ) && function_exists( 'dejoiy_library_render_book_card' ) ) {
+		$html                     = dejoiy_library_render_book_card( $q->posts[0] );
+		$checks['card_render']    = strlen( $html ) > 20 ? 'ok' : 'empty';
+	}
+	$checks['is_landing'] = function_exists( 'dejoiy_library_is_landing' ) ? ( dejoiy_library_is_landing() ? 'yes' : 'no' ) : 'n/a';
+
+	if ( function_exists( 'dejoiy_library_universe_render' ) ) {
+		$html                      = dejoiy_library_universe_render();
+		$checks['universe_render'] = strlen( $html ) > 500 ? 'ok len=' . strlen( $html ) : 'short';
+	}
+} catch ( Throwable $e ) {
+	$checks['error'] = $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine();
+}
+
+echo wp_json_encode( $checks, JSON_PRETTY_PRINT );

@@ -1,0 +1,107 @@
+<?php
+/**
+ * DEJOIY Nexus — WooCommerce-style book product cards.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Render one book card.
+ *
+ * @param WP_Post $post Product post.
+ * @return string
+ */
+function dejoiy_library_render_book_card( $post ) {
+	if ( ! $post instanceof WP_Post ) {
+		return '';
+	}
+
+	$id       = (int) $post->ID;
+	$title    = get_the_title( $id );
+	$view_url = function_exists( 'dejoiy_library_reader_url' )
+		? dejoiy_library_reader_url( $id )
+		: get_permalink( $id );
+	$cover    = dejoiy_library_get_cover_url( $id, 'woocommerce_thumbnail' );
+	if ( ! $cover ) {
+		$cover = dejoiy_library_get_cover_url( $id, 'medium' );
+	}
+	$fallback = function_exists( 'dejoiy_library_get_cover_fallback_url' )
+		? dejoiy_library_get_cover_fallback_url( $id )
+		: $cover;
+	$author   = dejoiy_library_get_author( $id );
+	$product  = function_exists( 'wc_get_product' ) ? wc_get_product( $id ) : null;
+
+	$price_html = '';
+	if ( $product ) {
+		$price_html = $product->get_price_html();
+	}
+
+	$price_plain = $price_html ? wp_strip_all_tags( $price_html ) : '';
+	$slug        = get_post_meta( $id, '_dejoiy_library_category', true );
+	$accent      = dejoiy_library_category_color( $slug ? (string) $slug : 'business' );
+	$cart_url    = function_exists( 'dejoiy_library_get_add_to_cart_url' )
+		? dejoiy_library_get_add_to_cart_url( $id )
+		: add_query_arg( 'add-to-cart', $id, dejoiy_library_get_landing_url() );
+	$buy_url     = function_exists( 'dejoiy_library_get_buy_now_url' )
+		? dejoiy_library_get_buy_now_url( $id )
+		: add_query_arg( 'dejoiy_buy_now', '1', $cart_url );
+	$is_free     = function_exists( 'dejoiy_library_lms_is_free_read_product' ) && dejoiy_library_lms_is_free_read_product( $id );
+	if ( $is_free ) {
+		$buy_url  = $view_url;
+		$cart_url = $view_url;
+	}
+	$excerpt     = $product ? wp_trim_words( wp_strip_all_tags( $product->get_short_description() ), 28, '…' ) : '';
+
+	$price_block = $price_html
+		? sprintf( '<span class="price">%s</span>', wp_kses_post( $price_html ) )
+		: '';
+
+	return sprintf(
+		'<li class="dlu-book product type-product post-%1$d" data-dlu-reveal style="--dlu-accent:%2$s"
+			data-id="%1$d"
+			data-title="%3$s"
+			data-author="%4$s"
+			data-cover="%5$s"
+			data-cover-fallback="%6$s"
+			data-price="%7$s"
+			data-read-url="%8$s"
+			data-buy-url="%9$s"
+			data-excerpt="%10$s">
+			<div class="dlu-wc-product-card">
+				<div class="dlu-book-image">
+					<a href="%8$s" class="dlu-book-image-link dlu-book-open">
+						<img src="%5$s" alt="%3$s" class="attachment-woocommerce_thumbnail" loading="lazy" width="300" height="450" data-fallback="%6$s" onerror="if(this.dataset.fallback){this.src=this.dataset.fallback;this.onerror=null;}" />
+						<span class="dlu-book-title-on-cover">%11$s</span>
+					</a>
+					<button type="button" class="dlu-book-preview" aria-label="Preview %3$s">Preview</button>
+					<button type="button" class="dlu-book-save" data-id="%1$d" aria-label="Save to Nexus wishlist">♡</button>
+				</div>
+				<div class="dlu-book-summary">
+					%12$s
+					<div class="dlu-book-buttons">
+						<a href="%13$s" class="button product_type_simple dlu-nexus-atc" rel="nofollow">Add to Nexus shelf</a>
+						<a href="%9$s" class="button alt dlu-buy-now">%14$s</a>
+					</div>
+				</div>
+			</div>
+		</li>',
+		(int) $id,
+		esc_attr( $accent ),
+		esc_attr( $title ),
+		esc_attr( $author ),
+		esc_url( $cover ),
+		esc_url( $fallback ),
+		esc_attr( $price_plain ),
+		esc_url( $view_url ),
+		esc_url( $buy_url ),
+		esc_attr( $excerpt ),
+		esc_html( $title ),
+		$price_block, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- kses in sprintf
+		esc_url( $cart_url ),
+		$is_free ? esc_html__( 'Read free', 'dejoiy' ) : esc_html__( 'Buy now', 'dejoiy' )
+	);
+}

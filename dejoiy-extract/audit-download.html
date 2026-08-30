@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEJOIY Audit Report — Download</title>
+    <meta name="description" content="DEJOIY.com vs Amazon.in UI/UX Audit Report - Free Download">
+    <meta name="robots" content="noindex, nofollow">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(150px);
+            opacity: 0.15;
+            z-index: 0;
+        }
+        .bg-glow-1 { top: -200px; left: -100px; background: #ff6b35; }
+        .bg-glow-2 { bottom: -200px; right: -100px; background: #00c9a7; }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 680px;
+            width: 90%;
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,107,53,0.1);
+            border: 1px solid rgba(255,107,53,0.25);
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ff6b35;
+            margin-bottom: 32px;
+            letter-spacing: 0.5px;
+        }
+        .badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #ff6b35;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h1 span {
+            background: linear-gradient(135deg, #ff6b35, #ff9a5c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 17px;
+            color: #888;
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+        .subtitle strong { color: #ccc; }
+
+        /* Stats row */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-num {
+            font-size: 32px;
+            font-weight: 800;
+            color: #ff6b35;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* Download button */
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #ff6b35, #e85d26);
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 20px 48px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 8px 32px rgba(255,107,53,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+        .download-btn:hover::before { left: 100%; }
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(255,107,53,0.45);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+        }
+        .download-btn svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* Secondary buttons */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .copy-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border-color: rgba(255,255,255,0.2);
+        }
+        .copy-btn svg { width: 16px; height: 16px; }
+
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #00c9a7;
+            color: #000;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 999;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Preview snippet */
+        .preview {
+            margin-top: 48px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: left;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+        .preview::-webkit-scrollbar { width: 6px; }
+        .preview::-webkit-scrollbar-track { background: transparent; }
+        .preview::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+        .preview-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #555;
+            margin-bottom: 16px;
+        }
+
+        .preview pre {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            color: #999;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .preview pre .hl { color: #ff6b35; font-weight: 600; }
+        .preview pre .ok { color: #00c9a7; }
+        .preview pre .err { color: #ff4757; }
+
+        /* Footer */
+        .footer {
+            margin-top: 48px;
+            font-size: 12px;
+            color: #444;
+        }
+        .footer a { color: #666; text-decoration: none; }
+        .footer a:hover { color: #ff6b35; }
+    </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
+<div class="container">
+    <div class="badge">AUDIT REPORT READY</div>
+
+    <h1>DEJOIY <span>vs</span> Amazon<br>UI/UX Audit</h1>
+
+    <p class="subtitle">
+        <strong>8 categories</strong> analyzed · <strong>50+ elements</strong> checked<br>
+        Ready to download as <strong>.md</strong> file for AI prompt
+    </p>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num">8</div>
+            <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">50+</div>
+            <div class="stat-label">UI Elements</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">10</div>
+            <div class="stat-label">Critical Errors</div>
+        </div>
+    </div>
+
+    <button class="download-btn" onclick="downloadFile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Audit File (.md)
+    </button>
+
+    <div class="btn-row">
+        <button class="copy-btn" onclick="copyContent()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+            Copy to Clipboard
+        </button>
+        <button class="copy-btn" onclick="window.open('https://chatgpt.com','_blank')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            Open ChatGPT
+        </button>
+    </div>
+
+    <div class="preview">
+        <div class="preview-title">📄 File Preview</div>
+        <pre id="preview-text"></pre>
+    </div>
+
+    <div class="footer">
+        Generated by <a href="https://dejoiy.com">DEJOIY</a> · August 2026
+    </div>
+</div>
+
+<div class="toast" id="toast">✅ Copied to clipboard!</div>
+
+<script>
+const auditContent = `# DEJOIY.com vs Amazon.in — UI/UX Audit Prompt
+## Use this entire file as a prompt on ChatGPT / Claude / Any AI
+
+---
+
+You are a senior UI/UX auditor. Compare **DEJOIY.com** (Indian e-commerce marketplace) against **Amazon.in** (industry standard).
+
+Rate each section out of **10** and list specific **UI errors / broken elements / UX issues**.
+
+---
+
+## 1. HOMEPAGE
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Hero Banner / Slider | Present — Single product promo (Shopify Store Dev ₹9,999) | Dynamic multi-category hero banners | /10 |
+| Navigation Bar | Present — Shop, Nexus, Books & courses, Delivery location, Cart | Mega-menu with departments, search, account, orders | /10 |
+| Search Bar | MISSING on homepage — No prominent search | Always visible, auto-suggest, voice search | /10 |
+| Category Grid | Partial — Categories listed but no visual grid | Visual category tiles with icons | /10 |
+| Featured Products | No featured product carousel on homepage | "Best Sellers", "Today's Deals" sections | /10 |
+| Trust Badges | MISSING — No payment logos, security badges, COD info | UPI, COD, Free Delivery badges prominently shown | /10 |
+| Footer | Basic — Missing key links | Comprehensive with 40+ links, social media, app download | /10 |
+
+---
+
+## 2. SEARCH & DISCOVERY
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Search Bar Visibility | Not prominent on all pages | Always visible in header | /10 |
+| Auto-suggest / Autocomplete | MISSING | Real-time suggestions with images | /10 |
+| Search Filters | MISSING — No filter sidebar on shop | Price, Brand, Rating, Prime, Size filters | /10 |
+| Sort Options | MISSING on /shop/ page | Sort by: Price, Popularity, Newest, Rating | /10 |
+| Search Results Layout | Shop page returns error — Cannot load | Grid/List toggle with product cards | /10 |
+
+---
+
+## 3. PRODUCT PAGES
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Product Images | Single image visible (Nest Mini, Instax) | Multiple images, zoom, 360 view, video | /10 |
+| Price Display | Price with strikethrough original | MRP + deal price + EMI options | /10 |
+| Add to Cart Button | Present but styling unclear | Bold orange "Add to Cart" + "Buy Now" | /10 |
+| Product Description | Minimal text content | Rich bullet points, specs table, A+ content | /10 |
+| Reviews & Ratings | MISSING on product cards | Star ratings + review count visible | /10 |
+| Delivery Info | MISSING — No ETA shown on product page | "FREE delivery by [date]" shown | /10 |
+| Size/Variant Selector | MISSING | Color swatches, size grid, dropdown | /10 |
+| Related Products | MISSING "Customers also bought" | AI-powered recommendations carousel | /10 |
+
+---
+
+## 4. CART & CHECKOUT
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Cart Page | Working — Shows items with SKU numbers | Product image, name, price, quantity, savings | /10 |
+| Cart Design | Text-heavy, no product images in cart | Clean card layout with thumbnails | /10 |
+| Quantity Selector | Present (+ / - buttons) | Dropdown or input field | /10 |
+| Coupon Field | Present | "Apply Coupon" with available coupons list | /10 |
+| Checkout Flow | Unclear — No guest checkout option visible | Guest checkout + Login + New account | /10 |
+| Payment Options | Not visible — UPI, Cards, COD, EMI missing | Multiple payment options with icons | /10 |
+| Order Summary | Basic subtotal shown | Itemized: Subtotal + Delivery + Tax + Savings | /10 |
+
+---
+
+## 5. ACCOUNT / MY ACCOUNT
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Login/Register | Present — Clean login/register tabs | OTP login + Email/Password + Social login | /10 |
+| Dashboard | Basic — "My account" title only | Orders, Wishlist, Addresses, Payment methods | /10 |
+| Order History | Not visible | Complete order history with tracking | /10 |
+| Wishlist | MISSING | Save for Later + Wishlist | /10 |
+| Address Book | MISSING | Saved addresses with edit/delete | /10 |
+| Profile Edit | MISSING | Name, email, phone, password change | /10 |
+
+---
+
+## 6. MOBILE RESPONSIVENESS
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Mobile Menu | Hamburger menu present | Slide-out drawer with categories | /10 |
+| Touch Targets | Small buttons — hard to tap | 48px minimum touch targets | /10 |
+| Mobile Search | MISSING — No search on mobile | Always-visible search bar | /10 |
+| Page Load Speed | Slow — Multiple HTTP requests | Optimized with lazy loading | /10 |
+| Mobile Checkout | Not tested | One-tap checkout with saved info | /10 |
+
+---
+
+## 7. VISUAL DESIGN & BRANDING
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| Color Scheme | Inconsistent — Mixed colors | Consistent blue/orange brand palette | /10 |
+| Typography | Mixed fonts — Not cohesive | Clean, readable system fonts | /10 |
+| Logo Placement | DEJOIY logo visible in header | Amazon logo centered with search | /10 |
+| Spacing & Alignment | Inconsistent padding/margins | Uniform grid system | /10 |
+| White Space | Too cluttered in some areas | Clean, breathable layouts | /10 |
+
+---
+
+## 8. PERFORMANCE & TECHNICAL
+
+| Element | DEJOIY Status | Amazon Standard | Rating |
+|---------|--------------|-----------------|--------|
+| SSL/HTTPS | Working — Valid certificate | Always HTTPS | /10 |
+| Page Speed | Slow — Multiple redirects | < 3 seconds load time | /10 |
+| 404 Errors | /shop/ returns error | Graceful error pages | /10 |
+| Broken Links | Some pages unreachable | All links functional | /10 |
+| SEO Meta Tags | Basic — Missing Open Graph | Rich snippets, meta tags, structured data | /10 |
+
+---
+
+## OVERALL RATING SUMMARY
+
+| Category | Score | Weight | Weighted |
+|----------|-------|--------|----------|
+| Homepage | /10 | 15% | |
+| Search & Discovery | /10 | 20% | |
+| Product Pages | /10 | 20% | |
+| Cart & Checkout | /10 | 15% | |
+| Account | /10 | 10% | |
+| Mobile | /10 | 10% | |
+| Visual Design | /10 | 5% | |
+| Performance | /10 | 5% | |
+| **TOTAL** | | **100%** | **/10** |
+
+---
+
+## TOP 10 CRITICAL UI ERRORS TO FIX
+
+1. **Search Bar Missing** — No search functionality visible on homepage
+2. **Shop Page Down** — /shop/ returns error
+3. **No Product Filters** — Users cannot filter/sort products
+4. **No Trust Badges** — Missing payment security indicators
+5. **No Delivery ETA** — No estimated delivery date shown
+6. **No Reviews/Ratings** — Product cards lack social proof
+7. **Cart Design Poor** — No images, text-heavy layout
+8. **Mobile Search Missing** — No search on mobile devices
+9. **Missing Wishlist** — No save-for-later functionality
+10. **No Order Tracking** — Users cannot track their orders
+
+---
+
+## RECOMMENDATIONS (Priority Order)
+
+### P0 — Fix Immediately
+- Add search bar to header (desktop + mobile)
+- Fix /shop/ page error
+- Add trust badges (SSL, COD, UPI, Free Delivery)
+
+### P1 — Fix This Week
+- Add product filters and sort options
+- Add delivery ETA on product pages
+- Add review/rating system
+- Improve cart page design with product images
+
+### P2 — Fix This Month
+- Add wishlist functionality
+- Implement order tracking
+- Add "Customers Also Bought" recommendations
+- Optimize page load speed
+
+### P3 — Future Improvements
+- Add mega-menu navigation
+- Implement auto-suggest search
+- Add A+ content for product pages
+- Implement one-tap checkout
+
+---
+
+## HOW TO USE THIS PROMPT
+
+1. Copy this entire file
+2. Paste into ChatGPT / Claude / Gemini
+3. Add: "Rate DEJOIY.com out of 100 and give specific UI/UX feedback"
+4. The AI will analyze and give detailed suggestions
+
+---
+
+*Generated by DEJOIY — August 2026*
+*Based on live analysis of dejoiy.com*`;
+
+// Preview
+const previewEl = document.getElementById('preview-text');
+const lines = auditContent.split('\\n').slice(0, 30);
+previewEl.innerHTML = lines.map(line => {
+    if (line.startsWith('#')) return '<span class="hl">' + escapeHtml(line) + '</span>';
+    if (line.includes('MISSING')) return '<span class="err">' + escapeHtml(line) + '</span>';
+    if (line.includes('Present') || line.includes('Working')) return '<span class="ok">' + escapeHtml(line) + '</span>';
+    return escapeHtml(line);
+}).join('\\n') + '\\n... (click download for full file)';
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Download
+function downloadFile() {
+    const blob = new Blob([auditContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'dejoiy-amazon-ui-audit.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Copy
+function copyContent() {
+    navigator.clipboard.writeText(auditContent).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    });
+}
+</script>
+</body>
+</html>

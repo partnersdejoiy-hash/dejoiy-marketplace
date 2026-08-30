@@ -1,0 +1,153 @@
+<?php
+/**
+ * DEJOIY Desktop Marketplace Header — laptop/desktop only (≥1025px).
+ *
+ * Amazon-inspired layout (logo, delivery, search, account, cart + universe bar)
+ * with DEJOIY branding. Does not affect phone/tablet (≤1024px).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_header_enabled() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( function_exists( 'wp_is_json_request' ) && wp_is_json_request() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) && dejoiy_mobile_os_is_dedicated_page() ) {
+		return false;
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @return string
+ */
+function dejoiy_desktop_marketplace_delivery_label() {
+	if ( function_exists( 'dejoiy_mobile_os_delivery_label' ) ) {
+		return dejoiy_mobile_os_delivery_label();
+	}
+	return __( 'Set delivery location', 'dejoiy' );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_desktop_marketplace_delivery_url() {
+	if ( function_exists( 'dejoiy_mobile_os_delivery_url' ) ) {
+		return dejoiy_mobile_os_delivery_url();
+	}
+	return home_url( '/my-account/' );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_show_category_rail() {
+	if ( is_front_page() ) {
+		return true;
+	}
+	if ( function_exists( 'is_shop' ) && is_shop() ) {
+		return true;
+	}
+	if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function dejoiy_desktop_marketplace_header_config() {
+	$account = home_url( '/my-account/' );
+	$orders  = function_exists( 'wc_get_account_endpoint_url' )
+		? wc_get_account_endpoint_url( 'orders' )
+		: $account;
+
+	$categories = array();
+	if ( function_exists( 'dejoiy_mobile_os_market_categories' ) ) {
+		foreach ( dejoiy_mobile_os_market_categories() as $cat ) {
+			$categories[] = array(
+				'label' => isset( $cat['label'] ) ? (string) $cat['label'] : '',
+				'url'   => isset( $cat['url'] ) ? (string) $cat['url'] : '',
+				'icon'  => isset( $cat['icon'] ) ? (string) $cat['icon'] : '',
+			);
+		}
+	}
+
+	return array(
+		'cartCount'      => function_exists( 'dejoiy_mobile_os_get_cart_count' ) ? dejoiy_mobile_os_get_cart_count() : 0,
+		'deliveryLabel'  => dejoiy_desktop_marketplace_delivery_label(),
+		'deliveryUrl'    => dejoiy_desktop_marketplace_delivery_url(),
+		'ordersUrl'      => $orders,
+		'ordersLabel'    => __( 'Orders', 'dejoiy' ),
+		'showCategories' => dejoiy_desktop_marketplace_show_category_rail(),
+		'categories'     => $categories,
+		'joiSearchLabel' => __( 'Ask JOI', 'dejoiy' ),
+		'allWorldsLabel' => __( 'All Worlds', 'dejoiy' ),
+	);
+}
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_desktop_marketplace_header_body_class( $classes ) {
+	if ( dejoiy_desktop_marketplace_header_enabled() ) {
+		$classes[] = 'dejoiy-dm-desktop-header';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_desktop_marketplace_header_body_class', 21 );
+
+/**
+ * Enqueue desktop-only assets.
+ */
+function dejoiy_desktop_marketplace_header_assets() {
+	if ( ! dejoiy_desktop_marketplace_header_enabled() ) {
+		return;
+	}
+
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-desktop-marketplace-header.css';
+	$js  = $dir . '/dejoiy-desktop-marketplace-header.js';
+
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-desktop-marketplace-header',
+			$uri . '/dejoiy-desktop-marketplace-header.css',
+			array( 'dejoiy-header-os-v4' ),
+			(string) filemtime( $css ),
+			'screen and (min-width: 1025px)'
+		);
+	}
+
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-desktop-marketplace-header',
+			$uri . '/dejoiy-desktop-marketplace-header.js',
+			array( 'dejoiy-header-os-v4' ),
+			(string) filemtime( $js ),
+			true
+		);
+		wp_localize_script(
+			'dejoiy-desktop-marketplace-header',
+			'dejoiyDesktopHeader',
+			dejoiy_desktop_marketplace_header_config()
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_desktop_marketplace_header_assets', 10060 );

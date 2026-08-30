@@ -1,0 +1,57 @@
+/**
+ * Laptop/desktop (≥1025px): hide ALL mobile/tablet chrome and mobile home.
+ * Desktop uses Elementor header #4228 + Universe desktop content only.
+ */
+@media (min-width: 1025px) {
+	#dejoiy-mobile-os-chrome,
+	#dejoiy-mobile-os-cart-bar,
+	.dejoiy-mobile-os-bottom,
+	#dm-joi-search-sheet,
+	#dejoiy-mobile-home,
+	.dejoiy-mobile-home-v2,
+	.dejoiy-desktop-header-bootstrap,
+	#dejoiy-desktop-marketplace-header {
+		display: none !important;
+		visibility: hidden !important;
+		height: 0 !important;
+		max-height: 0 !important;
+		overflow: hidden !important;
+		pointer-events: none !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	body.dejoiy-mobile-os,
+	body.dejoiy-mobile-home-v2-active.dejoiy-mobile-os,
+	body.dejoiy-mobile-cart-view,
+	body.dejoiy-dm-desktop-header {
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+	}
+
+	body.dejoiy-mobile-home-v2-active .dejoiy-universe-desktop-only,
+	body.dejoiy-mobile-home-v2-active .dejoiy-universe-desktop-only #dejoiy-universe {
+		display: block !important;
+		visibility: visible !important;
+		height: auto !important;
+		max-height: none !important;
+		overflow: visible !important;
+		pointer-events: auto !important;
+		position: relative !important;
+		left: auto !important;
+		width: auto !important;
+		opacity: 1 !important;
+	}
+
+	body.dejoiy-mobile-os .elementor-location-header,
+	body.dejoiy-mobile-os header.elementor-4228,
+	body.dejoiy-mobile-os header[data-elementor-id="4228"],
+	body.dejoiy-site-chrome-on .elementor-location-header,
+	body.dejoiy-site-chrome-on header.elementor-4228 {
+		display: block !important;
+		visibility: visible !important;
+		height: auto !important;
+		overflow: visible !important;
+		pointer-events: auto !important;
+	}
+}

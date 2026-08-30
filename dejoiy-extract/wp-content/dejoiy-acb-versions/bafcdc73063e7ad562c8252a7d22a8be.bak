@@ -1,0 +1,3 @@
+<?php
+// Temporarily disabled — buffer debugging.
+if ( ! defined( 'ABSPATH' ) ) { exit; }

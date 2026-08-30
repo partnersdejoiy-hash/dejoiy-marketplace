@@ -1,0 +1,10 @@
+<?php
+/**
+ * My Nexus — content partial.
+ *
+ * @package Dejoiy
+ */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+echo '<div class="dlu-page"><h1>My Nexus</h1></div>';

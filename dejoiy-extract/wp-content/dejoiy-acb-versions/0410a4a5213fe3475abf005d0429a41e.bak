@@ -1,0 +1,17 @@
+<?php
+/**
+ * DEJOIY child theme safe recovery functions.
+ * Studio/DCS/library modules are temporarily disabled after front-end HTTP 500 recovery.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+add_action( 'wp_enqueue_scripts', 'theme_enqueue_styles', 1001 );
+
+function theme_enqueue_styles() {
+	if ( function_exists( 'etheme_child_styles' ) ) {
+		etheme_child_styles();
+	}
+}

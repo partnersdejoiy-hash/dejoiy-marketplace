@@ -1,0 +1,45 @@
+/**
+ * DEJOIY mobile single product — section order: product → recommendations → reviews.
+ */
+(function () {
+	'use strict';
+
+	if (!document.body.classList.contains('dejoiy-mobile-product-view')) {
+		return;
+	}
+
+	function placeSections() {
+		var product = document.querySelector('.elementor-location-single');
+		var reco = document.querySelector('.dejoiy-mobile-product-reco');
+		if (!product || !reco) {
+			return;
+		}
+
+		if (product.nextElementSibling !== reco) {
+			product.insertAdjacentElement('afterend', reco);
+		}
+
+		var tabs = document.querySelector(
+			'.woocommerce-tabs.wc-tabs-wrapper, .woocommerce-tabs.et-clearfix'
+		);
+		if (tabs && tabs !== reco && tabs !== product) {
+			if (reco.nextElementSibling !== tabs) {
+				reco.insertAdjacentElement('afterend', tabs);
+			}
+		}
+
+		reco.classList.add('is-placed');
+	}
+
+	function run() {
+		placeSections();
+		setTimeout(placeSections, 350);
+		setTimeout(placeSections, 1200);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', run);
+	} else {
+		run();
+	}
+})();

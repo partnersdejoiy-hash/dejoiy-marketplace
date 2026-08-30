@@ -1,0 +1,286 @@
+<?php
+/**
+ * DEJOIY Studio — WooCommerce flow (single product + checkout).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/** Customizable category term IDs. */
+define( 'DEJOIY_STUDIO_CAT_IDS', array( 143, 153, 154, 155, 156 ) );
+
+/**
+ * Set studio flow cookie.
+ */
+function dejoiy_studio_maybe_set_cookie() {
+	if ( is_page( 4399 ) || ( isset( $_GET['dejoiy_studio'] ) && '1' === $_GET['dejoiy_studio'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! headers_sent() ) {
+			setcookie( 'dejoiy_studio_flow', '1', time() + DAY_IN_SECONDS, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		}
+		$_COOKIE['dejoiy_studio_flow'] = '1';
+	}
+}
+add_action( 'template_redirect', 'dejoiy_studio_maybe_set_cookie', 1 );
+
+/**
+ * Is customer in studio flow?
+ *
+ * @return bool
+ */
+function dejoiy_studio_is_flow() {
+	if ( isset( $_GET['dejoiy_studio'] ) && '1' === $_GET['dejoiy_studio'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
+	}
+	return isset( $_COOKIE['dejoiy_studio_flow'] ) && '1' === $_COOKIE['dejoiy_studio_flow'];
+}
+
+/**
+ * Product in customizable categories?
+ *
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_studio_is_customizable_product( $product_id ) {
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		return false;
+	}
+	return (bool) array_intersect( array_map( 'intval', $terms ), DEJOIY_STUDIO_CAT_IDS );
+}
+
+/**
+ * Studio product URL (custom view when customizable).
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_studio_product_url( $product_id ) {
+	$url = get_permalink( $product_id );
+	if ( dejoiy_studio_is_customizable_product( $product_id ) ) {
+		return add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+
+/**
+ * Use studio single template?
+ *
+ * @return bool
+ */
+function dejoiy_studio_use_single_template() {
+	if ( ! is_singular( 'product' ) || ! dejoiy_studio_is_flow() ) {
+		return false;
+	}
+	$id = get_queried_object_id();
+	return dejoiy_studio_is_customizable_product( $id );
+}
+
+/**
+ * Use studio cart template?
+ *
+ * @return bool
+ */
+function dejoiy_studio_use_cart_template() {
+	return function_exists( 'is_cart' ) && is_cart() && ! is_wc_endpoint_url() && dejoiy_studio_is_flow();
+}
+
+/**
+ * Template swap: single product + cart + checkout.
+ *
+ * @param string $template Path.
+ * @return string
+ */
+function dejoiy_studio_template_include( $template ) {
+	if ( dejoiy_studio_use_single_template() ) {
+		$custom = get_stylesheet_directory() . '/studio-single-product.php';
+		if ( file_exists( $custom ) ) {
+			return $custom;
+		}
+	}
+	if ( dejoiy_studio_use_cart_template() ) {
+		$cart = get_stylesheet_directory() . '/studio-cart.php';
+		if ( file_exists( $cart ) ) {
+			return $cart;
+		}
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url() && dejoiy_studio_is_flow() ) {
+		$checkout = get_stylesheet_directory() . '/studio-checkout.php';
+		if ( file_exists( $checkout ) ) {
+			return $checkout;
+		}
+	}
+	return $template;
+}
+add_filter( 'template_include', 'dejoiy_studio_template_include', 99 );
+
+/**
+ * Persist studio param in add-to-cart.
+ *
+ * @param string $url Add to cart URL.
+ * @return string
+ */
+function dejoiy_studio_add_to_cart_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_product_add_to_cart_url', 'dejoiy_studio_add_to_cart_url' );
+
+/**
+ * Checkout URL in studio flow.
+ *
+ * @param string $url Checkout URL.
+ * @return string
+ */
+function dejoiy_studio_checkout_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_get_checkout_url', 'dejoiy_studio_checkout_url' );
+
+/**
+ * Cart URL in studio flow.
+ *
+ * @param string $url Cart URL.
+ * @return string
+ */
+function dejoiy_studio_cart_url( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		$url = add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_get_cart_url', 'dejoiy_studio_cart_url' );
+
+/**
+ * Keep studio flow after add to cart.
+ *
+ * @param string $url Redirect URL.
+ * @return string
+ */
+function dejoiy_studio_add_to_cart_redirect( $url ) {
+	if ( dejoiy_studio_is_flow() ) {
+		return add_query_arg( 'dejoiy_studio', '1', $url );
+	}
+	return $url;
+}
+add_filter( 'woocommerce_add_to_cart_redirect', 'dejoiy_studio_add_to_cart_redirect' );
+
+$dejoiy_studio_customize = get_stylesheet_directory() . '/studio-customize.php';
+if ( is_readable( $dejoiy_studio_customize ) ) {
+	require_once $dejoiy_studio_customize;
+}
+
+/**
+ * AJAX search — studio products first, then all marketplace products + pages.
+ */
+function dejoiy_studio_search_handler() {
+	$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json( array() );
+	}
+
+	$out   = array();
+	$seen  = array();
+	$push  = function ( $row ) use ( &$out, &$seen ) {
+		$key = $row['type'] . '-' . $row['id'];
+		if ( isset( $seen[ $key ] ) ) {
+			return;
+		}
+		$seen[ $key ] = true;
+		$out[]        = $row;
+	};
+
+	$studio_q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 10,
+			'no_found_rows'  => true,
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy' => 'product_cat',
+					'field'    => 'term_id',
+					'terms'    => DEJOIY_STUDIO_CAT_IDS,
+					'operator' => 'IN',
+				),
+			),
+		)
+	);
+
+	foreach ( $studio_q->posts as $p ) {
+		$pr = function_exists( 'wc_get_product' ) ? wc_get_product( $p->ID ) : null;
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => dejoiy_studio_product_url( $p->ID ),
+				'thumb' => (string) ( get_the_post_thumbnail_url( $p->ID, 'thumbnail' ) ?: '' ),
+				'price' => $pr ? wp_strip_all_tags( $pr->get_price_html() ) : '',
+				'type'  => 'studio-product',
+				'badge' => 'Studio',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	$all_q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 6,
+			'no_found_rows'  => true,
+		)
+	);
+	foreach ( $all_q->posts as $p ) {
+		$pr = function_exists( 'wc_get_product' ) ? wc_get_product( $p->ID ) : null;
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => get_permalink( $p->ID ),
+				'thumb' => (string) ( get_the_post_thumbnail_url( $p->ID, 'thumbnail' ) ?: '' ),
+				'price' => $pr ? wp_strip_all_tags( $pr->get_price_html() ) : '',
+				'type'  => 'product',
+				'badge' => '',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	$page_q = new WP_Query(
+		array(
+			'post_type'      => 'page',
+			'post_status'    => 'publish',
+			's'              => $term,
+			'posts_per_page' => 4,
+			'no_found_rows'  => true,
+		)
+	);
+	foreach ( $page_q->posts as $p ) {
+		$push(
+			array(
+				'id'    => $p->ID,
+				'title' => html_entity_decode( get_the_title( $p->ID ), ENT_QUOTES ),
+				'url'   => get_permalink( $p->ID ),
+				'thumb' => '',
+				'price' => '',
+				'type'  => 'page',
+				'badge' => 'Page',
+			)
+		);
+	}
+	wp_reset_postdata();
+
+	wp_send_json( $out );
+}
+add_action( 'wp_ajax_dsu_search', 'dejoiy_studio_search_handler' );
+add_action( 'wp_ajax_nopriv_dsu_search', 'dejoiy_studio_search_handler' );

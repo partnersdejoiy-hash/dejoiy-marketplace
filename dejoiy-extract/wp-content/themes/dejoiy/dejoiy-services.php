@@ -1,0 +1,551 @@
+<?php
+/**
+ * DEJOIY Services — isolated premium landing + single-service viewer.
+ *
+ * UI-only layer for /dejoiy-services/. Does not alter other ecosystems.
+ * Disable: define( 'DEJOIY_SERVICES_DISABLED', true );
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'DEJOIY_SERVICES_VERSION', '1.2.0' );
+
+$dejoiy_svc_ui = get_stylesheet_directory() . '/dejoiy-services-ui.php';
+if ( is_readable( $dejoiy_svc_ui ) ) {
+	require_once $dejoiy_svc_ui;
+}
+$dejoiy_svc_booking = get_stylesheet_directory() . '/dejoiy-services-booking.php';
+if ( is_readable( $dejoiy_svc_booking ) ) {
+	require_once $dejoiy_svc_booking;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_services_enabled() {
+	if ( defined( 'DEJOIY_SERVICES_DISABLED' ) && DEJOIY_SERVICES_DISABLED ) {
+		return false;
+	}
+	if ( ! function_exists( 'dejoiy_evolution_is_enabled' ) || ! dejoiy_evolution_is_enabled() ) {
+		return false;
+	}
+	return (bool) apply_filters( 'dejoiy_services_enabled', true );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_services_base_url() {
+	return home_url( '/dejoiy-services/' );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_services_is_services_page() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( is_page( 'dejoiy-services' ) ) {
+		return true;
+	}
+	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+	return false !== strpos( $uri, '/dejoiy-services' );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_services_is_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_get_product_ecosystem' ) ) {
+		return 'services' === dejoiy_get_product_ecosystem( $product_id );
+	}
+	$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'slugs' ) );
+	if ( is_wp_error( $terms ) ) {
+		return false;
+	}
+	$slugs = function_exists( 'dejoiy_services_product_cat_slugs' ) ? dejoiy_services_product_cat_slugs() : array( 'services-marketplace' );
+	foreach ( $terms as $slug ) {
+		if ( in_array( $slug, $slugs, true ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_services_is_app_page() {
+	if ( ! dejoiy_services_enabled() ) {
+		return false;
+	}
+	return dejoiy_services_is_services_page();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_services_is_viewer_view() {
+	if ( ! dejoiy_services_is_services_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_dpin_resolve_from_request' ) && dejoiy_dpin_resolve_from_request() ) {
+		return true;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $_GET['dpin'] ) ) {
+		return true;
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $_GET['dejoiy_service'] ) ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Resolve product ID for viewer.
+ *
+ * @return int
+ */
+function dejoiy_services_resolve_viewer_product_id() {
+	if ( function_exists( 'dejoiy_dpin_resolve_from_request' ) ) {
+		$pid = (int) dejoiy_dpin_resolve_from_request();
+		if ( $pid > 0 ) {
+			return $pid;
+		}
+	}
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( ! empty( $_GET['dejoiy_service'] ) ) {
+		return absint( $_GET['dejoiy_service'] ); // phpcs:ignore
+	}
+	return 0;
+}
+
+/**
+ * Category slugs that belong to Services ecosystem.
+ *
+ * @return array<int, string>
+ */
+function dejoiy_services_product_cat_slugs() {
+	return apply_filters(
+		'dejoiy_services_product_cat_slugs',
+		array(
+			'services-marketplace',
+			'web-development',
+			'graphic-design',
+			'digital-marketing',
+			'content-writing',
+		)
+	);
+}
+
+/**
+ * Base WP_Query args for services products only.
+ *
+ * @return array<string, mixed>
+ */
+function dejoiy_services_base_query_args() {
+	return array(
+		'post_type'      => 'product',
+		'post_status'    => 'publish',
+		'posts_per_page' => 12,
+		'no_found_rows'  => false,
+		'tax_query'      => array(
+			array(
+				'taxonomy'         => 'product_cat',
+				'field'            => 'slug',
+				'terms'            => dejoiy_services_product_cat_slugs(),
+				'operator'         => 'IN',
+				'include_children' => true,
+			),
+		),
+	);
+}
+
+/**
+ * @param array<string, mixed> $extra Extra query args.
+ * @return WP_Query
+ */
+function dejoiy_services_query_products( $extra = array() ) {
+	$args = array_merge( dejoiy_services_base_query_args(), $extra );
+	return new WP_Query( $args );
+}
+
+/**
+ * Replace Services page body (landing or viewer).
+ *
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_services_replace_page_content( $content ) {
+	if ( ! dejoiy_services_is_services_page() || ! dejoiy_services_enabled() ) {
+		return $content;
+	}
+	if ( is_admin() ) {
+		return $content;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return '';
+	}
+	$done = true;
+
+	if ( dejoiy_services_is_viewer_view() ) {
+		$pid = dejoiy_services_resolve_viewer_product_id();
+		if ( $pid > 0 && dejoiy_services_is_product( $pid ) && function_exists( 'dejoiy_services_viewer_html' ) ) {
+			return dejoiy_services_viewer_html( $pid );
+		}
+	}
+
+	if ( function_exists( 'dejoiy_services_landing_html' ) ) {
+		return dejoiy_services_landing_html();
+	}
+
+	return $content;
+}
+add_filter( 'the_content', 'dejoiy_services_replace_page_content', 9999 );
+add_filter( 'elementor/frontend/the_content', 'dejoiy_services_replace_page_content', 9999 );
+
+/**
+ * Print dedicated Services chrome before page content.
+ */
+function dejoiy_services_print_chrome() {
+	if ( ! dejoiy_services_is_app_page() || ! function_exists( 'dejoiy_services_header_html' ) ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_services_header_html();
+}
+add_action( 'wp_body_open', 'dejoiy_services_print_chrome', 2 );
+add_action( 'etheme_after_body_open', 'dejoiy_services_print_chrome', 2 );
+
+/**
+ * Redirect native WooCommerce single product URLs for services → viewer.
+ */
+function dejoiy_services_redirect_native_single() {
+	if ( is_admin() || ! dejoiy_services_enabled() ) {
+		return;
+	}
+	if ( dejoiy_services_is_services_page() ) {
+		return;
+	}
+	if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+		return;
+	}
+	$pid = get_queried_object_id();
+	if ( ! $pid || ! dejoiy_services_is_product( $pid ) ) {
+		return;
+	}
+	if ( function_exists( 'dejoiy_ecosystem_product_url' ) ) {
+		$url = dejoiy_ecosystem_product_url( $pid );
+		if ( $url ) {
+			wp_safe_redirect( $url );
+			exit;
+		}
+	}
+}
+add_action( 'template_redirect', 'dejoiy_services_redirect_native_single', 8 );
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_services_body_class( $classes ) {
+	if ( dejoiy_services_is_app_page() ) {
+		$classes[] = 'dejoiy-services-app';
+		$classes[] = 'dejoiy-mobile-os-off';
+		if ( dejoiy_services_is_viewer_view() ) {
+			$classes[] = 'dejoiy-services-viewer';
+		}
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_services_body_class', 24 );
+
+/**
+ * Enqueue Services assets.
+ */
+function dejoiy_services_enqueue_assets() {
+	if ( ! dejoiy_services_is_app_page() ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-services.css';
+	$js  = $dir . '/dejoiy-services.js';
+	$deps = array();
+	if ( wp_style_is( 'dejoiy-os-design-system', 'registered' ) ) {
+		$deps[] = 'dejoiy-os-design-system';
+	}
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-services',
+			$uri . '/dejoiy-services.css',
+			$deps,
+			(string) filemtime( $css )
+		);
+	}
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-services',
+			$uri . '/dejoiy-services.js',
+			array(),
+			(string) filemtime( $js ),
+			true
+		);
+		wp_localize_script(
+			'dejoiy-services',
+			'dejoiyServices',
+			array(
+				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
+				'nonce'         => wp_create_nonce( 'dejoiy_services' ),
+				'bookingNonce'  => wp_create_nonce( 'dejoiy_services_booking' ),
+				'isLoggedIn'    => is_user_logged_in() ? 1 : 0,
+				'loginUrl'      => function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' ),
+				'baseUrl'       => dejoiy_services_base_url(),
+				'cartUrl'       => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ),
+				'accountUrl'    => home_url( '/my-account/' ),
+				'providerUrl'   => function_exists( 'dejoiy_services_vendor_registration_url' ) ? dejoiy_services_vendor_registration_url() : home_url( '/vendor-register/' ),
+				'i18n'          => array(
+					'bookService'    => __( 'Book this service', 'dejoiy' ),
+					'confirmBooking' => __( 'Confirm booking', 'dejoiy' ),
+					'loading'        => __( 'Loading…', 'dejoiy' ),
+					'submitting'     => __( 'Submitting…', 'dejoiy' ),
+					'loginRequired'  => __( 'Sign in to book this service.', 'dejoiy' ),
+				),
+			)
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_services_enqueue_assets', 10071 );
+
+/**
+ * Page slugs excluded from Services header page search.
+ *
+ * @return array<int, string>
+ */
+function dejoiy_services_page_search_exclude_slugs() {
+	return apply_filters(
+		'dejoiy_services_page_search_exclude_slugs',
+		array(
+			'cart',
+			'checkout',
+			'my-account',
+			'shop',
+			'dejoiy-services',
+		)
+	);
+}
+
+/**
+ * Search published pages only (no products).
+ *
+ * @param string $term Search term.
+ * @param int    $limit Max results.
+ * @return WP_Query
+ */
+function dejoiy_services_query_pages( $term, $limit = 6 ) {
+	$query = new WP_Query(
+		array(
+			'post_type'              => 'page',
+			'post_status'            => 'publish',
+			's'                      => $term,
+			'posts_per_page'         => $limit,
+			'no_found_rows'          => true,
+			'ignore_sticky_posts'    => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+
+	$exclude = dejoiy_services_page_search_exclude_slugs();
+	if ( empty( $exclude ) || empty( $query->posts ) ) {
+		return $query;
+	}
+
+	$filtered = array();
+	foreach ( $query->posts as $page ) {
+		if ( in_array( $page->post_name, $exclude, true ) ) {
+			continue;
+		}
+		$filtered[] = $page;
+	}
+	$query->posts = $filtered;
+	$query->post_count = count( $filtered );
+
+	return $query;
+}
+
+/**
+ * Build AJAX search payload: services products + site pages (no marketplace products).
+ *
+ * @param string $term Search term.
+ * @return array{services: array<int, array<string, string>>, pages: array<int, array<string, string>>}
+ */
+function dejoiy_services_build_search_results( $term ) {
+	$services = array();
+	$query    = dejoiy_services_query_products(
+		array(
+			's'              => $term,
+			'posts_per_page' => 8,
+			'no_found_rows'  => true,
+		)
+	);
+
+	foreach ( $query->posts as $post ) {
+		$pid = $post->ID;
+		if ( ! dejoiy_services_is_product( $pid ) ) {
+			continue;
+		}
+		$url   = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $pid ) : get_permalink( $pid );
+		$thumb = get_the_post_thumbnail_url( $pid, 'thumbnail' );
+		$price = '';
+		if ( function_exists( 'wc_get_product' ) ) {
+			$product = wc_get_product( $pid );
+			if ( $product ) {
+				$price = wp_strip_all_tags( $product->get_price_html() );
+			}
+		}
+		$services[] = array(
+			'type'  => 'service',
+			'title' => html_entity_decode( get_the_title( $pid ), ENT_QUOTES, 'UTF-8' ),
+			'url'   => $url,
+			'thumb' => $thumb ? $thumb : '',
+			'price' => $price,
+			'badge' => __( 'Service', 'dejoiy' ),
+		);
+	}
+	wp_reset_postdata();
+
+	$pages_out = array();
+	$pages     = dejoiy_services_query_pages( $term, 6 );
+	foreach ( $pages->posts as $page ) {
+		$pages_out[] = array(
+			'type'  => 'page',
+			'title' => html_entity_decode( get_the_title( $page->ID ), ENT_QUOTES, 'UTF-8' ),
+			'url'   => get_permalink( $page->ID ),
+			'thumb' => '',
+			'price' => '',
+			'badge' => __( 'Page', 'dejoiy' ),
+		);
+	}
+	wp_reset_postdata();
+
+	return array(
+		'services' => $services,
+		'pages'    => $pages_out,
+	);
+}
+
+/**
+ * AJAX: services-only search.
+ */
+function dejoiy_services_ajax_search() {
+	check_ajax_referer( 'dejoiy_services', 'nonce' );
+
+	$term = isset( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '';
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json( array( 'services' => array(), 'pages' => array(), 'results' => array() ) );
+	}
+
+	$payload = dejoiy_services_build_search_results( $term );
+	wp_send_json(
+		array(
+			'services' => $payload['services'],
+			'pages'    => $payload['pages'],
+			'results'  => array_merge( $payload['services'], $payload['pages'] ),
+		)
+	);
+}
+add_action( 'wp_ajax_dejoiy_services_search', 'dejoiy_services_ajax_search' );
+add_action( 'wp_ajax_nopriv_dejoiy_services_search', 'dejoiy_services_ajax_search' );
+
+add_action( 'wp_ajax_dejoiy_services_booking_product', 'dejoiy_services_ajax_booking_product' );
+add_action( 'wp_ajax_nopriv_dejoiy_services_booking_product', 'dejoiy_services_ajax_booking_product' );
+add_action( 'wp_ajax_dejoiy_services_booking_submit', 'dejoiy_services_ajax_booking_submit' );
+
+/**
+ * Booking modal shell (Services pages only).
+ */
+function dejoiy_services_print_booking_modal() {
+	if ( ! dejoiy_services_is_app_page() || ! function_exists( 'dejoiy_services_booking_modal_html' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_services_booking_modal_html();
+}
+add_action( 'wp_footer', 'dejoiy_services_print_booking_modal', 20 );
+
+/**
+ * Services footer (laptop/desktop only — hidden on phone/tablet via CSS).
+ */
+function dejoiy_services_print_footer() {
+	if ( ! dejoiy_services_is_app_page() || ! function_exists( 'dejoiy_services_footer_html' ) ) {
+		return;
+	}
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_services_footer_html();
+}
+add_action( 'wp_footer', 'dejoiy_services_print_footer', 18 );
+
+/**
+ * WCFM vendor booking status buttons (store manager only).
+ */
+function dejoiy_services_booking_vendor_scripts() {
+	if ( ! is_user_logged_in() || ! function_exists( 'dejoiy_services_booking_active' ) || ! dejoiy_services_booking_active() ) {
+		return;
+	}
+	$is_vendor = function_exists( 'wcfm_is_vendor' ) && wcfm_is_vendor( get_current_user_id() );
+	if ( ! $is_vendor && ! current_user_can( 'manage_woocommerce' ) ) {
+		return;
+	}
+	?>
+	<script>
+	(function(){
+		document.addEventListener('click', function(e) {
+			var btn = e.target.closest('.dejoiy-svc-status-btn');
+			if (!btn) return;
+			var wrap = btn.closest('.dejoiy-service-booking-actions');
+			if (!wrap) return;
+			var orderId = wrap.getAttribute('data-order-id');
+			var status = btn.getAttribute('data-status');
+			var body = new URLSearchParams();
+			body.append('action', 'dejoiy_services_booking_status');
+			body.append('nonce', '<?php echo esc_js( wp_create_nonce( 'dejoiy_services_booking_vendor' ) ); ?>');
+			body.append('order_id', orderId);
+			body.append('status', status);
+			btn.disabled = true;
+			fetch('<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>', { method: 'POST', credentials: 'same-origin', body: body })
+				.then(function(r){ return r.json(); })
+				.then(function(res) {
+					btn.disabled = false;
+					if (res.success && wrap.querySelector('.dejoiy-service-booking-actions__current span')) {
+						wrap.querySelector('.dejoiy-service-booking-actions__current span').textContent = res.data.label || status;
+					} else if (res.data && res.data.message) {
+						alert(res.data.message);
+					}
+				})
+				.catch(function(){ btn.disabled = false; });
+		});
+	})();
+	</script>
+	<?php
+}
+add_action( 'wp_footer', 'dejoiy_services_booking_vendor_scripts', 99 );

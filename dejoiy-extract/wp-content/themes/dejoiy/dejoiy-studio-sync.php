@@ -1,0 +1,52 @@
+<?php
+/**
+ * Sync Elementor layout for DEJOIY Custom Studio (page 4399).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Apply studio Elementor template once per version bump.
+ */
+function dejoiy_sync_studio_elementor_layout() {
+	$version = '8.0.1';
+	if ( get_option( 'dejoiy_studio_elementor_version' ) === $version ) {
+		return;
+	}
+
+	$page_id = 4399;
+	$path    = get_stylesheet_directory() . '/assets/dejoiy-studio-elementor.json';
+
+	if ( ! file_exists( $path ) ) {
+		return;
+	}
+
+	$json = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	if ( ! $json ) {
+		return;
+	}
+
+	update_post_meta( $page_id, '_elementor_data', wp_slash( $json ) );
+	update_post_meta( $page_id, '_elementor_edit_mode', 'builder' );
+	update_post_meta( $page_id, '_elementor_template_type', 'wp-page' );
+	update_post_meta( $page_id, '_wp_page_template', 'elementor_canvas' );
+
+	if ( defined( 'ELEMENTOR_VERSION' ) ) {
+		update_post_meta( $page_id, '_elementor_version', ELEMENTOR_VERSION );
+	}
+
+	update_option( 'dejoiy_studio_elementor_version', $version );
+
+	if ( class_exists( '\Elementor\Plugin' ) ) {
+		\Elementor\Plugin::$instance->files_manager->clear_cache();
+	}
+
+	if ( function_exists( 'litespeed_purge_all' ) ) {
+		litespeed_purge_all();
+	}
+}
+add_action( 'init', 'dejoiy_sync_studio_elementor_layout', 25 );

@@ -1,0 +1,667 @@
+<?php
+/**
+ * DEJOIY Nexus — WooCommerce, seeding, templates.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+require_once __DIR__ . '/library-books-catalog.php';
+
+define( 'DEJOIY_LIBRARY_PRICE', '101' );
+define( 'DEJOIY_LIBRARY_FLOW', 'dejoiy_library' );
+
+/**
+ * @return int Library landing page ID.
+ */
+function dejoiy_library_get_page_id() {
+	static $id = null;
+	if ( null !== $id ) {
+		return $id;
+	}
+	if ( defined( 'DEJOIY_LIBRARY_PAGE_ID' ) ) {
+		$id = (int) DEJOIY_LIBRARY_PAGE_ID;
+		return $id;
+	}
+	$page = get_page_by_path( 'dejoiy-library' );
+	$id   = $page ? (int) $page->ID : 0;
+	return $id;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_request_has_flow_flag() {
+	if ( isset( $_GET[ DEJOIY_LIBRARY_FLOW ] ) && '1' === (string) $_GET[ DEJOIY_LIBRARY_FLOW ] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
+	}
+	if ( isset( $_POST[ DEJOIY_LIBRARY_FLOW ] ) && '1' === (string) $_POST[ DEJOIY_LIBRARY_FLOW ] ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		return true;
+	}
+	if ( ! empty( $_REQUEST['dejoiy_library_ajax'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_is_landing() {
+	$pid = dejoiy_library_get_page_id();
+	if ( $pid > 0 && is_page( $pid ) ) {
+		return true;
+	}
+	return is_page( 'dejoiy-library' );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_use_cart_template() {
+	return function_exists( 'is_cart' ) && is_cart() && ! is_wc_endpoint_url() && dejoiy_library_request_has_flow_flag();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_use_checkout_template() {
+	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() || is_wc_endpoint_url() ) {
+		return false;
+	}
+	if ( ! dejoiy_library_request_has_flow_flag() ) {
+		return false;
+	}
+	return dejoiy_library_cart_has_items();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_is_reader_view() {
+	return dejoiy_library_request_has_flow_flag()
+		&& isset( $_GET['dejoiy_reader'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		&& is_numeric( $_GET['dejoiy_reader'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_is_my_universe_view() {
+	return dejoiy_library_request_has_flow_flag()
+		&& isset( $_GET['dejoiy_my_universe'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		&& '1' === (string) $_GET['dejoiy_my_universe']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_is_screen() {
+	if ( dejoiy_library_is_landing() ) {
+		return true;
+	}
+	if ( dejoiy_library_use_cart_template() || dejoiy_library_use_checkout_template() ) {
+		return true;
+	}
+	if ( dejoiy_library_is_reader_view() || dejoiy_library_is_my_universe_view() ) {
+		return true;
+	}
+	if ( dejoiy_library_is_book_product_page() ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Single product in library flow.
+ *
+ * @return bool
+ */
+function dejoiy_library_is_book_product_page() {
+	if ( ! is_singular( 'product' ) || ! dejoiy_library_request_has_flow_flag() ) {
+		return false;
+	}
+	return dejoiy_library_is_book_product( get_queried_object_id() );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return bool
+ */
+function dejoiy_library_is_book_product( $product_id ) {
+	return (bool) get_post_meta( (int) $product_id, '_dejoiy_library_book', true );
+}
+
+/**
+ * @param array $cart_item Cart item.
+ * @return bool
+ */
+function dejoiy_library_cart_item_is_book( $cart_item ) {
+	if ( ! empty( $cart_item['dejoiy_library_item'] ) ) {
+		return true;
+	}
+	$product_id = isset( $cart_item['product_id'] ) ? (int) $cart_item['product_id'] : 0;
+	return $product_id && dejoiy_library_is_book_product( $product_id );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_library_cart_has_items() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return false;
+	}
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( dejoiy_library_cart_item_is_book( $item ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * @return string
+ */
+function dejoiy_library_get_cart_url() {
+	$url = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	return add_query_arg( DEJOIY_LIBRARY_FLOW, '1', remove_query_arg( DEJOIY_LIBRARY_FLOW, $url ) );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_library_get_checkout_url() {
+	$url = function_exists( 'wc_get_checkout_url' ) ? wc_get_checkout_url() : home_url( '/checkout/' );
+	return add_query_arg( DEJOIY_LIBRARY_FLOW, '1', remove_query_arg( DEJOIY_LIBRARY_FLOW, $url ) );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_library_product_url( $product_id ) {
+	$url = get_permalink( $product_id );
+	if ( dejoiy_library_is_book_product( $product_id ) ) {
+		return add_query_arg( DEJOIY_LIBRARY_FLOW, '1', $url );
+	}
+	return $url;
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_library_reader_url( $product_id ) {
+	return add_query_arg(
+		array(
+			DEJOIY_LIBRARY_FLOW => '1',
+			'dejoiy_reader'     => (int) $product_id,
+		),
+		dejoiy_library_get_landing_url()
+	);
+}
+
+/**
+ * Site favicon / brand mark for Nexus header.
+ *
+ * @param int $size Icon size.
+ * @return string
+ */
+function dejoiy_library_get_logo_url( $size = 512 ) {
+	$icon = get_site_icon_url( (int) $size );
+	if ( $icon ) {
+		return $icon;
+	}
+	$logo_id = get_theme_mod( 'custom_logo' );
+	if ( $logo_id ) {
+		$url = wp_get_attachment_image_url( (int) $logo_id, 'medium' );
+		if ( $url ) {
+			return $url;
+		}
+	}
+	return home_url( '/favicon.ico' );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_library_get_landing_url() {
+	$pid = dejoiy_library_get_page_id();
+	return $pid ? get_permalink( $pid ) : home_url( '/dejoiy-library/' );
+}
+
+/**
+ * @return string
+ */
+function dejoiy_library_my_universe_url() {
+	return add_query_arg(
+		array(
+			DEJOIY_LIBRARY_FLOW  => '1',
+			'dejoiy_my_universe' => '1',
+		),
+		dejoiy_library_get_landing_url()
+	);
+}
+
+/**
+ * Cover gradient / thumb for library books.
+ *
+ * @param int    $product_id Product ID.
+ * @param string $size       Size.
+ * @return string
+ */
+function dejoiy_library_get_cover_url( $product_id, $size = 'medium' ) {
+	$product_id = (int) $product_id;
+	$url        = get_the_post_thumbnail_url( $product_id, $size );
+	if ( $url ) {
+		return $url;
+	}
+	$meta = get_post_meta( $product_id, '_dejoiy_library_cover', true );
+	if ( $meta ) {
+		return (string) $meta;
+	}
+	return '';
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_library_get_author( $product_id ) {
+	$author = get_post_meta( (int) $product_id, '_dejoiy_library_author', true );
+	return $author ? (string) $author : __( 'DEJOIY Curated', 'dejoiy' );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_library_get_reading_time( $product_id ) {
+	$time = get_post_meta( (int) $product_id, '_dejoiy_library_reading_time', true );
+	return $time ? (string) $time : '6h read';
+}
+
+/**
+ * Category accent color.
+ *
+ * @param string $slug Category slug.
+ * @return string
+ */
+function dejoiy_library_category_color( $slug ) {
+	$map = dejoiy_library_category_color_map();
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : '#7C3AED';
+}
+
+/**
+ * DEJOIY Library signature colors per category.
+ *
+ * @return array<string, string>
+ */
+function dejoiy_library_category_color_map() {
+	return array(
+		'business'          => '#2563EB',
+		'psychology'        => '#7C3AED',
+		'self-growth'       => '#10B981',
+		'design'            => '#EC4899',
+		'marketing'         => '#A855F7',
+		'ai-technology'     => '#06B6D4',
+		'creativity'        => '#EC4899',
+		'productivity'      => '#10B981',
+		'startups'          => '#2563EB',
+		'future-innovation' => '#7C3AED',
+	);
+}
+
+/**
+ * Featured collection card accent (maps collection slug → color).
+ *
+ * @param string $slug Collection slug.
+ * @return string
+ */
+function dejoiy_library_collection_accent_color( $slug ) {
+	$map = array(
+		'startups'          => '#2563EB',
+		'ai-technology'     => '#06B6D4',
+		'design'            => '#EC4899',
+		'psychology'        => '#7C3AED',
+		'business'          => '#2563EB',
+		'productivity'      => '#10B981',
+		'creativity'        => '#A855F7',
+		'future-innovation' => '#7C3AED',
+	);
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : '#7C3AED';
+}
+
+/**
+ * Generate cover art URL (no copyrighted jacket scans).
+ *
+ * @param string $title    Book title.
+ * @param string $cat_slug Category slug.
+ * @return string
+ */
+function dejoiy_library_make_cover_url( $title, $cat_slug ) {
+	$color = str_replace( '#', '', dejoiy_library_category_color( $cat_slug ) );
+	$text  = rawurlencode( mb_substr( $title, 0, 28 ) );
+	return "https://placehold.co/400x600/{$color}/ffffff?text={$text}&font=playfair-display";
+}
+
+/**
+ * Seed WooCommerce categories + 100 library books at ₹101.
+ */
+function dejoiy_library_seed_catalog() {
+	if ( get_option( 'dejoiy_library_seed_v1' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	$catalog = dejoiy_library_get_catalog();
+	$parent  = term_exists( 'dejoiy-library', 'product_cat' );
+	if ( ! $parent ) {
+		$parent = wp_insert_term( 'DEJOIY Nexus', 'product_cat', array( 'slug' => 'dejoiy-library' ) );
+	}
+	$parent_id = is_array( $parent ) ? (int) $parent['term_id'] : (int) $parent;
+
+	$cat_ids = array( $parent_id );
+	foreach ( $catalog as $slug => $group ) {
+		$term = term_exists( $slug, 'product_cat' );
+		if ( ! $term ) {
+			$term = wp_insert_term(
+				$group['label'],
+				'product_cat',
+				array(
+					'slug'   => $slug,
+					'parent' => $parent_id,
+				)
+			);
+		}
+		if ( ! is_wp_error( $term ) ) {
+			$cat_ids[ $slug ] = (int) ( is_array( $term ) ? $term['term_id'] : $term );
+		}
+	}
+
+	foreach ( $catalog as $slug => $group ) {
+		$term_id = isset( $cat_ids[ $slug ] ) ? $cat_ids[ $slug ] : $parent_id;
+		foreach ( $group['books'] as $title ) {
+			$sku = 'dlu-' . sanitize_title( $title );
+			$existing_id = function_exists( 'wc_get_product_id_by_sku' ) ? wc_get_product_id_by_sku( $sku ) : 0;
+			if ( $existing_id ) {
+				continue;
+			}
+
+			$product = new WC_Product_Simple();
+			$product->set_name( $title );
+			$product->set_status( 'publish' );
+			$product->set_regular_price( DEJOIY_LIBRARY_PRICE );
+			$product->set_virtual( true );
+			$product->set_catalog_visibility( 'visible' );
+			$product->set_sku( $sku );
+			$product->set_short_description(
+				__( 'DEJOIY Nexus digital edition. Attach your licensed file in WooCommerce before enabling downloads.', 'dejoiy' )
+			);
+			$id = $product->save();
+
+			if ( $id ) {
+				wp_set_object_terms( $id, array( $term_id, $parent_id ), 'product_cat' );
+				update_post_meta( $id, '_dejoiy_library_book', '1' );
+				update_post_meta( $id, '_dejoiy_library_category', $slug );
+				update_post_meta( $id, '_dejoiy_library_author', 'DEJOIY Curated' );
+				update_post_meta( $id, '_dejoiy_library_reading_time', sprintf( '%dh read', wp_rand( 4, 11 ) ) );
+				$cover = dejoiy_library_make_cover_url( $title, $slug );
+				update_post_meta( $id, '_dejoiy_library_cover', esc_url_raw( $cover ) );
+			}
+		}
+	}
+
+	update_option( 'dejoiy_library_seed_v1', '1' );
+}
+
+/**
+ * Query library books.
+ *
+ * @param array $args WP_Query args.
+ * @return WP_Query
+ */
+function dejoiy_library_query_books( $args = array() ) {
+	$defaults = array(
+		'post_type'      => 'product',
+		'post_status'    => 'publish',
+		'posts_per_page' => 12,
+		'meta_key'       => '_dejoiy_library_book', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		'meta_value'     => '1',
+		'orderby'        => 'title',
+		'order'          => 'ASC',
+	);
+	return new WP_Query( array_merge( $defaults, $args ) );
+}
+
+/**
+ * @param string $action Form action.
+ * @return string
+ */
+function dejoiy_library_add_to_cart_form_action( $action ) {
+	if ( dejoiy_library_is_book_product_page() ) {
+		return dejoiy_library_product_url( get_queried_object_id() );
+	}
+	return $action;
+}
+
+/**
+ * @param array $cart_item_data Cart data.
+ * @param int   $product_id     Product.
+ * @param int   $variation_id   Variation.
+ * @return array
+ */
+function dejoiy_library_add_cart_item_data( $cart_item_data, $product_id, $variation_id ) {
+	if ( dejoiy_library_request_has_flow_flag() && dejoiy_library_is_book_product( $product_id ) ) {
+		$cart_item_data['dejoiy_library_item'] = 1;
+	}
+	return $cart_item_data;
+}
+
+/**
+ * @param array $cart_item     Item.
+ * @param array $values        Session.
+ * @param string $cart_item_key Key.
+ * @return array
+ */
+function dejoiy_library_get_cart_item_from_session( $cart_item, $values, $cart_item_key ) {
+	if ( isset( $values['dejoiy_library_item'] ) ) {
+		$cart_item['dejoiy_library_item'] = $values['dejoiy_library_item'];
+	}
+	return $cart_item;
+}
+
+/**
+ * @param bool   $visible   Visible.
+ * @param array  $cart_item Item.
+ * @param string $cart_key  Key.
+ * @return bool
+ */
+function dejoiy_library_cart_item_visible( $visible, $cart_item, $cart_key ) {
+	if ( dejoiy_library_use_cart_template() || dejoiy_library_use_checkout_template() ) {
+		return dejoiy_library_cart_item_is_book( $cart_item );
+	}
+	return $visible;
+}
+
+/**
+ * @param string $url Cart URL.
+ * @return string
+ */
+function dejoiy_library_force_cart_url( $url ) {
+	if ( dejoiy_library_is_screen() && dejoiy_library_request_has_flow_flag() ) {
+		return dejoiy_library_get_cart_url();
+	}
+	return $url;
+}
+
+/**
+ * @param string $url Checkout URL.
+ * @return string
+ */
+function dejoiy_library_force_checkout_url( $url ) {
+	if ( dejoiy_library_is_screen() && dejoiy_library_request_has_flow_flag() ) {
+		return dejoiy_library_get_checkout_url();
+	}
+	return $url;
+}
+
+/**
+ * @param string $url Redirect.
+ * @return string
+ */
+function dejoiy_library_add_to_cart_redirect( $url ) {
+	if ( dejoiy_library_request_has_flow_flag() ) {
+		return dejoiy_library_get_cart_url();
+	}
+	return $url;
+}
+
+/**
+ * AJAX cart count.
+ */
+function dejoiy_library_ajax_cart_count() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		wp_send_json_success( array( 'count' => 0 ) );
+	}
+	$count = 0;
+	foreach ( WC()->cart->get_cart() as $item ) {
+		if ( dejoiy_library_cart_item_is_book( $item ) ) {
+			$count += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
+		}
+	}
+	wp_send_json_success( array( 'count' => $count ) );
+}
+
+/**
+ * JOI Librarian — keyword paths (no external API required).
+ */
+function dejoiy_library_joi_recommend_handler() {
+	$term = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( strlen( $term ) < 2 ) {
+		wp_send_json_success( array( 'message' => '', 'books' => array() ) );
+	}
+
+	$map = array(
+		'business'    => array( 'business', 'startup', 'money', 'empire', 'founder', 'strategy' ),
+		'design'      => array( 'design', 'creative', 'ui', 'visual', 'brand' ),
+		'ai-technology' => array( 'ai', 'artificial', 'machine', 'tech', 'future' ),
+		'psychology'  => array( 'psychology', 'mind', 'habit', 'behavior' ),
+		'marketing'   => array( 'marketing', 'ads', 'brand', 'story' ),
+		'productivity' => array( 'productivity', 'focus', 'deep work', 'time' ),
+		'startups'    => array( 'startup', 'venture', 'scale', 'founder' ),
+		'creativity'  => array( 'create', 'art', 'writer', 'creator' ),
+		'self-growth' => array( 'growth', 'self', 'life', 'purpose' ),
+	);
+
+	$slug = 'business';
+	$lower = strtolower( $term );
+	foreach ( $map as $key => $words ) {
+		foreach ( $words as $word ) {
+			if ( false !== strpos( $lower, $word ) ) {
+				$slug = $key;
+				break 2;
+			}
+		}
+	}
+
+	$catalog = dejoiy_library_get_catalog();
+	$label   = isset( $catalog[ $slug ]['label'] ) ? $catalog[ $slug ]['label'] : 'Business';
+
+	$q = dejoiy_library_query_books(
+		array(
+			'posts_per_page' => 6,
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy' => 'product_cat',
+					'field'    => 'slug',
+					'terms'    => $slug,
+				),
+			),
+		)
+	);
+
+	$books = array();
+	foreach ( $q->posts as $p ) {
+		$books[] = array(
+			'id'    => $p->ID,
+			'title' => get_the_title( $p->ID ),
+			'url'   => dejoiy_library_product_url( $p->ID ),
+			'cover' => dejoiy_library_get_cover_url( $p->ID, 'medium' ),
+			'author' => dejoiy_library_get_author( $p->ID ),
+		);
+	}
+	wp_reset_postdata();
+
+	wp_send_json_success(
+		array(
+			'message' => sprintf(
+				/* translators: %s: category label */
+				__( 'Your reading path: %s Mastery', 'dejoiy' ),
+				$label
+			),
+			'path_slug' => $slug,
+			'books'     => $books,
+		)
+	);
+}
+
+/**
+ * Boot hooks.
+ */
+function dejoiy_library_customize_init() {
+	add_action( 'init', 'dejoiy_library_seed_catalog', 32 );
+	add_filter( 'woocommerce_add_to_cart_form_action', 'dejoiy_library_add_to_cart_form_action', 10, 1 );
+	add_filter( 'woocommerce_add_cart_item_data', 'dejoiy_library_add_cart_item_data', 10, 3 );
+	add_filter( 'woocommerce_get_cart_item_from_session', 'dejoiy_library_get_cart_item_from_session', 10, 3 );
+	add_filter( 'woocommerce_cart_item_visible', 'dejoiy_library_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_checkout_cart_item_visible', 'dejoiy_library_cart_item_visible', 10, 3 );
+	add_filter( 'woocommerce_get_cart_url', 'dejoiy_library_force_cart_url', 999 );
+	add_filter( 'woocommerce_get_checkout_url', 'dejoiy_library_force_checkout_url', 999 );
+	add_filter( 'woocommerce_add_to_cart_redirect', 'dejoiy_library_add_to_cart_redirect', 20 );
+	add_action( 'wp_ajax_dejoiy_library_cart_count', 'dejoiy_library_ajax_cart_count' );
+	add_action( 'wp_ajax_nopriv_dejoiy_library_cart_count', 'dejoiy_library_ajax_cart_count' );
+	add_action( 'wp_ajax_dejoiy_library_joi', 'dejoiy_library_joi_recommend_handler' );
+	add_action( 'wp_ajax_nopriv_dejoiy_library_joi', 'dejoiy_library_joi_recommend_handler' );
+	add_filter( 'woocommerce_get_remove_url', 'dejoiy_library_cart_remove_url', 10, 2 );
+}
+
+/**
+ * @param string $url Remove URL.
+ * @param string $cart_item_key Cart item key.
+ * @return string
+ */
+function dejoiy_library_cart_remove_url( $url, $cart_item_key = '' ) {
+	if ( ! dejoiy_library_request_has_flow_flag() ) {
+		return $url;
+	}
+	return add_query_arg( DEJOIY_LIBRARY_FLOW, '1', remove_query_arg( DEJOIY_LIBRARY_FLOW, $url ) );
+}
+add_action( 'after_setup_theme', 'dejoiy_library_customize_init' );
+
+/**
+ * Document shell start.
+ */
+function dejoiy_library_document_start() {
+	?><!DOCTYPE html>
+	<html <?php language_attributes(); ?>>
+	<head>
+	<meta charset="<?php bloginfo( 'charset' ); ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+	<meta name="theme-color" content="#7C3AED">
+	<?php wp_head(); ?>
+	</head>
+	<body <?php body_class( 'dlu-screen dejoiy-library-universe dejoiy-nexus-active' ); ?>>
+	<?php wp_body_open(); ?>
+	<?php
+}
+
+/**
+ * Document shell end.
+ */
+function dejoiy_library_document_end() {
+	wp_footer();
+	echo '</body></html>';
+}

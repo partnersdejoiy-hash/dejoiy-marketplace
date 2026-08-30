@@ -1,0 +1,96 @@
+(function () {
+  "use strict";
+
+  var root = document.getElementById("dejoiy-about-xp");
+  if (!root) return;
+
+  /* Scroll reveal */
+  var reveals = root.querySelectorAll(".dabout-reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add("is-visible");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    reveals.forEach(function (el) {
+      io.observe(el);
+    });
+  } else {
+    reveals.forEach(function (el) {
+      el.classList.add("is-visible");
+    });
+  }
+
+  /* Animated counters */
+  function animateCount(el) {
+    var target = parseInt(el.getAttribute("data-count") || "0", 10);
+    var suffix = el.getAttribute("data-suffix") || "";
+    var duration = 1600;
+    var start = 0;
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var p = Math.min((ts - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      var val = Math.floor(start + (target - start) * eased);
+      el.textContent = val.toLocaleString("en-IN") + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var counters = root.querySelectorAll("[data-count]");
+  if ("IntersectionObserver" in window) {
+    var cio = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            animateCount(e.target);
+            cio.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    counters.forEach(function (el) {
+      cio.observe(el);
+    });
+  }
+
+  /* Carousel */
+  var carousel = root.querySelector("[data-carousel]");
+  if (carousel) {
+    var track = carousel.querySelector(".dabout-carousel__track");
+    var prev = carousel.querySelector(".dabout-carousel__btn--prev");
+    var next = carousel.querySelector(".dabout-carousel__btn--next");
+    var scrollAmt = 360;
+    if (prev && track) {
+      prev.addEventListener("click", function () {
+        track.scrollBy({ left: -scrollAmt, behavior: "smooth" });
+      });
+    }
+    if (next && track) {
+      next.addEventListener("click", function () {
+        track.scrollBy({ left: scrollAmt, behavior: "smooth" });
+      });
+    }
+  }
+
+  /* Hide legacy Elementor / XStore template blocks */
+  document.querySelectorAll(".elementor-section").forEach(function (sec) {
+    if (!sec.querySelector("#dejoiy-about-xp")) {
+      sec.style.setProperty("display", "none", "important");
+    }
+  });
+  document.querySelectorAll(".entry-content > *").forEach(function (child) {
+    if (child.id !== "dejoiy-about-xp" && !child.querySelector("#dejoiy-about-xp")) {
+      child.style.setProperty("display", "none", "important");
+    }
+  });
+})();

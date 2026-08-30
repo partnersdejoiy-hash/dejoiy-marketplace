@@ -1,0 +1,220 @@
+<?php
+/**
+ * DEJOIY Mobile / tablet single product — no marketplace header or footer.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_mobile_product_is_focus_view() {
+	if ( is_admin() ) {
+		return false;
+	}
+	return function_exists( 'is_product' ) && is_product();
+}
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_mobile_product_body_class( $classes ) {
+	if ( dejoiy_mobile_product_is_focus_view() ) {
+		$classes[] = 'dejoiy-mobile-product-view';
+		$classes[] = 'dejoiy-mobile-os-off';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_mobile_product_body_class', 22 );
+
+/**
+ * Enqueue minimal product view styles.
+ */
+function dejoiy_mobile_product_assets() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-mobile-product.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-product',
+			$uri . '/dejoiy-mobile-product.css',
+			array(),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_product_assets', 1011 );
+
+/**
+ * Minimal back bar (not full header).
+ */
+function dejoiy_mobile_product_print_bar() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	$back = wp_get_referer();
+	if ( ! $back ) {
+		$back = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
+	}
+	?>
+	<div class="dejoiy-mobile-product-bar" role="navigation" aria-label="<?php esc_attr_e( 'Product navigation', 'dejoiy' ); ?>">
+		<a class="dejoiy-mobile-product-bar__back" href="<?php echo esc_url( $back ); ?>">← <?php esc_html_e( 'Back', 'dejoiy' ); ?></a>
+	</div>
+	<?php
+}
+add_action( 'wp_body_open', 'dejoiy_mobile_product_print_bar', 3 );
+
+/**
+ * Related / recommended product IDs for single product view.
+ *
+ * @param int $product_id Product ID.
+ * @param int $limit      Max products.
+ * @return array<int, int>
+ */
+function dejoiy_mobile_product_recommendation_ids( $product_id, $limit = 12 ) {
+	$product_id = (int) $product_id;
+	$limit      = max( 4, min( 16, (int) $limit ) );
+	$ids        = array();
+
+	if ( function_exists( 'wc_get_related_products' ) ) {
+		$ids = wc_get_related_products( $product_id, $limit );
+	}
+
+	if ( count( $ids ) < 4 ) {
+		$terms = wp_get_post_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+		if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
+			$q = new WP_Query(
+				array(
+					'post_type'      => 'product',
+					'post_status'    => 'publish',
+					'posts_per_page' => $limit,
+					'post__not_in'   => array_merge( array( $product_id ), $ids ),
+					'tax_query'      => array(
+						array(
+							'taxonomy' => 'product_cat',
+							'field'    => 'term_id',
+							'terms'    => array_slice( array_map( 'intval', $terms ), 0, 3 ),
+						),
+					),
+					'orderby'        => 'rand',
+					'fields'         => 'ids',
+				)
+			);
+			if ( ! empty( $q->posts ) ) {
+				$ids = array_merge( $ids, array_map( 'intval', $q->posts ) );
+			}
+		}
+	}
+
+	if ( count( $ids ) < 4 && function_exists( 'dejoiy_universe_get_products' ) ) {
+		$posts = dejoiy_universe_get_products(
+			array(
+				'posts_per_page' => $limit,
+				'post__not_in'   => array_merge( array( $product_id ), $ids ),
+				'meta_key'       => 'total_sales',
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+			)
+		);
+		foreach ( $posts as $p ) {
+			$ids[] = (int) $p->ID;
+		}
+	}
+
+	$ids = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+	return array_slice( $ids, 0, $limit );
+}
+
+/**
+ * Remove default WooCommerce related/upsell blocks on mobile focus view (custom shelf below).
+ */
+function dejoiy_mobile_product_trim_default_related() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_related_products', 20 );
+	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_upsell_display', 15 );
+}
+add_action( 'wp', 'dejoiy_mobile_product_trim_default_related', 20 );
+
+/**
+ * Flipkart / Amazon style horizontal recommendations.
+ */
+function dejoiy_mobile_product_render_recommendations() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+
+	global $product;
+	if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+		return;
+	}
+
+	$ids = dejoiy_mobile_product_recommendation_ids( $product->get_id(), 12 );
+	if ( count( $ids ) < 2 ) {
+		return;
+	}
+
+	$done = true;
+	?>
+	<section class="dejoiy-mobile-product-reco" aria-label="<?php esc_attr_e( 'You may also like', 'dejoiy' ); ?>">
+		<h2 class="dejoiy-mobile-product-reco__title"><?php esc_html_e( 'You may also like', 'dejoiy' ); ?></h2>
+		<div class="dejoiy-mobile-product-reco__track" tabindex="0">
+			<?php
+			foreach ( $ids as $pid ) {
+				if ( function_exists( 'dejoiy_mobile_home_render_card' ) ) {
+					dejoiy_mobile_home_render_card( $pid, 'market' );
+				}
+			}
+			?>
+		</div>
+	</section>
+	<?php
+}
+add_action( 'woocommerce_after_single_product_summary', 'dejoiy_mobile_product_render_recommendations', 25 );
+add_action( 'woocommerce_after_single_product', 'dejoiy_mobile_product_render_recommendations', 25 );
+add_action( 'wp_footer', 'dejoiy_mobile_product_render_recommendations', 8 );
+
+/**
+ * Load product card styles for recommendations shelf.
+ */
+function dejoiy_mobile_product_enqueue_card_styles() {
+	if ( ! dejoiy_mobile_product_is_focus_view() ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_mobile_home_render_card' ) ) {
+		return;
+	}
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-mobile-home-v2.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-mobile-home-v2-cards',
+			$uri . '/dejoiy-mobile-home-v2.css',
+			array( 'dejoiy-mobile-product' ),
+			(string) filemtime( $css ),
+			'screen and (max-width: 1024px)'
+		);
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_mobile_product_enqueue_card_styles', 1012 );

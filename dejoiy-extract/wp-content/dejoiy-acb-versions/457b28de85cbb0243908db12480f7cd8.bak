@@ -1,0 +1,372 @@
+/* DEJOIY Library Universe — header, footer, cart (light premium system) */
+
+body.dejoiy-library-active .site-header,
+body.dejoiy-library-active #main-header,
+body.dejoiy-library-active .elementor-location-header,
+body.dejoiy-library-active .elementor,
+body.dejoiy-library-active .page-heading,
+body.dejoiy-library-active footer.footer,
+body.dejoiy-library-active .etheme-footer,
+body.dlu-screen .site-header,
+body.dlu-screen #main-header,
+body.dlu-screen .elementor {
+  display: none !important;
+}
+
+body.dejoiy-library-active .dlu-root,
+body.dlu-screen .dlu-root,
+body.dlu-screen .dlu-page,
+body.dlu-screen .dlu-reader {
+  display: block !important;
+}
+
+body.dejoiy-library-active,
+body.dlu-screen {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── Header ── */
+.dlu-hdr {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dlu-hdr-in {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0.65rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dlu-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.dlu-brand-text {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dlu-brand em {
+  font-style: normal;
+  font-weight: 700;
+}
+
+.dlu-brand-icon {
+  color: #7c3aed;
+  filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.35));
+  animation: dlu-icon-pulse 3s ease-in-out infinite;
+}
+
+@keyframes dlu-icon-pulse {
+  50% { filter: drop-shadow(0 0 16px rgba(236, 72, 153, 0.45)); }
+}
+
+.dlu-nav {
+  display: none;
+  gap: 0.25rem 1.1rem;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+}
+
+.dlu-nav a {
+  color: #475569;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.dlu-nav a:hover,
+.dlu-nav a:focus-visible {
+  color: #ec4899;
+}
+
+.dlu-hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.dlu-hdr-search {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dlu-hdr-search:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.dlu-hdr-search input {
+  width: 120px;
+  border: none;
+  background: transparent;
+  padding: 0.45rem 0.75rem;
+  color: #0f172a;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.dlu-hdr-search .dlu-search-submit {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 0.45rem 0.65rem;
+}
+
+.dlu-icon-btn,
+.dlu-cart-btn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #475569;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s, transform 0.2s;
+}
+
+.dlu-icon-btn:hover,
+.dlu-cart-btn:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.dlu-cart-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.dlu-btn-pass {
+  display: none;
+  background: #ffd700;
+  color: #0f172a;
+  font-weight: 800;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.dlu-btn-pass:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.45);
+}
+
+.dlu-burger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.dlu-burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  border-radius: 2px;
+}
+
+/* ── Cart panel (glass on light) ── */
+.dlu-cart-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(380px, 92vw);
+  height: 100vh;
+  z-index: 300;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px);
+  border-left: 1px solid #e2e8f0;
+  box-shadow: -12px 0 40px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dlu-cart-panel.is-open {
+  transform: translateX(0);
+}
+
+.dlu-cart-panel[hidden] {
+  display: flex !important;
+}
+
+.dlu-cart-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.dlu-cart-close {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.dlu-cart-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  color: #475569;
+}
+
+.dlu-cart-panel-foot {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.dlu-cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  z-index: 299;
+}
+
+.dlu-cart-backdrop.is-open {
+  display: block !important;
+}
+
+/* ── Footer ── */
+.dlu-ft {
+  position: relative;
+  margin-top: 4rem;
+  padding: 3rem 0 2rem;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.dlu-ft-stars {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.35;
+}
+
+.dlu-ft-in {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.dlu-ft-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.dlu-ft-col h3 {
+  color: #ffffff;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.5rem;
+}
+
+.dlu-ft-col ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dlu-ft-col a {
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.dlu-ft-col a:hover {
+  color: #a855f7;
+}
+
+.dlu-ft-tag {
+  text-align: center;
+  margin-top: 2rem;
+  color: #06b6d4;
+  font-weight: 600;
+}
+
+.dlu-ft-copy {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 900px) {
+  .dlu-nav {
+    display: flex;
+  }
+
+  .dlu-btn-pass {
+    display: inline-block;
+  }
+
+  .dlu-burger {
+    display: none;
+  }
+
+  .dlu-hdr-search input {
+    width: 180px;
+  }
+
+  .dlu-ft-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

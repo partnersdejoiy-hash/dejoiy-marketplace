@@ -1,0 +1,143 @@
+<?php
+/**
+ * Restore XStore / Elementor site header & footer on DEJOIY Universe home.
+ *
+ * Angie canvas and Universe content-only layout skip theme chrome; this re-enables
+ * the real Elementor header (4228) and footer (4225) on the front page only.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_site_chrome_should_restore() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( ! is_front_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_universe_home_is_active' ) && ! dejoiy_universe_home_is_active() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Elementor library template IDs for each location.
+ *
+ * @param string $location header|footer.
+ * @return int[]
+ */
+function dejoiy_site_chrome_template_ids( $location ) {
+	$defaults = array(
+		'header' => array( 4228 ),
+		'footer' => array( 4225 ),
+	);
+
+	$ids = isset( $defaults[ $location ] ) ? $defaults[ $location ] : array();
+
+	/**
+	 * @param int[]  $ids      Template post IDs.
+	 * @param string $location header|footer.
+	 */
+	return array_filter( array_map( 'intval', (array) apply_filters( 'dejoiy_site_chrome_elementor_template_ids', $ids, $location ) ) );
+}
+
+/**
+ * Render Elementor Theme Builder templates by post ID.
+ *
+ * @param string $location header|footer.
+ * @return string HTML.
+ */
+function dejoiy_site_chrome_elementor_html( $location ) {
+	if ( ! class_exists( '\Elementor\Plugin' ) ) {
+		return '';
+	}
+
+	$frontend = \Elementor\Plugin::$instance->frontend;
+	$html     = '';
+
+	foreach ( dejoiy_site_chrome_template_ids( $location ) as $template_id ) {
+		if ( $template_id <= 0 || 'publish' !== get_post_status( $template_id ) ) {
+			continue;
+		}
+		$chunk = $frontend->get_builder_content_for_display( $template_id, true );
+		if ( is_string( $chunk ) && strlen( trim( $chunk ) ) > 0 ) {
+			$html .= $chunk;
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * Output Elementor header inside page-wrapper (matches shop layout).
+ */
+function dejoiy_site_chrome_render_header() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	$html = dejoiy_site_chrome_elementor_html( 'header' );
+	if ( strlen( $html ) < 20 ) {
+		return;
+	}
+
+	echo '<div class="dejoiy-site-chrome-header">';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor markup.
+	echo $html;
+	echo '</div>';
+}
+add_action( 'dejoiy_universe_home_before', 'dejoiy_site_chrome_render_header', 5 );
+
+/**
+ * Output Elementor footer in wp_footer.
+ */
+function dejoiy_site_chrome_render_footer() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+
+	$html = dejoiy_site_chrome_elementor_html( 'footer' );
+	if ( strlen( $html ) < 20 ) {
+		return;
+	}
+
+	echo '<div class="et-footers-wrapper dejoiy-site-chrome-footer">';
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Elementor markup.
+	echo $html;
+	echo '</div>';
+}
+add_action( 'wp_footer', 'dejoiy_site_chrome_render_footer', 1 );
+
+/**
+ * Body class when site chrome is restored (hides duplicate Universe footer).
+ *
+ * @param array<int, string> $classes Classes.
+ * @return array<int, string>
+ */
+function dejoiy_site_chrome_body_class( $classes ) {
+	if ( dejoiy_site_chrome_should_restore() ) {
+		$classes[] = 'dejoiy-site-chrome-on';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_site_chrome_body_class', 25 );

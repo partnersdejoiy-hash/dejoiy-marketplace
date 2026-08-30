@@ -1,0 +1,22 @@
+[2026-06-02T02:53:18+00:00] type=1
+Uncaught Error: Maximum call stack size reached. Infinite recursion? in /home/u101086720/domains/dejoiy.com/public_html/wp-includes/class-wp-term-query.php:1176
+Stack trace:
+#0 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/class-wp-term-query.php(1176): serialize()
+#1 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/class-wp-term-query.php(777): WP_Term_Query->generate_cache_key()
+#2 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/class-wp-term-query.php(308): WP_Term_Query->get_terms()
+#3 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/taxonomy.php(1357): WP_Term_Query->query()
+#4 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/taxonomy.php(2338): get_terms()
+#5 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/taxonomy.php(3852): wp_get_object_terms()
+#6 /home/u101086720/domains/dejoiy.com/public_html/wp-includes/post.php(8291): update_object_term_cache()
+#7 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/class-wc-product-factory.php(45): _prime_post_caches()
+#8 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/wc-product-functions.php(78): WC_Product_Factory->get_product()
+#9 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/src/Internal/Utilities/ProductUtil.php(25): wc_get_product()
+#10 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/wc-product-functions.php(143): Automattic\WooCommerce\Internal\Utilities\ProductUtil->delete_product_specific_transients()
+#11 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/data-stores/class-wc-product-data-store-cpt.php(1149): wc_delete_product_transients()
+#12 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/data-stores/class-wc-product-data-store-cpt.php(388): WC_Product_Data_Store_CPT->clear_caches()
+#13 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/class-wc-data-store.php(196): WC_Product_Data_Store_CPT->update()
+#14 /home/u101086720/domains/dejoiy.com/public_html/wp-content/plugins/woocommerce/includes/abstracts/abstract-wc-product.php(1554): WC_Data_Store->update()
+#15 /home/u101086720/domains/dejoiy.com/public_html/wp-content/themes/dejoiy/library-shop-exclusion.php(494): WC_Product->save()
+#16 /home/u101086720/domains/dejoiy.com/public_html/wp-content/themes/dejoiy/library-selle
+/home/u101086720/domains/dejoiy.com/public_html/wp-includes/class-wp-term-query.php:1176
+URI: /shop/

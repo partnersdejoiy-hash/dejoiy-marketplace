@@ -1,0 +1,280 @@
+/**
+ * DEJOIY Desktop Marketplace Header — laptop/desktop only (≥1025px).
+ */
+(function () {
+	'use strict';
+
+	var mq = window.matchMedia('(min-width: 1025px)');
+	if (!mq.matches) {
+		return;
+	}
+
+	var cfg = window.dejoiyDesktopHeader;
+	if (!cfg) {
+		return;
+	}
+
+	var header =
+		document.querySelector('header.elementor-4228') ||
+		document.querySelector('header[data-elementor-id="4228"]') ||
+		document.getElementById('dejoiy-desktop-marketplace-header');
+	if (!header) {
+		return;
+	}
+
+	var isStandalone = header.id === 'dejoiy-desktop-marketplace-header';
+
+	function wireStandaloneLauncher() {
+		if (!isStandalone) {
+			return;
+		}
+		var worlds = document.getElementById('ddh-all-worlds-btn');
+		var explore = document.getElementById('ddh-explore-universe-btn');
+		var open = function () {
+			var btn = document.getElementById('dh-os-v4-explore-btn');
+			if (btn) {
+				btn.click();
+			}
+		};
+		if (worlds) {
+			worlds.addEventListener('click', open);
+		}
+		if (explore) {
+			explore.addEventListener('click', open);
+		}
+	}
+
+	function qs(sel, root) {
+		return (root || document).querySelector(sel);
+	}
+
+	function escapeHtml(s) {
+		var d = document.createElement('div');
+		d.textContent = s;
+		return d.innerHTML;
+	}
+
+	function injectAccentBar() {
+		if (header.querySelector('.ddh-accent-bar')) {
+			return;
+		}
+		var bar = document.createElement('div');
+		bar.className = 'ddh-accent-bar';
+		bar.setAttribute('aria-hidden', 'true');
+		header.insertBefore(bar, header.firstChild);
+	}
+
+	function injectDelivery() {
+		var row = header.querySelector('.elementor-element-9f69eb5 > .e-con-inner');
+		if (!row || row.querySelector('.ddh-deliver')) {
+			return;
+		}
+		var a = document.createElement('a');
+		a.className = 'ddh-deliver';
+		a.href = cfg.deliveryUrl || '/my-account/';
+		a.innerHTML =
+			'<span class="ddh-deliver__pin" aria-hidden="true">📍</span>' +
+			'<span class="ddh-deliver__lines">' +
+			'<span class="ddh-deliver__kicker">' +
+			escapeHtml('Deliver to') +
+			'</span>' +
+			'<span class="ddh-deliver__value">' +
+			escapeHtml(cfg.deliveryLabel || 'Set location') +
+			'</span>' +
+			'</span>';
+		var logo = row.querySelector('.elementor-element-397c596d');
+		if (logo && logo.nextSibling) {
+			row.insertBefore(a, logo.nextSibling);
+		} else {
+			row.appendChild(a);
+		}
+	}
+
+	function injectOrders() {
+		var row = header.querySelector('.elementor-element-9f69eb5 > .e-con-inner');
+		if (!row || row.querySelector('.ddh-orders')) {
+			return;
+		}
+		var account = row.querySelector('.elementor-element-274d854');
+		var a = document.createElement('a');
+		a.className = 'ddh-orders';
+		a.href = cfg.ordersUrl || '/my-account/';
+		a.innerHTML =
+			'<span class="ddh-orders__kicker">' +
+			escapeHtml('Returns') +
+			'</span>' +
+			'<span class="ddh-orders__label">' +
+			escapeHtml(cfg.ordersLabel || 'Orders') +
+			'</span>';
+		if (account) {
+			row.insertBefore(a, account.nextSibling);
+		} else {
+			row.appendChild(a);
+		}
+	}
+
+	function wrapIconStack(widget, label) {
+		if (!widget || widget.querySelector('.ddh-icon-stack')) {
+			return;
+		}
+		var btn = widget.querySelector('.etheme-elementor-off-canvas__toggle_button');
+		if (!btn) {
+			return;
+		}
+		var wrap = document.createElement('div');
+		wrap.className = 'ddh-icon-stack';
+		btn.parentNode.insertBefore(wrap, btn);
+		wrap.appendChild(btn);
+		var small = document.createElement('span');
+		small.className = 'ddh-icon-stack__label';
+		small.textContent = label;
+		wrap.appendChild(small);
+	}
+
+	function syncCartBadge() {
+		var cartWidget = header.querySelector('.elementor-element-26de207e');
+		if (!cartWidget) {
+			return;
+		}
+		var btn = cartWidget.querySelector('.etheme-elementor-off-canvas__toggle_button');
+		if (!btn) {
+			return;
+		}
+		var count = parseInt(cfg.cartCount, 10) || 0;
+		var badge = btn.querySelector('.ddh-cart-badge');
+		if (count < 1) {
+			if (badge) {
+				badge.remove();
+			}
+			return;
+		}
+		var text = count > 99 ? '99+' : String(count);
+		if (!badge) {
+			badge = document.createElement('span');
+			badge.className = 'ddh-cart-badge';
+			btn.appendChild(badge);
+		}
+		badge.textContent = text;
+		badge.setAttribute(
+			'aria-label',
+			count === 1 ? '1 item in cart' : count + ' items in cart'
+		);
+	}
+
+	function injectJoiSubmit() {
+		var form = header.querySelector('.etheme-search-form');
+		if (!form || form.querySelector('.ddh-joi-submit')) {
+			return;
+		}
+		var btn = document.createElement('button');
+		btn.type = 'submit';
+		btn.className = 'ddh-joi-submit';
+		btn.textContent = cfg.joiSearchLabel || 'Ask JOI';
+		form.appendChild(btn);
+	}
+
+	function injectAllWorlds() {
+		var nav = header.querySelector('.dh-os-v4-universe');
+		if (!nav || nav.querySelector('.ddh-all-worlds')) {
+			return;
+		}
+		var btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'ddh-all-worlds';
+		btn.innerHTML =
+			'<span class="ddh-all-worlds__bars" aria-hidden="true"><span></span><span></span><span></span></span>' +
+			'<span>' +
+			escapeHtml(cfg.allWorldsLabel || 'All Worlds') +
+			'</span>';
+		btn.addEventListener('click', function (e) {
+			e.preventDefault();
+			var explore = document.getElementById('dh-os-v4-explore-btn');
+			if (explore) {
+				explore.click();
+			}
+		});
+		nav.insertBefore(btn, nav.firstChild);
+	}
+
+	function injectCategoryRail() {
+		if (!cfg.showCategories || !cfg.categories || !cfg.categories.length) {
+			return;
+		}
+		if (header.querySelector('.ddh-category-rail')) {
+			return;
+		}
+		var rail = document.createElement('div');
+		rail.className = 'ddh-category-rail';
+		rail.setAttribute('role', 'navigation');
+		rail.setAttribute('aria-label', 'Shop categories');
+
+		var inner = document.createElement('div');
+		inner.className = 'ddh-category-rail__inner';
+
+		var title = document.createElement('span');
+		title.className = 'ddh-category-rail__title';
+		title.textContent = 'Browse';
+		inner.appendChild(title);
+
+		var list = document.createElement('ul');
+		list.className = 'ddh-category-rail__list';
+
+		cfg.categories.forEach(function (cat) {
+			if (!cat.url) {
+				return;
+			}
+			var li = document.createElement('li');
+			var a = document.createElement('a');
+			a.className = 'ddh-category-rail__link';
+			a.href = cat.url;
+			if (cat.icon) {
+				var em = document.createElement('span');
+				em.className = 'ddh-category-rail__emoji';
+				em.setAttribute('aria-hidden', 'true');
+				em.textContent = cat.icon;
+				a.appendChild(em);
+			}
+			a.appendChild(document.createTextNode(cat.label || ''));
+			li.appendChild(a);
+			list.appendChild(li);
+		});
+
+		inner.appendChild(list);
+		rail.appendChild(inner);
+		header.appendChild(rail);
+	}
+
+	function init() {
+		wireStandaloneLauncher();
+		if (isStandalone) {
+			header.classList.add('ddh-ready');
+			return;
+		}
+		injectAccentBar();
+		injectDelivery();
+		injectOrders();
+		injectJoiSubmit();
+		wrapIconStack(header.querySelector('.elementor-element-3ab89d5e'), 'Lists');
+		wrapIconStack(header.querySelector('.elementor-element-5671e013'), 'Compare');
+		wrapIconStack(header.querySelector('.elementor-element-26de207e'), 'Cart');
+		syncCartBadge();
+		injectAllWorlds();
+		injectCategoryRail();
+		header.classList.add('ddh-ready');
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
+
+	mq.addEventListener('change', function (e) {
+		if (e.matches) {
+			init();
+		}
+	});
+
+	document.addEventListener('added_to_cart', syncCartBadge);
+	document.addEventListener('removed_from_cart', syncCartBadge);
+})();

@@ -1,0 +1,499 @@
+<?php
+/**
+ * DEJOIY Product Identification Number (DPIN) — 11-character alphanumeric.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/** @var int Total characters (D + 10 alphanumeric). */
+define( 'DEJOIY_DPIN_LENGTH', 11 );
+
+/** @var string Fixed prefix letter. */
+define( 'DEJOIY_DPIN_PREFIX', 'D' );
+
+/**
+ * @return string
+ */
+function dejoiy_dpin_meta_key() {
+	return '_dejoiy_dpin';
+}
+
+/**
+ * @param string $dpin DPIN.
+ * @return bool
+ */
+function dejoiy_dpin_is_valid_format( $dpin ) {
+	$dpin = dejoiy_dpin_normalize( $dpin );
+	return (bool) preg_match( '/^' . preg_quote( DEJOIY_DPIN_PREFIX, '/' ) . '[A-Z0-9]{10}$/', $dpin );
+}
+
+/**
+ * Normalize legacy DPN-######## or messy input.
+ *
+ * @param string $raw Raw value.
+ * @return string
+ */
+function dejoiy_dpin_normalize( $raw ) {
+	$dpin = strtoupper( preg_replace( '/[^A-Z0-9]/', '', (string) $raw ) );
+	if ( '' === $dpin ) {
+		return '';
+	}
+	if ( DEJOIY_DPIN_PREFIX !== $dpin[0] ) {
+		$dpin = DEJOIY_DPIN_PREFIX . ltrim( $dpin, DEJOIY_DPIN_PREFIX );
+	}
+	if ( strlen( $dpin ) > DEJOIY_DPIN_LENGTH ) {
+		$dpin = substr( $dpin, 0, DEJOIY_DPIN_LENGTH );
+	}
+	return $dpin;
+}
+
+/**
+ * Generate a unique DPIN (D + 10 alphanumeric).
+ *
+ * @return string
+ */
+function dejoiy_dpin_generate_unique() {
+	$chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+	$len   = strlen( $chars );
+
+	for ( $attempt = 0; $attempt < 50; $attempt++ ) {
+		$dpin = DEJOIY_DPIN_PREFIX;
+		for ( $i = 0; $i < 10; $i++ ) {
+			$dpin .= $chars[ random_int( 0, $len - 1 ) ];
+		}
+		if ( ! dejoiy_dpin_is_valid_format( $dpin ) ) {
+			continue;
+		}
+		if ( dejoiy_dpin_resolve_product_id( $dpin, true ) ) {
+			continue;
+		}
+		return $dpin;
+	}
+
+	return dejoiy_dpin_generate_unique();
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_get_product_dpin( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return '';
+	}
+	$stored = strtoupper( trim( (string) get_post_meta( $product_id, dejoiy_dpin_meta_key(), true ) ) );
+	if ( dejoiy_dpin_is_valid_format( $stored ) ) {
+		return $stored;
+	}
+	return '';
+}
+
+/**
+ * Ensure product has a valid DPIN (assign if missing or legacy format).
+ *
+ * @param int $product_id Product ID.
+ * @return string DPIN.
+ */
+function dejoiy_ensure_product_dpin( $product_id ) {
+	$product_id = (int) $product_id;
+	$existing   = dejoiy_get_product_dpin( $product_id );
+	if ( $existing ) {
+		return $existing;
+	}
+	$raw = strtoupper( trim( (string) get_post_meta( $product_id, dejoiy_dpin_meta_key(), true ) ) );
+	if ( '' !== $raw && ! dejoiy_dpin_is_valid_format( $raw ) ) {
+		dejoiy_dpin_maybe_assign( $product_id, true );
+		return dejoiy_get_product_dpin( $product_id );
+	}
+	dejoiy_dpin_maybe_assign( $product_id, true );
+	return dejoiy_get_product_dpin( $product_id );
+}
+
+/**
+ * Assign DPIN on product save if missing or invalid.
+ *
+ * @param int  $product_id Product ID.
+ * @param bool $force      Replace invalid legacy values.
+ */
+function dejoiy_dpin_maybe_assign( $product_id, $force = false ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || 'product' !== get_post_type( $product_id ) ) {
+		return;
+	}
+	$current = strtoupper( trim( (string) get_post_meta( $product_id, dejoiy_dpin_meta_key(), true ) ) );
+	if ( ! $force && dejoiy_dpin_is_valid_format( $current ) ) {
+		return;
+	}
+	$dpin = dejoiy_dpin_generate_unique();
+	update_post_meta( $product_id, dejoiy_dpin_meta_key(), $dpin );
+	clean_post_cache( $product_id );
+}
+
+add_action( 'woocommerce_new_product', 'dejoiy_dpin_maybe_assign', 20 );
+add_action( 'save_post_product', 'dejoiy_dpin_maybe_assign', 25 );
+
+/**
+ * Backfill products without a valid DPIN.
+ */
+function dejoiy_dpin_backfill_batch() {
+	if ( get_option( 'dejoiy_dpin_backfill_done' ) ) {
+		return;
+	}
+	$q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'any',
+			'posts_per_page' => 50,
+			'fields'         => 'ids',
+		)
+	);
+	$assigned = 0;
+	foreach ( $q->posts as $pid ) {
+		if ( ! dejoiy_get_product_dpin( (int) $pid ) ) {
+			dejoiy_dpin_maybe_assign( (int) $pid, true );
+			++$assigned;
+		}
+	}
+	if ( empty( $q->posts ) || $assigned < 1 ) {
+		update_option( 'dejoiy_dpin_backfill_done', '1' );
+	}
+}
+add_action( 'init', 'dejoiy_dpin_backfill_batch', 99 );
+
+/**
+ * Migrate legacy DPN-######## codes to 11-character alphanumeric.
+ */
+function dejoiy_dpin_migrate_legacy_format_batch() {
+	if ( get_option( 'dejoiy_dpin_format_v2_done' ) ) {
+		return;
+	}
+	$q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'any',
+			'posts_per_page' => 40,
+			'fields'         => 'ids',
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				array(
+					'key'     => dejoiy_dpin_meta_key(),
+					'compare' => 'EXISTS',
+				),
+			),
+		)
+	);
+	$migrated = 0;
+	foreach ( $q->posts as $pid ) {
+		$pid = (int) $pid;
+		if ( dejoiy_dpin_is_valid_format( dejoiy_get_product_dpin( $pid ) ) ) {
+			continue;
+		}
+		dejoiy_dpin_maybe_assign( $pid, true );
+		++$migrated;
+	}
+	if ( empty( $q->posts ) ) {
+		update_option( 'dejoiy_dpin_format_v2_done', '1' );
+		return;
+	}
+	if ( 0 === $migrated ) {
+		update_option( 'dejoiy_dpin_format_v2_done', '1' );
+	}
+}
+add_action( 'init', 'dejoiy_dpin_migrate_legacy_format_batch', 98 );
+
+/**
+ * Migrate stored DPINs to D + 10 alphanumeric format.
+ */
+function dejoiy_dpin_migrate_d_prefix_batch() {
+	if ( get_option( 'dejoiy_dpin_format_v3_done' ) ) {
+		return;
+	}
+	$q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'any',
+			'posts_per_page' => 40,
+			'fields'         => 'ids',
+		)
+	);
+	$migrated = 0;
+	foreach ( $q->posts as $pid ) {
+		$pid = (int) $pid;
+		if ( dejoiy_dpin_is_valid_format( dejoiy_get_product_dpin( $pid ) ) ) {
+			continue;
+		}
+		dejoiy_dpin_maybe_assign( $pid, true );
+		++$migrated;
+	}
+	if ( empty( $q->posts ) ) {
+		update_option( 'dejoiy_dpin_format_v3_done', '1' );
+		return;
+	}
+	if ( 0 === $migrated ) {
+		update_option( 'dejoiy_dpin_format_v3_done', '1' );
+	}
+}
+add_action( 'init', 'dejoiy_dpin_migrate_d_prefix_batch', 97 );
+
+/**
+ * Resolve product ID from DPIN.
+ *
+ * @param string $dpin     DPIN or partial.
+ * @param bool   $exact_only Only exact 11-char match.
+ * @return int
+ */
+function dejoiy_dpin_resolve_product_id( $dpin, $exact_only = false ) {
+	$raw = strtoupper( preg_replace( '/[^A-Z0-9]/', '', (string) $dpin ) );
+	if ( strlen( $raw ) < DEJOIY_DPIN_LENGTH ) {
+		return 0;
+	}
+	if ( strlen( $raw ) > DEJOIY_DPIN_LENGTH ) {
+		$raw = substr( $raw, 0, DEJOIY_DPIN_LENGTH );
+	}
+
+	$pid = dejoiy_dpin_lookup_product_by_meta_value( $raw );
+	if ( $pid > 0 ) {
+		return $pid;
+	}
+
+	$normalized = dejoiy_dpin_normalize( $raw );
+	if ( $normalized && $normalized !== $raw ) {
+		$pid = dejoiy_dpin_lookup_product_by_meta_value( $normalized );
+		if ( $pid > 0 ) {
+			return $pid;
+		}
+	}
+
+	if ( ! dejoiy_dpin_is_valid_format( $normalized ) ) {
+		return 0;
+	}
+
+	return dejoiy_dpin_lookup_product_by_meta_value( $normalized );
+}
+
+/**
+ * @param string $meta_value Stored DPIN meta (exact match).
+ * @return int
+ */
+function dejoiy_dpin_lookup_product_by_meta_value( $meta_value ) {
+	$meta_value = strtoupper( trim( (string) $meta_value ) );
+	if ( '' === $meta_value ) {
+		return 0;
+	}
+	$ids = get_posts(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => array( 'publish', 'private', 'draft' ),
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_key'       => dejoiy_dpin_meta_key(), // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value'     => $meta_value,
+		)
+	);
+	return ! empty( $ids[0] ) ? (int) $ids[0] : 0;
+}
+
+/**
+ * Resolve product from ?dpin= or ?dejoiy_product= (legacy).
+ *
+ * @return int
+ */
+function dejoiy_dpin_resolve_from_request() {
+	if ( isset( $_GET['dpin'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$pid = dejoiy_dpin_resolve_product_id( sanitize_text_field( wp_unslash( $_GET['dpin'] ) ) ); // phpcs:ignore
+		if ( $pid > 0 ) {
+			return $pid;
+		}
+	}
+	if ( isset( $_GET['dejoiy_product'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return absint( $_GET['dejoiy_product'] ); // phpcs:ignore
+	}
+	if ( isset( $_GET['dejoiy_book'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return absint( $_GET['dejoiy_book'] ); // phpcs:ignore
+	}
+	return 0;
+}
+
+/**
+ * Canonical ecosystem URL using DPIN (not numeric product ID).
+ *
+ * @param int    $product_id Product ID.
+ * @param string $eco        Optional ecosystem override.
+ * @return string
+ */
+function dejoiy_dpin_product_url( $product_id, $eco = '' ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return '';
+	}
+	$dpin = dejoiy_ensure_product_dpin( $product_id );
+	if ( '' === $dpin ) {
+		return '';
+	}
+	if ( 'marketplace' === $eco || '' === $eco ) {
+		if ( function_exists( 'dejoiy_marketplace_product_url' ) ) {
+			$url = dejoiy_marketplace_product_url( $product_id );
+			if ( $url ) {
+				return $url;
+			}
+		}
+	}
+
+	if ( function_exists( 'dejoiy_ecosystem_product_url' ) ) {
+		return dejoiy_ecosystem_product_url( $product_id, $eco, $dpin );
+	}
+	return add_query_arg( 'dpin', $dpin, get_permalink( $product_id ) );
+}
+
+/**
+ * Redirect bare ?dpin= to canonical ecosystem URL.
+ */
+function dejoiy_dpin_redirect_request() {
+	if ( is_admin() ) {
+		return;
+	}
+	$raw = isset( $_GET['dpin'] ) ? sanitize_text_field( wp_unslash( $_GET['dpin'] ) ) : ''; // phpcs:ignore
+	if ( '' === $raw ) {
+		return;
+	}
+	$pid = dejoiy_dpin_resolve_product_id( $raw );
+	if ( $pid < 1 ) {
+		return;
+	}
+	$target = function_exists( 'dejoiy_ecosystem_product_url' )
+		? dejoiy_ecosystem_product_url( $pid )
+		: dejoiy_dpin_product_url( $pid );
+	if ( $target && ! dejoiy_dpin_request_url_matches( $target ) ) {
+		wp_safe_redirect( $target, 302 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_dpin_redirect_request', 5 );
+
+/**
+ * Redirect legacy ?dejoiy_product=ID to ?dpin=CODE (301).
+ */
+function dejoiy_dpin_redirect_legacy_product_id_url() {
+	if ( is_admin() || ! isset( $_GET['dejoiy_product'] ) ) { // phpcs:ignore
+		return;
+	}
+	if ( isset( $_GET['dpin'] ) && '' !== (string) $_GET['dpin'] ) { // phpcs:ignore
+		return;
+	}
+	$pid = absint( $_GET['dejoiy_product'] ); // phpcs:ignore
+	if ( $pid < 1 ) {
+		return;
+	}
+	$url = function_exists( 'dejoiy_ecosystem_product_url' )
+		? dejoiy_ecosystem_product_url( $pid )
+		: dejoiy_dpin_product_url( $pid );
+	if ( $url ) {
+		wp_safe_redirect( $url, 301 );
+		exit;
+	}
+}
+add_action( 'template_redirect', 'dejoiy_dpin_redirect_legacy_product_id_url', 6 );
+
+/**
+ * @param string $target Target URL.
+ * @return bool
+ */
+function dejoiy_dpin_request_url_matches( $target ) {
+	$current = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+	$path    = wp_parse_url( $target, PHP_URL_PATH );
+	$query   = wp_parse_url( $target, PHP_URL_QUERY );
+	if ( $query && false !== strpos( $current, $query ) ) {
+		return true;
+	}
+	return $path && false !== strpos( $current, $path );
+}
+
+/**
+ * Extend product search with DPIN.
+ *
+ * @param WP_Query $query Query.
+ */
+function dejoiy_dpin_extend_product_search( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! is_search() ) {
+		return;
+	}
+	$types = $query->get( 'post_type' );
+	if ( 'product' !== $types && ! in_array( 'product', (array) $types, true ) ) {
+		return;
+	}
+	$term = $query->get( 's' );
+	if ( ! $term ) {
+		return;
+	}
+	$norm = dejoiy_dpin_normalize( $term );
+	if ( strlen( $norm ) >= DEJOIY_DPIN_LENGTH ) {
+		$pid = dejoiy_dpin_resolve_product_id( $norm );
+		if ( $pid > 0 ) {
+			$query->set( 's', '' );
+			$query->set( 'post__in', array( $pid ) );
+		}
+	}
+}
+add_action( 'pre_get_posts', 'dejoiy_dpin_extend_product_search', 20 );
+
+/**
+ * Show DPIN on single product.
+ */
+function dejoiy_dpin_single_product_display() {
+	global $product;
+	if ( ! $product ) {
+		return;
+	}
+	$dpin = dejoiy_ensure_product_dpin( $product->get_id() );
+	if ( '' === $dpin ) {
+		return;
+	}
+	echo '<p class="dejoiy-dpin dejoiy-os-dpin"><span class="dejoiy-dpin-label">' . esc_html__( 'DEJOIY ID', 'dejoiy' ) . '</span> <code class="dejoiy-dpin-code">' . esc_html( $dpin ) . '</code></p>';
+}
+add_action( 'woocommerce_single_product_summary', 'dejoiy_dpin_single_product_display', 6 );
+
+/**
+ * @param array<string, string> $columns Columns.
+ * @return array<string, string>
+ */
+function dejoiy_dpin_admin_column( $columns ) {
+	$columns['dejoiy_dpin'] = __( 'DPIN', 'dejoiy' );
+	return $columns;
+}
+
+add_action( 'manage_product_posts_custom_column', 'dejoiy_dpin_admin_column_render', 10, 2 );
+/**
+ * @param string $column Column.
+ * @param int    $post_id Post ID.
+ */
+function dejoiy_dpin_admin_column_render( $column, $post_id ) {
+	if ( 'dejoiy_dpin' !== $column ) {
+		return;
+	}
+	$dpin = dejoiy_ensure_product_dpin( $post_id );
+	echo $dpin ? esc_html( $dpin ) : '—';
+}
+add_filter( 'manage_edit-product_columns', 'dejoiy_dpin_admin_column' );
+
+add_action( 'wcfm_product_manager_left_panel_after', 'dejoiy_dpin_wcfm_field', 15 );
+/**
+ * WCFM seller DPIN display.
+ */
+function dejoiy_dpin_wcfm_field() {
+	global $wp;
+	if ( empty( $wp->query_vars['wcfm-products-manage'] ) && empty( $_GET['wcfm-products-manage'] ) ) { // phpcs:ignore
+		return;
+	}
+	$product_id = isset( $_GET['products_manage'] ) ? absint( $_GET['products_manage'] ) : 0; // phpcs:ignore
+	if ( $product_id < 1 ) {
+		return;
+	}
+	$dpin = dejoiy_ensure_product_dpin( $product_id );
+	if ( $dpin ) {
+		echo '<div class="wcfm-container"><p><strong>' . esc_html__( 'DEJOIY Product ID (DPIN)', 'dejoiy' ) . ':</strong> <code>' . esc_html( $dpin ) . '</code></p></div>';
+	}
+}

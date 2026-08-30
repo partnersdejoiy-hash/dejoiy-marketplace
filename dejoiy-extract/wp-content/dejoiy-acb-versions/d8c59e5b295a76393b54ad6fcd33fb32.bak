@@ -1,0 +1,677 @@
+<?php
+/**
+ * DEJOIY Services — landing + viewer HTML.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * WCFM vendor registration page (same as site-wide seller signup).
+ *
+ * @return string
+ */
+function dejoiy_services_vendor_registration_url() {
+	$url = home_url( '/vendor-register/' );
+
+	if ( function_exists( 'wcfm_get_page_id' ) ) {
+		$page_id = wcfm_get_page_id( 'vendor_registration' );
+		if ( $page_id ) {
+			$permalink = get_permalink( $page_id );
+			if ( $permalink && ! is_wp_error( $permalink ) ) {
+				$url = $permalink;
+			}
+		}
+	}
+
+	return (string) apply_filters( 'dejoiy_services_vendor_registration_url', $url );
+}
+
+/**
+ * Compact logo markup (never output full-size custom logo HTML).
+ *
+ * @return string
+ */
+function dejoiy_services_logo_html() {
+	$home    = home_url( '/' );
+	$logo_id = (int) get_theme_mod( 'custom_logo' );
+
+	if ( $logo_id > 0 ) {
+		$img = wp_get_attachment_image(
+			$logo_id,
+			array( 140, 48 ),
+			false,
+			array(
+				'class'    => 'dsv-logo__img',
+				'alt'      => get_bloginfo( 'name', 'display' ),
+				'loading'  => 'eager',
+				'decoding' => 'async',
+			)
+		);
+		if ( $img ) {
+			return '<a class="dsv-logo" href="' . esc_url( $home ) . '" aria-label="' . esc_attr__( 'DEJOIY Home', 'dejoiy' ) . '">' . $img . '</a>';
+		}
+	}
+
+	return '<a class="dsv-logo dsv-logo--text" href="' . esc_url( $home ) . '"><span class="dsv-logo__mark">DEJOIY</span></a>';
+}
+
+/**
+ * @return int
+ */
+function dejoiy_services_cart_count() {
+	if ( ! function_exists( 'WC' ) || ! WC()->cart ) {
+		return 0;
+	}
+	return (int) WC()->cart->get_cart_contents_count();
+}
+
+/**
+ * Ecosystem switcher items.
+ *
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_services_ecosystem_nav() {
+	$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+	return array(
+		array(
+			'id'     => 'marketplace',
+			'label'  => __( 'Marketplace', 'dejoiy' ),
+			'url'    => $shop,
+			'icon'   => '◆',
+			'active' => false,
+		),
+		array(
+			'id'     => 'studio',
+			'label'  => __( 'Studio', 'dejoiy' ),
+			'url'    => home_url( '/dejoiy-custom-studio/' ),
+			'icon'   => '✿',
+			'active' => false,
+		),
+		array(
+			'id'     => 'nexus',
+			'label'  => __( 'Nexus', 'dejoiy' ),
+			'url'    => home_url( '/dejoiy-library/?dejoiy_library=1' ),
+			'icon'   => '✦',
+			'active' => false,
+		),
+		array(
+			'id'     => 'services',
+			'label'  => __( 'Services', 'dejoiy' ),
+			'url'    => dejoiy_services_base_url(),
+			'icon'   => '◎',
+			'active' => true,
+		),
+		array(
+			'id'          => 'quick',
+			'label'       => __( 'Quick', 'dejoiy' ),
+			'url'         => home_url( '/dejoiy-quick-mart/' ),
+			'icon'        => '⚡',
+			'active'      => false,
+			'coming_soon' => true,
+		),
+	);
+}
+
+/**
+ * Virtual service category cards.
+ *
+ * @return array<int, array<string, string>>
+ */
+function dejoiy_services_category_cards() {
+	return array(
+		array(
+			'key'   => 'design',
+			'icon'  => '🎨',
+			'title' => __( 'Design Services', 'dejoiy' ),
+			'desc'  => __( 'Logos, UI, graphics & brand identity', 'dejoiy' ),
+			'terms' => array( 'graphic-design', 'content-writing' ),
+		),
+		array(
+			'key'   => 'marketing',
+			'icon'  => '📣',
+			'title' => __( 'Marketing Services', 'dejoiy' ),
+			'desc'  => __( 'SEO, ads, social & growth campaigns', 'dejoiy' ),
+			'terms' => array( 'digital-marketing' ),
+		),
+		array(
+			'key'   => 'development',
+			'icon'  => '💻',
+			'title' => __( 'Development Services', 'dejoiy' ),
+			'desc'  => __( 'Web, apps, integrations & automation', 'dejoiy' ),
+			'terms' => array( 'web-development' ),
+		),
+		array(
+			'key'   => 'business',
+			'icon'  => '💼',
+			'title' => __( 'Business Services', 'dejoiy' ),
+			'desc'  => __( 'Consulting, ops & professional support', 'dejoiy' ),
+			'terms' => array( 'services-marketplace' ),
+		),
+		array(
+			'key'   => 'personal',
+			'icon'  => '✨',
+			'title' => __( 'Personal Services', 'dejoiy' ),
+			'desc'  => __( 'Coaching, wellness & lifestyle experts', 'dejoiy' ),
+			'terms' => array( 'services-marketplace' ),
+		),
+	);
+}
+
+/**
+ * @param string $cat_key Category key from svc_cat.
+ * @return array<int, string>
+ */
+function dejoiy_services_terms_for_category( $cat_key ) {
+	foreach ( dejoiy_services_category_cards() as $card ) {
+		if ( $card['key'] === $cat_key ) {
+			return $card['terms'];
+		}
+	}
+	return array();
+}
+
+/**
+ * @param string $cat_key Optional filter.
+ * @return string
+ */
+function dejoiy_services_listing_url( $cat_key = '' ) {
+	$args = array();
+	if ( $cat_key ) {
+		$args['svc_cat'] = $cat_key;
+	}
+	return add_query_arg( $args, dejoiy_services_base_url() . '#dsv-services' );
+}
+
+/**
+ * Dedicated sticky header.
+ *
+ * @return string
+ */
+function dejoiy_services_header_html() {
+	$cart_url    = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	$account_url = home_url( '/my-account/' );
+	$cart_ct     = dejoiy_services_cart_count();
+	$search_q    = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore
+
+	ob_start();
+	?>
+	<div id="dejoiy-services-chrome" class="dsv-chrome">
+		<header class="dsv-header" id="dsv-header" role="banner">
+			<div class="dsv-header__in">
+				<div class="dsv-header__row dsv-header__row--top">
+					<?php echo dejoiy_services_logo_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<div class="dsv-header__actions">
+						<a class="dsv-header__icon" href="<?php echo esc_url( $account_url ); ?>" aria-label="<?php esc_attr_e( 'My account', 'dejoiy' ); ?>">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+						</a>
+						<a class="dsv-header__icon dsv-header__icon--cart" href="<?php echo esc_url( $cart_url ); ?>" aria-label="<?php esc_attr_e( 'Cart', 'dejoiy' ); ?>">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M6 6L5 3H2"/></svg>
+							<?php if ( $cart_ct > 0 ) : ?>
+								<span class="dsv-header__badge"><?php echo esc_html( (string) $cart_ct ); ?></span>
+							<?php endif; ?>
+						</a>
+					</div>
+				</div>
+				<div class="dsv-header__row dsv-header__row--search">
+					<form class="dsv-header__search" action="<?php echo esc_url( dejoiy_services_base_url() ); ?>" method="get" role="search" autocomplete="off">
+						<label class="screen-reader-text" for="dsv-search-input"><?php esc_html_e( 'Search services', 'dejoiy' ); ?></label>
+						<span class="dsv-header__search-ico" aria-hidden="true">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+						</span>
+						<input type="search" id="dsv-search-input" class="dsv-header__search-input" name="s" value="<?php echo esc_attr( $search_q ); ?>" placeholder="<?php esc_attr_e( 'Search services only…', 'dejoiy' ); ?>" data-dsv-search-input />
+						<input type="hidden" name="post_type" value="product" />
+						<input type="hidden" name="dejoiy_services_search" value="1" />
+					</form>
+				</div>
+			</div>
+			<div class="dsv-header__results" id="dsv-search-results" hidden></div>
+		</header>
+
+		<nav class="dsv-eco-bar" aria-label="<?php esc_attr_e( 'DEJOIY ecosystems', 'dejoiy' ); ?>">
+			<div class="dsv-eco-bar__track">
+				<?php foreach ( dejoiy_services_ecosystem_nav() as $eco ) : ?>
+					<a class="dsv-eco-bar__item<?php echo ! empty( $eco['active'] ) ? ' is-active' : ''; ?><?php echo ! empty( $eco['coming_soon'] ) ? ' is-soon' : ''; ?>" href="<?php echo esc_url( $eco['url'] ); ?>"<?php echo ! empty( $eco['coming_soon'] ) ? ' aria-disabled="true" tabindex="-1"' : ''; ?>>
+						<span class="dsv-eco-bar__icon" aria-hidden="true"><?php echo esc_html( $eco['icon'] ); ?></span>
+						<span class="dsv-eco-bar__label"><?php echo esc_html( $eco['label'] ); ?></span>
+						<?php if ( ! empty( $eco['coming_soon'] ) ) : ?>
+							<span class="dsv-eco-bar__soon"><?php esc_html_e( 'COMING SOON', 'dejoiy' ); ?></span>
+						<?php endif; ?>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</nav>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_services_delivery_label( $product_id ) {
+	$custom = (string) get_post_meta( $product_id, '_dejoiy_service_delivery', true );
+	if ( '' !== $custom ) {
+		return $custom;
+	}
+	$days = (string) get_post_meta( $product_id, '_dejoiy_delivery_days', true );
+	if ( '' !== $days && is_numeric( $days ) ) {
+		/* translators: %d: number of days */
+		return sprintf( _n( '%d day delivery', '%d days delivery', (int) $days, 'dejoiy' ), (int) $days );
+	}
+	return __( '3–7 days delivery', 'dejoiy' );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_services_rating_html( $product_id ) {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return '';
+	}
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		return '';
+	}
+	$avg   = (float) $product->get_average_rating();
+	$count = (int) $product->get_rating_count();
+	if ( $count < 1 ) {
+		return '<span class="dsv-card__rating dsv-card__rating--new">' . esc_html__( 'New provider', 'dejoiy' ) . '</span>';
+	}
+	return sprintf(
+		'<span class="dsv-card__rating" aria-label="%1$s"><span aria-hidden="true">★</span> %2$s <em>(%3$d)</em></span>',
+		esc_attr( sprintf( __( 'Rated %1$s out of 5', 'dejoiy' ), number_format( $avg, 1 ) ) ),
+		esc_html( number_format( $avg, 1 ) ),
+		$count
+	);
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_services_render_service_card( $product_id ) {
+	$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+	if ( ! $product ) {
+		return '';
+	}
+
+	$url    = function_exists( 'dejoiy_ecosystem_product_url' ) ? dejoiy_ecosystem_product_url( $product_id ) : get_permalink( $product_id );
+	$cover  = get_the_post_thumbnail_url( $product_id, 'woocommerce_thumbnail' );
+	$seller = function_exists( 'dejoiy_universe_seller_label' ) ? dejoiy_universe_seller_label( $product_id ) : __( 'Verified provider', 'dejoiy' );
+	$delivery = dejoiy_services_delivery_label( $product_id );
+	$rating = dejoiy_services_rating_html( $product_id );
+
+	ob_start();
+	?>
+	<article class="dsv-card" data-reveal data-product-id="<?php echo esc_attr( (string) $product_id ); ?>">
+		<a class="dsv-card__link" href="<?php echo esc_url( $url ); ?>">
+			<div class="dsv-card__media">
+				<?php if ( $cover ) : ?>
+					<img class="dsv-card__img" src="<?php echo esc_url( $cover ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" loading="lazy" decoding="async" width="320" height="240" />
+				<?php else : ?>
+					<span class="dsv-card__ph" aria-hidden="true">◎</span>
+				<?php endif; ?>
+				<span class="dsv-card__badge"><?php esc_html_e( 'Services', 'dejoiy' ); ?></span>
+			</div>
+			<div class="dsv-card__body">
+				<h3 class="dsv-card__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+				<p class="dsv-card__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></p>
+				<p class="dsv-card__seller"><?php echo esc_html( $seller ); ?></p>
+				<?php echo $rating; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				<p class="dsv-card__delivery"><?php echo esc_html( $delivery ); ?></p>
+				<span class="dsv-card__cta"><?php esc_html_e( 'View Service', 'dejoiy' ); ?></span>
+			</div>
+		</a>
+		<?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
+			<button type="button" class="dsv-card__book dsv-btn dsv-btn--book" data-dsv-book="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Book this service', 'dejoiy' ); ?></button>
+		<?php endif; ?>
+	</article>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Full landing page markup.
+ *
+ * @return string
+ */
+function dejoiy_services_landing_html() {
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$svc_cat   = isset( $_GET['svc_cat'] ) ? sanitize_key( wp_unslash( $_GET['svc_cat'] ) ) : '';
+	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$search    = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
+	$provider  = dejoiy_services_vendor_registration_url();
+	$list_url  = dejoiy_services_listing_url();
+
+	$query_args = array(
+		'posts_per_page' => 12,
+		'paged'          => max( 1, (int) get_query_var( 'paged' ) ),
+	);
+	if ( $search ) {
+		$query_args['s'] = $search;
+	}
+	if ( $svc_cat ) {
+		$terms = dejoiy_services_terms_for_category( $svc_cat );
+		if ( ! empty( $terms ) ) {
+			$query_args['tax_query'] = array(
+				array(
+					'taxonomy'         => 'product_cat',
+					'field'            => 'slug',
+					'terms'            => $terms,
+					'operator'         => 'IN',
+					'include_children' => true,
+				),
+			);
+		}
+	}
+
+	$query = dejoiy_services_query_products( $query_args );
+
+	ob_start();
+	?>
+	<div class="dsv-app" id="dejoiy-services-app">
+		<section class="dsv-hero" data-reveal>
+			<div class="dsv-hero__bg" aria-hidden="true">
+				<span class="dsv-hero__orb dsv-hero__orb--1"></span>
+				<span class="dsv-hero__orb dsv-hero__orb--2"></span>
+				<span class="dsv-hero__orb dsv-hero__orb--3"></span>
+			</div>
+			<div class="dsv-hero__in">
+				<p class="dsv-hero__eyebrow"><?php esc_html_e( 'DEJOIY Services Marketplace', 'dejoiy' ); ?></p>
+				<h1 class="dsv-hero__title"><?php esc_html_e( 'Premium Services for Every Need', 'dejoiy' ); ?></h1>
+				<p class="dsv-hero__desc"><?php esc_html_e( 'Hire experts. Book services. Get professional work done faster with DEJOIY Services.', 'dejoiy' ); ?></p>
+				<div class="dsv-hero__actions">
+					<a class="dsv-btn dsv-btn--primary" href="<?php echo esc_url( $list_url ); ?>"><?php esc_html_e( 'Browse Services', 'dejoiy' ); ?></a>
+					<a class="dsv-btn dsv-btn--ghost" href="<?php echo esc_url( $provider ); ?>"><?php esc_html_e( 'Become a Service Provider', 'dejoiy' ); ?></a>
+				</div>
+			</div>
+		</section>
+
+		<section class="dsv-categories" aria-labelledby="dsv-categories-title" data-reveal>
+			<div class="dsv-section__head">
+				<h2 id="dsv-categories-title" class="dsv-section__title"><?php esc_html_e( 'Browse by category', 'dejoiy' ); ?></h2>
+				<button type="button" class="dsv-filter-toggle" id="dsv-filter-toggle" aria-expanded="false" aria-controls="dsv-filter-sheet"><?php esc_html_e( 'Filters', 'dejoiy' ); ?></button>
+			</div>
+			<div class="dsv-categories__grid">
+				<?php foreach ( dejoiy_services_category_cards() as $card ) : ?>
+					<a class="dsv-cat-card<?php echo $svc_cat === $card['key'] ? ' is-active' : ''; ?>" href="<?php echo esc_url( dejoiy_services_listing_url( $card['key'] ) ); ?>" data-reveal>
+						<span class="dsv-cat-card__icon" aria-hidden="true"><?php echo esc_html( $card['icon'] ); ?></span>
+						<h3 class="dsv-cat-card__title"><?php echo esc_html( $card['title'] ); ?></h3>
+						<p class="dsv-cat-card__desc"><?php echo esc_html( $card['desc'] ); ?></p>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<section class="dsv-listing" id="dsv-services" aria-labelledby="dsv-listing-title" data-reveal>
+			<div class="dsv-section__head">
+				<h2 id="dsv-listing-title" class="dsv-section__title">
+					<?php
+					if ( $search ) {
+						/* translators: %s: search query */
+						printf( esc_html__( 'Results for “%s”', 'dejoiy' ), esc_html( $search ) );
+					} elseif ( $svc_cat ) {
+						esc_html_e( 'Services in this category', 'dejoiy' );
+					} else {
+						esc_html_e( 'Featured services', 'dejoiy' );
+					}
+					?>
+				</h2>
+				<?php if ( $svc_cat || $search ) : ?>
+					<a class="dsv-clear" href="<?php echo esc_url( dejoiy_services_base_url() . '#dsv-services' ); ?>"><?php esc_html_e( 'Clear filters', 'dejoiy' ); ?></a>
+				<?php endif; ?>
+			</div>
+			<div class="dsv-listing__grid" id="dsv-listing-grid">
+				<?php
+				if ( $query->have_posts() ) {
+					while ( $query->have_posts() ) {
+						$query->the_post();
+						$pid = get_the_ID();
+						if ( dejoiy_services_is_product( $pid ) ) {
+							echo dejoiy_services_render_service_card( $pid ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+					}
+					wp_reset_postdata();
+				} else {
+					echo '<p class="dsv-empty">' . esc_html__( 'No services match your filters yet. Try another category or search.', 'dejoiy' ) . '</p>';
+				}
+				?>
+			</div>
+			<?php if ( $query->max_num_pages > 1 ) : ?>
+				<nav class="dsv-pagination" aria-label="<?php esc_attr_e( 'Services pagination', 'dejoiy' ); ?>">
+					<?php
+					echo wp_kses_post(
+						paginate_links(
+							array(
+								'total'   => $query->max_num_pages,
+								'current' => max( 1, (int) get_query_var( 'paged' ) ),
+								'format'  => '?paged=%#%',
+							)
+						)
+					);
+					?>
+				</nav>
+			<?php endif; ?>
+		</section>
+	</div>
+
+	<div class="dsv-filter-sheet" id="dsv-filter-sheet" hidden>
+		<div class="dsv-filter-sheet__panel" role="dialog" aria-label="<?php esc_attr_e( 'Service filters', 'dejoiy' ); ?>">
+			<header class="dsv-filter-sheet__head">
+				<strong><?php esc_html_e( 'Categories', 'dejoiy' ); ?></strong>
+				<button type="button" class="dsv-filter-sheet__close" id="dsv-filter-close" aria-label="<?php esc_attr_e( 'Close', 'dejoiy' ); ?>">×</button>
+			</header>
+			<div class="dsv-filter-sheet__list">
+				<a class="dsv-filter-sheet__item<?php echo '' === $svc_cat ? ' is-active' : ''; ?>" href="<?php echo esc_url( dejoiy_services_listing_url( '' ) ); ?>"><?php esc_html_e( 'All services', 'dejoiy' ); ?></a>
+				<?php foreach ( dejoiy_services_category_cards() as $card ) : ?>
+					<a class="dsv-filter-sheet__item<?php echo $svc_cat === $card['key'] ? ' is-active' : ''; ?>" href="<?php echo esc_url( dejoiy_services_listing_url( $card['key'] ) ); ?>"><?php echo esc_html( $card['title'] ); ?></a>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Single service viewer (not default WooCommerce template).
+ *
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_services_viewer_html( $product_id ) {
+	$product_id = (int) $product_id;
+	$product    = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+	if ( ! $product || ! dejoiy_services_is_product( $product_id ) ) {
+		return dejoiy_services_landing_html();
+	}
+
+	$cover    = get_the_post_thumbnail_url( $product_id, 'large' );
+	$gallery  = $product->get_gallery_image_ids();
+	$seller   = function_exists( 'dejoiy_universe_seller_label' ) ? dejoiy_universe_seller_label( $product_id ) : '';
+	$vendor   = (int) get_post_field( 'post_author', $product_id );
+	$store    = ( $vendor && function_exists( 'wcfmmp_get_store_url' ) ) ? wcfmmp_get_store_url( $vendor ) : '';
+	$delivery = dejoiy_services_delivery_label( $product_id );
+	$rating   = dejoiy_services_rating_html( $product_id );
+	$dpin     = function_exists( 'dejoiy_display_product_dpin' ) ? dejoiy_display_product_dpin( $product_id ) : '';
+	$desc     = $product->get_description() ?: $product->get_short_description();
+	$atc_url  = $product->add_to_cart_url();
+
+	ob_start();
+	?>
+	<div class="dsv-app dsv-app--viewer" id="dejoiy-services-viewer">
+		<main class="dsv-viewer" data-reveal>
+			<p class="dsv-viewer__crumb"><a href="<?php echo esc_url( dejoiy_services_base_url() ); ?>">&larr; <?php esc_html_e( 'All Services', 'dejoiy' ); ?></a></p>
+			<div class="dsv-viewer__layout">
+				<div class="dsv-viewer__gallery">
+					<?php if ( $cover ) : ?>
+						<img class="dsv-viewer__img" src="<?php echo esc_url( $cover ); ?>" alt="<?php echo esc_attr( $product->get_name() ); ?>" loading="eager" decoding="async" />
+					<?php endif; ?>
+					<?php foreach ( array_slice( $gallery, 0, 4 ) as $gid ) : ?>
+						<?php $gurl = wp_get_attachment_image_url( (int) $gid, 'medium' ); ?>
+						<?php if ( $gurl ) : ?>
+							<img class="dsv-viewer__thumb" src="<?php echo esc_url( $gurl ); ?>" alt="" loading="lazy" decoding="async" />
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</div>
+				<div class="dsv-viewer__summary">
+					<span class="dsv-viewer__badge">💼 <?php esc_html_e( 'Services', 'dejoiy' ); ?></span>
+					<h1 class="dsv-viewer__title"><?php echo esc_html( $product->get_name() ); ?></h1>
+					<?php if ( $dpin ) : ?>
+						<p class="dsv-viewer__dpin"><?php echo esc_html( $dpin ); ?></p>
+					<?php endif; ?>
+					<p class="dsv-viewer__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></p>
+					<?php echo $rating; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					<p class="dsv-viewer__delivery"><?php echo esc_html( $delivery ); ?></p>
+					<p class="dsv-viewer__seller">
+						<?php esc_html_e( 'Provider:', 'dejoiy' ); ?>
+						<?php if ( $store ) : ?>
+							<a href="<?php echo esc_url( $store ); ?>"><?php echo esc_html( $seller ); ?></a>
+						<?php else : ?>
+							<?php echo esc_html( $seller ); ?>
+						<?php endif; ?>
+					</p>
+					<?php if ( $desc ) : ?>
+						<div class="dsv-viewer__desc"><?php echo wp_kses_post( wpautop( $desc ) ); ?></div>
+					<?php endif; ?>
+					<div class="dsv-viewer__actions">
+						<?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
+							<button type="button" class="dsv-btn dsv-btn--primary" data-dsv-book="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Book this service', 'dejoiy' ); ?></button>
+						<?php endif; ?>
+						<a href="<?php echo esc_url( dejoiy_services_base_url() ); ?>" class="dsv-btn dsv-btn--ghost"><?php esc_html_e( 'Browse more', 'dejoiy' ); ?></a>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<section class="dsv-listing dsv-listing--related" aria-labelledby="dsv-related-title" data-reveal>
+			<h2 id="dsv-related-title" class="dsv-section__title"><?php esc_html_e( 'More services you may like', 'dejoiy' ); ?></h2>
+			<div class="dsv-listing__grid">
+				<?php
+				$related = dejoiy_services_query_products(
+					array(
+						'posts_per_page' => 4,
+						'post__not_in'   => array( $product_id ),
+						'orderby'        => 'rand',
+					)
+				);
+				while ( $related->have_posts() ) {
+					$related->the_post();
+					echo dejoiy_services_render_service_card( get_the_ID() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+				wp_reset_postdata();
+				?>
+			</div>
+		</section>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Global booking modal markup (lazy-filled via JS).
+ *
+ * @return string
+ */
+function dejoiy_services_booking_modal_html() {
+	ob_start();
+	?>
+	<div class="dsv-booking" id="dsv-booking" hidden aria-hidden="true">
+		<div class="dsv-booking__backdrop" data-dsv-booking-close></div>
+		<div class="dsv-booking__panel" role="dialog" aria-modal="true" aria-labelledby="dsv-booking-title">
+			<header class="dsv-booking__head">
+				<div class="dsv-booking__head-text">
+					<p class="dsv-booking__eyebrow"><?php esc_html_e( 'DEJOIY Services', 'dejoiy' ); ?></p>
+					<h2 id="dsv-booking-title" class="dsv-booking__title"><?php esc_html_e( 'Book this service', 'dejoiy' ); ?></h2>
+				</div>
+				<button type="button" class="dsv-booking__close" data-dsv-booking-close aria-label="<?php esc_attr_e( 'Close', 'dejoiy' ); ?>">×</button>
+			</header>
+			<div class="dsv-booking__loader" id="dsv-booking-loader" hidden>
+				<span class="dsv-booking__spinner"></span>
+				<p><?php esc_html_e( 'Loading service details…', 'dejoiy' ); ?></p>
+			</div>
+			<form class="dsv-booking__form" id="dsv-booking-form" hidden enctype="multipart/form-data">
+				<input type="hidden" name="product_id" id="dsv-booking-product-id" value="" />
+				<input type="hidden" name="service_type" id="dsv-booking-service-type" value="" />
+				<input type="hidden" name="price_type" id="dsv-booking-price-type" value="fixed" />
+
+				<div class="dsv-booking__summary" id="dsv-booking-summary"></div>
+
+				<div class="dsv-booking__field">
+					<label for="dsv-booking-delivery"><?php esc_html_e( 'Delivery timeline', 'dejoiy' ); ?></label>
+					<select id="dsv-booking-delivery" name="delivery_timeline">
+						<option value=""><?php esc_html_e( 'Use default delivery', 'dejoiy' ); ?></option>
+						<option value="Express (1–2 days)"><?php esc_html_e( 'Express (1–2 days)', 'dejoiy' ); ?></option>
+						<option value="Standard (3–7 days)"><?php esc_html_e( 'Standard (3–7 days)', 'dejoiy' ); ?></option>
+						<option value="Extended (7–14 days)"><?php esc_html_e( 'Extended (7–14 days)', 'dejoiy' ); ?></option>
+					</select>
+				</div>
+
+				<div class="dsv-booking__fields dsv-booking__fields--design" data-type="design" hidden>
+					<div class="dsv-booking__field">
+						<label for="dsv-req-design"><?php esc_html_e( 'Requirements', 'dejoiy' ); ?> <span class="req">*</span></label>
+						<textarea id="dsv-req-design" name="requirements" rows="4" placeholder="<?php esc_attr_e( 'Describe what you need designed…', 'dejoiy' ); ?>"></textarea>
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-brand"><?php esc_html_e( 'Brand name', 'dejoiy' ); ?></label>
+						<input type="text" id="dsv-brand" name="brand_name" />
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-files-design"><?php esc_html_e( 'Reference files', 'dejoiy' ); ?></label>
+						<input type="file" id="dsv-files-design" name="booking_files[]" accept="image/*,.pdf,.zip" multiple />
+					</div>
+				</div>
+
+				<div class="dsv-booking__fields dsv-booking__fields--development" data-type="development" hidden>
+					<div class="dsv-booking__field">
+						<label for="dsv-proj-desc"><?php esc_html_e( 'Project description', 'dejoiy' ); ?> <span class="req">*</span></label>
+						<textarea id="dsv-proj-desc" name="project_description" rows="4"></textarea>
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-tech"><?php esc_html_e( 'Tech stack preference', 'dejoiy' ); ?></label>
+						<input type="text" id="dsv-tech" name="tech_stack" placeholder="WordPress, React, PHP…" />
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-deadline"><?php esc_html_e( 'Deadline', 'dejoiy' ); ?></label>
+						<input type="date" id="dsv-deadline" name="deadline" />
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-files-dev"><?php esc_html_e( 'Project files', 'dejoiy' ); ?></label>
+						<input type="file" id="dsv-files-dev" name="booking_files[]" accept="image/*,.pdf,.zip,.doc,.docx" multiple />
+					</div>
+				</div>
+
+				<div class="dsv-booking__fields dsv-booking__fields--marketing dsv-booking__fields--business dsv-booking__fields--personal" data-type="business" hidden>
+					<div class="dsv-booking__field">
+						<label for="dsv-consult"><?php esc_html_e( 'Consultation details', 'dejoiy' ); ?></label>
+						<textarea id="dsv-consult" name="consultation_details" rows="4"></textarea>
+					</div>
+					<div class="dsv-booking__field">
+						<label for="dsv-slot"><?php esc_html_e( 'Preferred meeting slot', 'dejoiy' ); ?></label>
+						<input type="text" id="dsv-slot" name="meeting_slot" placeholder="<?php esc_attr_e( 'e.g. Mon 10am IST', 'dejoiy' ); ?>" />
+					</div>
+				</div>
+
+				<div class="dsv-booking__field">
+					<label for="dsv-notes"><?php esc_html_e( 'Additional notes', 'dejoiy' ); ?></label>
+					<textarea id="dsv-notes" name="customer_notes" rows="2"></textarea>
+				</div>
+
+				<p class="dsv-booking__error" id="dsv-booking-error" hidden role="alert"></p>
+
+				<footer class="dsv-booking__foot">
+					<button type="button" class="dsv-btn dsv-btn--ghost" data-dsv-booking-close><?php esc_html_e( 'Cancel', 'dejoiy' ); ?></button>
+					<button type="submit" class="dsv-btn dsv-btn--primary" id="dsv-booking-submit"><?php esc_html_e( 'Confirm booking', 'dejoiy' ); ?></button>
+				</footer>
+			</form>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}

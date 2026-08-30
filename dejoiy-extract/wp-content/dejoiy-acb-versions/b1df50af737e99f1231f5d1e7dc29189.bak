@@ -1,0 +1,426 @@
+<?php
+/**
+ * DEJOIY Nexus — Project Gutenberg sync (public-domain books + files).
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @param int $gid Gutenberg ebook ID.
+ * @return string
+ */
+function dejoiy_library_gutenberg_txt_url( $gid ) {
+	return sprintf( 'https://www.gutenberg.org/cache/epub/%1$d/pg%1$d.txt', (int) $gid );
+}
+
+/**
+ * @param int $gid Gutenberg ebook ID.
+ * @return string
+ */
+function dejoiy_library_gutenberg_epub_url( $gid ) {
+	return sprintf( 'https://www.gutenberg.org/ebooks/%d.epub.noimages', (int) $gid );
+}
+
+/**
+ * @param int $gid Gutenberg ebook ID.
+ * @return string
+ */
+function dejoiy_library_gutenberg_cover_url( $gid ) {
+	return sprintf( 'https://www.gutenberg.org/cache/epub/%1$d/pg%1$d.cover.medium.jpg', (int) $gid );
+}
+
+/**
+ * @param int $product_id Product ID.
+ * @return string
+ */
+function dejoiy_library_get_reader_text( $product_id ) {
+	$stored = get_post_meta( (int) $product_id, '_dejoiy_library_text', true );
+	if ( $stored ) {
+		return (string) $stored;
+	}
+	$path = get_post_meta( (int) $product_id, '_dejoiy_library_text_file', true );
+	if ( $path && is_readable( $path ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$raw = file_get_contents( $path );
+		return $raw ? (string) $raw : '';
+	}
+	return '';
+}
+
+/**
+ * Download remote file to a temp path.
+ *
+ * @param string $url     URL.
+ * @param string $suffix  File suffix.
+ * @return string|WP_Error
+ */
+function dejoiy_library_download_to_temp( $url, $suffix = '.tmp' ) {
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+
+	$filter = static function ( $args ) {
+		$args['user-agent'] = 'DEJOIY-Nexus/1.0; ' . home_url();
+		$args['timeout']    = 90;
+		return $args;
+	};
+	add_filter( 'http_request_args', $filter, 10, 1 );
+
+	$tmp = download_url( $url, 90 );
+	remove_filter( 'http_request_args', $filter, 10 );
+
+	if ( ! is_wp_error( $tmp ) ) {
+		return $tmp;
+	}
+
+	$response = wp_remote_get(
+		$url,
+		array(
+			'timeout' => 90,
+			'headers' => array(
+				'User-Agent' => 'DEJOIY-Nexus/1.0; ' . home_url(),
+			),
+		)
+	);
+	if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+		return $tmp;
+	}
+	$body = wp_remote_retrieve_body( $response );
+	if ( ! $body ) {
+		return $tmp;
+	}
+	$tmp = wp_tempnam( 'dlu-' . wp_generate_password( 8, false ) . $suffix );
+	if ( ! $tmp ) {
+		return new WP_Error( 'dlu_temp', 'Could not create temp file.' );
+	}
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	file_put_contents( $tmp, $body );
+	return $tmp;
+}
+
+/**
+ * Sideload a file into the media library and return attachment ID.
+ *
+ * @param int    $post_id  Post ID.
+ * @param string $tmp_path Temp path.
+ * @param string $name     Filename.
+ * @return int|false
+ */
+function dejoiy_library_sideload_file( $post_id, $tmp_path, $name ) {
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	$file = array(
+		'name'     => sanitize_file_name( $name ),
+		'tmp_name' => $tmp_path,
+	);
+	$attach_id = media_handle_sideload( $file, $post_id );
+	if ( is_wp_error( $attach_id ) ) {
+		return false;
+	}
+	return (int) $attach_id;
+}
+
+/**
+ * Attach Gutenberg cover image to product.
+ *
+ * @param int $product_id Product ID.
+ * @param int $gid        Gutenberg ID.
+ * @return bool
+ */
+function dejoiy_library_attach_gutenberg_cover( $product_id, $gid ) {
+	$url = dejoiy_library_gutenberg_cover_url( $gid );
+	$tmp = dejoiy_library_download_to_temp( $url, '.jpg' );
+	if ( is_wp_error( $tmp ) ) {
+		update_post_meta( $product_id, '_dejoiy_library_cover', esc_url_raw( $url ) );
+		return false;
+	}
+	$attach_id = dejoiy_library_sideload_file( $product_id, $tmp, 'gutenberg-' . $gid . '-cover.jpg' );
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+	@unlink( $tmp );
+	if ( $attach_id ) {
+		set_post_thumbnail( $product_id, $attach_id );
+		$src = wp_get_attachment_url( $attach_id );
+		if ( $src ) {
+			update_post_meta( $product_id, '_dejoiy_library_cover', esc_url_raw( $src ) );
+		}
+		return true;
+	}
+	update_post_meta( $product_id, '_dejoiy_library_cover', esc_url_raw( $url ) );
+	return false;
+}
+
+/**
+ * Import plain-text sample + full text file for reader; attach EPUB download.
+ *
+ * @param WC_Product $product Product.
+ * @param int        $gid     Gutenberg ID.
+ * @return void
+ */
+function dejoiy_library_attach_gutenberg_files( $product, $gid ) {
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$product_id = $product->get_id();
+	$txt_url    = dejoiy_library_gutenberg_txt_url( $gid );
+	$txt_tmp    = dejoiy_library_download_to_temp( $txt_url, '.txt' );
+
+	if ( ! is_wp_error( $txt_tmp ) ) {
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$raw = file_get_contents( $txt_tmp );
+		if ( $raw ) {
+			$raw = preg_replace( '/\r\n|\r/', "\n", $raw );
+			$raw = preg_replace( '/\n{3,}/', "\n\n", $raw );
+			$upload = wp_upload_dir();
+			if ( empty( $upload['error'] ) ) {
+				$dir = trailingslashit( $upload['basedir'] ) . 'dejoiy-nexus';
+				if ( ! is_dir( $dir ) ) {
+					wp_mkdir_p( $dir );
+				}
+				$dest = $dir . '/pg' . $gid . '.txt';
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_copy
+				if ( copy( $txt_tmp, $dest ) ) {
+					update_post_meta( $product_id, '_dejoiy_library_text_file', $dest );
+				}
+			}
+			$excerpt = wp_trim_words( wp_strip_all_tags( $raw ), 120, '…' );
+			update_post_meta( $product_id, '_dejoiy_library_text', wp_kses_post( wpautop( substr( $raw, 0, 120000 ) ) ) );
+			$product->set_description( wp_kses_post( wpautop( $excerpt ) ) );
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+		@unlink( $txt_tmp );
+	}
+
+	$epub_url = dejoiy_library_gutenberg_epub_url( $gid );
+	$epub_tmp = dejoiy_library_download_to_temp( $epub_url, '.epub' );
+	$downloads = array();
+
+	if ( ! is_wp_error( $epub_tmp ) ) {
+		$attach_id = dejoiy_library_sideload_file( $product_id, $epub_tmp, 'gutenberg-' . $gid . '.epub' );
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+		@unlink( $epub_tmp );
+		if ( $attach_id ) {
+			$file_path = get_attached_file( $attach_id );
+			if ( $file_path ) {
+				$upload_dir = wp_upload_dir();
+				$relative   = $file_path;
+				if ( ! empty( $upload_dir['basedir'] ) && 0 === strpos( $file_path, $upload_dir['basedir'] ) ) {
+					$relative = ltrim( str_replace( wp_normalize_path( $upload_dir['basedir'] ), '', wp_normalize_path( $file_path ) ), '/' );
+				}
+				$downloads[ 'gutenberg-' . $gid . '-epub' ] = array(
+					'name' => $product->get_name() . ' (EPUB)',
+					'file' => $relative,
+				);
+			}
+		}
+	}
+
+	if ( ! empty( $downloads ) ) {
+		$product->set_downloadable( true );
+		$product->set_downloads( $downloads );
+	}
+
+	$product->save();
+}
+
+/**
+ * Create or update one Gutenberg-backed library product.
+ *
+ * @param array $entry Catalog entry with slug, title, author, gid, blurb.
+ * @return int Product ID or 0.
+ */
+function dejoiy_library_upsert_gutenberg_book( $entry ) {
+	if ( empty( $entry['gid'] ) || empty( $entry['title'] ) ) {
+		return 0;
+	}
+
+	$gid  = (int) $entry['gid'];
+	$slug = isset( $entry['slug'] ) ? (string) $entry['slug'] : 'business';
+	$sku  = 'dlu-pg-' . $gid;
+
+	$product_id = function_exists( 'wc_get_product_id_by_sku' ) ? (int) wc_get_product_id_by_sku( $sku ) : 0;
+	if ( ! $product_id ) {
+		$existing = get_posts(
+			array(
+				'post_type'      => 'product',
+				'post_status'    => 'any',
+				'posts_per_page' => 1,
+				'meta_key'       => '_dejoiy_gutenberg_id', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'     => (string) $gid,
+				'fields'         => 'ids',
+			)
+		);
+		if ( ! empty( $existing[0] ) ) {
+			$product_id = (int) $existing[0];
+		}
+	}
+
+	if ( $product_id ) {
+		$product = wc_get_product( $product_id );
+	} else {
+		$product = new WC_Product_Simple();
+	}
+
+	if ( ! $product ) {
+		return 0;
+	}
+
+	// Never overwrite WooCommerce seller editions (e.g. paid creator books).
+	if ( $product_id && 'woocommerce' === (string) get_post_meta( $product_id, '_dejoiy_library_source', true ) ) {
+		return $product_id;
+	}
+
+	$product->set_name( $entry['title'] );
+	$product->set_status( 'publish' );
+	$product->set_catalog_visibility( 'hidden' );
+	$product->set_sku( $sku );
+	$product->set_regular_price( '0' );
+	$product->set_sale_price( '' );
+	$product->set_short_description(
+		! empty( $entry['blurb'] )
+			? $entry['blurb']
+			: sprintf(
+				/* translators: %s: author */
+				__( 'Public-domain edition from Project Gutenberg by %s.', 'dejoiy' ),
+				$entry['author']
+			)
+	);
+
+	$product_id = $product->save();
+	if ( ! $product_id ) {
+		return 0;
+	}
+
+	$parent = term_exists( 'dejoiy-library', 'product_cat' );
+	$parent_id = is_array( $parent ) ? (int) $parent['term_id'] : (int) $parent;
+	$term = term_exists( $slug, 'product_cat' );
+	$term_id = $term ? (int) ( is_array( $term ) ? $term['term_id'] : $term ) : $parent_id;
+
+	$term_ids = array( $parent_id, $term_id );
+	$current  = wp_get_object_terms( $product_id, 'product_cat', array( 'fields' => 'ids' ) );
+	if ( ! is_wp_error( $current ) && ! empty( $current ) ) {
+		$term_ids = array_unique( array_merge( array_map( 'intval', $current ), $term_ids ) );
+	}
+	wp_set_object_terms( $product_id, $term_ids, 'product_cat' );
+
+	update_post_meta( $product_id, '_dejoiy_library_book', '1' );
+	update_post_meta( $product_id, '_dejoiy_gutenberg_id', (string) $gid );
+	update_post_meta( $product_id, '_dejoiy_library_category', $slug );
+	update_post_meta( $product_id, '_dejoiy_library_author', $entry['author'] );
+	update_post_meta( $product_id, '_dejoiy_library_reading_time', dejoiy_library_estimate_reading_time( $gid ) );
+	update_post_meta( $product_id, '_dejoiy_library_cover', esc_url_raw( dejoiy_library_gutenberg_cover_url( $gid ) ) );
+	update_post_meta( $product_id, '_dejoiy_library_cover_fallback', esc_url_raw( dejoiy_library_make_cover_gradient_url( $entry['title'], $slug ) ) );
+	update_post_meta( $product_id, '_dejoiy_library_source', 'project-gutenberg' );
+
+	$product = wc_get_product( $product_id );
+	if ( $product ) {
+		dejoiy_library_apply_virtual_product( $product, false );
+		dejoiy_library_attach_gutenberg_cover( $product_id, $gid );
+		$product = wc_get_product( $product_id );
+		if ( $product ) {
+			dejoiy_library_attach_gutenberg_files( $product, $gid );
+		}
+	}
+
+	return $product_id;
+}
+
+/**
+ * @param int $gid Gutenberg ID.
+ * @return string
+ */
+function dejoiy_library_estimate_reading_time( $gid ) {
+	$url  = dejoiy_library_gutenberg_txt_url( $gid );
+	$head = wp_remote_get(
+		$url,
+		array(
+			'timeout'    => 15,
+			'headers'    => array( 'Range' => 'bytes=0-50000' ),
+			'user-agent' => 'DEJOIY-Nexus/1.0',
+		)
+	);
+	$words = 60000;
+	if ( ! is_wp_error( $head ) ) {
+		$body = wp_remote_retrieve_body( $head );
+		$words = str_word_count( wp_strip_all_tags( $body ) ) * 40;
+	}
+	$hours = max( 1, (int) ceil( $words / 25000 ) );
+	return sprintf( '%dh read', $hours );
+}
+
+/**
+ * Draft legacy mock library products (no Gutenberg ID).
+ */
+function dejoiy_library_retire_mock_books() {
+	if ( get_option( 'dejoiy_library_mocks_retired' ) ) {
+		return;
+	}
+
+	$q = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => 'publish',
+			'posts_per_page' => 40,
+			'fields'         => 'ids',
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'relation' => 'AND',
+				array(
+					'key'   => '_dejoiy_library_book',
+					'value' => '1',
+				),
+				array(
+					'key'     => '_dejoiy_gutenberg_id',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		)
+	);
+
+	if ( empty( $q->posts ) ) {
+		update_option( 'dejoiy_library_mocks_retired', '1' );
+		return;
+	}
+
+	foreach ( $q->posts as $pid ) {
+		wp_update_post(
+			array(
+				'ID'          => (int) $pid,
+				'post_status' => 'draft',
+			)
+		);
+	}
+	wp_reset_postdata();
+}
+
+/**
+ * Batched migration: replace mocks with Project Gutenberg editions.
+ */
+function dejoiy_library_sync_gutenberg_catalog() {
+	if ( get_option( 'dejoiy_library_gutenberg_sync_done' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+
+	if ( ! get_option( 'dejoiy_library_mocks_retired' ) ) {
+		dejoiy_library_retire_mock_books();
+		return;
+	}
+
+	$all    = dejoiy_library_get_catalog_sync_queue();
+	$offset = (int) get_option( 'dejoiy_library_gutenberg_offset', 0 );
+
+	if ( $offset >= count( $all ) ) {
+		update_option( 'dejoiy_library_gutenberg_sync_done', '1' );
+		delete_option( 'dejoiy_library_gutenberg_offset' );
+		return;
+	}
+
+	$slice = array_slice( $all, $offset, 1 );
+	foreach ( $slice as $entry ) {
+		dejoiy_library_upsert_gutenberg_book( $entry );
+	}
+
+	update_option( 'dejoiy_library_gutenberg_offset', $offset + count( $slice ) );
+}

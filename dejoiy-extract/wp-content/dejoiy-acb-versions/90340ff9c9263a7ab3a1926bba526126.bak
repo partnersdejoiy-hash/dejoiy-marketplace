@@ -1,0 +1,370 @@
+<?php
+/**
+ * DEJOIY Nexus — landing, templates, shortcode.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+$dlu_customize = get_stylesheet_directory() . '/library-customize.php';
+if ( is_readable( $dlu_customize ) ) {
+	require_once $dlu_customize;
+}
+
+$dlu_cards = get_stylesheet_directory() . '/library-cards.php';
+if ( is_readable( $dlu_cards ) ) {
+	require_once $dlu_cards;
+}
+
+/**
+ * Register shortcode + force landing content.
+ */
+function dejoiy_library_universe_register() {
+	add_shortcode( 'dejoiy_library_universe', 'dejoiy_library_universe_render' );
+}
+add_action( 'init', 'dejoiy_library_universe_register' );
+
+/**
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_library_universe_force_content( $content ) {
+	if ( function_exists( 'dejoiy_library_is_reader_view' ) && dejoiy_library_is_reader_view() ) {
+		return dejoiy_library_universe_render();
+	}
+	if ( function_exists( 'dejoiy_library_is_landing' ) && dejoiy_library_is_landing() ) {
+		return do_shortcode( '[dejoiy_library_universe]' );
+	}
+	return $content;
+}
+add_filter( 'the_content', 'dejoiy_library_universe_force_content', 9999 );
+add_filter( 'elementor/frontend/the_content', 'dejoiy_library_universe_force_content', 9999 );
+
+/**
+ * Template routing.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function dejoiy_library_template_include( $template ) {
+	$dir = get_stylesheet_directory();
+
+	if ( function_exists( 'dejoiy_library_use_cart_template' ) && dejoiy_library_use_cart_template() ) {
+		$custom = $dir . '/library-cart.php';
+		if ( file_exists( $custom ) ) {
+			return $custom;
+		}
+	}
+	if ( function_exists( 'dejoiy_library_use_checkout_template' ) && dejoiy_library_use_checkout_template() ) {
+		$custom = $dir . '/library-checkout.php';
+		if ( file_exists( $custom ) ) {
+			return $custom;
+		}
+	}
+	return $template;
+}
+add_filter( 'template_include', 'dejoiy_library_template_include', 99 );
+
+/**
+ * Enqueue assets on library screens.
+ */
+function dejoiy_library_universe_enqueue() {
+	$load = ( function_exists( 'dejoiy_library_is_landing' ) && dejoiy_library_is_landing() )
+		|| ( function_exists( 'dejoiy_library_is_screen' ) && dejoiy_library_is_screen() );
+	if ( ! $load ) {
+		return;
+	}
+
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
+	$ver = '1.0.0';
+
+	$is_shelf = ( function_exists( 'dejoiy_library_use_cart_template' ) && dejoiy_library_use_cart_template() )
+		|| ( function_exists( 'dejoiy_library_use_checkout_template' ) && dejoiy_library_use_checkout_template() );
+
+	wp_enqueue_style(
+		'dejoiy-library-hf',
+		$uri . '/library-hf.css',
+		array(),
+		(string) ( file_exists( $dir . '/library-hf.css' ) ? filemtime( $dir . '/library-hf.css' ) : $ver )
+	);
+
+	if ( $is_shelf ) {
+		wp_enqueue_style(
+			'dejoiy-library-universe',
+			$uri . '/library-universe.css',
+			array( 'dejoiy-library-hf' ),
+			(string) ( file_exists( $dir . '/library-universe.css' ) ? filemtime( $dir . '/library-universe.css' ) : $ver )
+		);
+		wp_enqueue_script(
+			'dejoiy-library-universe',
+			$uri . '/library-universe.js',
+			array(),
+			(string) ( file_exists( $dir . '/library-universe.js' ) ? filemtime( $dir . '/library-universe.js' ) : $ver ),
+			true
+		);
+		wp_localize_script(
+			'dejoiy-library-universe',
+			'DEJOIY_LIBRARY',
+			array(
+				'home'     => dejoiy_library_get_landing_url(),
+				'cart_url' => dejoiy_library_get_cart_url(),
+			)
+		);
+		wp_enqueue_script(
+			'dejoiy-library-cart',
+			$uri . '/library-cart.js',
+			array(),
+			(string) ( file_exists( $dir . '/library-cart.js' ) ? filemtime( $dir . '/library-cart.js' ) : $ver ),
+			true
+		);
+		return;
+	}
+
+	wp_enqueue_style(
+		'dejoiy-library-universe',
+		$uri . '/library-universe.css',
+		array( 'dejoiy-library-hf' ),
+		(string) ( file_exists( $dir . '/library-universe.css' ) ? filemtime( $dir . '/library-universe.css' ) : $ver )
+	);
+
+	wp_enqueue_script(
+		'dejoiy-library-universe',
+		$uri . '/library-universe.js',
+		array(),
+		(string) ( file_exists( $dir . '/library-universe.js' ) ? filemtime( $dir . '/library-universe.js' ) : $ver ),
+		true
+	);
+
+	$orbit = array();
+	if ( function_exists( 'dejoiy_library_query_books' ) ) {
+		$q = dejoiy_library_query_books( array( 'posts_per_page' => 12 ) );
+		foreach ( $q->posts as $p ) {
+			$orbit[] = array(
+				'id'    => $p->ID,
+				'title' => get_the_title( $p->ID ),
+				'cover' => dejoiy_library_get_cover_url( $p->ID, 'thumbnail' ),
+				'url'   => dejoiy_library_product_url( $p->ID ),
+			);
+		}
+		wp_reset_postdata();
+	}
+
+	wp_localize_script(
+		'dejoiy-library-universe',
+		'DEJOIY_LIBRARY',
+		array(
+			'ajax'       => admin_url( 'admin-ajax.php' ),
+			'home'       => dejoiy_library_get_landing_url(),
+			'cart_url'   => dejoiy_library_get_cart_url(),
+			'checkout'   => dejoiy_library_get_checkout_url(),
+			'cart_count' => admin_url( 'admin-ajax.php?action=dejoiy_library_cart_count' ),
+			'joi'        => admin_url( 'admin-ajax.php?action=dejoiy_library_joi' ),
+			'books'      => $orbit,
+			'topics'     => function_exists( 'dejoiy_library_galaxy_topics' ) ? dejoiy_library_galaxy_topics() : array(),
+		)
+	);
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_library_universe_enqueue', 1004 );
+
+/**
+ * Body classes.
+ *
+ * @param array $classes Classes.
+ * @return array
+ */
+function dejoiy_library_body_class( $classes ) {
+	if ( function_exists( 'dejoiy_library_is_screen' ) && dejoiy_library_is_screen() ) {
+		$classes[] = 'dejoiy-library-active';
+		$classes[] = 'dejoiy-nexus-active';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_library_body_class' );
+
+/**
+ * Main landing render.
+ *
+ * @return string
+ */
+function dejoiy_library_universe_render() {
+	if ( function_exists( 'dejoiy_library_is_reader_view' ) && dejoiy_library_is_reader_view() ) {
+		ob_start();
+		require get_stylesheet_directory() . '/library-reader.php';
+		return (string) ob_get_clean();
+	}
+
+	if ( function_exists( 'dejoiy_library_seed_catalog' ) ) {
+		dejoiy_library_seed_catalog();
+	}
+
+	ob_start();
+	require get_stylesheet_directory() . '/library-header.php';
+	?>
+	<div id="dlu" class="dlu-root">
+		<section class="dlu-hero" id="dlu-hero" aria-label="Living Knowledge Galaxy">
+			<div class="dlu-hero-mesh" aria-hidden="true"></div>
+			<canvas id="dlu-galaxy" class="dlu-galaxy-canvas" aria-hidden="true"></canvas>
+			<div class="dlu-hero-core" aria-hidden="true"></div>
+			<div class="dlu-hero-content">
+				<p class="dlu-kicker">DEJOIY Nexus</p>
+				<h1 class="dlu-hero-title">
+					<span class="dlu-hero-line1">10,000 Billion Ideas.</span>
+					<span class="dlu-hero-line2">One Living Universe.</span>
+				</h1>
+				<p class="dlu-hero-sub">Discover. Collect. Read. Create.</p>
+				<form class="dlu-hero-search" id="dlu-hero-search" action="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>" method="get" role="search">
+					<input type="search" name="dlu_q" id="dlu-hero-search-in" placeholder="Search books, topics, creators…" aria-label="Search DEJOIY Nexus" autocomplete="off" />
+					<button type="submit" class="dlu-search-submit" aria-label="Search">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+					</button>
+				</form>
+				<div class="dlu-hero-ctas">
+					<a href="#dlu-discover" class="dlu-btn-primary">Discover</a>
+					<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-btn-secondary">Continue Reading</a>
+				</div>
+			</div>
+		</section>
+
+		<section id="dlu-joi" class="dlu-sec dlu-joi">
+			<div class="dlu-sec-in">
+				<div class="dlu-joi-layout">
+					<div class="dlu-joi-orb" aria-hidden="true"></div>
+					<div class="dlu-joi-panel">
+						<h2 class="dlu-sec-title">JOI Librarian</h2>
+						<p class="dlu-sec-desc">Tell the universe what you want to become — get a curated reading path.</p>
+						<div class="dlu-joi-box">
+							<input type="text" id="dlu-joi-input" placeholder="I want to learn business…" autocomplete="off" />
+							<button type="button" id="dlu-joi-go" class="dlu-btn-primary dlu-search-submit">Ask JOI</button>
+						</div>
+						<div id="dlu-joi-result" class="dlu-joi-result" hidden></div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section id="dlu-my-library" class="dlu-sec dlu-sec-my">
+			<div class="dlu-sec-in dlu-my-in">
+				<p class="dlu-my-kicker">Your collection</p>
+				<h2 class="dlu-my-title">My Nexus</h2>
+				<p class="dlu-my-desc">Recently read, favorites, and purchased books — your knowledge shelf in one place.</p>
+				<div class="dlu-my-cards">
+					<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-my-glass-card">
+						<strong>Continue Reading</strong>
+						<span>Pick up where you left off</span>
+					</a>
+					<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-my-glass-card">
+						<strong>Purchased Books</strong>
+						<span>Your owned editions</span>
+					</a>
+					<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-my-glass-card">
+						<strong>Collections</strong>
+						<span>Curated shelves</span>
+					</a>
+				</div>
+				<a href="<?php echo esc_url( dejoiy_library_my_universe_url() ); ?>" class="dlu-btn-my">Open My Nexus</a>
+			</div>
+		</section>
+
+		<section id="dlu-collections" class="dlu-sec">
+			<div class="dlu-sec-in">
+				<h2 class="dlu-sec-title">Featured Collections</h2>
+				<div class="dlu-collections-grid">
+					<?php
+					foreach ( dejoiy_library_get_collections() as $col ) :
+						$accent = function_exists( 'dejoiy_library_collection_accent_color' )
+							? dejoiy_library_collection_accent_color( $col['slug'] )
+							: '#7C3AED';
+						?>
+						<a href="#dlu-cat-<?php echo esc_attr( $col['slug'] ); ?>" class="dlu-collection-card" data-dlu-reveal data-cat="<?php echo esc_attr( $col['slug'] ); ?>" style="--dlu-cat-color:<?php echo esc_attr( $accent ); ?>">
+							<span class="dlu-collection-icon"><?php echo esc_html( $col['icon'] ); ?></span>
+							<h3><?php echo esc_html( $col['title'] ); ?></h3>
+							<p><?php echo esc_html( $col['desc'] ); ?></p>
+						</a>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		</section>
+
+		<section id="dlu-categories" class="dlu-sec dlu-sec-anchor" aria-hidden="true"></section>
+
+		<section id="dlu-discover" class="dlu-sec">
+			<div class="dlu-sec-in">
+				<h2 class="dlu-sec-title">Discover the Universe</h2>
+				<p class="dlu-sec-desc">Premium digital editions — ₹101 each. Build your personal knowledge shelf.</p>
+				<div class="dlu-books-grid" id="dlu-books-grid">
+					<?php
+					$all = dejoiy_library_query_books( array( 'posts_per_page' => 24 ) );
+					foreach ( $all->posts as $p ) {
+						echo dejoiy_library_render_book_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+					wp_reset_postdata();
+					?>
+				</div>
+			</div>
+		</section>
+
+		<?php foreach ( dejoiy_library_get_catalog() as $slug => $group ) : ?>
+			<section id="dlu-cat-<?php echo esc_attr( $slug ); ?>" class="dlu-sec dlu-sec-cat">
+				<div class="dlu-sec-in">
+					<h2 class="dlu-sec-title"><?php echo esc_html( $group['label'] ); ?></h2>
+					<div class="dlu-books-grid">
+						<?php
+						$cat_q = dejoiy_library_query_books(
+							array(
+								'posts_per_page' => 10,
+								'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+									array(
+										'taxonomy' => 'product_cat',
+										'field'    => 'slug',
+										'terms'    => $slug,
+									),
+								),
+							)
+						);
+						foreach ( $cat_q->posts as $p ) {
+							echo dejoiy_library_render_book_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						}
+						wp_reset_postdata();
+						?>
+					</div>
+				</div>
+			</section>
+		<?php endforeach; ?>
+
+		<section id="dlu-bestsellers" class="dlu-sec">
+			<div class="dlu-sec-in">
+				<h2 class="dlu-sec-title">Best Sellers</h2>
+				<div class="dlu-books-grid dlu-books-grid--compact">
+					<?php
+					$best = dejoiy_library_query_books(
+						array(
+							'posts_per_page' => 8,
+							'orderby'        => 'rand',
+						)
+					);
+					foreach ( $best->posts as $p ) {
+						echo dejoiy_library_render_book_card( $p ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					}
+					wp_reset_postdata();
+					?>
+				</div>
+			</div>
+		</section>
+
+		<section id="dlu-free" class="dlu-sec dlu-sec-premium">
+			<div class="dlu-sec-in" id="dlu-pass">
+				<span class="dlu-premium-badge">Premium</span>
+				<h2 class="dlu-sec-title">Free Books &amp; <span class="dlu-gold-text">Nexus Pass</span></h2>
+				<p class="dlu-sec-desc">Exclusive unlimited discovery — VIP collections and early releases.</p>
+				<a href="<?php echo esc_url( dejoiy_library_get_landing_url() ); ?>#dlu-discover" class="dlu-btn-pass dlu-btn-pass--lg">Get Nexus Pass</a>
+			</div>
+		</section>
+	</div>
+	<?php
+	require get_stylesheet_directory() . '/library-footer.php';
+	return (string) ob_get_clean();
+}

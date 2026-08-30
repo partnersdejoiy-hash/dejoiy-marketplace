@@ -1,0 +1,183 @@
+<?php
+/**
+ * Seller / manual library products — adopt DEJOIY Library category assignments.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Mark and configure a WooCommerce product as a Nexus library title.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_adopt_nexus_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 || ! function_exists( 'wc_get_product' ) ) {
+		return;
+	}
+	static $processing = array();
+	if ( isset( $processing[ $product_id ] ) ) {
+		return;
+	}
+	$processing[ $product_id ] = true;
+
+	$product = wc_get_product( $product_id );
+	if ( ! $product ) {
+		unset( $processing[ $product_id ] );
+		return;
+	}
+
+	try {
+		update_post_meta( $product_id, '_dejoiy_library_book', '1' );
+		update_post_meta( $product_id, '_dejoiy_library_source', 'woocommerce' );
+		delete_post_meta( $product_id, '_dejoiy_gutenberg_id' );
+
+		if ( function_exists( 'dejoiy_library_set_product_catalog_hidden' ) ) {
+			dejoiy_library_set_product_catalog_hidden( $product_id );
+		} else {
+			$product->set_catalog_visibility( 'hidden' );
+		}
+
+		if ( function_exists( 'dejoiy_library_apply_virtual_product' ) ) {
+			dejoiy_library_apply_virtual_product( $product );
+		} else {
+			$product->set_virtual( true );
+			$product->set_downloadable( false );
+		}
+
+		$author = get_post_meta( $product_id, '_dejoiy_library_author', true );
+		if ( ! $author ) {
+			$post = get_post( $product_id );
+			if ( $post && $post->post_author ) {
+				$user = get_userdata( (int) $post->post_author );
+				if ( $user && $user->display_name ) {
+					update_post_meta( $product_id, '_dejoiy_library_author', $user->display_name );
+				}
+			}
+		}
+
+		$product->save();
+	} finally {
+		unset( $processing[ $product_id ] );
+	}
+}
+
+/**
+ * When a product is assigned to the DEJOIY Library category tree, register it for Nexus.
+ *
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_maybe_adopt_product( $product_id ) {
+	$product_id = (int) $product_id;
+	if ( $product_id < 1 ) {
+		return;
+	}
+	if ( ! function_exists( 'dejoiy_library_product_has_nexus_category' ) ) {
+		return;
+	}
+	if ( ! dejoiy_library_product_has_nexus_category( $product_id ) ) {
+		return;
+	}
+	dejoiy_library_adopt_nexus_product( $product_id );
+}
+
+/**
+ * @param int $product_id Product ID.
+ */
+function dejoiy_library_on_save_product( $product_id ) {
+	if ( wp_is_post_revision( $product_id ) || wp_is_post_autosave( $product_id ) ) {
+		return;
+	}
+	if ( 'product' !== get_post_type( $product_id ) ) {
+		return;
+	}
+	dejoiy_library_maybe_adopt_product( $product_id );
+}
+
+/**
+ * Batch: adopt existing published products already in DEJOIY Library category.
+ */
+function dejoiy_library_upgrade_adopt_seller_products() {
+	if ( dejoiy_library_is_dashboard_request() ) {
+		return;
+	}
+	if ( get_option( 'dejoiy_library_seller_adopt_v3' ) || ! class_exists( 'WooCommerce' ) ) {
+		return;
+	}
+	if ( function_exists( 'dejoiy_library_ensure_customize_loaded' ) ) {
+		dejoiy_library_ensure_customize_loaded();
+	}
+	if ( ! function_exists( 'dejoiy_library_get_nexus_category_term_ids' ) ) {
+		return;
+	}
+
+	$term_ids = dejoiy_library_get_nexus_category_term_ids();
+	if ( empty( $term_ids ) ) {
+		update_option( 'dejoiy_library_seller_adopt_v3', '1' );
+		return;
+	}
+
+	$page = max( 1, (int) get_option( 'dejoiy_library_seller_adopt_page', 1 ) );
+	$q    = new WP_Query(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => array( 'publish', 'pending', 'draft' ),
+			'posts_per_page' => 20,
+			'paged'          => $page,
+			'fields'         => 'ids',
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy'         => 'product_cat',
+					'field'            => 'term_id',
+					'terms'            => $term_ids,
+					'include_children' => true,
+				),
+			),
+		)
+	);
+
+	if ( empty( $q->posts ) ) {
+		update_option( 'dejoiy_library_seller_adopt_v3', '1' );
+		delete_option( 'dejoiy_library_seller_adopt_page' );
+		return;
+	}
+
+	foreach ( $q->posts as $product_id ) {
+		dejoiy_library_adopt_nexus_product( (int) $product_id );
+	}
+	wp_reset_postdata();
+
+	if ( $page >= (int) $q->max_num_pages ) {
+		update_option( 'dejoiy_library_seller_adopt_v3', '1' );
+		delete_option( 'dejoiy_library_seller_adopt_page' );
+	} else {
+		update_option( 'dejoiy_library_seller_adopt_page', $page + 1 );
+	}
+}
+
+/**
+ * Register seller library hooks.
+ *
+ * @param bool $run_batch_upgrade Run adopt batch on front-end only.
+ */
+function dejoiy_library_seller_books_init( $run_batch_upgrade = true ) {
+	static $registered = false;
+	if ( $registered ) {
+		return;
+	}
+	$registered = true;
+
+	add_action( 'save_post_product', 'dejoiy_library_on_save_product', 20, 1 );
+	add_action( 'woocommerce_update_product', 'dejoiy_library_on_save_product', 20, 1 );
+	// WCFM vendor dashboard product saves.
+	add_action( 'after_wcfm_products_manage_save', 'dejoiy_library_on_save_product', 30, 1 );
+	add_action( 'wcfm_product_manage_after_save', 'dejoiy_library_on_save_product', 30, 1 );
+
+	if ( $run_batch_upgrade && ! dejoiy_library_is_dashboard_request() ) {
+		add_action( 'wp', 'dejoiy_library_upgrade_adopt_seller_products', 5 );
+	}
+}

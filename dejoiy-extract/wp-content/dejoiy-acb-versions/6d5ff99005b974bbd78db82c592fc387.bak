@@ -1,0 +1,728 @@
+<?php
+/**
+ * DEJOIY Desktop Marketplace Header — premium standalone chrome (≥1025px).
+ *
+ * Premium standalone chrome on all pages (desktop/laptop ≥1025px) except dedicated
+ * ecosystem landings (Nexus, Refurbished, Custom Studio, Services, QuickMart).
+ * Mobile/tablet use Mobile OS (≤1024px).
+ * Disable: define( 'DEJOIY_DM_HEADER_DISABLED', true );
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+define( 'DEJOIY_DM_HEADER_VERSION', '1.3.5' );
+
+/**
+ * Ecosystem pages with their own dedicated chrome (Nexus, Refurbished, Studio, Services, QuickMart).
+ *
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_is_dedicated_ecosystem_page() {
+	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) ) {
+		return dejoiy_mobile_os_is_dedicated_page();
+	}
+
+	if ( is_admin() ) {
+		return false;
+	}
+
+	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+	$needles = array(
+		'dejoiy-custom-studio',
+		'dejoiy-quick-mart',
+		'dejoiy-services',
+		'dejoiy-refurbished',
+		'dejoiy-library',
+		'dejoiy_library=1',
+	);
+
+	foreach ( $needles as $needle ) {
+		if ( false !== strpos( $uri, $needle ) ) {
+			return true;
+		}
+	}
+
+	if ( is_page() ) {
+		$slug = (string) get_post_field( 'post_name', get_queried_object_id() );
+		$dedicated = array(
+			'dejoiy-custom-studio',
+			'dejoiy-quick-mart',
+			'dejoiy-services',
+			'dejoiy-refurbished',
+			'dejoiy-library',
+		);
+		if ( in_array( $slug, $dedicated, true ) ) {
+			return true;
+		}
+	}
+
+	return (bool) apply_filters( 'dejoiy_desktop_marketplace_is_dedicated_ecosystem_page', false );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_header_enabled() {
+	if ( defined( 'DEJOIY_DM_HEADER_DISABLED' ) && DEJOIY_DM_HEADER_DISABLED ) {
+		return false;
+	}
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( function_exists( 'wp_is_json_request' ) && wp_is_json_request() ) {
+		return false;
+	}
+	if ( ! function_exists( 'dejoiy_evolution_is_enabled' ) || ! dejoiy_evolution_is_enabled() ) {
+		return false;
+	}
+	if ( dejoiy_desktop_marketplace_is_dedicated_ecosystem_page() ) {
+		return false;
+	}
+	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Whether the standalone marketplace header replaces theme chrome (desktop/laptop).
+ *
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_should_bootstrap_standalone() {
+	if ( ! dejoiy_desktop_marketplace_header_enabled() ) {
+		return false;
+	}
+	if ( apply_filters( 'dejoiy_desktop_marketplace_skip_standalone', false ) ) {
+		return false;
+	}
+	if ( apply_filters( 'dejoiy_desktop_marketplace_force_standalone', false ) ) {
+		return true;
+	}
+	/**
+	 * Default: all non-dedicated pages use the marketplace header on desktop/laptop.
+	 * Dedicated ecosystem landings keep their own headers.
+	 */
+	return (bool) apply_filters( 'dejoiy_desktop_marketplace_should_bootstrap_standalone', true );
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_standalone_is_active() {
+	return dejoiy_desktop_marketplace_should_bootstrap_standalone();
+}
+
+/**
+ * Phone/tablet user-agent guard (viewport CSS is the source of truth for laptops).
+ *
+ * @return bool
+ */
+function dejoiy_desktop_marketplace_is_mobile_client() {
+	return function_exists( 'wp_is_mobile' ) && wp_is_mobile();
+}
+
+/**
+ * @param string $name Lucide icon key.
+ * @return string
+ */
+function dejoiy_dm_header_icon( $name ) {
+	$icons = array(
+		'map-pin'    => '<svg class="dmh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+		'search'     => '<svg class="dmh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+		'chevron'    => '<svg class="dmh-ico dmh-ico--chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+		'user'       => '<svg class="dmh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+		'cart'       => '<svg class="dmh-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
+		'menu'       => '<svg class="dmh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>',
+		'globe'      => '<svg class="dmh-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
+		'x'          => '<svg class="dmh-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+		'package'    => '<svg class="dmh-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+		'shield'     => '<svg class="dmh-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>',
+	);
+	return isset( $icons[ $name ] ) ? $icons[ $name ] : '';
+}
+
+/**
+ * @return string
+ */
+function dejoiy_dm_header_logo_html() {
+	$home = home_url( '/' );
+	$logo_id = (int) get_theme_mod( 'custom_logo' );
+	if ( $logo_id > 0 ) {
+		$img = wp_get_attachment_image(
+			$logo_id,
+			array( 240, 88 ),
+			false,
+			array(
+				'class'    => 'dmh-logo__img',
+				'alt'      => get_bloginfo( 'name', 'display' ),
+				'loading'  => 'eager',
+				'decoding' => 'async',
+			)
+		);
+		if ( $img ) {
+			return '<a class="dmh-logo" href="' . esc_url( $home ) . '" aria-label="' . esc_attr__( 'DEJOIY Home', 'dejoiy' ) . '">' . $img . '</a>';
+		}
+	}
+	if ( function_exists( 'get_custom_logo' ) ) {
+		$logo = get_custom_logo();
+		if ( $logo ) {
+			return '<a class="dmh-logo" href="' . esc_url( $home ) . '" aria-label="' . esc_attr__( 'DEJOIY Home', 'dejoiy' ) . '">' . $logo . '</a>';
+		}
+	}
+	return '<a class="dmh-logo dmh-logo--text" href="' . esc_url( $home ) . '" aria-label="' . esc_attr__( 'DEJOIY Home', 'dejoiy' ) . '">'
+		. '<span class="dmh-logo__mark">D</span><span class="dmh-logo__word">DEJOIY</span></a>';
+}
+
+/**
+ * Search category options for dropdown.
+ *
+ * @return array<int, array{slug:string,label:string,url:string}>
+ */
+function dejoiy_dm_header_search_categories() {
+	$shop  = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+	$items = array(
+		array(
+			'slug'  => 'all',
+			'label' => __( 'All Departments', 'dejoiy' ),
+			'url'   => $shop,
+		),
+	);
+	if ( taxonomy_exists( 'product_cat' ) ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'parent'     => 0,
+				'number'     => 10,
+				'orderby'    => 'count',
+				'order'      => 'DESC',
+			)
+		);
+		if ( ! is_wp_error( $terms ) ) {
+			foreach ( $terms as $term ) {
+				if ( in_array( $term->slug, array( 'uncategorized', 'uncategorised' ), true ) ) {
+					continue;
+				}
+				$link = get_term_link( $term );
+				if ( is_wp_error( $link ) ) {
+					continue;
+				}
+				$items[] = array(
+					'slug'  => $term->slug,
+					'label' => $term->name,
+					'url'   => $link,
+				);
+			}
+		}
+	}
+	return $items;
+}
+
+/**
+ * All top-level WooCommerce categories for the desktop All Categories dropdown.
+ *
+ * @return array<int, array{slug:string,label:string,url:string}>
+ */
+function dejoiy_dm_header_main_categories() {
+	static $cached = null;
+
+	if ( null !== $cached ) {
+		return $cached;
+	}
+
+	$cached = array();
+
+	if ( ! taxonomy_exists( 'product_cat' ) ) {
+		if ( function_exists( 'dejoiy_mobile_os_market_categories' ) ) {
+			$cached = dejoiy_mobile_os_market_categories();
+		}
+		return $cached;
+	}
+
+	$terms = get_terms(
+		array(
+			'taxonomy'   => 'product_cat',
+			'hide_empty' => false,
+			'parent'     => 0,
+			'orderby'    => 'name',
+			'order'      => 'ASC',
+		)
+	);
+
+	if ( is_wp_error( $terms ) || empty( $terms ) ) {
+		if ( function_exists( 'dejoiy_mobile_os_market_categories' ) ) {
+			$cached = dejoiy_mobile_os_market_categories();
+		}
+		return $cached;
+	}
+
+	foreach ( $terms as $term ) {
+		if ( in_array( $term->slug, array( 'uncategorized', 'uncategorised' ), true ) ) {
+			continue;
+		}
+		$link = get_term_link( $term );
+		if ( is_wp_error( $link ) ) {
+			continue;
+		}
+		$cached[] = array(
+			'slug'  => $term->slug,
+			'label' => $term->name,
+			'url'   => $link,
+		);
+	}
+
+	if ( empty( $cached ) && function_exists( 'dejoiy_mobile_os_market_categories' ) ) {
+		$cached = dejoiy_mobile_os_market_categories();
+	}
+
+	return $cached;
+}
+
+/**
+ * @return array<int, array{code:string,label:string,flag:string}>
+ */
+function dejoiy_dm_header_languages() {
+	$flags = array(
+		'en' => '🇬🇧',
+		'hi' => '🇮🇳',
+		'bn' => '🇧🇩',
+		'ta' => '🇮🇳',
+	);
+	$out   = array();
+	$langs = function_exists( 'dejoiy_library_get_languages' ) ? dejoiy_library_get_languages() : array();
+	$pick  = array( 'en', 'hi', 'bn', 'ta' );
+	foreach ( $pick as $code ) {
+		if ( ! isset( $langs[ $code ] ) ) {
+			continue;
+		}
+		$out[] = array(
+			'code'  => $code,
+			'label' => $langs[ $code ]['native'],
+			'flag'  => isset( $flags[ $code ] ) ? $flags[ $code ] : '🌐',
+		);
+	}
+	if ( empty( $out ) ) {
+		$out[] = array(
+			'code'  => 'en',
+			'label' => 'English',
+			'flag'  => '🇬🇧',
+		);
+	}
+	return $out;
+}
+
+/**
+ * Dark sub-nav links (desktop marketplace header row 2).
+ *
+ * @return array{items:array<int,array<string,mixed>>}
+ */
+function dejoiy_dm_header_nav_links() {
+	$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+
+	return array(
+		'items' => array(
+			array(
+				'label' => __( 'Home', 'dejoiy' ),
+				'url'   => home_url( '/' ),
+				'key'   => 'home',
+			),
+			array(
+				'label' => __( 'Shop', 'dejoiy' ),
+				'url'   => $shop,
+				'key'   => 'shop',
+			),
+			array(
+				'label' => __( 'Nexus', 'dejoiy' ),
+				'url'   => home_url( '/dejoiy-library/?dejoiy_library=1' ),
+				'key'   => 'nexus',
+			),
+			array(
+				'label' => __( 'Custom Studio', 'dejoiy' ),
+				'url'   => home_url( '/dejoiy-custom-studio/' ),
+				'key'   => 'custom-studio',
+			),
+			array(
+				'label' => __( 'Refurbished', 'dejoiy' ),
+				'url'   => home_url( '/dejoiy-refurbished/' ),
+				'key'   => 'refurbished',
+			),
+			array(
+				'label' => __( 'Services', 'dejoiy' ),
+				'url'   => home_url( '/dejoiy-services/' ),
+				'key'   => 'services',
+			),
+			array(
+				'label' => __( 'QuickMart', 'dejoiy' ),
+				'url'   => home_url( '/dejoiy-quick-mart/' ),
+				'key'   => 'quickmart',
+				'pill'  => __( 'Coming soon', 'dejoiy' ),
+				'soon'  => true,
+			),
+			array(
+				'label' => __( 'Support', 'dejoiy' ),
+				'url'   => home_url( '/contact/' ),
+				'key'   => 'support',
+			),
+			array(
+				'label' => __( 'Meet JOI', 'dejoiy' ),
+				'url'   => home_url( '/joi/' ),
+				'key'   => 'meet-joi',
+				'joi'   => true,
+			),
+		),
+	);
+}
+
+/**
+ * Whether a sub-nav link matches the current request (desktop active state).
+ *
+ * @param array<string, mixed> $link Nav item.
+ * @return bool
+ */
+function dejoiy_dm_header_nav_link_is_active( $link ) {
+	if ( empty( $link['key'] ) ) {
+		return false;
+	}
+
+	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+	$key = (string) $link['key'];
+
+	switch ( $key ) {
+		case 'home':
+			return is_front_page();
+		case 'shop':
+			return ( function_exists( 'is_shop' ) && is_shop() )
+				|| ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() )
+				|| ( function_exists( 'is_product' ) && is_product() );
+		case 'nexus':
+			return ( false !== strpos( $uri, 'dejoiy-library' ) ) || ( false !== strpos( $uri, 'dejoiy_library' ) );
+		case 'custom-studio':
+			return false !== strpos( $uri, 'dejoiy-custom-studio' );
+		case 'refurbished':
+			return false !== strpos( $uri, 'dejoiy-refurbished' );
+		case 'services':
+			return false !== strpos( $uri, 'dejoiy-services' );
+		case 'quickmart':
+			return false !== strpos( $uri, 'dejoiy-quick-mart' );
+		case 'support':
+			return ( is_page() && 'contact' === get_post_field( 'post_name', get_queried_object_id() ) )
+				|| ( false !== strpos( $uri, '/contact' ) );
+		case 'meet-joi':
+			return ( is_page() && 'joi' === get_post_field( 'post_name', get_queried_object_id() ) )
+				|| ( false !== strpos( $uri, '/joi/' ) )
+				|| ( rtrim( $uri, '/' ) === '/joi' );
+	}
+
+	return false;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function dejoiy_dm_header_config() {
+	$account = home_url( '/my-account/' );
+	$orders  = function_exists( 'wc_get_account_endpoint_url' )
+		? wc_get_account_endpoint_url( 'orders' )
+		: $account;
+	$v4      = function_exists( 'dejoiy_header_os_v4_config' ) ? dejoiy_header_os_v4_config() : array();
+
+	$cats = array();
+	foreach ( dejoiy_dm_header_search_categories() as $cat ) {
+		$cats[] = array(
+			'slug'  => $cat['slug'],
+			'label' => $cat['label'],
+		);
+	}
+
+	$menu = array();
+	if ( function_exists( 'dejoiy_header_os_v4_account_menu' ) ) {
+		foreach ( dejoiy_header_os_v4_account_menu() as $item ) {
+			$menu[] = array(
+				'label' => $item['label'],
+				'url'   => $item['url'],
+				'key'   => $item['key'],
+			);
+		}
+	}
+
+	$mega = array();
+	foreach ( dejoiy_dm_header_main_categories() as $cat ) {
+		$mega[] = array(
+			'label' => $cat['label'],
+			'url'   => $cat['url'],
+			'icon'  => isset( $cat['icon'] ) ? $cat['icon'] : '',
+		);
+	}
+
+	return array(
+		'version'      => DEJOIY_DM_HEADER_VERSION,
+		'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+		'nonce'        => function_exists( 'dejoiy_header_os_v4_config' ) && isset( $v4['nonce'] ) ? $v4['nonce'] : wp_create_nonce( 'dejoiy_header_os_v4' ),
+		'cartCount'    => function_exists( 'dejoiy_mobile_os_get_cart_count' ) ? dejoiy_mobile_os_get_cart_count() : 0,
+		'isLoggedIn'   => is_user_logged_in() ? 1 : 0,
+		'customerName' => function_exists( 'dejoiy_header_os_v4_customer_name' ) ? dejoiy_header_os_v4_customer_name() : '',
+		'deliveryUrl'  => function_exists( 'dejoiy_mobile_os_delivery_url' ) ? dejoiy_mobile_os_delivery_url() : $account,
+		'accountUrl'   => $account,
+		'ordersUrl'    => $orders,
+		'cartUrl'      => function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' ),
+		'searchScopes' => isset( $v4['searchScopes'] ) ? $v4['searchScopes'] : array(),
+		'categories'   => $cats,
+		'accountMenu'  => $menu,
+		'megaCategories' => $mega,
+		'i18n'         => array(
+			'searchPlaceholder' => __( 'Search products, brands and more…', 'dejoiy' ),
+			'noResults'         => __( 'No results found', 'dejoiy' ),
+			'search'            => __( 'Search', 'dejoiy' ),
+			'allCategories'     => __( 'All Categories', 'dejoiy' ),
+		),
+	);
+}
+
+/**
+ * Standalone marketplace header markup.
+ *
+ * @return string
+ */
+function dejoiy_desktop_marketplace_header_html() {
+	$shop     = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+	$cart     = function_exists( 'wc_get_cart_url' ) ? wc_get_cart_url() : home_url( '/cart/' );
+	$account  = home_url( '/my-account/' );
+	$orders   = function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : $account;
+	$delivery = function_exists( 'dejoiy_mobile_os_delivery_url' ) ? dejoiy_mobile_os_delivery_url() : $account;
+	$cart_ct  = function_exists( 'dejoiy_mobile_os_get_cart_count' ) ? dejoiy_mobile_os_get_cart_count() : 0;
+	$nav      = dejoiy_dm_header_nav_links();
+	$langs    = dejoiy_dm_header_languages();
+	$greet    = is_user_logged_in()
+		? ( function_exists( 'dejoiy_header_os_v4_customer_name' ) && dejoiy_header_os_v4_customer_name()
+			? sprintf( /* translators: %s name */ __( 'Hello, %s', 'dejoiy' ), dejoiy_header_os_v4_customer_name() )
+			: __( 'Hello', 'dejoiy' ) )
+		: __( 'Hello, Sign In', 'dejoiy' );
+
+	ob_start();
+	?>
+	<header id="dejoiy-marketplace-header" class="dmh" data-dmh-header role="banner" hidden aria-hidden="true">
+		<div class="dmh__sticky">
+			<div class="dmh__top">
+				<div class="dmh__inner">
+					<div class="dmh__logo-wrap">
+						<?php echo dejoiy_dm_header_logo_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
+
+					<a class="dmh-loc" href="<?php echo esc_url( $delivery ); ?>">
+						<?php echo dejoiy_dm_header_icon( 'map-pin' ); // phpcs:ignore ?>
+						<span class="dmh-loc__text">
+							<span class="dmh-loc__kicker"><?php esc_html_e( 'Deliver to', 'dejoiy' ); ?></span>
+							<span class="dmh-loc__value"><?php echo esc_html( function_exists( 'dejoiy_mobile_os_delivery_label' ) ? dejoiy_mobile_os_delivery_label() : __( 'Set location', 'dejoiy' ) ); ?></span>
+						</span>
+					</a>
+
+					<form class="dmh-search" action="<?php echo esc_url( $shop ); ?>" method="get" role="search" data-dmh-search-form>
+						<label class="screen-reader-text" for="dmh-search-input"><?php esc_html_e( 'Search DEJOIY', 'dejoiy' ); ?></label>
+						<input id="dmh-search-input" class="dmh-search__input" type="search" name="s" placeholder="<?php esc_attr_e( 'Search products, brands and more…', 'dejoiy' ); ?>" autocomplete="off" data-dmh-search-input />
+						<input type="hidden" name="post_type" value="product" />
+						<button type="submit" class="dmh-search__submit" aria-label="<?php esc_attr_e( 'Search', 'dejoiy' ); ?>">
+							<?php echo dejoiy_dm_header_icon( 'search' ); // phpcs:ignore ?>
+							<span><?php esc_html_e( 'Search', 'dejoiy' ); ?></span>
+						</button>
+						<div class="dmh-search__panel" id="dmh-search-panel" hidden>
+							<div class="dmh-search__panel-head">
+								<span class="dmh-search__panel-kicker"><?php esc_html_e( 'JOI Search', 'dejoiy' ); ?></span>
+								<button type="button" class="dmh-search__close" data-dmh-search-close aria-label="<?php esc_attr_e( 'Close search', 'dejoiy' ); ?>">
+									<?php echo dejoiy_dm_header_icon( 'x' ); // phpcs:ignore ?>
+								</button>
+							</div>
+							<div class="dmh-search__results" id="dmh-search-results" hidden></div>
+						</div>
+					</form>
+
+					<div class="dmh-lang" data-dmh-dropdown-wrap>
+						<button type="button" class="dmh-lang__btn" data-dmh-lang-toggle aria-expanded="false">
+							<?php echo dejoiy_dm_header_icon( 'globe' ); // phpcs:ignore ?>
+							<span><?php echo esc_html( $langs[0]['flag'] . ' ' . $langs[0]['label'] ); ?></span>
+							<?php echo dejoiy_dm_header_icon( 'chevron' ); // phpcs:ignore ?>
+						</button>
+						<ul class="dmh-lang__menu" data-dmh-lang-menu hidden>
+							<?php foreach ( $langs as $lang ) : ?>
+								<li>
+									<button type="button" class="dmh-lang__item" data-lang="<?php echo esc_attr( $lang['code'] ); ?>">
+										<?php echo esc_html( $lang['flag'] . ' ' . $lang['label'] ); ?>
+									</button>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+
+					<div class="dmh-account" data-dmh-dropdown-wrap>
+						<button type="button" class="dmh-account__btn" data-dmh-account-toggle aria-expanded="false">
+							<?php echo dejoiy_dm_header_icon( 'user' ); // phpcs:ignore ?>
+							<span class="dmh-account__text">
+								<span class="dmh-account__kicker"><?php echo esc_html( $greet ); ?></span>
+								<span class="dmh-account__label"><?php esc_html_e( 'Account & Lists', 'dejoiy' ); ?></span>
+							</span>
+						</button>
+						<div class="dmh-account__menu" data-dmh-account-menu hidden>
+							<?php if ( function_exists( 'dejoiy_header_os_v4_account_menu' ) ) : ?>
+								<?php foreach ( dejoiy_header_os_v4_account_menu() as $item ) : ?>
+									<a class="dmh-account__link" href="<?php echo esc_url( $item['url'] ); ?>"><?php echo esc_html( $item['label'] ); ?></a>
+								<?php endforeach; ?>
+							<?php else : ?>
+								<a class="dmh-account__link" href="<?php echo esc_url( $account ); ?>"><?php esc_html_e( 'Sign In', 'dejoiy' ); ?></a>
+							<?php endif; ?>
+						</div>
+					</div>
+
+					<a class="dmh-orders" href="<?php echo esc_url( $orders ); ?>">
+						<span class="dmh-orders__kicker"><?php esc_html_e( 'Returns', 'dejoiy' ); ?></span>
+						<span class="dmh-orders__label"><?php esc_html_e( 'and Orders', 'dejoiy' ); ?></span>
+					</a>
+
+					<a class="dmh-cart" href="<?php echo esc_url( $cart ); ?>" aria-label="<?php esc_attr_e( 'Cart', 'dejoiy' ); ?>">
+						<span class="dmh-cart__icon-wrap">
+							<?php echo dejoiy_dm_header_icon( 'cart' ); // phpcs:ignore ?>
+							<?php if ( $cart_ct > 0 ) : ?>
+								<span class="dmh-cart__badge" data-dmh-cart-badge><?php echo esc_html( $cart_ct > 99 ? '99+' : (string) $cart_ct ); ?></span>
+							<?php else : ?>
+								<span class="dmh-cart__badge" data-dmh-cart-badge hidden>0</span>
+							<?php endif; ?>
+						</span>
+						<span class="dmh-cart__label"><?php esc_html_e( 'Cart', 'dejoiy' ); ?></span>
+					</a>
+				</div>
+			</div>
+
+			<nav class="dmh__sub" aria-label="<?php esc_attr_e( 'Marketplace navigation', 'dejoiy' ); ?>">
+				<div class="dmh__sub-inner">
+					<div class="dmh-cat-drop" data-dmh-dropdown-wrap>
+						<button type="button" class="dmh-mega-btn" data-dmh-catlist-toggle aria-expanded="false" aria-haspopup="true">
+							<?php echo dejoiy_dm_header_icon( 'menu' ); // phpcs:ignore ?>
+							<span><?php esc_html_e( 'All Categories', 'dejoiy' ); ?></span>
+							<?php echo dejoiy_dm_header_icon( 'chevron' ); // phpcs:ignore ?>
+						</button>
+						<div class="dmh-cat-drop__panel" data-dmh-catlist-panel hidden role="menu">
+							<p class="dmh-cat-drop__title"><?php esc_html_e( 'Shop by category', 'dejoiy' ); ?></p>
+							<ul class="dmh-cat-drop__list">
+								<?php foreach ( dejoiy_dm_header_main_categories() as $cat ) : ?>
+									<li role="none">
+										<a class="dmh-cat-drop__link" role="menuitem" href="<?php echo esc_url( $cat['url'] ); ?>">
+											<?php echo esc_html( $cat['label'] ); ?>
+										</a>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					</div>
+
+					<div class="dmh__sub-links">
+						<?php foreach ( $nav['items'] as $link ) : ?>
+							<?php $nav_active = dejoiy_dm_header_nav_link_is_active( $link ); ?>
+							<a class="dmh-nav-link<?php echo ! empty( $link['soon'] ) ? ' dmh-nav-link--soon' : ''; ?><?php echo ! empty( $link['joi'] ) ? ' dmh-nav-link--joi' : ''; ?><?php echo $nav_active ? ' dmh-nav-link--active' : ''; ?>" href="<?php echo esc_url( $link['url'] ); ?>"<?php echo $nav_active ? ' aria-current="page"' : ''; ?>>
+								<?php echo esc_html( $link['label'] ); ?>
+								<?php if ( ! empty( $link['pill'] ) ) : ?>
+									<span class="dmh-nav-link__pill"><?php echo esc_html( $link['pill'] ); ?></span>
+								<?php endif; ?>
+							</a>
+						<?php endforeach; ?>
+					</div>
+
+					<div class="dmh-promo" aria-label="<?php esc_attr_e( 'Promotion', 'dejoiy' ); ?>">
+						<?php echo dejoiy_dm_header_icon( 'shield' ); // phpcs:ignore ?>
+						<span><?php esc_html_e( 'Up to 70% Off Refurbished Devices', 'dejoiy' ); ?></span>
+					</div>
+				</div>
+			</nav>
+		</div>
+	</header>
+	<?php
+	return (string) ob_get_clean();
+}
+
+/**
+ * Mark standalone active and print header when theme header is absent.
+ */
+function dejoiy_desktop_marketplace_ensure_header() {
+	if ( ! dejoiy_desktop_marketplace_should_bootstrap_standalone() ) {
+		return;
+	}
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+
+	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+	echo dejoiy_desktop_marketplace_header_html();
+	do_action( 'dejoiy_desktop_marketplace_header_printed' );
+	$done = true;
+}
+
+/**
+ * Critical CSS: desktop header must never appear on mobile/tablet (≤1024px).
+ */
+function dejoiy_desktop_marketplace_viewport_guard() {
+	if ( ! dejoiy_desktop_marketplace_should_bootstrap_standalone() ) {
+		return;
+	}
+	echo '<style id="dmh-viewport-guard">';
+	echo '@media (max-width:1024px){#dejoiy-marketplace-header,.dmh{display:none!important;visibility:hidden!important;position:absolute!important;left:-9999px!important;width:0!important;height:0!important;overflow:hidden!important;pointer-events:none!important;}}';
+	echo '@media (min-width:1025px){body.dejoiy-dmh-standalone #dejoiy-marketplace-header,body.dejoiy-dmh-standalone #dejoiy-marketplace-header[hidden]{display:block!important;visibility:visible!important;position:relative!important;left:auto!important;width:auto!important;height:auto!important;overflow:visible!important;pointer-events:auto!important;}}';
+	echo '</style>';
+}
+add_action( 'wp_head', 'dejoiy_desktop_marketplace_viewport_guard', 2 );
+add_action( 'wp_body_open', 'dejoiy_desktop_marketplace_ensure_header', 1 );
+add_action( 'etheme_after_body_open', 'dejoiy_desktop_marketplace_ensure_header', 1 );
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_desktop_marketplace_header_body_class( $classes ) {
+	if ( ! dejoiy_desktop_marketplace_header_enabled() ) {
+		return $classes;
+	}
+	$classes[] = 'dejoiy-dm-header';
+	if ( dejoiy_desktop_marketplace_standalone_is_active() ) {
+		$classes[] = 'dejoiy-dmh-standalone';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_desktop_marketplace_header_body_class', 21 );
+
+/**
+ * Enqueue desktop-only assets.
+ */
+function dejoiy_desktop_marketplace_header_assets() {
+	if ( ! dejoiy_desktop_marketplace_header_enabled() ) {
+		return;
+	}
+
+	$dir = get_stylesheet_directory();
+	$uri = get_stylesheet_directory_uri();
+	$css = $dir . '/dejoiy-desktop-marketplace-header.css';
+	$js  = $dir . '/dejoiy-desktop-marketplace-header.js';
+	$ver = defined( 'DEJOIY_DM_HEADER_VERSION' ) ? DEJOIY_DM_HEADER_VERSION : '1.0.0';
+
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-desktop-marketplace-header',
+			$uri . '/dejoiy-desktop-marketplace-header.css',
+			array(),
+			$ver . '.' . (string) filemtime( $css )
+		);
+	}
+
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-desktop-marketplace-header',
+			$uri . '/dejoiy-desktop-marketplace-header.js',
+			array(),
+			$ver . '.' . (string) filemtime( $js ),
+			true
+		);
+		wp_localize_script( 'dejoiy-desktop-marketplace-header', 'dejoiyDmHeader', dejoiy_dm_header_config() );
+	}
+}
+add_action( 'wp_enqueue_scripts', 'dejoiy_desktop_marketplace_header_assets', 10060 );

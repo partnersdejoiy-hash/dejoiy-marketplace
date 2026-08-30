@@ -1,0 +1,133 @@
+<?php
+/**
+ * DEJOIY Universal layer — checkout, marketplace cart labels, shop card styling.
+ *
+ * Loads only after the main query (wp) to avoid breaking marketplace / studio.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( defined( 'DEJOIY_UNIVERSAL_DISABLED' ) && DEJOIY_UNIVERSAL_DISABLED ) {
+	return;
+}
+
+/**
+ * Cart page without calling is_cart() (safe during WC filters).
+ *
+ * @return bool
+ */
+function dejoiy_universal_is_wc_cart_page_raw() {
+	if ( ! did_action( 'wp' ) || ! function_exists( 'wc_get_page_id' ) ) {
+		return false;
+	}
+	if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url() ) {
+		return false;
+	}
+	$page_id = (int) wc_get_page_id( 'cart' );
+	if ( $page_id < 1 ) {
+		return false;
+	}
+	$queried = (int) get_queried_object_id();
+	if ( $queried === $page_id ) {
+		return true;
+	}
+	global $post;
+	return isset( $post->ID ) && (int) $post->ID === $page_id;
+}
+
+/**
+ * Checkout page without calling is_checkout() (avoids recursion with Nexus filters).
+ *
+ * @return bool
+ */
+function dejoiy_universal_is_wc_checkout_page_raw() {
+	if ( ! did_action( 'wp' ) || ! function_exists( 'wc_get_page_id' ) ) {
+		return false;
+	}
+	if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) {
+		return false;
+	}
+	$page_id = (int) wc_get_page_id( 'checkout' );
+	if ( $page_id < 1 ) {
+		return false;
+	}
+	$queried = (int) get_queried_object_id();
+	if ( $queried === $page_id ) {
+		return true;
+	}
+	global $post;
+	return isset( $post->ID ) && (int) $post->ID === $page_id;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_universal_is_checkout_screen() {
+	if ( function_exists( 'dejoiy_library_request_has_flow_flag' ) && dejoiy_library_request_has_flow_flag() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_studio_request_has_flow_flag' ) && dejoiy_studio_request_has_flow_flag() ) {
+		return false;
+	}
+	return dejoiy_universal_is_wc_checkout_page_raw();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_universal_is_marketplace_cart_screen() {
+	return dejoiy_universal_is_wc_cart_page_raw();
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_universal_is_shop_screen() {
+	return did_action( 'wp' ) && function_exists( 'is_shop' ) && is_shop();
+}
+
+/**
+ * Load universal modules once WooCommerce is available (after main query).
+ */
+function dejoiy_universal_init() {
+	static $done = false;
+	if ( $done || ! class_exists( 'WooCommerce' ) || ! did_action( 'wp' ) ) {
+		return;
+	}
+	$done = true;
+
+	$dir   = get_stylesheet_directory();
+	$files = array(
+		'dejoiy-universal-checkout.php',
+		'dejoiy-universal-cart.php',
+		'dejoiy-universal-shop.php',
+	);
+
+	foreach ( $files as $file ) {
+		$path = $dir . '/' . $file;
+		if ( is_readable( $path ) ) {
+			require_once $path;
+		}
+	}
+
+	if ( function_exists( 'dejoiy_universal_checkout_init' ) ) {
+		dejoiy_universal_checkout_init();
+	}
+	if ( function_exists( 'dejoiy_universal_cart_init' ) ) {
+		dejoiy_universal_cart_init();
+	}
+	if ( function_exists( 'dejoiy_universal_shop_init' ) ) {
+		dejoiy_universal_shop_init();
+	}
+}
+
+/**
+ * Bootstrap on wp — never during woocommerce_init (too early for conditional tags).
+ */
+function dejoiy_universal_bootstrap() {
+	add_action( 'wp', 'dejoiy_universal_init', 20 );
+}

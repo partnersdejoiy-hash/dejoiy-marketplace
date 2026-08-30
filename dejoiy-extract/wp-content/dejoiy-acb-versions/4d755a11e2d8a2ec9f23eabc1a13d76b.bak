@@ -1,0 +1,90 @@
+/**
+ * Studio WooCommerce — fast AJAX add to cart on single product.
+ */
+(function ($) {
+  'use strict';
+
+  var CFG = window.DEJOIY_STUDIO_WC || {};
+
+  function updateBadges(count) {
+    var n = parseInt(count, 10) || 0;
+    ['#dsu-hdr-cart-count', '#dsu-hdr-cart-count-mob'].forEach(function (sel) {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      if (n > 0) {
+        el.textContent = String(n);
+        el.removeAttribute('hidden');
+      } else {
+        el.setAttribute('hidden', '');
+      }
+    });
+  }
+
+  function showNotice(msg, type) {
+    var existing = document.querySelector('.dsu-atc-notice');
+    if (existing) existing.remove();
+    var note = document.createElement('div');
+    note.className = 'dsu-atc-notice dsu-atc-notice--' + (type || 'success');
+    note.setAttribute('role', 'status');
+    note.textContent = msg;
+    var shell = document.querySelector('.dsu-single-shell');
+    if (shell) shell.insertBefore(note, shell.firstChild);
+    setTimeout(function () {
+      note.classList.add('dsu-atc-notice--out');
+      setTimeout(function () { note.remove(); }, 400);
+    }, 3200);
+  }
+
+  function bindForm() {
+    var $form = $('form.cart');
+    if (!$form.length || !CFG.wc_ajax) return;
+
+    $form.on('submit', function (e) {
+      if (!$form.find('[name="add-to-cart"]').length) return;
+
+      e.preventDefault();
+      var $btn = $form.find('.single_add_to_cart_button');
+      if ($btn.hasClass('loading')) return;
+
+      $btn.addClass('loading').prop('disabled', true);
+
+      var data = $form.serializeArray();
+      data.push({ name: 'dejoiy_studio_ajax', value: '1' });
+
+      var url = CFG.wc_ajax.replace('%%endpoint%%', 'add_to_cart');
+
+      $.ajax({
+        type: 'POST',
+        url: url,
+        data: $.param(data),
+        dataType: 'json',
+        success: function (response) {
+          if (response.error && response.product_url) {
+            showNotice(CFG.i18n_error || 'Could not add to cart.', 'error');
+            return;
+          }
+          showNotice(CFG.i18n_added || 'Added to studio cart', 'success');
+          if (response.fragments) {
+            $.each(response.fragments, function (key, html) {
+              $(key).replaceWith(html);
+            });
+          }
+          $(document.body).trigger('added_to_cart', [response.fragments, response.cart_hash, $btn]);
+          var match = response.fragments && response.fragments['#dsu-hdr-cart-count'];
+          if (match) {
+            var tmp = $('<div>').html(match);
+            updateBadges(tmp.text());
+          }
+        },
+        error: function () {
+          showNotice(CFG.i18n_error || 'Could not add to cart.', 'error');
+        },
+        complete: function () {
+          $btn.removeClass('loading').prop('disabled', false);
+        }
+      });
+    });
+  }
+
+  $(bindForm);
+})(jQuery);

@@ -1,0 +1,146 @@
+<?php
+/**
+ * Restore Elementor site header & footer on DEJOIY Universe home.
+ *
+ * Pre-renders templates at wp_enqueue_scripts, then injects via a safe output buffer.
+ *
+ * @package Dejoiy
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * @return bool
+ */
+function dejoiy_site_chrome_should_restore() {
+	if ( is_admin() && ! wp_doing_ajax() ) {
+		return false;
+	}
+	if ( ! is_front_page() ) {
+		return false;
+	}
+	if ( function_exists( 'dejoiy_universe_home_is_active' ) && ! dejoiy_universe_home_is_active() ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @param string $location header|footer.
+ * @return int[]
+ */
+function dejoiy_site_chrome_template_ids( $location ) {
+	$defaults = array(
+		'header' => array( 4228 ),
+		'footer' => array( 4225 ),
+	);
+	$ids      = isset( $defaults[ $location ] ) ? $defaults[ $location ] : array();
+	return array_filter( array_map( 'intval', (array) apply_filters( 'dejoiy_site_chrome_elementor_template_ids', $ids, $location ) ) );
+}
+
+/**
+ * @param string $location header|footer.
+ * @return string
+ */
+function dejoiy_site_chrome_elementor_html( $location ) {
+	if ( ! class_exists( '\Elementor\Plugin' ) ) {
+		return '';
+	}
+	$frontend = \Elementor\Plugin::$instance->frontend;
+	$html     = '';
+	foreach ( dejoiy_site_chrome_template_ids( $location ) as $template_id ) {
+		if ( $template_id <= 0 || 'publish' !== get_post_status( $template_id ) ) {
+			continue;
+		}
+		$chunk = $frontend->get_builder_content_for_display( $template_id, true );
+		if ( is_string( $chunk ) && strlen( trim( $chunk ) ) > 0 ) {
+			$html .= $chunk;
+		}
+	}
+	return $html;
+}
+
+/**
+ * Pre-render header/footer once Elementor frontend is available.
+ */
+function dejoiy_site_chrome_prerender() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+	$GLOBALS['dejoiy_site_chrome_header_html'] = dejoiy_site_chrome_elementor_html( 'header' );
+	$GLOBALS['dejoiy_site_chrome_footer_html'] = dejoiy_site_chrome_elementor_html( 'footer' );
+}
+add_action( 'elementor/init', 'dejoiy_site_chrome_prerender', 20 );
+
+/**
+ * Buffer page output for string injection only (no Elementor calls in callback).
+ */
+function dejoiy_site_chrome_buffer_start() {
+	if ( ! dejoiy_site_chrome_should_restore() ) {
+		return;
+	}
+	$header = isset( $GLOBALS['dejoiy_site_chrome_header_html'] ) ? $GLOBALS['dejoiy_site_chrome_header_html'] : '';
+	$footer = isset( $GLOBALS['dejoiy_site_chrome_footer_html'] ) ? $GLOBALS['dejoiy_site_chrome_footer_html'] : '';
+	$h = isset( $GLOBALS['dejoiy_site_chrome_header_html'] ) ? $GLOBALS['dejoiy_site_chrome_header_html'] : '';
+	$f = isset( $GLOBALS['dejoiy_site_chrome_footer_html'] ) ? $GLOBALS['dejoiy_site_chrome_footer_html'] : '';
+	if ( strlen( trim( wp_strip_all_tags( $h ) ) ) < 40 && strlen( trim( wp_strip_all_tags( $f ) ) ) < 40 ) {
+		return;
+	}
+	ob_start( 'dejoiy_site_chrome_buffer_filter' );
+}
+add_action( 'template_redirect', 'dejoiy_site_chrome_buffer_start', 99 );
+
+/**
+ * @param string $html Page HTML.
+ * @return string
+ */
+function dejoiy_site_chrome_buffer_filter( $html ) {
+	if ( ! is_string( $html ) || strlen( $html ) < 500 ) {
+		return is_string( $html ) ? $html : '';
+	}
+
+	$header = isset( $GLOBALS['dejoiy_site_chrome_header_html'] ) ? $GLOBALS['dejoiy_site_chrome_header_html'] : '';
+	if ( is_string( $header ) && strlen( trim( wp_strip_all_tags( $header ) ) ) > 40 ) {
+		$block    = '<div class="dejoiy-site-chrome-header">' . $header . '</div>';
+		$replaced = preg_replace( '/(<div class="page-wrapper">\s*)/', '$1' . $block, $html, 1, $count );
+		if ( is_string( $replaced ) && $count > 0 ) {
+			$html = $replaced;
+		}
+	}
+
+	$footer = isset( $GLOBALS['dejoiy_site_chrome_footer_html'] ) ? $GLOBALS['dejoiy_site_chrome_footer_html'] : '';
+	if ( is_string( $footer ) && strlen( trim( wp_strip_all_tags( $footer ) ) ) > 40 ) {
+		$block    = '<div class="et-footers-wrapper dejoiy-site-chrome-footer">' . $footer . '</div>';
+		$replaced = preg_replace(
+			'/<div class="et-footers-wrapper dejoiy-site-chrome-footer">\s*<\/div>/',
+			$block,
+			$html,
+			1,
+			$count
+		);
+		if ( is_string( $replaced ) && $count > 0 ) {
+			$html = $replaced;
+		} else {
+			$pos = strripos( $html, '</body>' );
+			if ( false !== $pos ) {
+				$html = substr_replace( $html, $block, $pos, 0 );
+			}
+		}
+	}
+
+	return $html;
+}
+
+/**
+ * @param array<int, string> $classes Body classes.
+ * @return array<int, string>
+ */
+function dejoiy_site_chrome_body_class( $classes ) {
+	if ( dejoiy_site_chrome_should_restore() ) {
+		$classes[] = 'dejoiy-site-chrome-on';
+	}
+	return $classes;
+}
+add_filter( 'body_class', 'dejoiy_site_chrome_body_class', 25 );
