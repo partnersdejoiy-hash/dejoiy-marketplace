@@ -155,10 +155,22 @@
 		openSearchPanel();
 		if (!items || !items.length) {
 			searchResults.innerHTML =
-				'<p class="dmh-search__empty">' + (cfg.i18n && cfg.i18n.noResults ? cfg.i18n.noResults : 'No results') + '</p>';
+				'<div class="dmh-search__empty-state">' +
+				'<span class="dmh-search__empty-state__icon">🔍</span>' +
+				'<p class="dmh-search__empty-state__text">' + (cfg.i18n && cfg.i18n.noResults ? cfg.i18n.noResults : 'No results found') + '</p>' +
+				'<a class="dmh-search__empty-state__cta" href="' + (cfg.categories && cfg.categories[0] ? cfg.categories[0].url : '#') + '">Browse all products</a>' +
+				'</div>';
 			searchResults.hidden = false;
 			setSearchOpen(true);
 			return;
+		}
+
+		function renderLoading() {
+			if (!searchResults) return;
+			openSearchPanel();
+			searchResults.innerHTML = '<div class="dmh-search__loading">Searching DEJOIY Universe…</div>';
+			searchResults.hidden = false;
+			setSearchOpen(true);
 		}
 		searchResults.innerHTML = items
 			.map(function (item) {
@@ -223,6 +235,7 @@
 				closeSearchPanel();
 				return;
 			}
+			renderLoading();
 			searchTimer = setTimeout(function () {
 				runSearch(q);
 			}, 280);

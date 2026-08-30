@@ -235,6 +235,33 @@ function dejoiy_universe_render_card_v2( $product_id, $world = 'market' ) {
 	$badge  = dejoiy_universe_eco_badge( $product_id );
 	$dpin   = function_exists( 'dejoiy_display_product_dpin' ) ? dejoiy_display_product_dpin( $product_id ) : '';
 	$seller = dejoiy_universe_seller_label( $product_id );
+
+	/* Rating */
+	$avg_rating = (float) $product->get_average_rating();
+	$review_count = (int) $product->get_review_count();
+
+	/* Discount */
+	$regular_price = (float) $product->get_regular_price();
+	$sale_price    = (float) $product->get_sale_price();
+	$discount_pct  = 0;
+	if ( $regular_price > 0 && $sale_price > 0 && $sale_price < $regular_price ) {
+		$discount_pct = (int) round( ( ( $regular_price - $sale_price ) / $regular_price ) * 100 );
+	}
+
+	/* Delivery ETA — estimate based on product type */
+	$delivery_text = '';
+	if ( function_exists( 'dejoiy_get_product_ecosystem' ) ) {
+		$eco_type = dejoiy_get_product_ecosystem( $product_id );
+		if ( 'services' === $eco_type ) {
+			$delivery_text = __( 'Starting from', 'dejoiy' );
+		} elseif ( 'nexus' === $eco_type ) {
+			$delivery_text = __( 'Instant access', 'dejoiy' );
+		} else {
+			$delivery_text = __( 'Free delivery', 'dejoiy' );
+		}
+	} else {
+		$delivery_text = __( 'Free delivery', 'dejoiy' );
+	}
 	?>
 	<article class="du-card-v2 du-card-v2--<?php echo esc_attr( $world ); ?>" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>">
 		<button type="button" class="du-card-v2__fav" aria-label="<?php esc_attr_e( 'Save to favorites', 'dejoiy' ); ?>" aria-pressed="false" data-fav-id="<?php echo esc_attr( (string) $product_id ); ?>">
@@ -247,7 +274,9 @@ function dejoiy_universe_render_card_v2( $product_id, $world = 'market' ) {
 				<?php else : ?>
 					<span class="du-card-v2__ph" aria-hidden="true"></span>
 				<?php endif; ?>
-				<?php if ( $badge ) : ?>
+				<?php if ( $discount_pct > 0 ) : ?>
+					<span class="du-card-v2__discount"><?php echo esc_html( '-' . $discount_pct . '%' ); ?></span>
+				<?php elseif ( $badge ) : ?>
 					<span class="du-card-v2__eco"><?php echo esc_html( $badge ); ?></span>
 				<?php endif; ?>
 			</div>
@@ -256,7 +285,37 @@ function dejoiy_universe_render_card_v2( $product_id, $world = 'market' ) {
 					<span class="du-card-v2__dpin" title="<?php esc_attr_e( 'DEJOIY Product ID', 'dejoiy' ); ?>"><?php echo esc_html( $dpin ); ?></span>
 				<?php endif; ?>
 				<h3 class="du-card-v2__title"><?php echo esc_html( $product->get_name() ); ?></h3>
+				<?php if ( $avg_rating > 0 ) : ?>
+					<span class="du-card-v2__rating" aria-label="<?php echo esc_attr( sprintf( __( '%s out of 5 stars', 'dejoiy' ), number_format( $avg_rating, 1 ) ) ); ?>">
+						<span class="du-card-v2__stars" aria-hidden="true">
+							<?php
+							for ( $i = 1; $i <= 5; $i++ ) {
+								if ( $i <= floor( $avg_rating ) ) {
+									echo '★';
+								} elseif ( $i - $avg_rating < 1 && $i - $avg_rating > 0 ) {
+									echo '★';
+								} else {
+									echo '<span class="du-card-v2__star-empty">★</span>';
+								}
+							}
+							?>
+						</span>
+						<span class="du-card-v2__rating-num"><?php echo esc_html( number_format( $avg_rating, 1 ) ); ?></span>
+						<?php if ( $review_count > 0 ) : ?>
+							<span class="du-card-v2__review-count">(<?php echo esc_html( (string) $review_count ); ?>)</span>
+						<?php endif; ?>
+					</span>
+				<?php endif; ?>
 				<span class="du-card-v2__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
+				<?php if ( $discount_pct > 0 && $regular_price > 0 ) : ?>
+					<del class="du-card-v2__mrp"><?php echo wp_kses_post( wc_price( $regular_price ) ); ?></del>
+				<?php endif; ?>
+				<?php if ( $delivery_text ) : ?>
+					<span class="du-card-v2__delivery">
+						<span aria-hidden="true">🚚</span>
+						<?php echo esc_html( $delivery_text ); ?>
+					</span>
+				<?php endif; ?>
 				<span class="du-card-v2__seller">
 					<span class="du-card-v2__seller-dot" aria-hidden="true"></span>
 					<?php echo esc_html( $seller ); ?>
@@ -663,6 +722,45 @@ function dejoiy_universe_home_html() {
 			</div>
 		</section>
 		<?php endif; ?>
+
+		<!-- §8 Trust signals -->
+		<section class="du-trust du-reveal" aria-labelledby="du-trust-title">
+			<div class="du-trust__in">
+				<h2 id="du-trust-title" class="screen-reader-text"><?php esc_html_e( 'Why shop with DEJOIY', 'dejoiy' ); ?></h2>
+				<div class="du-trust__grid">
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">🔒</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Secure Payments', 'dejoiy' ); ?></span>
+						<span class="du-trust__desc"><?php esc_html_e( 'UPI, Cards, NetBanking & COD', 'dejoiy' ); ?></span>
+					</div>
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">🚚</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Fast Delivery', 'dejoiy' ); ?></span>
+						<span class="du-trust__desc"><?php esc_html_e( 'Across India', 'dejoiy' ); ?></span>
+					</div>
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">↩️</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Easy Returns', 'dejoiy' ); ?></span>
+						<?php esc_html_e( 'Hassle-free', 'dejoiy' ); ?>
+					</div>
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">🛡️</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Buyer Protection', 'dejoiy' ); ?></span>
+						<?php esc_html_e( 'DEJOIY guaranteed', 'dejoiy' ); ?>
+					</div>
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">✅</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Verified Sellers', 'dejoiy' ); ?></span>
+						<?php esc_html_e( 'Quality checked', 'dejoiy' ); ?>
+					</div>
+					<div class="du-trust__item">
+						<span class="du-trust__icon" aria-hidden="true">💬</span>
+						<span class="du-trust__label"><?php esc_html_e( 'Dedicated Support', 'dejoiy' ); ?></span>
+						<?php esc_html_e( 'Always here for you', 'dejoiy' ); ?>
+					</div>
+				</div>
+			</div>
+		</section>
 
 		<!-- §9 Become part of DEJOIY -->
 		<section class="du-join du-reveal" aria-labelledby="du-join-title">

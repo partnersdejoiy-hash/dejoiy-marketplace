@@ -313,6 +313,15 @@ body.dejoiy-cart-xp .product-remove a:hover {
 	color: #dc2626 !important;
 }
 
+/* Remove button transition */
+body.dejoiy-cart-xp .product-remove a {
+	transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+body.dejoiy-cart-xp .product-remove a:active {
+	transform: scale(0.92);
+}
+
 body.dejoiy-cart-xp .quantity .qty {
 	min-width: 52px;
 	min-height: 44px;
@@ -642,6 +651,22 @@ body.dejoiy-cart-xp .wc-proceed-to-checkout .checkout-button {
 body.dejoiy-cart-xp .wc-proceed-to-checkout a.checkout-button:hover {
 	transform: translateY(-2px);
 	box-shadow: 0 18px 44px rgba(124, 58, 237, 0.42) !important;
+}
+
+body.dejoiy-cart-xp .wc-proceed-to-checkout a.checkout-button:active {
+	transform: translateY(0) scale(0.98);
+}
+
+/* Coupon applied success animation */
+body.dejoiy-cart-xp .woocommerce-info,
+body.dejoiy-cart-xp .woocommerce-message {
+	border-radius: 14px !important;
+	font-size: 0.85rem !important;
+}
+
+body.dejoiy-cart-xp .woocommerce-info a,
+body.dejoiy-cart-xp .woocommerce-message a {
+	font-weight: 700;
 }
 
 /* Empty cart */

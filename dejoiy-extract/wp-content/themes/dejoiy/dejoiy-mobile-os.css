@@ -578,6 +578,22 @@
 	font-weight: 700;
 }
 
+.dm-bottom__item.is-active::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 1.5rem;
+	height: 3px;
+	border-radius: 0 0 3px 3px;
+	background: #2563eb;
+}
+
+.dm-bottom__item {
+	position: relative;
+}
+
 @media (max-width: 390px) {
 	.dm-search__input {
 		font-size: 0.82rem;

@@ -810,6 +810,73 @@
 	flex-shrink: 0;
 }
 
+/* Discount badge */
+.du-card-v2__discount {
+	position: absolute;
+	left: 0.5rem;
+	top: 0.5rem;
+	z-index: 2;
+	font-size: 0.68rem;
+	font-weight: 800;
+	padding: 0.25rem 0.55rem;
+	border-radius: 8px;
+	background: linear-gradient(135deg, #10b981, #06b6d4);
+	color: #fff;
+	letter-spacing: 0.02em;
+}
+
+/* Rating */
+.du-card-v2__rating {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	margin-bottom: 0.25rem;
+	font-size: 0.72rem;
+}
+
+.du-card-v2__stars {
+	color: #f59e0b;
+	font-size: 0.78rem;
+	letter-spacing: -0.02em;
+}
+
+.du-card-v2__star-empty {
+	color: #e2e8f0;
+}
+
+.du-card-v2__rating-num {
+	font-weight: 700;
+	color: var(--du-ink);
+}
+
+.du-card-v2__review-count {
+	color: var(--du-muted);
+	font-size: 0.68rem;
+}
+
+/* MRP strikethrough */
+.du-card-v2__mrp {
+	display: block;
+	font-size: 0.72rem;
+	color: var(--du-muted);
+	margin-top: -0.15rem;
+}
+
+/* Delivery */
+.du-card-v2__delivery {
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
+	font-size: 0.68rem;
+	font-weight: 600;
+	color: #16a34a;
+	margin-bottom: 0.2rem;
+}
+
+.du-card-v2__delivery span:first-child {
+	font-size: 0.75rem;
+}
+
 /* —— Worlds —— */
 .du-world {
 	position: relative;
@@ -1030,6 +1097,69 @@
 	}
 }
 
+
+/* —— Trust signals —— */
+.du-trust {
+	padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
+}
+
+.du-trust__in {
+	max-width: 1100px;
+	margin: 0 auto;
+}
+
+.du-trust__grid {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 0.65rem;
+}
+
+@media (min-width: 560px) {
+	.du-trust__grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+@media (min-width: 900px) {
+	.du-trust__grid {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+.du-trust__item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	padding: 1.1rem 0.75rem;
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.85);
+	border: 1px solid var(--du-line);
+	box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+	text-align: center;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.du-trust__item:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.du-trust__icon {
+	font-size: 1.65rem;
+	line-height: 1;
+}
+
+.du-trust__label {
+	font-size: 0.82rem;
+	font-weight: 700;
+	color: var(--du-ink);
+}
+
+.du-trust__desc {
+	font-size: 0.68rem;
+	color: var(--du-muted);
+}
 
 /* Antigravity accents (CSS-only; respects reduced motion) */
 @keyframes du-ag-drift {

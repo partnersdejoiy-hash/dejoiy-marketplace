@@ -315,6 +315,18 @@
 		box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
 		overflow: hidden;
 		z-index: 420;
+		animation: dmh-panel-in 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	@keyframes dmh-panel-in {
+		from {
+			opacity: 0;
+			transform: translateY(-8px) scale(0.98);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
 	}
 
 	.dmh-search__panel-head {
@@ -399,11 +411,12 @@
 		text-decoration: none;
 		color: var(--dmh-ink);
 		border-bottom: 1px solid #f1f5f9;
-		transition: background var(--dmh-ease), transform var(--dmh-ease);
+		transition: background var(--dmh-ease), transform var(--dmh-ease), padding-left var(--dmh-ease);
 	}
 
 	.dmh-search__result:hover {
 		background: rgba(6, 182, 212, 0.08);
+		padding-left: 1.1rem;
 	}
 
 	.dmh-search__result img {
@@ -981,6 +994,66 @@
 		border-color: rgba(6, 182, 212, 0.48);
 		box-shadow: 0 0 22px rgba(6, 182, 212, 0.22);
 		transform: translateY(-1px);
+	}
+
+	/* Premium search loading indicator */
+	.dmh-search__loading {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		padding: 0.75rem 0.9rem;
+		color: var(--dmh-muted);
+		font-size: 0.85rem;
+	}
+
+	.dmh-search__loading::before {
+		content: '';
+		width: 20px;
+		height: 20px;
+		border: 2px solid rgba(6, 182, 212, 0.2);
+		border-top-color: var(--dmh-accent);
+		border-radius: 50%;
+		animation: dmh-spin 0.7s linear infinite;
+	}
+
+	@keyframes dmh-spin {
+		to { transform: rotate(360deg); }
+	}
+
+	/* Premium empty state for search */
+	.dmh-search__empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 2rem 1.5rem;
+		text-align: center;
+	}
+
+	.dmh-search__empty-state__icon {
+		font-size: 2rem;
+		margin-bottom: 0.65rem;
+	}
+
+	.dmh-search__empty-state__text {
+		font-size: 0.88rem;
+		color: var(--dmh-muted);
+		margin-bottom: 0.85rem;
+	}
+
+	.dmh-search__empty-state__cta {
+		padding: 0.45rem 0.9rem;
+		border-radius: 8px;
+		background: rgba(6, 182, 212, 0.1);
+		color: var(--dmh-accent-dim);
+		font-size: 0.82rem;
+		font-weight: 700;
+		text-decoration: none;
+		border: 1px solid rgba(6, 182, 212, 0.25);
+		transition: background 0.2s;
+	}
+
+	.dmh-search__empty-state__cta:hover {
+		background: rgba(6, 182, 212, 0.18);
 	}
 
 	.dmh-promo .dmh-ico {
