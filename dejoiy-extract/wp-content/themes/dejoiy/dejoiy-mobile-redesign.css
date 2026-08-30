@@ -1,0 +1,831 @@
+/**
+ * DEJOIY Mobile + Tablet Redesign — premium app-like experience.
+ *
+ * This file overrides the desktop-shrunk layout with intentionally
+ * designed mobile compositions. Light glass header, larger typography,
+ * generous spacing, thumb-friendly targets.
+ *
+ * Breakpoints:
+ *   Phone:     360–599px
+ *   Small tab: 600–767px
+ *   Tablet:    768–1023px
+ *   Desktop:   1024px+ (this file does NOT affect desktop)
+ *
+ * @package Dejoiy
+ */
+
+/* ==============================================================
+   0. GLOBAL HEADER — ensure light glass on all pages
+   ============================================================== */
+
+/* Force light header even on pages with old dark header */
+body.dejoiy-gh #dejoiy-global-header,
+body.dejoiy-gh .gh {
+	background: transparent !important;
+}
+
+/* Utility bar — light */
+body.dejoiy-gh .gh-util {
+	background: rgba(255, 255, 255, 0.88) !important;
+	backdrop-filter: blur(20px) saturate(1.2) !important;
+	-webkit-backdrop-filter: blur(20px) saturate(1.2) !important;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Main header — light glass */
+body.dejoiy-gh .gh-main {
+	background: rgba(255, 255, 255, 0.92) !important;
+	backdrop-filter: blur(20px) saturate(1.3) !important;
+	-webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+	box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Nav bar — light */
+body.dejoiy-gh .gh-nav {
+	background: rgba(248, 250, 252, 0.95) !important;
+	backdrop-filter: blur(16px) !important;
+	-webkit-backdrop-filter: blur(16px) !important;
+	border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ==============================================================
+   1. MOBILE HEADER (≤1024px) — app-style composition
+   ============================================================== */
+
+@media (max-width: 1024px) {
+	/* Mobile header — light glass, NOT dark */
+	.gh-mobile {
+		background: rgba(255, 255, 255, 0.94) !important;
+		backdrop-filter: blur(20px) saturate(1.3) !important;
+		-webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+		border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+		box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06) !important;
+	}
+
+	/* Top row — compact, well-spaced */
+	.gh-m-top {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.5rem 0.75rem;
+		min-height: 56px;
+		background: transparent;
+	}
+
+	/* Browse button — larger touch target */
+	.gh-m-browse {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		border-radius: 12px;
+		background: rgba(255, 255, 255, 0.8);
+		color: #0f172a;
+		cursor: pointer;
+		flex-shrink: 0;
+		transition: background 0.2s ease, transform 0.15s ease;
+	}
+
+	.gh-m-browse:active {
+		transform: scale(0.92);
+		background: rgba(15, 23, 42, 0.04);
+	}
+
+	/* Logo — centered, larger */
+	.gh-logo--sm {
+		flex: 1;
+		justify-content: center;
+	}
+
+	.gh-logo--sm .gh-logo__img {
+		max-height: 40px;
+		max-width: 160px;
+	}
+
+	.gh-logo--sm .gh-logo__mark {
+		width: 38px;
+		height: 38px;
+		font-size: 1rem;
+	}
+
+	.gh-logo--sm .gh-logo__word {
+		font-size: 1.1rem;
+		letter-spacing: 0.05em;
+	}
+
+	/* Actions — right side */
+	.gh-m-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.gh-m-action {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 12px;
+		text-decoration: none;
+		color: #1e293b;
+		position: relative;
+		transition: background 0.2s ease;
+	}
+
+	.gh-m-action:active {
+		transform: scale(0.9);
+		background: rgba(15, 23, 42, 0.04);
+	}
+
+	.gh-m-action svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	.gh-m-action--cart {
+		color: #2563eb;
+	}
+
+	/* Search row — large, thumb-friendly */
+	.gh-m-search {
+		padding: 0 0.75rem 0.6rem;
+	}
+
+	.gh-m-search__wrap {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0 1rem;
+		min-height: 48px;
+		border-radius: 14px;
+		border: 1.5px solid rgba(15, 23, 42, 0.08);
+		background: rgba(248, 250, 252, 0.95);
+		cursor: pointer;
+		transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.gh-m-search__wrap:active {
+		border-color: #2563eb;
+		background: #fff;
+		box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+	}
+
+	.gh-m-search__wrap svg {
+		color: #94a3b8;
+		flex-shrink: 0;
+		width: 20px;
+		height: 20px;
+	}
+
+	.gh-m-search__input {
+		flex: 1;
+		min-width: 0;
+		border: none;
+		background: transparent;
+		padding: 0.6rem 0;
+		font-size: 0.95rem;
+		font-weight: 500;
+		color: #0f172a;
+		outline: none;
+	}
+
+	.gh-m-search__input::placeholder {
+		color: #94a3b8;
+		font-weight: 400;
+	}
+
+	/* World chips — horizontal scroll, larger */
+	.gh-m-chips {
+		display: flex;
+		overflow-x: auto;
+		scrollbar-width: none;
+		gap: 0.5rem;
+		padding: 0 0.75rem 0.6rem;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.gh-m-chips::-webkit-scrollbar {
+		display: none;
+	}
+
+	.gh-m-chip {
+		flex: 0 0 auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.45rem 0.85rem;
+		border-radius: 999px;
+		border: 1px solid rgba(15, 23, 42, 0.08);
+		background: rgba(255, 255, 255, 0.9);
+		color: #1e293b;
+		text-decoration: none;
+		font-size: 0.78rem;
+		font-weight: 600;
+		white-space: nowrap;
+		transition: all 0.2s ease;
+		min-height: 38px;
+	}
+
+	.gh-m-chip svg {
+		color: var(--gh-world, #64748b);
+		width: 16px;
+		height: 16px;
+	}
+
+	.gh-m-chip.is-active {
+		background: color-mix(in srgb, var(--gh-world, #2563eb) 10%, white);
+		border-color: color-mix(in srgb, var(--gh-world, #2563eb) 25%, transparent);
+		color: var(--gh-world, #2563eb);
+		font-weight: 700;
+	}
+
+	.gh-m-chip:active {
+		transform: scale(0.95);
+	}
+
+	/* Bottom nav — premium app feel */
+	.gh-m-bottom {
+		display: none;
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 9999;
+		background: rgba(255, 255, 255, 0.96) !important;
+		backdrop-filter: blur(20px) saturate(1.3) !important;
+		-webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+		border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+		box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.04) !important;
+		padding-bottom: env(safe-area-inset-bottom, 0);
+	}
+
+	.gh-m-bottom__item {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.15rem;
+		padding: 0.4rem 0;
+		text-decoration: none;
+		color: #94a3b8;
+		font-size: 0.62rem;
+		font-weight: 500;
+		min-height: 56px;
+		position: relative;
+		-webkit-tap-highlight-color: transparent;
+		transition: color 0.2s ease;
+	}
+
+	.gh-m-bottom__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+	}
+
+	.gh-m-bottom__icon svg {
+		width: 22px;
+		height: 22px;
+	}
+
+	.gh-m-bottom__item:active .gh-m-bottom__icon {
+		transform: scale(0.8);
+	}
+
+	.gh-m-bottom__item.is-active {
+		color: #2563eb;
+		font-weight: 700;
+	}
+
+	.gh-m-bottom__item.is-active .gh-m-bottom__icon {
+		transform: scale(1.15);
+	}
+
+	.gh-m-bottom__item.is-active::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 2rem;
+		height: 3px;
+		border-radius: 0 0 4px 4px;
+		background: linear-gradient(90deg, #2563eb, #7c3aed);
+	}
+
+	/* Add bottom padding to body for fixed nav */
+	body.dejoiy-gh {
+		padding-bottom: calc(56px + env(safe-area-inset-bottom, 0)) !important;
+	}
+}
+
+/* ==============================================================
+   2. MOBILE HOMEPAGE — intentionally composed
+   ============================================================== */
+
+@media (max-width: 1024px) {
+	/* Hero — stacked, readable, breathing */
+	.du-hero {
+		padding: 2rem 1rem 2.5rem;
+	}
+
+	.du-hero__kicker {
+		font-size: 0.72rem;
+		letter-spacing: 0.15em;
+		margin-bottom: 0.6rem;
+	}
+
+	.du-hero__title {
+		font-size: clamp(2rem, 8vw, 2.75rem);
+		font-weight: 800;
+		line-height: 1.1;
+		letter-spacing: -0.025em;
+		margin-bottom: 0.75rem;
+	}
+
+	.du-hero__lead {
+		font-size: 1rem;
+		line-height: 1.6;
+		color: #64748b;
+		margin-bottom: 1.5rem;
+		max-width: 100%;
+	}
+
+	/* Gateway cards — 2-column, generous height */
+	.du-gates {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+		padding: 0;
+	}
+
+	.du-gate {
+		min-height: 120px;
+		padding: 1rem 0.85rem;
+		border-radius: 16px;
+	}
+
+	.du-gate__icon {
+		font-size: 1.25rem;
+	}
+
+	.du-gate__verb {
+		font-size: 0.6rem;
+		letter-spacing: 0.12em;
+	}
+
+	.du-gate__label {
+		font-size: 0.95rem;
+		font-weight: 700;
+	}
+
+	.du-gate__tag {
+		font-size: 0.75rem;
+		color: #64748b;
+	}
+
+	/* Story section — more breathing */
+	.du-story {
+		padding: 2.5rem 1rem;
+	}
+
+	.du-story__formula {
+		font-size: clamp(1.5rem, 6vw, 2rem);
+		margin-bottom: 0.75rem;
+	}
+
+	.du-story__title {
+		font-size: clamp(1.25rem, 4vw, 1.5rem);
+		margin-bottom: 1rem;
+	}
+
+	.du-story__verbs {
+		gap: 0.4rem 0.6rem;
+	}
+
+	.du-story__verbs li {
+		font-size: 0.88rem;
+		padding: 0.35rem 0.75rem;
+	}
+
+	/* JOI section — spacious */
+	.du-joi {
+		padding: 2rem 1rem;
+	}
+
+	.du-joi__in {
+		padding: 1.5rem;
+		border-radius: 20px;
+	}
+
+	.du-joi__title {
+		font-size: clamp(1.5rem, 6vw, 2rem);
+		margin-bottom: 0.5rem;
+	}
+
+	.du-joi__input {
+		min-height: 50px;
+		font-size: 1rem;
+		border-radius: 14px;
+		padding: 0 1rem;
+	}
+
+	.du-joi__submit {
+		min-height: 50px;
+		border-radius: 14px;
+		font-size: 0.95rem;
+		padding: 0 1.5rem;
+	}
+
+	/* Product shelves — horizontal scroll */
+	.du-shelf-v2 {
+		display: flex;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
+		gap: 0.75rem;
+		padding: 0 1rem 0.5rem;
+	}
+
+	.du-shelf-v2::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* Product cards — mobile-optimized */
+	.du-card-v2 {
+		flex: 0 0 46%;
+		min-width: 160px;
+		scroll-snap-align: start;
+		border-radius: 16px;
+		overflow: hidden;
+		background: #fff;
+		border: 1px solid rgba(15, 23, 42, 0.06);
+		box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+		transition: transform 0.15s ease;
+	}
+
+	.du-card-v2:active {
+		transform: scale(0.97);
+	}
+
+	.du-card-v2__media {
+		aspect-ratio: 1;
+		border-radius: 0;
+	}
+
+	.du-card-v2__img {
+		transition: none;
+	}
+
+	.du-card-v2:hover .du-card-v2__img {
+		transform: none;
+	}
+
+	.du-card-v2__body {
+		padding: 0.65rem 0.75rem 0.8rem;
+	}
+
+	.du-card-v2__title {
+		font-size: 0.85rem;
+		line-height: 1.35;
+		-webkit-line-clamp: 2;
+		margin-bottom: 0.3rem;
+	}
+
+	.du-card-v2__rating {
+		font-size: 0.68rem;
+		margin-bottom: 0.2rem;
+	}
+
+	.du-card-v2__stars {
+		font-size: 0.72rem;
+	}
+
+	.du-card-v2__price {
+		font-size: 0.9rem;
+		margin-bottom: 0.15rem;
+	}
+
+	.du-card-v2__mrp {
+		font-size: 0.7rem;
+	}
+
+	.du-card-v2__delivery {
+		font-size: 0.65rem;
+		margin-bottom: 0.15rem;
+	}
+
+	.du-card-v2__seller {
+		font-size: 0.65rem;
+	}
+
+	.du-card-v2__fav {
+		width: 2rem;
+		height: 2rem;
+		font-size: 0.9rem;
+		top: 0.5rem;
+		right: 0.5rem;
+		opacity: 1;
+	}
+
+	.du-card-v2__discount {
+		font-size: 0.65rem;
+		padding: 0.2rem 0.5rem;
+		left: 0.5rem;
+		top: 0.5rem;
+	}
+
+	.du-card-v2__eco {
+		font-size: 0.6rem;
+		padding: 0.2rem 0.45rem;
+		left: 0.5rem;
+		bottom: 0.5rem;
+	}
+
+	/* World sections — spacious */
+	.du-world {
+		margin: 1.5rem 0.75rem;
+		border-radius: 20px;
+	}
+
+	.du-world__in {
+		padding: 1.5rem;
+	}
+
+	.du-world__title {
+		font-size: clamp(1.2rem, 4vw, 1.5rem);
+		margin-bottom: 0.5rem;
+	}
+
+	.du-world__desc {
+		font-size: 0.9rem;
+		margin-bottom: 1rem;
+	}
+
+	.du-world__cta {
+		font-size: 0.85rem;
+		padding: 0.5rem 1rem;
+		border-radius: 999px;
+	}
+
+	/* Recommendations */
+	.du-reco {
+		padding: 2rem 1rem;
+	}
+
+	.du-reco__title {
+		font-size: clamp(1.2rem, 4vw, 1.5rem);
+		margin-bottom: 0.75rem;
+	}
+
+	.du-reco__tabs {
+		gap: 0.4rem;
+		margin-bottom: 1rem;
+	}
+
+	.du-reco__tab {
+		font-size: 0.82rem;
+		padding: 0.45rem 0.9rem;
+		white-space: nowrap;
+	}
+
+	/* Trust signals — compact grid */
+	.du-trust {
+		padding: 1.5rem 1rem;
+	}
+
+	.du-trust__grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.5rem;
+	}
+
+	.du-trust__item {
+		padding: 0.9rem 0.5rem;
+		border-radius: 14px;
+	}
+
+	.du-trust__icon {
+		font-size: 1.4rem;
+	}
+
+	.du-trust__label {
+		font-size: 0.75rem;
+		font-weight: 700;
+	}
+
+	.du-trust__desc {
+		font-size: 0.62rem;
+	}
+
+	/* Join CTA */
+	.du-join {
+		margin: 2rem 0.75rem 0;
+		padding: 2rem 1.25rem;
+		border-radius: 22px;
+	}
+
+	.du-join__title {
+		font-size: clamp(1.3rem, 5vw, 1.65rem);
+	}
+
+	.du-join__lead {
+		font-size: 0.9rem;
+	}
+
+	.du-join__roles {
+		gap: 0.4rem;
+	}
+
+	.du-join__roles span {
+		font-size: 0.75rem;
+		padding: 0.35rem 0.7rem;
+	}
+
+	.du-join__btn {
+		padding: 0.8rem 1.5rem;
+		font-size: 0.9rem;
+	}
+}
+
+/* ==============================================================
+   3. TABLET (768–1023px) — adaptive composition
+   ============================================================== */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+	/* 3-column product grid on tablet */
+	.du-shelf-v2 {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 1rem;
+		overflow-x: visible;
+		scroll-snap-type: none;
+	}
+
+	.du-card-v2 {
+		flex: none;
+		min-width: 0;
+		scroll-snap-align: auto;
+	}
+
+	/* Larger gateway cards */
+	.du-gates {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.85rem;
+	}
+
+	.du-gate {
+		min-height: 135px;
+		padding: 1.1rem 0.9rem;
+	}
+
+	/* Trust — full 6 columns */
+	.du-trust__grid {
+		grid-template-columns: repeat(6, 1fr);
+	}
+
+	.du-trust__desc {
+		display: block;
+	}
+
+	/* Larger search */
+	.gh-m-search__wrap {
+		min-height: 52px;
+	}
+
+	.gh-m-search__input {
+		font-size: 1rem;
+	}
+}
+
+/* ==============================================================
+   4. VERY SMALL (≤360px) — compact but readable
+   ============================================================== */
+
+@media (max-width: 360px) {
+	.gh-m-top {
+		padding: 0.4rem 0.5rem;
+		min-height: 50px;
+	}
+
+	.gh-logo--sm .gh-logo__word {
+		display: none;
+	}
+
+	.gh-m-chip {
+		font-size: 0.72rem;
+		padding: 0.38rem 0.7rem;
+		min-height: 36px;
+	}
+
+	.gh-m-bottom__item {
+		font-size: 0.55rem;
+		min-height: 50px;
+	}
+
+	.gh-m-bottom__icon svg {
+		width: 20px;
+		height: 20px;
+	}
+
+	.du-gates {
+		gap: 0.5rem;
+	}
+
+	.du-gate {
+		min-height: 105px;
+		padding: 0.8rem 0.65rem;
+	}
+
+	.du-gate__label {
+		font-size: 0.88rem;
+	}
+
+	.du-card-v2 {
+		flex: 0 0 44%;
+		min-width: 145px;
+	}
+
+	.du-card-v2__body {
+		padding: 0.55rem 0.65rem 0.7rem;
+	}
+
+	.du-card-v2__title {
+		font-size: 0.8rem;
+	}
+
+	.du-trust__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.du-trust__item {
+		padding: 0.7rem 0.4rem;
+	}
+}
+
+/* ==============================================================
+   5. REDUCED MOTION
+   ============================================================== */
+
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+	.du-card-v2,
+	.gh-m-bottom__icon,
+	.gh-m-chip,
+	.gh-m-browse,
+	.gh-m-action {
+		transition: none !important;
+	}
+
+	.du-card-v2:active,
+	.gh-m-bottom__item:active .gh-m-bottom__icon,
+	.gh-m-chip:active,
+	.gh-m-browse:active,
+	.gh-m-action:active {
+		transform: none !important;
+	}
+}
+
+/* ==============================================================
+   6. SAFE AREA (notched devices)
+   ============================================================== */
+
+@supports (padding-top: env(safe-area-inset-top)) {
+	.gh-mobile {
+		padding-top: env(safe-area-inset-top);
+	}
+
+	.gh-m-bottom {
+		padding-bottom: env(safe-area-inset-bottom, 0);
+	}
+}
+
+/* ==============================================================
+   7. DARK MODE (future-ready, commented)
+   ============================================================== */
+
+/*
+@media (prefers-color-scheme: dark) {
+	.gh-mobile,
+	.gh-m-bottom {
+		background: rgba(15, 23, 42, 0.94) !important;
+		border-color: rgba(255, 255, 255, 0.06) !important;
+	}
+	.gh-m-chip {
+		background: rgba(30, 41, 59, 0.8);
+		border-color: rgba(255, 255, 255, 0.08);
+		color: #e2e8f0;
+	}
+	.du-card-v2 {
+		background: #1e293b;
+		border-color: rgba(255, 255, 255, 0.06);
+	}
+	.du-card-v2__title {
+		color: #f1f5f9;
+	}
+}
+*/
