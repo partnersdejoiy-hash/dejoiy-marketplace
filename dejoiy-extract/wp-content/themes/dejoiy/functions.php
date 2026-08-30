@@ -251,5 +251,15 @@ if ( is_readable( $library_lms ) ) {
 
 // DEJOIY Marketplace Evolution — Phase 1
 require_once get_stylesheet_directory() . '/dejoiy-marketplace-evolution.php';
-// DEJOIY Header OS V4 — Elementor header ecosystem navigation
-require_once get_stylesheet_directory() . '/dejoiy-header-os-v4.php';
+// DEJOIY Global Header OS — unified canonical header
+$gh_path = get_stylesheet_directory() . '/dejoiy-global-header.php';
+if ( is_readable( $gh_path ) ) {
+	require_once $gh_path;
+}
+
+// DEJOIY Header OS V4 — Elementor header ecosystem navigation (legacy, disabled when global header active)
+if ( ! defined( 'DEJOIY_GH_DISABLED' ) || ! DEJOIY_GH_DISABLED ) {
+	// Header OS V4 is superseded by Global Header OS
+} else {
+	require_once get_stylesheet_directory() . '/dejoiy-header-os-v4.php';
+}
