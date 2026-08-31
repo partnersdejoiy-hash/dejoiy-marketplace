@@ -251,21 +251,47 @@ if ( is_readable( $library_lms ) ) {
 
 // DEJOIY Marketplace Evolution — Phase 1
 require_once get_stylesheet_directory() . '/dejoiy-marketplace-evolution.php';
-// DEJOIY Global Header OS — unified canonical header
-$gh_path = get_stylesheet_directory() . '/dejoiy-global-header.php';
-if ( is_readable( $gh_path ) ) {
-	require_once $gh_path;
-}
+// DEJOIY Header OS V4 — Elementor header ecosystem navigation
+require_once get_stylesheet_directory() . '/dejoiy-header-os-v4.php';
 
-// DEJOIY Header OS V4 — Elementor header ecosystem navigation (legacy, disabled when global header active)
-if ( ! defined( 'DEJOIY_GH_DISABLED' ) || ! DEJOIY_GH_DISABLED ) {
-	// Header OS V4 is superseded by Global Header OS
-} else {
-	require_once get_stylesheet_directory() . '/dejoiy-header-os-v4.php';
-}
+/* ===== DEJOIY Animated Header — Three.js Canvas ===== */
+function dejoiy_animated_header_assets() {
+	if ( ! function_exists( 'dejoiy_desktop_marketplace_header_enabled' ) || ! dejoiy_desktop_marketplace_header_enabled() ) {
+		return;
+	}
+	$uri = get_stylesheet_directory_uri();
+	$dir = get_stylesheet_directory();
 
-// DEJOIY Motion Adapters — premium motion system powered by ThreeUI Community concepts
-$dm_path = get_stylesheet_directory() . '/dejoiy-motion/dejoiy-motion-adapters.php';
-if ( is_readable( $dm_path ) ) {
-	require_once $dm_path;
+	// Three.js CDN
+	wp_enqueue_script(
+		'dejoiy-three-js',
+		'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+		array(),
+		'r128',
+		true
+	);
+
+	// Header Three CSS
+	$css = $dir . '/dejoiy-header-three.css';
+	if ( is_readable( $css ) ) {
+		wp_enqueue_style(
+			'dejoiy-header-three',
+			$uri . '/dejoiy-header-three.css',
+			array(),
+			(string) filemtime( $css )
+		);
+	}
+
+	// Header Three Canvas JS
+	$js = $dir . '/dejoiy-header-three-canvas.js';
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-header-three-canvas',
+			$uri . '/dejoiy-header-three-canvas.js',
+			array( 'dejoiy-three-js' ),
+			(string) filemtime( $js ),
+			true
+		);
+	}
 }
+add_action( 'wp_enqueue_scripts', 'dejoiy_animated_header_assets', 10055 );

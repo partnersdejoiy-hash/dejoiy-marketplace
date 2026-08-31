@@ -502,6 +502,9 @@ function dejoiy_desktop_marketplace_header_html() {
 
 	ob_start();
 	?>
+	<div class="dejoiy-header-three-wrap">
+		<canvas id="dejoiy-header-canvas" aria-hidden="true"></canvas>
+		<div class="dejoiy-header-glass" id="dejoiy-header-glass">
 	<header id="dejoiy-marketplace-header" class="dmh" data-dmh-header role="banner" hidden aria-hidden="true">
 		<div class="dmh__sticky">
 			<div class="dmh__top">
@@ -634,6 +637,8 @@ function dejoiy_desktop_marketplace_header_html() {
 			</nav>
 		</div>
 	</header>
+		</div>
+	</div>
 	<?php
 	return (string) ob_get_clean();
 }
@@ -708,15 +713,6 @@ function dejoiy_desktop_marketplace_header_assets() {
 			$uri . '/dejoiy-desktop-marketplace-header.css',
 			array(),
 			$ver . '.' . (string) filemtime( $css )
-		);
-	}
-	$desktop_website = $dir . '/dejoiy-desktop-website.css';
-	if ( is_readable( $desktop_website ) ) {
-		wp_enqueue_style(
-			'dejoiy-desktop-website',
-			$uri . '/dejoiy-desktop-website.css',
-			array( 'dejoiy-desktop-marketplace-header' ),
-			$ver . '.' . (string) filemtime( $desktop_website )
 		);
 	}
 
