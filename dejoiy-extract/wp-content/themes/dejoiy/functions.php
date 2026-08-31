@@ -263,3 +263,9 @@ if ( ! defined( 'DEJOIY_GH_DISABLED' ) || ! DEJOIY_GH_DISABLED ) {
 } else {
 	require_once get_stylesheet_directory() . '/dejoiy-header-os-v4.php';
 }
+
+// DEJOIY Motion Adapters — premium motion system powered by ThreeUI Community concepts
+$dm_path = get_stylesheet_directory() . '/dejoiy-motion/dejoiy-motion-adapters.php';
+if ( is_readable( $dm_path ) ) {
+	require_once $dm_path;
+}
