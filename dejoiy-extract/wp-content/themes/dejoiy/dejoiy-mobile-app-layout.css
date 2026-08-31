@@ -1,0 +1,999 @@
+/**
+ * DEJOIY Mobile App Layout — exact composition from design spec.
+ *
+ * ┌─────────────────────────┐
+ * │  DEJOIY   ♡   🛒   ☰    │  ← compact glass bar
+ * ├─────────────────────────┤
+ * │ 🔎 Search anything...   │  ← large, easy thumb target
+ * ├─────────────────────────┤
+ * │ Shop  Nexus  Renew  ... │  ← horizontal scroll chips
+ * ├─────────────────────────┤
+ * │    HERO CONTENT         │
+ * │    large readable type  │
+ * │  [ Explore ] [ Ask JOI ]│
+ * │  ┌──────┐ ┌──────┐     │
+ * │  │ Shop │ │ Nexus│     │
+ * │  │      │ │      │     │
+ * │  └──────┘ └──────┘     │
+ * │  ┌──────┐ ┌──────┐     │
+ * │  │Create│ │Quick │     │
+ * │  └──────┘ └──────┘     │
+ * ├─────────────────────────┤
+ * │ Popular Categories      │
+ * │ ○      ○      ○        │
+ * ├─────────────────────────┤
+ * │ JOI                     │
+ * │ Ask anything...         │
+ * ├─────────────────────────┤
+ * │ ...                     │
+ * └─────────────────────────┘
+ *
+ * @package Dejoiy
+ */
+
+/* ==============================================================
+   1. COMPACT GLASS HEADER BAR
+   ============================================================== */
+
+@media (max-width: 600px) {
+  /* Override any desktop header */
+  body .gh-desktop,
+  body .dmh,
+  body #dejoiy-marketplace-header,
+  body .elementor-location-header,
+  body header[data-elementor-id="4228"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Mobile header — ONE compact glass bar */
+  .gh-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9990;
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(24px) saturate(1.4) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06) !important;
+    box-shadow: 0 1px 8px rgba(15, 23, 42, 0.04) !important;
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Compact top row: Logo + actions */
+  .gh-m-top {
+    display: flex !important;
+    align-items: center;
+    gap: 0;
+    padding: 0 0.75rem;
+    min-height: 48px;
+    background: transparent;
+  }
+
+  /* Browse/menu button — left */
+  .gh-m-browse {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #0f172a;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .gh-m-browse:active {
+    background: rgba(15, 23, 42, 0.06);
+  }
+
+  .gh-m-browse svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Logo — center */
+  .gh-logo--sm {
+    flex: 1;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .gh-logo--sm .gh-logo__img {
+    max-height: 32px;
+    max-width: 120px;
+    object-fit: contain;
+  }
+
+  .gh-logo--sm .gh-logo__mark {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+  }
+
+  .gh-logo--sm .gh-logo__word {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+  }
+
+  /* Actions — right: wishlist, cart */
+  .gh-m-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 0.1rem;
+  }
+
+  .gh-m-action {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #0f172a;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease;
+  }
+
+  .gh-m-action:active {
+    background: rgba(15, 23, 42, 0.06);
+  }
+
+  .gh-m-action svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .gh-m-action--cart svg {
+    color: #2563eb;
+  }
+
+  /* Cart badge */
+  .gh-badge--sm {
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+    border: 1.5px solid #fff;
+  }
+}
+
+/* ==============================================================
+   2. LARGE SEARCH FIELD
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .gh-m-search {
+    padding: 0 0.75rem 0.5rem;
+  }
+
+  .gh-m-search__wrap {
+    display: flex !important;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 0.85rem;
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(15, 23, 42, 0.08);
+    background: rgba(248, 250, 252, 0.95);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .gh-m-search__wrap:active {
+    border-color: #2563eb;
+    background: #fff;
+  }
+
+  .gh-m-search__wrap svg {
+    color: #94a3b8;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .gh-m-search__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 0.6rem 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #0f172a;
+    outline: none;
+  }
+
+  .gh-m-search__input::placeholder {
+    color: #94a3b8;
+    font-weight: 400;
+  }
+}
+
+/* ==============================================================
+   3. HORIZONTAL SCROLL CHIPS
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .gh-m-chips {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.45rem;
+    padding: 0 0.75rem 0.6rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+  }
+
+  .gh-m-chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gh-m-chip {
+    flex: 0 0 auto;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    min-height: 36px;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gh-m-chip svg {
+    width: 14px;
+    height: 14px;
+    color: var(--gh-world, #64748b);
+  }
+
+  .gh-m-chip.is-active {
+    background: color-mix(in srgb, var(--gh-world, #2563eb) 10%, white);
+    border-color: color-mix(in srgb, var(--gh-world, #2563eb) 25%, transparent);
+    color: var(--gh-world, #2563eb);
+    font-weight: 700;
+  }
+
+  .gh-m-chip:active {
+    transform: scale(0.95);
+  }
+}
+
+/* ==============================================================
+   4. BOTTOM NAVIGATION
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .gh-m-bottom {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    background: rgba(255, 255, 255, 0.96) !important;
+    backdrop-filter: blur(20px) saturate(1.3) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.3) !important;
+    border-top: 1px solid rgba(15, 23, 42, 0.06) !important;
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.04) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .gh-m-bottom__item {
+    flex: 1;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0.35rem 0;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: 0.58rem;
+    font-weight: 500;
+    min-height: 52px;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s ease;
+  }
+
+  .gh-m-bottom__icon {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .gh-m-bottom__icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .gh-m-bottom__item:active .gh-m-bottom__icon {
+    transform: scale(0.8);
+  }
+
+  .gh-m-bottom__item.is-active {
+    color: #2563eb;
+    font-weight: 700;
+  }
+
+  .gh-m-bottom__item.is-active .gh-m-bottom__icon {
+    transform: scale(1.15);
+  }
+
+  .gh-m-bottom__item.is-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2rem;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+  }
+
+  /* Body padding for fixed bottom nav */
+  body {
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 0)) !important;
+  }
+}
+
+/* ==============================================================
+   5. MOBILE HERO — large readable type
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .du-hero {
+    padding: 2rem 1rem 2.5rem;
+    text-align: center;
+  }
+
+  .du-hero__kicker {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #7c3aed;
+    margin-bottom: 0.6rem;
+  }
+
+  .du-hero__title {
+    font-size: clamp(2rem, 9vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #0f172a 0%, #7c3aed 55%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .du-hero__lead {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #64748b;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+
+  /* Two CTAs side by side */
+  .du-hero__ctas {
+    display: flex;
+    gap: 0.65rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .du-hero__cta {
+    flex: 1;
+    max-width: 180px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    min-height: 48px;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .du-hero__cta:active {
+    transform: scale(0.96);
+  }
+
+  .du-hero__cta--primary {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  }
+
+  .du-hero__cta--secondary {
+    background: rgba(124, 58, 237, 0.08);
+    color: #7c3aed;
+    border: 1px solid rgba(124, 58, 237, 0.15);
+  }
+}
+
+/* ==============================================================
+   6. 2-COLUMN ECOSYSTEM GRID — generous cards
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .du-gates {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    padding: 0;
+  }
+
+  .du-gate {
+    position: relative;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    padding: 1.1rem 0.9rem 1rem;
+    min-height: 110px;
+    border-radius: 16px;
+    text-decoration: none;
+    color: #0f172a;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .du-gate:active {
+    transform: scale(0.97);
+  }
+
+  .du-gate__art {
+    position: absolute;
+    inset: 0;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .du-gate__icon {
+    position: relative;
+    font-size: 1.25rem;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+
+  .du-gate__verb {
+    position: relative;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.65;
+  }
+
+  .du-gate__label {
+    position: relative;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .du-gate__tag {
+    position: relative;
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.3;
+  }
+
+  /* Hide refurbished on mobile */
+  .du-gate--refurbished {
+    display: none !important;
+  }
+}
+
+/* ==============================================================
+   7. POPULAR CATEGORIES — horizontal scroll
+   ============================================================== */
+
+@media (max-width: 600px) {
+  /* If there's a category section on homepage */
+  .du-categories,
+  .du-popular-cats {
+    padding: 0 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .du-categories__title,
+  .du-popular-cats__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0.75rem;
+  }
+
+  .du-categories__scroll,
+  .du-popular-cats__scroll {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.75rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .du-categories__scroll::-webkit-scrollbar,
+  .du-popular-cats__scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Category circle item */
+  .du-cat-item {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: #0f172a;
+    scroll-snap-align: start;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .du-cat-item__circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.06), rgba(124, 58, 237, 0.06));
+    border: 1.5px solid rgba(15, 23, 42, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .du-cat-item:active .du-cat-item__circle {
+    transform: scale(0.92);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+
+  .du-cat-item__label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-align: center;
+    max-width: 72px;
+    line-height: 1.2;
+  }
+}
+
+/* ==============================================================
+   8. JOI SECTION
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .du-joi {
+    padding: 1.5rem 0.75rem 2rem;
+  }
+
+  .du-joi__in {
+    padding: 1.25rem;
+    border-radius: 18px;
+  }
+
+  .du-joi__badge {
+    font-size: 0.65rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .du-joi__title {
+    font-size: clamp(1.4rem, 6vw, 1.75rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .du-joi__form {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .du-joi__input {
+    min-height: 48px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    padding: 0 1rem;
+  }
+
+  .du-joi__submit {
+    min-height: 48px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    padding: 0 1.5rem;
+  }
+
+  /* JOI chips — horizontal scroll */
+  .du-joi__examples {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.4rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .du-joi__examples::-webkit-scrollbar {
+    display: none;
+  }
+
+  .du-joi__chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    font-size: 0.75rem;
+    padding: 0.38rem 0.7rem;
+    white-space: nowrap;
+  }
+}
+
+/* ==============================================================
+   9. PRODUCT SHELVES — horizontal scroll
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .du-reco,
+  .du-world {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .du-shelf-v2 {
+    display: flex !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.65rem;
+    padding: 0 0 0.5rem;
+  }
+
+  .du-shelf-v2::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Product cards — mobile */
+  .du-card-v2 {
+    flex: 0 0 45%;
+    min-width: 155px;
+    scroll-snap-align: start;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    transition: transform 0.15s ease;
+  }
+
+  .du-card-v2:active {
+    transform: scale(0.97);
+  }
+
+  .du-card-v2__media {
+    aspect-ratio: 1;
+    border-radius: 0;
+  }
+
+  .du-card-v2__img {
+    transition: none;
+  }
+
+  .du-card-v2:hover .du-card-v2__img {
+    transform: none;
+  }
+
+  .du-card-v2__body {
+    padding: 0.6rem 0.7rem 0.75rem;
+  }
+
+  .du-card-v2__title {
+    font-size: 0.82rem;
+    line-height: 1.3;
+    -webkit-line-clamp: 2;
+  }
+
+  .du-card-v2__rating {
+    font-size: 0.65rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .du-card-v2__stars {
+    font-size: 0.7rem;
+  }
+
+  .du-card-v2__price {
+    font-size: 0.88rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .du-card-v2__mrp {
+    font-size: 0.68rem;
+  }
+
+  .du-card-v2__delivery {
+    font-size: 0.62rem;
+  }
+
+  .du-card-v2__seller {
+    font-size: 0.62rem;
+  }
+
+  .du-card-v2__fav {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.85rem;
+    top: 0.4rem;
+    right: 0.4rem;
+    opacity: 1;
+  }
+
+  .du-card-v2__discount {
+    font-size: 0.6rem;
+    padding: 0.18rem 0.4rem;
+    left: 0.4rem;
+    top: 0.4rem;
+  }
+}
+
+/* ==============================================================
+   10. TRUST SIGNALS — compact
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .du-trust {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .du-trust__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+  }
+
+  .du-trust__item {
+    padding: 0.75rem 0.4rem;
+    border-radius: 12px;
+  }
+
+  .du-trust__icon {
+    font-size: 1.3rem;
+  }
+
+  .du-trust__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  .du-trust__desc {
+    font-size: 0.58rem;
+  }
+}
+
+/* ==============================================================
+   11. SECTION RHYTHM — consistent vertical spacing
+   ============================================================== */
+
+@media (max-width: 600px) {
+  /* Consistent vertical rhythm between sections */
+  .du-hero + .du-story,
+  .du-story + .du-joi,
+  .du-joi + .du-reco,
+  .du-reco + .du-world,
+  .du-world + .du-trust,
+  .du-trust + .du-join {
+    margin-top: 0;
+  }
+
+  .du-world {
+    margin: 1.25rem 0.75rem;
+    border-radius: 18px;
+  }
+
+  .du-world__in {
+    padding: 1.25rem;
+  }
+
+  .du-world__title {
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
+  }
+
+  .du-world__desc {
+    font-size: 0.85rem;
+  }
+
+  .du-world__cta {
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+  }
+
+  .du-reco {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .du-reco__title {
+    font-size: clamp(1.1rem, 4vw, 1.35rem);
+  }
+
+  .du-reco__tab {
+    font-size: 0.78rem;
+    padding: 0.38rem 0.75rem;
+  }
+
+  .du-join {
+    margin: 1.5rem 0.75rem 0;
+    padding: 1.5rem 1rem;
+    border-radius: 20px;
+  }
+
+  .du-join__title {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+  }
+
+  .du-join__btn {
+    padding: 0.7rem 1.25rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ==============================================================
+   12. MOBILE DRAWER — browse all
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .gh-m-drawer__panel {
+    width: min(300px, 85vw);
+  }
+
+  .gh-m-drawer__link {
+    padding: 0.65rem 0.6rem;
+    gap: 0.6rem;
+  }
+
+  .gh-m-drawer__link-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .gh-m-drawer__link-label {
+    font-size: 0.92rem;
+  }
+
+  .gh-m-drawer__cat {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ==============================================================
+   13. MOBILE SEARCH SHEET — full screen
+   ============================================================== */
+
+@media (max-width: 600px) {
+  .gh-m-search-sheet {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .gh-m-search-sheet__input-wrap {
+    min-height: 48px;
+  }
+
+  .gh-m-search-sheet__input {
+    font-size: 1rem;
+  }
+}
+
+/* ==============================================================
+   14. REDUCED MOTION
+   ============================================================== */
+
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) {
+  .du-card-v2,
+  .du-gate,
+  .gh-m-bottom__icon,
+  .gh-m-chip,
+  .gh-m-browse,
+  .gh-m-action,
+  .du-hero__cta {
+    transition: none !important;
+  }
+
+  .du-card-v2:active,
+  .du-gate:active,
+  .gh-m-bottom__item:active .gh-m-bottom__icon,
+  .gh-m-chip:active,
+  .gh-m-browse:active,
+  .gh-m-action:active,
+  .du-hero__cta:active {
+    transform: none !important;
+  }
+}
+
+/* ==============================================================
+   15. VERY SMALL (≤360px) — compact but readable
+   ============================================================== */
+
+@media (max-width: 360px) {
+  .gh-m-top {
+    min-height: 44px;
+    padding: 0 0.5rem;
+  }
+
+  .gh-logo--sm .gh-logo__word {
+    display: none;
+  }
+
+  .gh-m-chip {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.65rem;
+    min-height: 34px;
+  }
+
+  .gh-m-bottom__item {
+    font-size: 0.52rem;
+    min-height: 48px;
+  }
+
+  .du-gate {
+    min-height: 95px;
+    padding: 0.85rem 0.7rem;
+  }
+
+  .du-gate__label {
+    font-size: 0.88rem;
+  }
+
+  .du-hero__title {
+    font-size: clamp(1.75rem, 8vw, 2.25rem);
+  }
+
+  .du-card-v2 {
+    flex: 0 0 44%;
+    min-width: 140px;
+  }
+}
