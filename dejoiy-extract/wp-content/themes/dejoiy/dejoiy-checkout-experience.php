@@ -66,7 +66,7 @@ function dejoiy_checkout_xp_is_checkout_page() {
 			return true;
 		}
 	}
-	return '' !== $uri && (bool) preg_match( '#/checkout(/|\?|#|$)#', $uri );
+	return '' !== $uri && (bool) preg_match( '~/checkout(/|\?|#|$)~', $uri );
 }
 
 /**

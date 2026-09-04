@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return bool
  */
 function dejoiy_mobile_home_v2_active() {
+	if ( function_exists( 'dejoiy_marketplace_home_active' ) && dejoiy_marketplace_home_active() ) {
+		return false;
+	}
 	if ( ! function_exists( 'dejoiy_universe_home_is_active' ) || ! dejoiy_universe_home_is_active() ) {
 		return false;
 	}

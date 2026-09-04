@@ -360,7 +360,7 @@ function dejoiy_gh_desktop_header_html() {
 					</div>
 					<div class="gh-util__right">
 						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/sell-on-dejoiy/' ) ); ?>"><?php esc_html_e( 'Sell on DEJOIY', 'dejoiy' ); ?></a>
-						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/deals/' ) ); ?>"><?php esc_html_e( 'Deals', 'dejoiy' ); ?></a>
+						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>"><?php esc_html_e( 'Deals', 'dejoiy' ); ?></a>
 						<a class="gh-util__link" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Track Order', 'dejoiy' ); ?></a>
 						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php esc_html_e( 'Support', 'dejoiy' ); ?></a>
 					</div>
@@ -630,10 +630,6 @@ function dejoiy_gh_print_header() {
 	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) && dejoiy_mobile_os_is_dedicated_page() ) {
 		return;
 	}
-	// Skip product pages (they have their own chrome)
-	if ( function_exists( 'is_product' ) && is_product() ) {
-		return;
-	}
 	// Skip cart page (cart experience has its own)
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
 		return;
@@ -642,7 +638,7 @@ function dejoiy_gh_print_header() {
 	if ( $done ) {
 		return;
 	}
-	$done = true;
+$done = true;
 	echo dejoiy_gh_desktop_header_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
 add_action( 'wp_body_open', 'dejoiy_gh_print_header', 1 );
@@ -662,24 +658,13 @@ function dejoiy_gh_hide_legacy() {
 	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) && dejoiy_mobile_os_is_dedicated_page() ) {
 		return;
 	}
-	if ( function_exists( 'is_product' ) && is_product() ) {
-		return;
-	}
 	if ( function_exists( 'is_cart' ) && is_cart() ) {
 		return;
 	}
 	echo '<style id="dejoiy-gh-guard">';
-	// Hide desktop marketplace header (replaced by our unified header)
-	echo 'body.dejoiy-gh #dejoiy-marketplace-header,.dmh{display:none!important;visibility:hidden!important;pointer-events:none!important;}';
-	// Hide mobile OS header (replaced by our unified header)
-	echo 'body.dejoiy-gh #dejoiy-mobile-os-chrome,body.dejoiy-gh #dejoiy-mobile-os-header{display:none!important;visibility:hidden!important;}';
-	// Hide mobile OS bottom nav (replaced by our unified bottom nav)
-	echo 'body.dejoiy-gh #dejoiy-mobile-os-bottom{display:none!important;}';
-	// Hide mobile OS search sheet
-	echo 'body.dejoiy-gh #dm-joi-search-sheet{display:none!important;}';
-	// Hide Header OS V4 Elementor header
+	// Parent-theme chrome (xstore / Elementor) still renders from the template
+	// hierarchy — suppress it so only the Global Header OS is visible.
 	echo 'body.dejoiy-gh .elementor-location-header,body.dejoiy-gh header[data-elementor-id="4228"]{display:none!important;visibility:hidden!important;}';
-	// Hide legacy theme header
 	echo 'body.dejoiy-gh .header-wrapper,body.dejoiy-gh .mobile-header-wrapper,body.dejoiy-gh .etheme-elementor-header-sticky{display:none!important;}';
 	// Ensure our header is visible
 	echo 'body.dejoiy-gh #dejoiy-global-header{display:block!important;visibility:visible!important;}';

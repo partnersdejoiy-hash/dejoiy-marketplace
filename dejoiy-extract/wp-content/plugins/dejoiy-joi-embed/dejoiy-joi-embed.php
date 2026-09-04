@@ -13,6 +13,19 @@ if (!defined('ABSPATH')) {
 define('DEJOIY_JOI_URL', 'https://joi.dejoiy.tech');
 
 /**
+ * Widget availability gate — the script host (joi.dejoiy.tech) is not always
+ * up. Keep a single source of truth so a dead host never breaks page loads:
+ * enabled only when the option is set to '1' or filtered on. Register REST
+ * routes still work regardless (they power the /joi/ page).
+ */
+function dejoiy_joi_widget_enabled(): bool {
+    if (defined('DEJOIY_JOI_EMBED_SECRET') && DEJOIY_JOI_EMBED_SECRET === 'DISABLED') {
+        return false;
+    }
+    return '1' === get_option('dejoiy_joi_widget_enabled', '0') && (bool) apply_filters('dejoiy_joi_widget_enabled', true);
+}
+
+/**
  * Shared secret with Joi server (wp-config.php or auto-provisioned wp_option).
  */
 function dejoiy_joi_get_embed_secret(): string {
@@ -95,7 +108,9 @@ function dejoiy_joi_inline_user_config(): void {
 
     echo '<script>window.__DEJOIY_JOI_USER__=' . wp_json_encode($config) . ';</script>' . "\n";
 }
-add_action('wp_footer', 'dejoiy_joi_inline_user_config', 98);
+if (dejoiy_joi_widget_enabled()) {
+    add_action('wp_footer', 'dejoiy_joi_inline_user_config', 98);
+}
 
 function dejoiy_joi_embed_script(): void {
     $user_name = '';
@@ -124,7 +139,9 @@ function dejoiy_joi_embed_script(): void {
     ></script>
     <?php
 }
-add_action('wp_footer', 'dejoiy_joi_embed_script', 99);
+if (dejoiy_joi_widget_enabled()) {
+    add_action('wp_footer', 'dejoiy_joi_embed_script', 99);
+}
 
 /**
  * Create read-only WooCommerce REST API keys for Joi order lookup (once).

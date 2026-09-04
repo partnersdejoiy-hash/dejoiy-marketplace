@@ -257,6 +257,18 @@ if ( is_readable( $gh_path ) ) {
 	require_once $gh_path;
 }
 
+// DEJOIY Global Footer — unified marketplace footer (optional, fallback safe)
+$gf_path = get_stylesheet_directory() . '/dejoiy-global-footer.php';
+if ( is_readable( $gf_path ) ) {
+	require_once $gf_path;
+}
+
+// DEJOIY Product Detail — trust strip + Buy Now (optional, fallback safe)
+$pd_path = get_stylesheet_directory() . '/dejoiy-product-detail.php';
+if ( is_readable( $pd_path ) ) {
+	require_once $pd_path;
+}
+
 // DEJOIY Header OS V4 — Elementor header ecosystem navigation (legacy, disabled when global header active)
 if ( ! defined( 'DEJOIY_GH_DISABLED' ) || ! DEJOIY_GH_DISABLED ) {
 	// Header OS V4 is superseded by Global Header OS
@@ -307,4 +319,50 @@ add_action( 'wp_enqueue_scripts', 'dejoiy_animated_header_assets', 10055 );
 $dm_path = get_stylesheet_directory() . '/dejoiy-motion/dejoiy-motion-adapters.php';
 if ( is_readable( $dm_path ) ) {
 	require_once $dm_path;
+}
+
+/**
+ * The xstore product template renders its own gallery, so the
+ * gallery-slider-for-woocommerce markup (#wpgs-gallery) never appears.
+ * Its assets are dead weight here and log an IntersectionObserver
+ * TypeError on every product page — dequeue them.
+ */
+add_action( 'wp_enqueue_scripts', 'dejoiy_drop_unused_gallery_slider_assets', 10120 );
+function dejoiy_drop_unused_gallery_slider_assets() {
+	$handles = array(
+		'gallery-slider-for-woocommerce',
+		'wcgs-swiper',
+		'wcgs-fancybox',
+		'sp_wcgs-fontello-fontende-icons',
+		'sp_wcgs-fontello-icons',
+	);
+	foreach ( $handles as $handle ) {
+		wp_dequeue_style( $handle );
+	}
+	wp_dequeue_script( 'gallery-slider-for-woocommerce' );
+}
+
+/**
+ * Block REST user enumeration for logged-out visitors.
+ * /wp/v2/users exposes admin slugs and email addresses otherwise.
+ */
+add_filter( 'rest_endpoints', 'dejoiy_harden_rest_users' );
+function dejoiy_harden_rest_users( $endpoints ) {
+	if ( is_user_logged_in() ) {
+		return $endpoints;
+	}
+	unset( $endpoints['/wp/v2/users'] );
+	unset( $endpoints['/wp/v2/users/(?P<id>[\d]+)'] );
+	return $endpoints;
+}
+
+/**
+ * Dead author archives are a secondary enumeration vector — bounce them home.
+ */
+add_action( 'template_redirect', 'dejoiy_block_author_archives' );
+function dejoiy_block_author_archives() {
+	if ( is_author() ) {
+		wp_safe_redirect( home_url( '/' ), 301 );
+		exit;
+	}
 }

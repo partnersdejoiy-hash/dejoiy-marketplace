@@ -40,7 +40,7 @@ function dejoiy_about_xp_is_about_page() {
 		return true;
 	}
 	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-	return '' !== $uri && (bool) preg_match( '#/about-us(/|\?|#|$)#', $uri );
+	return '' !== $uri && (bool) preg_match( '~/about-us(/|\?|#|$)~', $uri );
 }
 
 /**

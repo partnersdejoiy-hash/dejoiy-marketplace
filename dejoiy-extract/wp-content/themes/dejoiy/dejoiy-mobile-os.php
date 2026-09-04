@@ -102,7 +102,7 @@ function dejoiy_mobile_os_is_checkout_focus() {
 	if ( '' === $uri || false !== strpos( $uri, 'order-received' ) ) {
 		return false;
 	}
-	return (bool) preg_match( '#/checkout(/|\?|#|$)#', $uri );
+	return (bool) preg_match( '~/checkout(/|\?|#|$)~', $uri );
 }
 
 /**
@@ -674,6 +674,12 @@ function dejoiy_mobile_os_ajax_cart_count() {
  * Output fixed header once.
  */
 function dejoiy_mobile_os_print_header() {
+	// Single header architecture: Global Header OS owns site-wide chrome.
+	// Mobile OS only keeps its specialized cart/checkout focus modes.
+	if ( ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus()
+		&& function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
+		return;
+	}
 	if ( ! dejoiy_mobile_os_enabled() && ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus() ) {
 		return;
 	}
@@ -698,6 +704,11 @@ add_action( 'etheme_before_page_wrapper', 'dejoiy_mobile_os_print_header', 1 );
  * Search sheet + bottom nav.
  */
 function dejoiy_mobile_os_print_footer_chrome() {
+	// Single header architecture: Global Header OS provides the bottom nav.
+	if ( ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus()
+		&& function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
+		return;
+	}
 	if ( ! dejoiy_mobile_os_enabled() && ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus() ) {
 		return;
 	}
@@ -757,6 +768,11 @@ add_filter( 'body_class', 'dejoiy_mobile_os_body_class', 20 );
  * Enqueue Mobile OS assets (all pages, mobile/tablet media).
  */
 function dejoiy_mobile_os_assets() {
+	// Single header architecture: skip site-wide chrome on Global Header pages.
+	if ( ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus()
+		&& function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
+		return;
+	}
 	if ( ! dejoiy_mobile_os_enabled() && ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus() ) {
 		return;
 	}

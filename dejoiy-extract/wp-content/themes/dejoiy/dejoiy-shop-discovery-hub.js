@@ -95,7 +95,7 @@
 		}
 
 		var row = findLoopControlsRow();
-		if (!row || slot.contains(row)) {
+		if (!row || row.contains(slot) || slot.contains(row)) {
 			return;
 		}
 

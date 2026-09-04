@@ -16,6 +16,9 @@ function dejoiy_universe_home_is_active() {
 	if ( is_admin() && ! wp_doing_ajax() ) {
 		return false;
 	}
+	if ( function_exists( 'dejoiy_marketplace_home_active' ) && dejoiy_marketplace_home_active() ) {
+		return false;
+	}
 	return '1' === get_option( 'dejoiy_universe_home_active', '1' );
 }
 

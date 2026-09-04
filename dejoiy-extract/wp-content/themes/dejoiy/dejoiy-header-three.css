@@ -1,16 +1,5 @@
-/**
- * DEJOIY Animated Header — CSS
- *
- * Styles for the Three.js-powered animated header.
- * Works alongside the existing dmh header styles.
- * Adds canvas positioning, glassmorphism overlay, and animation states.
- *
- * @version 1.0.0
- */
+/* DEJOIY Animated Header — Light Glassmorphism (Amazon-style) */
 
-/* ---------------------------------------------------------
- *  Canvas container — sits behind the header content
- * ------------------------------------------------------- */
 .dejoiy-header-three-wrap {
   position: relative;
   width: 100%;
@@ -27,226 +16,87 @@
   pointer-events: none;
 }
 
-/* ---------------------------------------------------------
- *  Glass overlay — content sits on top of the canvas
- * ------------------------------------------------------- */
 .dejoiy-header-glass {
   position: relative;
   z-index: 5;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  transition: background 400ms cubic-bezier(0.4, 0, 0.2, 1),
-              backdrop-filter 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.dejoiy-header-glass.is-scrolled {
-  background: rgba(15, 23, 42, 0.68);
-  backdrop-filter: blur(28px) saturate(1.5);
-  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+/* Light glass overlay */
+.dejoiy-header-glass--djv3 {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
+  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ---------------------------------------------------------
- *  Nav items — hover glow effect
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh-nav-link {
-  position: relative;
-  overflow: hidden;
+.dejoiy-header-glass--djv3.is-scrolled {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(32px) saturate(1.8);
+  -webkit-backdrop-filter: blur(32px) saturate(1.8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
 }
 
-.dejoiy-header-glass .dmh-nav-link::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(6, 182, 212, 0.25) 0%,
-    rgba(99, 102, 241, 0.15) 50%,
-    transparent 70%
-  );
-  transform: translate(-50%, -50%);
-  transition: width 350ms cubic-bezier(0.4, 0, 0.2, 1),
-              height 350ms cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 350ms cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-  z-index: -1;
+/* Make djv3 header transparent so glass shows through */
+.djv3 .djv3-header {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-.dejoiy-header-glass .dmh-nav-link:hover::before {
-  width: 120px;
-  height: 120px;
-  opacity: 1;
+.djv3 .djv3-nav {
+  background: rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
 }
 
-/* ---------------------------------------------------------
- *  Logo pulse — subtle breathing animation
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh-logo {
-  position: relative;
+.djv3 .djv3-primary {
+  color: #1a1a2e !important;
 }
 
-.dejoiy-header-glass .dmh-logo::after {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 16px;
-  background: linear-gradient(
-    135deg,
-    rgba(6, 182, 212, 0.15),
-    rgba(236, 72, 153, 0.1),
-    rgba(99, 102, 241, 0.12)
-  );
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 400ms ease;
-  animation: dejoiy-logo-breathe 6s ease-in-out infinite;
+.djv3 .djv3-primary a,
+.djv3 .djv3-primary span {
+  color: #1a1a2e !important;
 }
 
-.dejoiy-header-glass .dmh-logo:hover::after {
-  opacity: 1;
+.djv3 .djv3-nav a {
+  color: #333 !important;
+  font-weight: 600 !important;
 }
 
-@keyframes dejoiy-logo-breathe {
-  0%, 100% { opacity: 0; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.04); }
+.djv3 .djv3-nav a:hover {
+  color: #007185 !important;
 }
 
-/* ---------------------------------------------------------
- *  Search bar — animated border glow on focus
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh-search {
-  position: relative;
+.djv3 .djv3-search {
+  background: #fff !important;
+  border: 2px solid #cdcdcd !important;
+  border-radius: 8px !important;
+  color: #111 !important;
 }
 
-.dejoiy-header-glass .dmh-search::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 18px;
-  background: linear-gradient(
-    90deg,
-    var(--dmh-accent, #06b6d4),
-    var(--dmh-brand-indigo, #6366f1),
-    var(--dmh-pink, #ec4899),
-    var(--dmh-accent, #06b6d4)
-  );
-  background-size: 300% 100%;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 400ms ease;
-  animation: dejoiy-search-border 4s linear infinite;
+.djv3 .djv3-search:focus {
+  border-color: #007185 !important;
+  box-shadow: 0 0 0 3px rgba(0, 113, 133, 0.15) !important;
 }
 
-.dejoiy-header-glass .dmh-search:focus-within::after {
-  opacity: 1;
-}
-
-@keyframes dejoiy-search-border {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ---------------------------------------------------------
- *  Cart badge — subtle bounce on update
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh-cart__badge {
-  animation: dejoiy-badge-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes dejoiy-badge-pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-/* ---------------------------------------------------------
- *  Sub-nav — entrance stagger (JS triggers .is-visible)
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh__sub .dmh-nav-link {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 300ms ease, transform 300ms ease;
-}
-
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(1) { transition-delay: 50ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(2) { transition-delay: 100ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(3) { transition-delay: 150ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(4) { transition-delay: 200ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(5) { transition-delay: 250ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(6) { transition-delay: 300ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(7) { transition-delay: 350ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(8) { transition-delay: 400ms; }
-.dejoiy-header-glass .dmh__sub.is-visible .dmh-nav-link:nth-child(9) { transition-delay: 450ms; }
-
-/* ---------------------------------------------------------
- *  JOI button — continuous AI glow
- * ------------------------------------------------------- */
-.dejoiy-header-glass .dmh-nav-link--joi {
-  position: relative;
-}
-
-.dejoiy-header-glass .dmh-nav-link--joi::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 999px;
-  background: linear-gradient(
-    135deg,
-    rgba(236, 72, 153, 0.3),
-    rgba(59, 130, 246, 0.3),
-    rgba(99, 102, 241, 0.3)
-  );
-  z-index: -1;
-  animation: dejoiy-joi-pulse 3s ease-in-out infinite;
-  filter: blur(8px);
-}
-
-@keyframes dejoiy-joi-pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(1.08); }
-}
-
-/* ---------------------------------------------------------
- *  Reduced motion — kill all animations
- * ------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  .dejoiy-header-glass .dmh-nav-link::before,
-  .dejoiy-header-glass .dmh-logo::after,
-  .dejoiy-header-glass .dmh-search::after,
-  .dejoiy-header-glass .dmh-nav-link--joi::before {
-    animation: none !important;
-    transition: none !important;
-  }
-
-  .dejoiy-header-glass .dmh__sub .dmh-nav-link {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-/* ---------------------------------------------------------
- *  Mobile — hide canvas on small screens
- * ------------------------------------------------------- */
+/* Mobile */
 @media (max-width: 1024px) {
   .dejoiy-header-three-wrap canvas {
     display: none;
   }
+  .dejoiy-header-glass--djv3 {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+}
 
-  .dejoiy-header-glass {
-    background: rgba(15, 23, 42, 0.92);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .dejoiy-header-glass * {
+    animation: none !important;
+    transition: none !important;
   }
 }

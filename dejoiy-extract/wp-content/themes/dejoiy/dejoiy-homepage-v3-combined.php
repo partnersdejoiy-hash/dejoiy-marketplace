@@ -1,3 +1,4 @@
+echo "<!-- DGH TEST: combined file loaded -->";
 <?php
 /**
  * DEJOIY Homepage V3 — Combined single file
@@ -420,6 +421,9 @@ return '
 function dejoiy_v3_render_header() {
     $shop_url = function_exists('wc_get_page_permalink') ? wc_get_page_permalink('shop') : home_url('/shop/');
     ?>
+    <div class="dejoiy-header-three-wrap">
+        <canvas id="dejoiy-header-canvas" aria-hidden="true"></canvas>
+        <div class="dejoiy-header-glass dejoiy-header-glass--djv3" id="dejoiy-header-glass">
     <header class="djv3-header" id="djv3-header">
         <!-- Utility Bar -->
         <div class="djv3-utility">
@@ -540,6 +544,7 @@ function dejoiy_v3_render_header() {
             </div>
         </nav>
     </header>
+</div>    </div>
     <?php
 }
 
@@ -961,13 +966,15 @@ echo '<meta property="og:title" content="DEJOIY - India\'s Next-Generation Marke
 echo '<meta property="og:description" content="Shop, create, learn, sell and grow - all in one ecosystem.">';
 echo '<meta property="og:type" content="website">';
 echo '<meta name="twitter:card" content="summary_large_image">';
-echo '<style>' . dejoiy_v3_design_system_css() . dejoiy_v3_section_css() . '</style>';
-
-    // Wrapper
+echo '<style>' . dejoiy_v3_design_system_css() . dejoiy_v3_section_css() . '</style>'; echo '<style id="dejoiy-gh-compat">.djv3 .djv3-utility{display:none!important;visibility:hidden!important;max-height:0!important;overflow:hidden!important;padding:0!important;margin:0!important;}</style>';
+echo '<link rel="stylesheet" href="' . get_stylesheet_directory_uri() . '/dejoiy-header-three.css?v=' . filemtime(get_stylesheet_directory() . '/dejoiy-header-three.css') . '" />';
     echo '<div class="djv3">';
 
     // Header
-    dejoiy_v3_render_header();
+echo '<link rel="stylesheet" href="' . get_stylesheet_directory_uri() . '/dejoiy-global-header-three.css?v=' . filemtime(get_stylesheet_directory() . '/dejoiy-global-header-three.css') . '" />';
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
+echo '<script src="' . get_stylesheet_directory_uri() . '/dejoiy-global-header-three.js?v=' . filemtime(get_stylesheet_directory() . '/dejoiy-global-header-three.js') . '"></script>';
+    echo '<div class="dgh-wrap" id="dgh-wrap"><canvas id="dgh-canvas" aria-hidden="true"></canvas><div class="dgh-glass" id="dgh-glass"><div class="dgh-desktop"><div class="dgh-top"><div class="dgh-container"><a class="dgh-logo" href="' . esc_url(home_url('/')) . '"><img src="' . esc_url(dejoiy_dgh_logo_url()) . '" alt="DEJOIY" class="dgh-logo__img" width="140" height="42" loading="eager"></a><form class="dgh-search" action="' . esc_url(function_exists("wc_get_page_permalink") ? wc_get_page_permalink("shop") : home_url("/shop/")) . '" method="get"><input class="dgh-search__input" type="search" name="s" placeholder="Search products, brands and more..." autocomplete="off"><input type="hidden" name="post_type" value="product"><button type="submit" class="dgh-search__btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button></form><nav class="dgh-actions"><a href="' . esc_url(home_url('/my-account/')) . '" class="dgh-action"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>' . (is_user_logged_in() ? "Hello" : "Sign In") . '</span></a><a href="' . esc_url(home_url('/cart/')) . '" class="dgh-action dgh-action--cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg></a></nav></div></div><nav class="dgh-nav"><div class="dgh-container"><a href="' . esc_url(home_url('/')) . '" class="dgh-nav__link">Home</a><a href="' . esc_url(home_url('/shop/')) . '" class="dgh-nav__link">Shop</a><a href="' . esc_url(home_url('/dejoiy-festival-sale/')) . '" class="dgh-nav__link dgh-nav__link--deals">Deals</a><a href="' . esc_url(home_url('/sell-on-dejoiy/')) . '" class="dgh-nav__link">Sell on DEJOIY</a><a href="' . esc_url(home_url('/contact/')) . '" class="dgh-nav__link">Support</a></div></nav></div><div class="dgh-mobile"><div class="dgh-mobile__top"><a class="dgh-logo dgh-logo--mobile" href="' . esc_url(home_url('/')) . '"><img src="' . esc_url(dejoiy_dgh_logo_url()) . '" alt="DEJOIY" class="dgh-logo__img" width="110" height="36" loading="eager"></a></div><form class="dgh-mobile__search" action="' . esc_url(home_url('/shop/')) . '" method="get"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="dgh-mobile__search-input" type="search" name="s" placeholder="Search DEJOIY..." autocomplete="off"><input type="hidden" name="post_type" value="product"></form><nav class="dgh-bottomnav"><a href="' . esc_url(home_url('/')) . '" class="dgh-bottomnav__item is-active"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Home</span></a><a href="' . esc_url(home_url('/shop/')) . '" class="dgh-bottomnav__item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/></svg><span>Shop</span></a><a href="' . esc_url(home_url('/dejoiy-festival-sale/')) . '" class="dgh-bottomnav__item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg><span>Deals</span></a><a href="' . esc_url(home_url('/my-account/')) . '" class="dgh-bottomnav__item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Account</span></a><a href="' . esc_url(home_url('/cart/')) . '" class="dgh-bottomnav__item"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg><span>Cart</span></a></nav></div></div></div></div>';
 
     // Hero
     dejoiy_v3_render_hero();
@@ -1143,6 +1150,73 @@ echo '<style>' . dejoiy_v3_design_system_css() . dejoiy_v3_section_css() . '</st
 
     // JS
     dejoiy_v3_render_js();
+
+
+/* DEJOIY Three.js Animated Header — CDN + Engine */
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>';
+echo '<script>
+(function(){
+  "use strict";
+  var C={pc:100,ps:0.02,sp:7,pd:0.0012,sc:5,ss:0.25,sdr:0.35,srs:0.005,cF:42,cZ:5.8,mi:0.18,sp_:0.35,fN:3.5,fF:13,bg:11206746,dC:2,
+    CY:669772,IN:6513489,PV:15267993,VL:8145148
+  };
+  var cv=document.getElementById("dejoiy-header-canvas");
+  var hd=document.getElementById("dejoiy-header-glass");
+  if(!cv||typeof THREE==="undefined")return;
+  var R,SC,Ca,Cl,Pa=[],SH=[],P1,P2,mx=0,my=0,tmx=0,tmy=0,scY=0,vi=true;
+  function lp(a,b,t){return a+(b-a)*t}
+  function rn(a,b){return Math.random()*(b-a)+a}
+  function gT(){var s=64,c=document.createElement("canvas");c.width=s;c.height=s;var x=c.getContext("2d");var g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(0.35,"rgba(255,255,255,0.5)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,s,s);var t=new THREE.CanvasTexture(c);t.needsUpdate=true;return t}
+  function init(){
+    var d=Math.min(window.devicePixelRatio||1,C.dC);
+    R=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true,powerPreference:"high-performance"});
+    R.setPixelRatio(d);R.setSize(cv.parentElement.offsetWidth,cv.parentElement.offsetHeight);R.setClearColor(C.bg,1);
+    SC=new THREE.Scene();SC.fog=new THREE.Fog(C.fN,C.fN,C.fF);
+    var a=cv.parentElement.offsetWidth/cv.parentElement.offsetHeight;
+    Ca=new THREE.PerspectiveCamera(C.cF,a,0.1,50);Ca.position.set(0,0.2,C.cZ);Ca.lookAt(0,0,0);
+    SC.add(new THREE.AmbientLight(8590991,0.35));
+    P1=new THREE.PointLight(C.CY,1.1,12);P1.position.set(2.5,1.2,3);SC.add(P1);
+    P2=new THREE.PointLight(C.PV,0.9,10);P2.position.set(-2.5,-0.8,2.5);SC.add(P2);
+    Cl=new THREE.Clock();bP();bS();obs();bind();anim()
+  }
+  function bP(){var n=C.pc,p=new Float32Array(n*3),c=new Float32Array(n*3);
+    var pl=[new THREE.Color(C.CY),new THREE.Color(C.IN),new THREE.Color(C.PV),new THREE.Color(C.VL),new THREE.Color(16777215)];
+    for(var i=0;i<n;i++){var i3=i*3;p[i3]=rn(-C.sp,C.sp);p[i3+1]=rn(-C.sp,C.sp);p[i3+2]=rn(-2.5,2.5);var cl=pl[Math.floor(Math.random()*pl.length)];c[i3]=cl.r;c[i3+1]=cl.g;c[i3+2]=cl.b}
+    var g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(p,3));g.setAttribute("color",new THREE.BufferAttribute(c,3));
+    Pa=new THREE.Points(g,new THREE.PointsMaterial({size:C.ps,map:gT(),vertexColors:true,transparent:true,opacity:0.8,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));
+    SC.add(Pa)
+  }
+  function bS(){
+    var geos=[new THREE.IcosahedronGeometry(C.ss,0),new THREE.OctahedronGeometry(C.ss*0.85,0),new THREE.TetrahedronGeometry(C.ss*0.75,0),new THREE.TorusGeometry(C.ss*0.65,C.ss*0.22,8,16),new THREE.DodecahedronGeometry(C.ss*0.8,0)];
+    var cols=[C.CY,C.IN,C.PV,C.VL,C.CY];
+    for(var i=0;i<C.sc;i++){
+      var m=new THREE.MeshPhysicalMaterial({color:cols[i%cols.length],roughness:0.3,metalness:0.55,transparent:true,opacity:0.65,wireframe:i%2===0,clearcoat:0.5,clearcoatRoughness:0.3});
+      var ms=new THREE.Mesh(geos[i%geos.length],m);ms.position.set(rn(-3,3),rn(-1,1.5),rn(-1.5,1));
+      ms.userData={bx:ms.position.x,by:ms.position.y,bz:ms.position.z,dx:rn(-C.sdr,C.sdr),dy:rn(-C.sdr,C.sdr),rx:rn(-C.srs,C.srs),ry:rn(-C.srs,C.srs),ph:rn(0,Math.PI*2)};
+      SC.add(ms);SH.push(ms)
+    }
+  }
+  function obs(){if(!("IntersectionObserver" in window))return;new IntersectionObserver(function(e){vi=e[0].isIntersecting},{threshold:0.05}).observe(cv)}
+  function anim(){
+    if(!vi){requestAnimationFrame(anim);return}
+    var t=Cl.getElapsedTime();
+    mx=lp(mx,tmx,0.055);my=lp(my,tmy,0.055);
+    Ca.position.x=lp(Ca.position.x,mx*C.mi,0.025);Ca.position.y=lp(Ca.position.y,0.2-my*C.mi*0.4,0.025);Ca.lookAt(0,0,0);
+    if(Pa){var p=Pa.geometry.attributes.position.array;for(var i=0;i<p.length;i+=3){p[i]+=Math.sin(t*0.3+i)*C.pd;p[i+1]+=Math.cos(t*0.2+i*0.5)*C.pd;if(p[i]>C.sp)p[i]=-C.sp;if(p[i]<-C.sp)p[i]=C.sp;if(p[i+1]>C.sp)p[i+1]=-C.sp;if(p[i+1]<-C.sp)p[i+1]=C.sp}Pa.geometry.attributes.position.needsUpdate=true;Pa.rotation.y=t*0.015}
+    for(var j=0;j<SH.length;j++){var s=SH[j],d=s.userData;s.position.x=d.bx+Math.sin(t*0.5+d.ph)*d.dx;s.position.y=d.by+Math.cos(t*0.4+d.ph)*d.dy;s.position.z=d.bz+Math.sin(t*0.3+d.ph*0.7)*0.12;s.rotation.x+=d.rx;s.rotation.y+=d.ry;s.material.opacity=0.5+Math.sin(t*1.1+d.ph)*0.15}
+    if(P1){P1.position.x=2.5+Math.sin(t*0.55)*1;P1.position.y=1.2+Math.cos(t*0.4)*0.7}
+    if(P2){P2.position.x=-2.5+Math.cos(t*0.45)*0.8;P2.position.y=-0.8+Math.sin(t*0.65)*0.5}
+    SC.position.y=lp(SC.position.y,scY*C.sp_*0.001,0.04);
+    R.render(SC,Ca);requestAnimationFrame(anim)
+  }
+  function bind(){
+    window.addEventListener("mousemove",function(e){tmx=(e.clientX/window.innerWidth-0.5)*2;tmy=(e.clientY/window.innerHeight-0.5)*2},{passive:true});
+    window.addEventListener("scroll",function(){scY=window.scrollY||window.pageYOffset;if(hd)hd.classList.toggle("is-scrolled",scY>8)},{passive:true});
+    window.addEventListener("resize",function(){if(!R)return;var w=cv.parentElement.offsetWidth,h=cv.parentElement.offsetHeight;R.setSize(w,h);R.setPixelRatio(Math.min(window.devicePixelRatio||1,C.dC));Ca.aspect=w/h;Ca.updateProjectionMatrix()},{passive:true})
+  }
+  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",function(){setTimeout(init,120)})}else{setTimeout(init,120)}
+})();
+</script>';
 
     return ob_get_clean();
 }

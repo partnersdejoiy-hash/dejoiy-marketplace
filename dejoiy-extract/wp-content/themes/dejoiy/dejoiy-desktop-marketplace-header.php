@@ -94,6 +94,10 @@ function dejoiy_desktop_marketplace_should_bootstrap_standalone() {
 	if ( ! dejoiy_desktop_marketplace_header_enabled() ) {
 		return false;
 	}
+	// Single header architecture: Global Header OS owns site-wide chrome.
+	if ( function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
+		return false;
+	}
 	if ( apply_filters( 'dejoiy_desktop_marketplace_skip_standalone', false ) ) {
 		return false;
 	}

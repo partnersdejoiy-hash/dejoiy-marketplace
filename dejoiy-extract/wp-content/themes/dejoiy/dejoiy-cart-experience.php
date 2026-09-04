@@ -42,7 +42,7 @@ function dejoiy_cart_xp_is_cart_page() {
 		return false;
 	}
 	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-	if ( '' !== $uri && preg_match( '#/nexus/cart(/|\?|$)#', $uri ) ) {
+	if ( '' !== $uri && preg_match( '~/nexus/cart(/|\?|$)~', $uri ) ) {
 		return false;
 	}
 	if ( function_exists( 'dejoiy_library_use_cart_template' ) && dejoiy_library_use_cart_template() ) {
@@ -60,7 +60,7 @@ function dejoiy_cart_xp_is_cart_page() {
 			return true;
 		}
 	}
-	return '' !== $uri && (bool) preg_match( '#/cart(/|\?|#|$)#', $uri );
+	return '' !== $uri && (bool) preg_match( '~/cart(/|\?|#|$)~', $uri );
 }
 
 /**

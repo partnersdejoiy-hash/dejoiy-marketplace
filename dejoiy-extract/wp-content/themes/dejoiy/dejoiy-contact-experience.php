@@ -52,7 +52,7 @@ function dejoiy_contact_xp_is_contact_page() {
 		return true;
 	}
 	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-	return '' !== $uri && (bool) preg_match( '#/contact-us(/|\?|#|$)#', $uri );
+	return '' !== $uri && (bool) preg_match( '~/contact-us(/|\?|#|$)~', $uri );
 }
 
 /**

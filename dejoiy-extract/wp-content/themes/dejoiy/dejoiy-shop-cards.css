@@ -1,0 +1,40 @@
+/**
+ * DEJOIY Shop + Category grid polish.
+ * Light, safe enhancements over the XStore product grid.
+ */
+
+.etheme-product-grid-item {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.etheme-product-grid-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(124, 58, 237, 0.14);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1);
+}
+
+.etheme-product-grid-item .etheme-product-grid-image img {
+  transition: transform 0.35s ease;
+}
+
+.etheme-product-grid-item:hover .etheme-product-grid-image img {
+  transform: scale(1.03);
+}
+
+/* Keep XStore hover overlays (buttons / quick view) above the lifted card */
+.etheme-product-grid-item:hover .et-popup-holder,
+.etheme-product-grid-item:hover .product-buy-button,
+.etheme-product-grid-item:hover .product-quick-view {
+  z-index: 3;
+}
+
+/* Brand the sale badge if XStore renders one */
+.etheme-product-grid-item .products-badge,
+.etheme-product-grid-item .onsale {
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  font-weight: 800;
+}
