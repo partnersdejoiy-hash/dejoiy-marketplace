@@ -877,15 +877,71 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 		-webkit-backdrop-filter: blur(var(--gh-glass-blur)) saturate(1.3);
 		border-bottom: 1px solid var(--gh-glass-border);
 		box-shadow: var(--gh-shadow);
+		overflow: hidden;
 	}
 
-	/* Top row */
+	/* Animated canvas band (Flipkart-style header motion, scoped to the header) */
+	.gh-m-canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		display: block;
+		z-index: 0;
+		pointer-events: none;
+	}
+
 	.gh-m-top {
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.45rem 0.65rem;
 		min-height: 52px;
+		position: relative;
+		z-index: 1;
+	}
+
+	/* Expandable explore panel: collapsed by default */
+	.gh-m-panel {
+		position: relative;
+		z-index: 1;
+		max-height: 0;
+		overflow: hidden;
+		opacity: 0;
+		visibility: hidden;
+		transition: max-height 0.42s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, visibility 0.3s ease;
+	}
+	.gh-mobile.is-expanded .gh-m-panel {
+		max-height: 160px;
+		opacity: 1;
+		visibility: visible;
+	}
+
+	.gh-m-expand {
+		color: var(--gh-blue);
+	}
+	.gh-m-expand__chev {
+		display: none;
+		transition: transform 0.3s ease;
+	}
+	.gh-m-expand__tile {
+		display: block;
+		transition: opacity 0.3s ease, transform 0.3s ease;
+	}
+	.gh-mobile.is-expanded .gh-m-expand__chev {
+		display: block;
+		transform: rotate(180deg);
+	}
+	.gh-mobile.is-expanded .gh-m-expand__tile {
+		display: none;
+	}
+
+	/* Body spacer so fixed header never covers content */
+	body.dejoiy-gh {
+		padding-top: 56px;
+	}
+	body.dejoiy-gh.gh-m-expanded-gh {
+		padding-top: 168px;
 	}
 
 	.gh-m-browse {

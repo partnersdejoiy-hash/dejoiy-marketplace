@@ -208,7 +208,7 @@
 			results.innerHTML = items.map(function (item) {
 				var thumb = item.thumb
 					? '<img src="' + escapeHtml(item.thumb) + '" alt="" width="40" height="40" />'
-					: '<span style="width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:8px;font-size:1.2rem">📦</span>';
+					: '<span style="width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>';
 				return (
 					'<a class="gh-search__result" href="' + escapeHtml(item.url) + '">' +
 					thumb +
@@ -387,7 +387,7 @@
 						resultsEl.innerHTML = items.map(function (item) {
 							var thumb = item.thumb
 								? '<img src="' + escapeHtml(item.thumb) + '" alt="" width="40" height="40" style="border-radius:8px;object-fit:cover;" />'
-								: '<span style="width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:8px;">📦</span>';
+								: '<span style="width:40px;height:40px;display:grid;place-items:center;background:#f1f5f9;border-radius:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg></span>';
 							return (
 								'<a href="' + escapeHtml(item.url) + '" style="display:flex;gap:0.75rem;align-items:center;padding:0.65rem;border-radius:10px;text-decoration:none;color:#0f172a;border-bottom:1px solid rgba(15,23,42,0.04);">' +
 								thumb +
@@ -445,6 +445,137 @@
 	document.addEventListener('removed_from_cart', syncCartBadge);
 
 	/* ---------------------------------------------------------------
+	   MOBILE EXPANDABLE EXPLORE PANEL
+	   --------------------------------------------------------------- */
+
+	function setupMobileExpand() {
+		var mobile = header ? qs('.gh-mobile', header) : null;
+		var btn = header ? qs('[data-gh-m-expand]', header) : null;
+		if (!mobile || !btn) {
+			return;
+		}
+		btn.addEventListener('click', function () {
+			var expanded = mobile.classList.toggle('is-expanded');
+			btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			document.body.classList.toggle('gh-m-expanded-gh', expanded);
+		});
+	}
+
+	/* ---------------------------------------------------------------
+	   MOBILE HEADER CANVAS — playful motion band inside the header
+	   Scoped strictly to the header; never overlays the page.
+	   --------------------------------------------------------------- */
+
+	var djyCanvas = {
+		raf: null,
+		running: false,
+		mouse: { x: 0.5, y: 0.5 },
+		t: 0,
+		orbs: [],
+		pointerMoved: false,
+		colors: [
+			[255, 124, 2],
+			[255, 45, 85],
+			[255, 207, 82],
+			[124, 92, 255],
+			[67, 20, 6]
+		],
+		spawn: function () {
+			var orbs = [];
+			for (var i = 0; i < 4; i++) {
+				orbs.push({
+					c: this.colors[i % this.colors.length],
+					x: Math.random(),
+					y: Math.random(),
+					r: 0.24 + Math.random() * 0.3,
+					vx: (Math.random() - 0.5) * 0.00012,
+					vy: (Math.random() - 0.5) * 0.0001,
+					ph: Math.random() * Math.PI * 2,
+					depth: 0.6 + Math.random() * 0.9
+				});
+			}
+			this.orbs = orbs;
+		},
+		frame: function () {
+			var self = djyCanvas;
+			if (!self.running) return;
+			self.t += 1;
+			var ctx = self.ctx, dpr = self.dpr, W = self.w, H = self.h;
+			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx.clearRect(0, 0, W, H);
+			ctx.globalCompositeOperation = 'lighter';
+			for (var i = 0; i < self.orbs.length; i++) {
+				var o = self.orbs[i];
+				o.x += o.vx;
+				o.y += o.vy;
+				if (o.x < -0.25) o.x = 1.25;
+				if (o.x > 1.25) o.x = -0.25;
+				if (o.y < -0.25) o.y = 1.25;
+				if (o.y > 1.25) o.y = -0.25;
+				var bob = Math.sin(self.t * 0.011 + o.ph) * 0.035;
+				var px = self.pointerMoved ? (self.mouse.x - 0.5) * 0.05 * o.depth : 0;
+				var py = self.pointerMoved ? (self.mouse.y - 0.5) * 0.05 * o.depth : 0;
+				var cx = (o.x + px) * W;
+				var cy = (o.y + py + bob) * H;
+				var rad = (o.r + Math.sin(self.t * 0.008 + o.ph) * 0.045) * Math.max(W, H) * 0.6;
+				if (rad < 8) continue;
+				var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+				g.addColorStop(0, 'rgba(' + o.c.join(',') + ',0.24)');
+				g.addColorStop(1, 'rgba(' + o.c.join(',') + ',0)');
+				ctx.fillStyle = g;
+				ctx.beginPath();
+				ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.globalCompositeOperation = 'source-over';
+			self.raf = requestAnimationFrame(self.frame);
+		}
+	};
+
+	function djyCanvasResize() {
+		var self = djyCanvas;
+		if (!self.canvas) return;
+		var r = self.canvas.getBoundingClientRect();
+		self.dpr = Math.min(window.devicePixelRatio || 1, 2);
+		self.w = Math.max(1, Math.round(r.width));
+		self.h = Math.max(1, Math.round(r.height));
+		self.canvas.width = self.w * self.dpr;
+		self.canvas.height = self.h * self.dpr;
+	}
+
+	function setupMobileCanvas() {
+		if (!header) return;
+		var canvas = qs('[data-gh-m-canvas]', header);
+		if (!canvas) return;
+		if (window.matchMedia('(min-width: 1025px)').matches) return;
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		var ctx = canvas.getContext('2d');
+		if (!ctx) return;
+		var self = djyCanvas;
+		self.canvas = canvas;
+		self.ctx = ctx;
+		djyCanvasResize();
+		self.spawn();
+		self.running = true;
+		window.addEventListener('pointermove', function (e) {
+			self.mouse.x = e.clientX / (window.innerWidth || 1);
+			self.mouse.y = e.clientY / (window.innerHeight || 1);
+			self.pointerMoved = true;
+		}, { passive: true });
+		window.addEventListener('resize', debounce(djyCanvasResize, 160));
+		document.addEventListener('visibilitychange', function () {
+			if (document.hidden) {
+				self.running = false;
+				if (self.raf) cancelAnimationFrame(self.raf);
+			} else if (self.canvas) {
+				self.running = true;
+				self.raf = requestAnimationFrame(self.frame);
+			}
+		}, false);
+		self.raf = requestAnimationFrame(self.frame);
+	}
+
+	/* ---------------------------------------------------------------
 	   MOBILE CHIPS — horizontal scroll active indicator
 	   --------------------------------------------------------------- */
 
@@ -471,6 +602,8 @@
 	setupDesktopSearch();
 	setupMobileDrawer();
 	setupMobileSearch();
+	setupMobileExpand();
+	setupMobileCanvas();
 	setupMobileChips();
 	syncCartBadge();
 

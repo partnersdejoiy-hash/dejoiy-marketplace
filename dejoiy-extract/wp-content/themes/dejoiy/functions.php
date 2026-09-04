@@ -315,11 +315,10 @@ function dejoiy_animated_header_assets() {
 add_action( 'wp_enqueue_scripts', 'dejoiy_animated_header_assets', 10055 );
 }
 
-// DEJOIY Motion Adapters — premium motion system powered by ThreeUI Community concepts
-$dm_path = get_stylesheet_directory() . '/dejoiy-motion/dejoiy-motion-adapters.php';
-if ( is_readable( $dm_path ) ) {
-	require_once $dm_path;
-}
+// DEJOIY Motion Adapters were removed — the legacy full-viewport ambient-orb
+// overlay (#dejoiy-motion-root) painted over the page on every layout and was a
+// source of duplicate-visual reports. Motion now lives inside the header canvas
+// (see dejoiy-header-motion) and marketplace home, scoped to their containers.
 
 /**
  * The xstore product template renders its own gallery, so the

@@ -218,10 +218,82 @@
     });
   }
 
+  function initPresentsCanvas() {
+    var canvas = document.querySelector('[data-mph-presents-canvas]');
+    if (!canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    var raf = null;
+    var running = true;
+    var w = 0, h = 0, dpr = 1;
+    var t = 0;
+    var colors = [
+      { c: [255, 124, 2], ph: 0.0 },
+      { c: [255, 45, 85], ph: 1.2 },
+      { c: [124, 92, 255], ph: 2.4 },
+      { c: [255, 207, 82], ph: 3.6 }
+    ];
+
+    function resize() {
+      var r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = Math.max(1, Math.round(r.width));
+      h = Math.max(1, Math.round(r.height));
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+    }
+
+    function frame() {
+      if (!running) return;
+      t += 0.016;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < colors.length; i++) {
+        var o = colors[i];
+        var dx = Math.sin(t * 0.5 + o.ph) * 0.12;
+        var dy = Math.cos(t * 0.42 + o.ph * 1.3) * 0.09;
+        var cx = w * (0.5 + dx * 0.6 + i * 0.18);
+        var cy = h * (0.5 + dy * 0.7 + (i % 2) * 0.14);
+        var rad = Math.min(w, h) * (0.5 + Math.sin(t * 0.8 + o.ph) * 0.18);
+        if (rad < 10) continue;
+        var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+        var alpha = 0.1 + 0.08 * (0.5 + 0.5 * Math.sin(t * 0.7 + o.ph));
+        g.addColorStop(0, 'rgba(' + o.c.join(',') + ',' + alpha.toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(' + o.c.join(',') + ',0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      raf = requestAnimationFrame(frame);
+    }
+
+    resize();
+    raf = requestAnimationFrame(frame);
+
+    window.addEventListener('resize', function () { resize(); }, { passive: true });
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        running = false;
+        if (raf) cancelAnimationFrame(raf);
+      } else if (ctx) {
+        running = true;
+        resize();
+        raf = requestAnimationFrame(frame);
+      }
+    }, false);
+  }
+
   onReady(function () {
     initHero();
     initRails();
     initCountdown();
     initAddToCart();
+    initPresentsCanvas();
   });
 })();

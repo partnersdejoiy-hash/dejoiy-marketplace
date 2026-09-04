@@ -65,7 +65,6 @@ function dejoiy_evolution_boot() {
 		'dejoiy-universe-home.php',
 		'dejoiy-marketplace-home.php',
 		'dejoiy-site-chrome.php',
-		'dejoiy-header-os-v4.php',
 		'dejoiy-joi-intelligence.php',
 		'dejoiy-desktop-marketplace-header.php',
 		'dejoiy-mobile-os.php',

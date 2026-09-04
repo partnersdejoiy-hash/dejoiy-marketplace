@@ -1,8 +1,7 @@
 <?php
 /**
  * Template Name: Header
- * @xstore-version 9.4.0
- */
+ * @xstore-version 9.4.0 */
 ?>
 
 <!DOCTYPE html>
@@ -14,10 +13,11 @@
 </head>
 <?php $mode = etheme_get_option('dark_styles', 0) ? 'dark' : 'light'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited valid use case ?>
 <body <?php body_class(); ?> data-mode="<?php echo esc_attr( $mode ); ?>">
+<?php if ( function_exists( 'dejoiy_gh_print_header' ) ) { dejoiy_gh_print_header(); } ?>
 <?php if ( function_exists( 'wp_body_open' ) ) {
 			wp_body_open();
 	} else {
-		do_action( 'wp_body_open' );
+	do_action( 'wp_body_open' );
 }
 ?>
 
@@ -42,7 +42,7 @@
 	 ?>
 	<div class="template-content">
 		<div class="page-wrapper">
-			<?php 
+			<?php
 			/**
 			 * Hook: etheme_header.
 			 *
@@ -66,4 +66,8 @@
 				do_action( 'etheme_header_mobile' );
 			}
             do_action( 'etheme_header_end' );
-endif;
+		?>
+		</div>
+	</div>
+
+<?php endif; ?>

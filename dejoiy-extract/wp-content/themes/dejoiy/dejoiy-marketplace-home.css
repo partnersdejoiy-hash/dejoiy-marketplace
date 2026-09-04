@@ -1224,3 +1224,156 @@
 .site-footer a[href*="8theme"] {
   display: none !important;
 }
+
+/* ---------------- Icon sizing inside MPH containers (inline SVG) ---------------- */
+
+.mph-app__bubble .mph-ic {
+  width: 28px;
+  height: 28px;
+}
+
+.mph-catgrid__icon .mph-ic {
+  width: 30px;
+  height: 30px;
+}
+
+.mph-eco__icon .mph-ic {
+  width: 30px;
+  height: 30px;
+}
+
+.mph-hero__icon .mph-ic,
+.mph-hero__mock .mph-ic {
+  width: 34px;
+  height: 34px;
+}
+
+/* ---------------- Poster strip + animated "share frame" canvas ---------------- */
+
+.mph-presents {
+  position: relative;
+  overflow: hidden;
+  padding-top: 10px;
+  padding-bottom: 0;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #1a0a06 0%, #140808 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.mph-presents__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+.mph-presents__in {
+  position: relative;
+  z-index: 1;
+  padding: 18px 2px 14px;
+}
+
+.mph-presents__title {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 0 0 14px;
+}
+
+.mph-presents__grid {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 2px 2px 10px;
+}
+
+.mph-presents__grid::-webkit-scrollbar {
+  display: none;
+}
+
+.mph-poster {
+  position: relative;
+  flex: 0 0 60%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 16px;
+  border-radius: 18px;
+  color: #fff;
+  text-decoration: none;
+  background: var(--mph-post-bg, linear-gradient(135deg, #ff7c02, #ff2d55));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  scroll-snap-align: start;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.mph-poster:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.34);
+}
+
+.mph-poster__glow {
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.32), transparent 62%);
+  opacity: 0.6;
+}
+
+.mph-poster__eyebrow {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0.86;
+  position: relative;
+  z-index: 1;
+}
+
+.mph-poster__title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1.05;
+  position: relative;
+  z-index: 1;
+}
+
+.mph-poster__sub {
+  font-size: 0.78rem;
+  opacity: 0.92;
+  position: relative;
+  z-index: 1;
+}
+
+.mph-poster__cta {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 768px) {
+  .mph-presents__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    padding: 2px;
+  }
+
+  .mph-poster {
+    flex: none;
+  }
+}

@@ -491,6 +491,7 @@ function dejoiy_gh_desktop_header_html() {
 		</div>
 		<!-- Mobile: ≤1024px -->
 		<div class="gh-mobile" aria-hidden="true">
+			<canvas class="gh-m-canvas" data-gh-m-canvas aria-hidden="true"></canvas>
 			<!-- Top row: logo + actions -->
 			<div class="gh-m-top">
 				<button type="button" class="gh-m-browse" data-gh-m-browse aria-label="<?php esc_attr_e( 'Browse', 'dejoiy' ); ?>">
@@ -509,18 +510,22 @@ function dejoiy_gh_desktop_header_html() {
 							<span class="gh-badge gh-badge--sm" data-gh-m-cart-badge><?php echo esc_html( $cart_ct > 99 ? '99+' : (string) $cart_ct ); ?></span>
 						<?php endif; ?>
 					</a>
+					<button type="button" class="gh-m-action gh-m-expand" data-gh-m-expand aria-label="<?php esc_attr_e( 'Toggle explore', 'dejoiy' ); ?>" aria-expanded="false">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="gh-m-expand__chev"><path d="m6 9 6 6 6-6"/></svg>
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="gh-m-expand__tile" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+					</button>
 				</div>
 			</div>
-			<!-- Search row -->
-			<div class="gh-m-search">
-				<label class="gh-m-search__wrap" for="gh-m-search-input">
-					<?php echo dejoiy_gh_icon( 'search' ); // phpcs:ignore ?>
-					<input id="gh-m-search-input" class="gh-m-search__input" type="search" name="s" placeholder="<?php esc_attr_e( 'Search DEJOIY…', 'dejoiy' ); ?>" autocomplete="off" data-gh-m-search-input />
-					<input type="hidden" name="post_type" value="product" />
-				</label>
-			</div>
-			<!-- World chips -->
-			<div class="gh-m-chips" data-gh-m-chips>
+			<!-- Expandable panel: search + world chips -->
+			<div class="gh-m-panel" data-gh-m-panel>
+				<div class="gh-m-search">
+					<label class="gh-m-search__wrap" for="gh-m-search-input">
+						<?php echo dejoiy_gh_icon( 'search' ); // phpcs:ignore ?>
+						<input id="gh-m-search-input" class="gh-m-search__input" type="search" name="s" placeholder="<?php esc_attr_e( 'Search DEJOIY…', 'dejoiy' ); ?>" autocomplete="off" data-gh-m-search-input />
+						<input type="hidden" name="post_type" value="product" />
+					</label>
+				</div>
+				<div class="gh-m-chips" data-gh-m-chips>
 				<?php foreach ( dejoiy_gh_nav_items() as $item ) :
 					$active = dejoiy_gh_is_active( $item['id'] );
 				?>
@@ -529,6 +534,7 @@ function dejoiy_gh_desktop_header_html() {
 						<span><?php echo esc_html( $item['label'] ); ?></span>
 					</a>
 				<?php endforeach; ?>
+				</div>
 			</div>
 		</div>
 		<!-- Mobile Bottom Nav -->

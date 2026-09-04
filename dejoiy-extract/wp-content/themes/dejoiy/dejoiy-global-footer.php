@@ -130,13 +130,15 @@ function dejoiy_global_footer_render() {
 	$L    = dejoiy_global_footer_links();
 	$cats = dejoiy_global_footer_categories();
 	$year = gmdate( 'Y' );
+	$dgf_logo_id = 4592;
+	$dgf_logo = wp_get_attachment_image( $dgf_logo_id, array( 220, 84 ), false, array( 'class' => 'dgf__logo-img', 'alt' => 'DEJOIY logo', 'loading' => 'lazy' ) );
 	?>
 	<footer class="dgf" id="dejoiy-global-footer">
 		<div class="dgf__inner">
 			<div class="dgf__top">
 				<div class="dgf__brand">
 					<a class="dgf__logo" href="<?php echo esc_url( home_url( '/' ) ); ?>" aria-label="DEJOIY home">
-						<span aria-hidden="true">DEJOIY</span>
+						<?php echo $dgf_logo ? $dgf_logo : '<span aria-hidden="true">DEJOIY</span>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</a>
 					<p class="dgf__tag">Discover &middot; Create &middot; Own &mdash; one multi-world marketplace.</p>
 					<div class="dgf__contact">

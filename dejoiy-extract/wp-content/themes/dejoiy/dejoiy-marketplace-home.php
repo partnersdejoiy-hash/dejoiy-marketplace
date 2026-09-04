@@ -39,6 +39,23 @@ function dejoiy_marketplace_home_active() {
 }
 
 /**
+ * Render the Marketplace Home exactly once per request.
+ *
+ * Multiple outlets (dedicated template, the_content replacement, shortcode)
+ * may each try to emit the module — this guard keeps exactly one instance.
+ *
+ * @return string
+ */
+function dejoiy_marketplace_home_once() {
+	static $rendered = false;
+	if ( $rendered ) {
+		return '';
+	}
+	$rendered = true;
+	return dejoiy_marketplace_home_html();
+}
+
+/**
  * Replace front page content (runs last so legacy home systems can be skipped).
  *
  * @param string $content Post content.
@@ -52,13 +69,7 @@ function dejoiy_marketplace_home_replace_content( $content ) {
 		return $content;
 	}
 
-	static $done = false;
-	if ( $done ) {
-		return $content;
-	}
-	$done = true;
-
-	return dejoiy_marketplace_home_html();
+	return dejoiy_marketplace_home_once();
 }
 add_filter( 'the_content', 'dejoiy_marketplace_home_replace_content', 10001 );
 add_filter( 'elementor/frontend/the_content', 'dejoiy_marketplace_home_replace_content', 10001 );
@@ -276,56 +287,56 @@ function dejoiy_mph_categories() {
 		array(
 			'slug' => 'electronics',
 			'name' => __( 'Electronics', 'dejoiy' ),
-			'icon' => '📱',
+			'icon' => 'phone',
 			'url'  => '',
 			'bg'   => 'linear-gradient(135deg,#7c3aed,#a855f7)',
 		),
 		array(
 			'slug' => 'fashion',
 			'name' => __( 'Fashion', 'dejoiy' ),
-			'icon' => '👗',
+			'icon' => 'dress',
 			'url'  => '',
 			'bg'   => 'linear-gradient(135deg,#ec4899,#f472b6)',
 		),
 		array(
 			'slug' => 'home-kitchen',
 			'name' => __( 'Home & Kitchen', 'dejoiy' ),
-			'icon' => '🏠',
+			'icon' => 'home',
 			'url'  => home_url( '/home-kitchen/home-kitchen/' ),
 			'bg'   => 'linear-gradient(135deg,#06b6d4,#22d3ee)',
 		),
 		array(
 			'slug' => 'beauty-personal-care',
 			'name' => __( 'Beauty & Care', 'dejoiy' ),
-			'icon' => '💄',
+			'icon' => 'beauty',
 			'url'  => home_url( '/beauty-personal-care/beauty-personal-care/' ),
 			'bg'   => 'linear-gradient(135deg,#f59e0b,#fbbf24)',
 		),
 		array(
 			'slug' => 'nexus',
 			'name' => __( 'Books & Learning', 'dejoiy' ),
-			'icon' => '📚',
+			'icon' => 'book',
 			'url'  => home_url( '/dejoiy-library/?dejoiy_library=1' ),
 			'bg'   => 'linear-gradient(135deg,#8b5cf6,#d946ef)',
 		),
 		array(
 			'slug' => 'toys-games',
 			'name' => __( 'Toys & Games', 'dejoiy' ),
-			'icon' => '🎮',
+			'icon' => 'game',
 			'url'  => home_url( '/toys-games/toys-games/' ),
 			'bg'   => 'linear-gradient(135deg,#10b981,#34d399)',
 		),
 		array(
 			'slug' => 'sports-fitness',
 			'name' => __( 'Sports & Fitness', 'dejoiy' ),
-			'icon' => '🏋️',
+			'icon' => 'fitness',
 			'url'  => home_url( '/sports-fitness/sports-fitness/' ),
 			'bg'   => 'linear-gradient(135deg,#ef4444,#f87171)',
 		),
 		array(
 			'slug' => 'studio',
 			'name' => __( 'Custom Studio', 'dejoiy' ),
-			'icon' => '🎨',
+			'icon' => 'art',
 			'url'  => home_url( '/dejoiy-custom-studio/' ),
 			'bg'   => 'linear-gradient(135deg,#f97316,#fb923c)',
 		),
@@ -525,15 +536,47 @@ function dejoiy_mph_can_add( $product ) {
  * @return string
  */
 function dejoiy_mph_icon( $name ) {
+	$s = '<svg class="mph-ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>';
 	$icons = array(
 		'star'  => '<svg class="mph-star" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>',
 		'star-o' => '<svg class="mph-star mph-star--o" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>',
 		'truck' => '<svg class="mph-card__truck" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>',
+		'phone' => sprintf( $s, '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>' ),
+		'dress' => sprintf( $s, '<path d="M9 3 5 6l-1.5 3L9 12v9h6v-9l5.5-3L19 6l-4-3-3 2-3-2z"/><path d="M12 5v16"/>' ),
+		'home'  => sprintf( $s, '<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>' ),
+		'beauty'=> sprintf( $s, '<rect x="7" y="2" width="10" height="5" rx="1.4"/><path d="M7 7h10l-1.2 5H8.2z"/><rect x="8.2" y="12" width="7.6" height="9" rx="1.6"/>' ),
+		'book'  => sprintf( $s, '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>' ),
+		'game'  => sprintf( $s, '<path d="M6 6h12a4 4 0 0 1 3.9 4.8l-.8 4A4 4 0 0 1 15.6 18l-2.1-2H10.5L8.4 18a4 4 0 0 1-5.5-3.2l-.8-4A4 4 0 0 1 6 6z"/><path d="M8 6v4M6 8h4"/>' ),
+		'fitness'=> sprintf( $s, '<path d="M6.5 6.5v11M4 9v6M17.5 6.5v11M20 9v6M8.5 12h7"/>' ),
+		'art'   => sprintf( $s, '<circle cx="12" cy="12" r="9"/><path d="M12 7l5 5-5 5-5-5z"/><path d="M12 7v10M7 12h10"/>' ),
+		'spark' => sprintf( $s, '<path d="M12 2 14.5 9.5 22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/>' ),
+		'bolt'  => sprintf( $s, '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>' ),
+		'gem'   => sprintf( $s, '<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M6 3 4 9l8 12L20 9l-2-6M10 3l2 6 2-6"/>' ),
+		'mark'  => sprintf( $s, '<path d="M12 3l7 9-7 9-7-9z"/>' ),
+		'orb'   => sprintf( $s, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>' ),
+		// Glyph aliases coming from the universe gateway helper.
+		'◆' => sprintf( $s, '<path d="M12 3l7 9-7 9-7-9z"/>' ),
+		'✦' => sprintf( $s, '<path d="M12 2 14.5 9.5 22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/>' ),
+		'✿' => sprintf( $s, '<circle cx="12" cy="12" r="9"/><path d="M12 7l5 5-5 5-5-5z"/><path d="M12 7v10M7 12h10"/>' ),
+		'⚡' => sprintf( $s, '<path d="M13 2 4 14h6l-1 8 9-12h-6z"/>' ),
+		'◈' => sprintf( $s, '<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M2 9h20M6 3 4 9l8 12L20 9l-2-6M10 3l2 6 2-6"/>' ),
+		'◎' => sprintf( $s, '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>' ),
 		'chev-l' => '<svg class="mph-rarr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
 		'chev-r' => '<svg class="mph-rarr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
 		'check'  => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
 	);
 	return isset( $icons[ $name ] ) ? $icons[ $name ] : '';
+}
+
+/**
+ * Resolve an icon renderer: SVG when available, else the raw glyph.
+ *
+ * @param string $name Icon key / glyph.
+ * @return string
+ */
+function dejoiy_mph_icon_or( $name ) {
+	$svg = dejoiy_mph_icon( $name );
+	return '' !== $svg ? $svg : esc_html( $name );
 }
 
 /**
@@ -715,13 +758,13 @@ function dejoiy_mph_hero_slides() {
 	return array(
 		array(
 			'id'     => 'deals',
-			'kicker' => __( 'JOY FESTIVAL SALE 🔥', 'dejoiy' ),
+			'kicker' => __( 'JOY FESTIVAL SALE', 'dejoiy' ),
 			'title'  => __( 'Deals that make you smile', 'dejoiy' ),
 			'sub'    => __( 'Big offers on electronics, fashion, home & more. Best-price guarantee, UPI & easy returns.', 'dejoiy' ),
 			'cta'    => __( 'Shop the Sale', 'dejoiy' ),
 			'url'    => $deals,
 			'bg'     => 'linear-gradient(118deg,#7c3aed 0%,#a855f7 45%,#ec4899 100%)',
-			'icon'   => '🔥',
+			'icon'   => 'spark',
 			'img'    => $deal_img,
 			'chip1'  => __( 'UPTO 60% OFF', 'dejoiy' ),
 			'chip2'  => __( 'UPI · Cards · COD', 'dejoiy' ),
@@ -734,7 +777,7 @@ function dejoiy_mph_hero_slides() {
 			'cta'    => __( 'Open the Studio', 'dejoiy' ),
 			'url'    => $studio,
 			'bg'     => 'linear-gradient(118deg,#0ea5e9 0%,#6366f1 50%,#8b5cf6 100%)',
-			'icon'   => '✿',
+			'icon'   => 'art',
 			'img'    => $studio_img,
 			'chip1'  => __( '100% YOUR DESIGN', 'dejoiy' ),
 			'chip2'  => __( 'START ₹349', 'dejoiy' ),
@@ -762,11 +805,70 @@ function dejoiy_mph_hero_slides() {
  */
 function dejoiy_mph_trust() {
 	return array(
-		array( 'icon' => '🚚', 'title' => __( 'FREE Delivery', 'dejoiy' ), 'sub' => __( 'On eligible orders', 'dejoiy' ) ),
-		array( 'icon' => '🔒', 'title' => __( '100% Secure', 'dejoiy' ), 'sub' => __( 'UPI · Cards · COD', 'dejoiy' ) ),
-		array( 'icon' => '↩️', 'title' => __( 'Easy Returns', 'dejoiy' ), 'sub' => __( 'Hassle-free policy', 'dejoiy' ) ),
-		array( 'icon' => '💰', 'title' => __( 'Best Price', 'dejoiy' ), 'sub' => __( 'Guaranteed fair deals', 'dejoiy' ) ),
+		array( 'icon' => 'truck', 'title' => __( 'FREE Delivery', 'dejoiy' ), 'sub' => __( 'On eligible orders', 'dejoiy' ) ),
+		array( 'icon' => 'lock', 'title' => __( '100% Secure', 'dejoiy' ), 'sub' => __( 'UPI · Cards · COD', 'dejoiy' ) ),
+		array( 'icon' => 'return', 'title' => __( 'Easy Returns', 'dejoiy' ), 'sub' => __( 'Hassle-free policy', 'dejoiy' ) ),
+		array( 'icon' => 'wallet', 'title' => __( 'Best Price', 'dejoiy' ), 'sub' => __( 'Guaranteed fair deals', 'dejoiy' ) ),
 	);
+}
+
+/**
+ * Poster strip with an animated "share frame" canvas — vivid brand colours.
+ *
+ * @param string $deals   Festival-sale URL.
+ * @param string $studio  Custom-studio URL.
+ * @param string $library Library URL.
+ * @return string
+ */
+function dejoiy_mph_presents_html( $deals, $studio, $library ) {
+	$posters = array(
+		array(
+			'url'     => $deals,
+			'eyebrow' => __( 'Limited time', 'dejoiy' ),
+			'title'   => __( 'Festival Deals', 'dejoiy' ),
+			'sub'     => __( 'Big savings across every world', 'dejoiy' ),
+			'cta'     => __( 'Shop the sale', 'dejoiy' ),
+			'bg'      => 'linear-gradient(135deg, #ff7c02 0%, #ff2d55 100%)',
+			'accent'  => '#ff7c02',
+		),
+		array(
+			'url'     => $studio,
+			'eyebrow' => __( 'Made by you', 'dejoiy' ),
+			'title'   => __( 'Custom Studio', 'dejoiy' ),
+			'sub'     => __( 'Design tees, mugs, caps & more', 'dejoiy' ),
+			'cta'     => __( 'Start designing', 'dejoiy' ),
+			'bg'      => 'linear-gradient(135deg, #7c5cff 0%, #431406 120%)',
+			'accent'  => '#9d7bff',
+		),
+		array(
+			'url'     => $library,
+			'eyebrow' => __( 'Read & learn', 'dejoiy' ),
+			'title'   => __( 'DEJOIY Library', 'dejoiy' ),
+			'sub'     => __( 'Books that expand your universe', 'dejoiy' ),
+			'cta'     => __( 'Explore the Library', 'dejoiy' ),
+			'bg'      => 'linear-gradient(135deg, #ffd000 0%, #ff7c02 110%)',
+			'accent'  => '#ffd000',
+		),
+	);
+
+	$cards = '';
+	foreach ( $posters as $p ) {
+		$cards .= '<a class="mph-poster" href="' . esc_url( $p['url'] ) . '" style="--mph-post-bg:' . $p['bg'] . ';--mph-post-ac:' . esc_attr( $p['accent'] ) . ';">'
+			. '<span class="mph-poster__glow" aria-hidden="true"></span>'
+			. '<span class="mph-poster__eyebrow">' . esc_html( $p['eyebrow'] ) . '</span>'
+			. '<span class="mph-poster__title">' . esc_html( $p['title'] ) . '</span>'
+			. '<span class="mph-poster__sub">' . esc_html( $p['sub'] ) . '</span>'
+			. '<span class="mph-poster__cta">' . esc_html( $p['cta'] ) . ' →</span>'
+			. '</a>';
+	}
+
+	return '<section class="mph-section mph-presents" aria-labelledby="mph-h-presents" data-mph-presents>'
+		. '<canvas class="mph-presents__canvas" data-mph-presents-canvas aria-hidden="true"></canvas>'
+		. '<div class="mph-presents__in">'
+		. '<h2 id="mph-h-presents" class="mph-presents__title">' . esc_html__( 'Explore fresh stories', 'dejoiy' ) . '</h2>'
+		. '<div class="mph-presents__grid">' . $cards . '</div>'
+		. '</div>'
+		. '</section>';
 }
 
 /* ---------------------------------------------------------------
@@ -787,6 +889,8 @@ function dejoiy_marketplace_home_html() {
 	$vreg     = home_url( '/vendor-register/' );
 	$services = home_url( '/dejoiy-services/' );
 	$author   = home_url( '/dejoiy-library/?dejoiy_library=1' );
+	$studio   = home_url( '/dejoiy-custom-studio/' );
+	$library  = home_url( '/dejoiy-library/?dejoiy_library=1' );
 
 	$gateways = dejoiy_mph_gateways();
 	$cats     = dejoiy_mph_categories();
@@ -862,11 +966,11 @@ function dejoiy_marketplace_home_html() {
 								<a class="mph-btn mph-btn--hero" href="<?php echo esc_url( $s['url'] ); ?>"><?php echo esc_html( $s['cta'] ); ?> →</a>
 							</div>
 							<div class="mph-hero__media">
-								<span class="mph-hero__icon" aria-hidden="true"><?php echo esc_html( $s['icon'] ); ?></span>
+								<span class="mph-hero__icon" aria-hidden="true"><?php echo dejoiy_mph_icon_or( $s['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 								<?php if ( '' !== $s['img'] ) : ?>
 									<img class="mph-hero__img" src="<?php echo esc_url( $s['img'] ); ?>" alt="" loading="<?php echo 0 === $i ? 'eager' : 'lazy'; ?>" decoding="async">
 								<?php else : ?>
-									<span class="mph-hero__mock" aria-hidden="true"><?php echo esc_html( $s['icon'] ); ?></span>
+									<span class="mph-hero__mock" aria-hidden="true"><?php echo dejoiy_mph_icon_or( $s['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 								<?php endif; ?>
 							</div>
 						</div>
@@ -881,13 +985,16 @@ function dejoiy_marketplace_home_html() {
 		</section>
 
 		<?php
+		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
+		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
 		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
 		?>
 		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
 			<div class="mph-apps__scroller" data-mph-cats>
 				<?php foreach ( $cats as $c ) : ?>
 					<a class="mph-app" href="<?php echo esc_url( $c['url'] ); ?>">
-						<span class="mph-app__bubble" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>"><?php echo esc_html( $c['icon'] ); ?></span>
+						<span class="mph-app__bubble" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>"><span class="mph-ic-wrap"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span></span>
 						<span class="mph-app__label"><?php echo esc_html( $c['name'] ); ?></span>
 					</a>
 				<?php endforeach; ?>
@@ -895,7 +1002,7 @@ function dejoiy_marketplace_home_html() {
 			<div class="mph-catgrid" aria-hidden="false">
 				<?php foreach ( $cats as $c ) : ?>
 					<a class="mph-catgrid__tile" href="<?php echo esc_url( $c['url'] ); ?>" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>">
-						<span class="mph-catgrid__icon"><?php echo esc_html( $c['icon'] ); ?></span>
+						<span class="mph-catgrid__icon"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 						<span class="mph-catgrid__name"><?php echo esc_html( $c['name'] ); ?></span>
 						<span class="mph-catgrid__go">→</span>
 					</a>
@@ -937,7 +1044,7 @@ function dejoiy_marketplace_home_html() {
 					<?php foreach ( $gateways as $g ) : ?>
 						<a class="mph-eco__card mph-eco__card--<?php echo esc_attr( $g['theme'] ); ?>" href="<?php echo esc_url( $g['url'] ); ?>">
 							<span class="mph-eco__art" aria-hidden="true"></span>
-							<span class="mph-eco__icon" aria-hidden="true"><?php echo esc_html( $g['icon'] ); ?></span>
+							<span class="mph-eco__icon" aria-hidden="true"><?php echo dejoiy_mph_icon_or( $g['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
 							<span class="mph-eco__verb"><?php echo esc_html( $g['verb'] ); ?></span>
 							<span class="mph-eco__label"><?php echo esc_html( $g['label'] ); ?></span>
 							<span class="mph-eco__tag"><?php echo esc_html( $g['tagline'] ); ?></span>
@@ -950,14 +1057,14 @@ function dejoiy_marketplace_home_html() {
 
 		<?php
 		/* ============ TRENDING RAIL ============ */
-		echo dejoiy_mph_rail( 'mph-h-trending', __( '🔥 Trending this week', 'dejoiy' ), $trending, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo dejoiy_mph_rail( 'mph-h-trending', __( 'Trending this week', 'dejoiy' ), $trending, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		/* ============ FRESH RAIL ============ */
-		echo dejoiy_mph_rail( 'mph-h-fresh', __( '💎 Fresh arrivals', 'dejoiy' ), $fresh, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo dejoiy_mph_rail( 'mph-h-fresh', __( 'Fresh arrivals', 'dejoiy' ), $fresh, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		/* ============ RECENTLY VIEWED ============ */
 		if ( ! empty( $viewed ) ) {
-			echo dejoiy_mph_rail( 'mph-h-viewed', __( '⏳ You last checked out', 'dejoiy' ), $viewed, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo dejoiy_mph_rail( 'mph-h-viewed', __( 'You last checked out', 'dejoiy' ), $viewed, $shop ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		}
 		?>
 
@@ -968,7 +1075,7 @@ function dejoiy_marketplace_home_html() {
 			<div class="mph-joi__in">
 				<span class="mph-joi__orb" aria-hidden="true"></span>
 				<div class="mph-joi__copy">
-					<p class="mph-joi__badge">✨ <?php esc_html_e( 'Powered by DEJOIY intelligence', 'dejoiy' ); ?></p>
+					<p class="mph-joi__badge"><?php esc_html_e( 'Powered by DEJOIY intelligence', 'dejoiy' ); ?></p>
 					<h2 id="mph-h-joi" class="mph-joi__title"><?php esc_html_e( 'Ask JOI anything', 'dejoiy' ); ?></h2>
 					<p class="mph-joi__sub"><?php esc_html_e( 'Fast search, smart picks, and instant answers across every DEJOIY world.', 'dejoiy' ); ?></p>
 					<form class="mph-joi__form" action="<?php echo esc_url( $shop ); ?>" method="get" role="search">
@@ -986,7 +1093,19 @@ function dejoiy_marketplace_home_html() {
 		<section class="mph-section mph-trust" aria-label="<?php esc_attr_e( 'Why shop on DEJOIY', 'dejoiy' ); ?>">
 			<?php foreach ( dejoiy_mph_trust() as $t ) : ?>
 				<div class="mph-trust__item">
-					<span class="mph-trust__icon" aria-hidden="true"><?php echo esc_html( $t['icon'] ); ?></span>
+					<span class="mph-trust__icon" aria-hidden="true">
+						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+							<?php if ( 'truck' === $t['icon'] ) : ?>
+								<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
+							<?php elseif ( 'lock' === $t['icon'] ) : ?>
+								<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+							<?php elseif ( 'return' === $t['icon'] ) : ?>
+								<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 1-15 2.72L3 15"/><path d="M3 13a9 9 0 0 1 15-2.72L21 13"/>
+							<?php else : ?>
+								<path d="M12 2 14.4 8.1 21 9.27l-5 4.87 1.18 6.88L12 17.77 6.82 21.02 8 14.14 3 9.27 9.6 8.1z"/>
+							<?php endif; ?>
+						</svg>
+					</span>
 					<div class="mph-trust__copy">
 						<b><?php echo esc_html( $t['title'] ); ?></b>
 						<small><?php echo esc_html( $t['sub'] ); ?></small>

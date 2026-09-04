@@ -18,8 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
-if ( function_exists( 'dejoiy_marketplace_home_html' ) ) {
-	echo dejoiy_marketplace_home_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentional HTML module output.
+if ( function_exists( 'dejoiy_marketplace_home_once' ) ) {
+	echo dejoiy_marketplace_home_once(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- intentional HTML module output.
 } else {
 	the_content(); // Fallback only if the module is unavailable.
 }
