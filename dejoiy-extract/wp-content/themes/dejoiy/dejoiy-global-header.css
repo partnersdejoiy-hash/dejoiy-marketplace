@@ -11,8 +11,8 @@
    ============================================================== */
 
 :root {
-	/* Surface */
-	--gh-surface: rgba(255, 255, 255, 0.92);
+	/* Surface (glass alpha kept low so the brand orb canvas reads, same as mobile) */
+	--gh-surface: rgba(255, 255, 255, 0.88);
 	--gh-surface-solid: #ffffff;
 	--gh-surface-2: rgba(248, 250, 252, 0.96);
 	--gh-glass: rgba(255, 255, 255, 0.72);
@@ -91,6 +91,23 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 	position: sticky;
 	top: 0;
 	z-index: 960;
+}
+
+/* Brand orb canvas behind the desktop header — same color/motion as the mobile header */
+.gh-d-canvas {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	display: block;
+	z-index: 0;
+	pointer-events: none;
+}
+
+.gh-desktop > .gh-util,
+.gh-desktop > .gh-main {
+	position: relative;
+	z-index: 1;
 }
 
 /* ==============================================================
@@ -896,7 +913,7 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.45rem 0.65rem;
-		min-height: 52px;
+		min-height: 46px;
 		position: relative;
 		z-index: 1;
 	}
@@ -938,7 +955,7 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 
 	/* Body spacer so fixed header never covers content */
 	body.dejoiy-gh {
-		padding-top: 56px;
+		padding-top: 50px;
 	}
 	body.dejoiy-gh.gh-m-expanded-gh {
 		padding-top: 168px;

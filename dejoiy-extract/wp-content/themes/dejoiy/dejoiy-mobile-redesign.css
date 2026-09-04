@@ -67,19 +67,20 @@ body.dejoiy-gh .gh-nav {
 	.gh-m-top {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
-		padding: 0.5rem 0.75rem;
-		min-height: 56px;
+		gap: 0.5rem;
+		padding: 0.28rem 0.65rem;
+		min-height: 40px;
+		box-sizing: border-box;
 		background: transparent;
 	}
 
-	/* Browse button — larger touch target */
+	/* Browse button — touch-friendly */
 	.gh-m-browse {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 44px;
-		height: 44px;
+		width: 38px;
+		height: 38px;
 		padding: 0;
 		border: 1px solid rgba(15, 23, 42, 0.08);
 		border-radius: 12px;
@@ -95,15 +96,17 @@ body.dejoiy-gh .gh-nav {
 		background: rgba(15, 23, 42, 0.04);
 	}
 
-	/* Logo — centered, larger */
+	/* Logo — compact, left (brand, matching DEJOIY app style) */
 	.gh-logo--sm {
-		flex: 1;
-		justify-content: center;
+		flex: 0 0 auto;
+		justify-content: flex-start;
+		margin-right: auto;
+		max-width: 138px;
 	}
 
 	.gh-logo--sm .gh-logo__img {
-		max-height: 40px;
-		max-width: 160px;
+		max-height: 30px;
+		max-width: 126px;
 	}
 
 	.gh-logo--sm .gh-logo__mark {
@@ -128,8 +131,8 @@ body.dejoiy-gh .gh-nav {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 44px;
-		height: 44px;
+		width: 38px;
+		height: 38px;
 		border-radius: 12px;
 		text-decoration: none;
 		color: #1e293b;

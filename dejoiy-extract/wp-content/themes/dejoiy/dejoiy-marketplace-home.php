@@ -871,6 +871,96 @@ function dejoiy_mph_presents_html( $deals, $studio, $library ) {
 		. '</section>';
 }
 
+/**
+ * Customer care strip — real humans, real support (no fake agents).
+ *
+ * @return string
+ */
+function dejoiy_mph_care_html() {
+	$contact = home_url( '/contact-us/' );
+	$support = home_url( '/support-page/' );
+	$phone   = '+01146594425';
+	$mail    = 'support-care@dejoiy.com';
+
+	$avatar = static function ( $bg_a, $bg_b, $skin, $hair, $accent_a, $accent_b ) {
+		return '<span class="mph-care__avatar" style="--av-a:' . $bg_a . ';--av-b:' . $bg_b . ';" aria-hidden="true">'
+			. '<svg viewBox="0 0 64 64" focusable="false">'
+			. '<defs><linearGradient id="av' . esc_attr( $bg_a . $bg_b ) . '" x1="0" y1="0" x2="1" y2="1">'
+			. '<stop offset="0" stop-color="' . esc_attr( $bg_a ) . '"/><stop offset="1" stop-color="' . esc_attr( $bg_b ) . '"/></linearGradient></defs>'
+			. '<circle cx="32" cy="32" r="30" fill="url(#av' . esc_attr( $bg_a . $bg_b ) . ')"/>'
+			. '<circle cx="32" cy="26" r="12" fill="' . esc_attr( $skin ) . '"/>'
+			. '<path d="M14 54c4-8 10-12 18-12s14 4 18 12c-4 5-10 8-18 8s-14-3-18-8Z" fill="' . esc_attr( $hair ) . '"/>'
+			. '<circle cx="27" cy="25" r="1.6" fill="#1f2937"/><circle cx="37" cy="25" r="1.6" fill="#1f2937"/>'
+			. '<path d="M26 32c2.4 2 9.6 2 12 0" fill="none" stroke="#1f2937" stroke-width="1.8" stroke-linecap="round"/>'
+			. '<path d="M44 20c1.6-2.4 4.4-3.4 7-2.6M20 20c-1.6-2.4-4.4-3.4-7-2.6" fill="none" stroke="' . esc_attr( $accent_a ) . '" stroke-width="2" stroke-linecap="round"/>'
+			. '</svg></span>';
+	};
+
+	$team = array(
+		array(
+			'name'  => __( 'Support at DEJOIY', 'dejoiy' ),
+			'role'  => __( '24×7 human help', 'dejoiy' ),
+			'av'    => $avatar( '#ff7c02', '#ff2d55', '#f5c6a0', '#3b2a20', '#ffd000', '#7c5cff' ),
+			'links' => array(
+				array( 'icon' => 'phone',  'label' => '+011 46594425', 'url' => 'tel:' . $phone ),
+				array( 'icon' => 'mail',   'label' => 'support-care@dejoiy.com', 'url' => 'mailto:' . $mail ),
+				array( 'icon' => 'chat',   'label' => 'Talk to a human', 'url' => $support ),
+			),
+		),
+		array(
+			'name'  => __( 'Order care', 'dejoiy' ),
+			'role'  => __( 'Track, cancel, return', 'dejoiy' ),
+			'av'    => $avatar( '#7c5cff', '#431406', '#efc9a4', '#5b4333', '#ff7c02', '#ffd000' ),
+			'links' => array(
+array( 'icon' => 'bag',   'label' => __( 'Track your order', 'dejoiy' ), 'url' => $contact ),
+			array( 'icon' => 'chat',  'label' => __( 'Live chat', 'dejoiy' ), 'url' => $support ),
+			),
+		),
+		array(
+			'name'  => __( 'Sellers & Studio', 'dejoiy' ),
+			'role'  => __( 'Partner help desk', 'dejoiy' ),
+			'av'    => $avatar( '#ffd000', '#ff7c02', '#f2bf94', '#221813', '#ff2d55', '#7c5cff' ),
+			'links' => array(
+				array( 'icon' => 'chat',  'label' => __( 'Contact Us', 'dejoiy' ), 'url' => $contact ),
+				array( 'icon' => 'mail',  'label' => __( 'Email support', 'dejoiy' ), 'url' => 'mailto:' . $mail ),
+			),
+		),
+	);
+
+	$icons = array(
+		'phone' => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>',
+		'mail'  => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>',
+		'chat'  => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.4 8.6 8.6 0 0 1-3.5-.7L3 21l1.8-5.9a8.4 8.4 0 0 1-.3-3.6A8.5 8.5 0 1 1 21 11.5Z"/></svg>',
+		'bag'   => '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>',
+	);
+
+	$cards = '';
+	foreach ( $team as $t ) {
+		$links = '';
+		foreach ( $t['links'] as $lk ) {
+			$ic = isset( $icons[ $lk['icon'] ] ) ? $icons[ $lk['icon'] ] : $icons['chat'];
+			$links .= '<a class="mph-care__link" href="' . esc_url( $lk['url'] ) . '">' . $ic . '<span>' . esc_html( $lk['label'] ) . '</span></a>';
+		}
+		$cards .= '<div class="mph-care__card">'
+			. $t['av']
+			. '<h3 class="mph-care__name">' . esc_html( $t['name'] ) . '</h3>'
+			. '<p class="mph-care__role">' . esc_html( $t['role'] ) . '</p>'
+			. '<div class="mph-care__links">' . $links . '</div>'
+			. '</div>';
+	}
+
+	return '<section class="mph-section mph-care" aria-labelledby="mph-h-care" data-mph-care>'
+		. '<div class="mph-care__in">'
+		. '<div class="mph-care__head">'
+		. '<span class="mph-care__tag">' . esc_html__( 'Real humans', 'dejoiy' ) . '</span>'
+		. '<h2 id="mph-h-care" class="mph-care__title">' . esc_html__( 'Need a hand? Talk to our people.', 'dejoiy' ) . '</h2>'
+		. '<p class="mph-care__sub">' . esc_html__( 'No bots around here — a real DEJOIY team member answers, day or night.', 'dejoiy' ) . '</p>'
+		. '</div>'
+		. '<div class="mph-care__grid">' . $cards . '</div>'
+		. '</div>'
+		. '</section>';
+}
+
 /* ---------------------------------------------------------------
    Main renderer
    --------------------------------------------------------------- */
@@ -978,15 +1068,18 @@ function dejoiy_marketplace_home_html() {
 				<?php endforeach; ?>
 			</div>
 			<div class="mph-hero__nav">
-				<button type="button" class="mph-hero__arrow" data-mph-hero-prev aria-label="<?php esc_attr_e( 'Previous slide', 'dejoiy' ); ?>">‹</button>
+				<button type="button" class="mph-hero__arrow mph-hero__arrow--prev" data-mph-hero-prev aria-label="<?php esc_attr_e( 'Previous slide', 'dejoiy' ); ?>">‹</button>
 				<div class="mph-hero__dots" data-mph-hero-dots></div>
-				<button type="button" class="mph-hero__arrow" data-mph-hero-next aria-label="<?php esc_attr_e( 'Next slide', 'dejoiy' ); ?>">›</button>
+				<button type="button" class="mph-hero__arrow mph-hero__arrow--next" data-mph-hero-next aria-label="<?php esc_attr_e( 'Next slide', 'dejoiy' ); ?>">›</button>
 			</div>
 		</section>
 
 		<?php
 		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
 		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		/* ============ REAL-HUMANS CUSTOMER CARE ============ */
+		echo dejoiy_mph_care_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
 		?>

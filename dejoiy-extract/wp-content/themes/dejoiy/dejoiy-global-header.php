@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'DEJOIY_GH_VERSION' ) ) {
-	define( 'DEJOIY_GH_VERSION', '2.0.0' );
+	define( 'DEJOIY_GH_VERSION', '2.1.0' );
 }
 
 /* ---------------------------------------------------------------
@@ -352,6 +352,7 @@ function dejoiy_gh_desktop_header_html() {
 	<header id="dejoiy-global-header" class="gh" role="banner" data-gh-header>
 		<!-- Desktop: ≥1025px -->
 		<div class="gh-desktop" aria-hidden="false">
+			<canvas class="gh-d-canvas" data-gh-d-canvas aria-hidden="true"></canvas>
 			<!-- Utility bar -->
 			<div class="gh-util" role="navigation" aria-label="<?php esc_attr_e( 'Utility', 'dejoiy' ); ?>">
 				<div class="gh-util__in">

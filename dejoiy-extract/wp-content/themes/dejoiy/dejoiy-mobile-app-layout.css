@@ -69,7 +69,7 @@
     align-items: center;
     gap: 0;
     padding: 0 0.75rem;
-    min-height: 48px;
+    min-height: 44px;
     background: transparent;
   }
 
@@ -100,16 +100,18 @@
     height: 20px;
   }
 
-  /* Logo — center */
+  /* Logo — compact, left (brand, matching DEJOIY app style) */
   .gh-logo--sm {
-    flex: 1;
-    justify-content: center;
+    flex: 0 0 auto;
+    justify-content: flex-start;
+    margin-right: auto;
+    max-width: 122px;
     padding: 0;
   }
 
   .gh-logo--sm .gh-logo__img {
-    max-height: 32px;
-    max-width: 120px;
+    max-height: 28px;
+    max-width: 112px;
     object-fit: contain;
   }
 

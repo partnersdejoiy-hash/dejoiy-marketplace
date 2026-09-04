@@ -575,6 +575,38 @@
 		self.raf = requestAnimationFrame(self.frame);
 	}
 
+	function setupDesktopCanvas() {
+		if (!header) return;
+		var canvas = qs('[data-gh-d-canvas]', header);
+		if (!canvas) return;
+		if (window.matchMedia('(max-width: 1024px)').matches) return;
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		var ctx = canvas.getContext('2d');
+		if (!ctx) return;
+		var self = djyCanvas;
+		self.canvas = canvas;
+		self.ctx = ctx;
+		djyCanvasResize();
+		self.spawn();
+		self.running = true;
+		window.addEventListener('pointermove', function (e) {
+			self.mouse.x = e.clientX / (window.innerWidth || 1);
+			self.mouse.y = e.clientY / (window.innerHeight || 1);
+			self.pointerMoved = true;
+		}, { passive: true });
+		window.addEventListener('resize', debounce(djyCanvasResize, 160));
+		document.addEventListener('visibilitychange', function () {
+			if (document.hidden) {
+				self.running = false;
+				if (self.raf) cancelAnimationFrame(self.raf);
+			} else if (self.canvas) {
+				self.running = true;
+				self.raf = requestAnimationFrame(self.frame);
+			}
+		}, false);
+		self.raf = requestAnimationFrame(self.frame);
+	}
+
 	/* ---------------------------------------------------------------
 	   MOBILE CHIPS — horizontal scroll active indicator
 	   --------------------------------------------------------------- */
@@ -604,6 +636,7 @@
 	setupMobileSearch();
 	setupMobileExpand();
 	setupMobileCanvas();
+	setupDesktopCanvas();
 	setupMobileChips();
 	syncCartBadge();
 
