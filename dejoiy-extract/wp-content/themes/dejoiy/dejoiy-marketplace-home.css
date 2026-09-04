@@ -1346,37 +1346,57 @@
   opacity: 0.6;
 }
 
+/* Generated vector artwork on each poster — the cards are never blank */
+.mph-poster__art {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 118px;
+  height: 72px;
+  opacity: 0.95;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(135deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(135deg, #000 55%, transparent 100%);
+}
+
+.mph-poster__art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mph-poster__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 70%;
+}
+
 .mph-poster__eyebrow {
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   opacity: 0.86;
-  position: relative;
-  z-index: 1;
 }
 
 .mph-poster__title {
   font-size: 1.2rem;
   font-weight: 900;
   line-height: 1.05;
-  position: relative;
-  z-index: 1;
 }
 
 .mph-poster__sub {
   font-size: 0.78rem;
   opacity: 0.92;
-  position: relative;
-  z-index: 1;
 }
 
 .mph-poster__cta {
   margin-top: 10px;
   font-size: 0.8rem;
   font-weight: 800;
-  position: relative;
-  z-index: 1;
 }
 
 @media (min-width: 768px) {
@@ -1391,176 +1411,6 @@
     flex: none;
   }
 }
-/* ---------------- Real-human customer care ---------------- */
-
-.mph-care {
-  background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
-  color: #fff;
-}
-
-.mph-care__in {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 40px var(--mph-gap) 44px;
-}
-
-.mph-care__head {
-  text-align: center;
-  margin-bottom: 26px;
-}
-
-.mph-care__tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #ff7c02, #ff2d55);
-  color: #fff;
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-}
-
-.mph-care__title {
-  margin: 0 0 6px;
-  font-size: 1.25rem;
-  line-height: 1.25;
-  letter-spacing: -0.01em;
-}
-
-.mph-care__sub {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #cbd5e1;
-}
-
-.mph-care__grid {
-  display: grid;
-  gap: 14px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.mph-care__card {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 18px 16px 16px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
-}
-
-.mph-care__card:hover {
-  transform: translateY(-3px);
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
-}
-
-.mph-care__avatar {
-  width: 72px;
-  height: 72px;
-  display: block;
-  margin-bottom: 12px;
-  border-radius: 999px;
-  padding: 3px;
-  background: linear-gradient(135deg, var(--av-a), var(--av-b));
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-}
-
-.mph-care__avatar svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 999px;
-}
-
-.mph-care__name {
-  margin: 0 0 2px;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
-}
-
-.mph-care__role {
-  margin: 0 0 12px;
-  font-size: 0.74rem;
-  color: #94a3b8;
-}
-
-.mph-care__links {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.mph-care__link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.mph-care__link svg {
-  flex-shrink: 0;
-  color: #ffd000;
-}
-
-.mph-care__link:hover {
-  background: linear-gradient(135deg, #ff7c02, #ff2d55);
-  color: #fff;
-}
-
-@media (max-width: 700px) {
-  .mph-care__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mph-care__card {
-    flex-direction: row;
-    text-align: left;
-    align-items: center;
-    gap: 14px;
-    padding: 14px;
-  }
-
-  .mph-care__avatar {
-    width: 56px;
-    height: 56px;
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .mph-care__name {
-    font-size: 0.9rem;
-  }
-
-  .mph-care__role {
-    margin-bottom: 4px;
-  }
-
-  .mph-care__links {
-    margin-top: 6px;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .mph-care__link {
-    flex: 1 1 auto;
-    min-width: 118px;
-  }
-}
-
 /* ---------------- Hero: full-bleed on phones & tablets (no blank sides) ---------------- */
 
 @media (max-width: 900px) {

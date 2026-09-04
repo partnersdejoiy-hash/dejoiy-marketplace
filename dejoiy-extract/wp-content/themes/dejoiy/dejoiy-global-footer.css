@@ -240,3 +240,68 @@
     padding: 0.35rem 0.4rem;
   }
 }
+
+/* ===== Expandable footer columns on phones (accordion) ===== */
+@media (min-width: 561px) {
+  .dgf__list {
+    max-height: none;
+    opacity: 1;
+  }
+  .dgf__col {
+    border: none;
+  }
+  .dgf__title {
+    cursor: default;
+  }
+  .dgf__title::after {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .dgf__col {
+    grid-column: span 12;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dgf__title {
+    margin: 0;
+    cursor: pointer;
+    padding: 0.8rem 0.35rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dgf__title::after {
+    content: "+";
+    flex-shrink: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #fbbf24;
+    transition: transform 0.2s ease;
+  }
+
+  .dgf__col.is-open .dgf__title::after {
+    transform: rotate(45deg);
+  }
+
+  .dgf__list {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    margin: 0;
+    transition: max-height 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.24s ease, visibility 0.34s ease;
+  }
+
+  .dgf__col.is-open .dgf__list {
+    max-height: 340px;
+    opacity: 1;
+    visibility: visible;
+    padding-bottom: 0.9rem;
+  }
+}

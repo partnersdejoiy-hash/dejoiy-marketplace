@@ -231,5 +231,15 @@ function dejoiy_global_footer_assets() {
 			(string) filemtime( $css )
 		);
 	}
+	$js = $dir . '/dejoiy-global-footer.js';
+	if ( is_readable( $js ) ) {
+		wp_enqueue_script(
+			'dejoiy-global-footer',
+			$uri . '/dejoiy-global-footer.js',
+			array(),
+			(string) filemtime( $js ),
+			true
+		);
+	}
 }
 add_action( 'wp_enqueue_scripts', 'dejoiy_global_footer_assets', 10050 );
