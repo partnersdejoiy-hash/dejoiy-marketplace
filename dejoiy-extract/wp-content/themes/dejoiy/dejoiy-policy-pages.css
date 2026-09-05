@@ -1,0 +1,129 @@
+/* DEJOIY Policy Pages — card-based legal presentation */
+.dpol-lead {
+	max-width: 860px;
+	margin: 28px auto 34px;
+	padding: 22px 26px;
+	background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+	border: 1px solid #e2e8f0;
+	border-left: 4px solid #f97316;
+	border-radius: 16px;
+	font-size: 17px;
+	line-height: 1.7;
+	color: #334155;
+	box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.35);
+}
+
+.dpol-lead p:last-child {
+	margin-bottom: 0;
+}
+
+.dpol-cards {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 20px;
+	max-width: 1180px;
+	margin: 0 auto 48px;
+	padding: 0 18px;
+}
+
+.dpol-card {
+	position: relative;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 18px;
+	padding: 22px 24px 24px 26px;
+	box-shadow: 0 6px 24px -16px rgba(15, 23, 42, 0.25);
+	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+	overflow: hidden;
+}
+
+.dpol-card:hover {
+	transform: translateY(-3px);
+	box-shadow: 0 18px 38px -20px rgba(15, 23, 42, 0.35);
+	border-color: #fed7aa;
+}
+
+.dpol-num {
+	position: absolute;
+	top: 18px;
+	right: 18px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 38px;
+	height: 38px;
+	padding: 0 8px;
+	border-radius: 12px;
+	background: linear-gradient(135deg, #f97316, #f59e0b);
+	color: #ffffff;
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	line-height: 1;
+	box-shadow: 0 6px 14px -8px rgba(249, 115, 22, 0.6);
+}
+
+.dpol-card h2 {
+	margin: 0 0 12px;
+	padding-right: 52px;
+	font-size: 1.15rem;
+	font-weight: 700;
+	line-height: 1.35;
+	color: #0f172a;
+	letter-spacing: -0.01em;
+}
+
+.dpol-card p {
+	margin: 0 0 10px;
+	font-size: 0.96rem;
+	line-height: 1.7;
+	color: #475569;
+}
+
+.dpol-card p:last-child {
+	margin-bottom: 0;
+}
+
+.dpol-card a {
+	color: #ea580c;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.dpol-card a:hover {
+	color: #c2410c;
+}
+
+.dpol-card ul,
+.dpol-card ol {
+	margin: 8px 0 10px;
+	padding-left: 20px;
+	color: #475569;
+	line-height: 1.7;
+	font-size: 0.96rem;
+}
+
+@media (min-width: 768px) {
+	.dpol-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.dpol-lead {
+		margin-top: 36px;
+		padding: 26px 32px;
+		font-size: 18px;
+	}
+}
+
+@media (min-width: 1200px) {
+	.dpol-cards {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dpol-card,
+	.dpol-card:hover {
+		transition: none;
+		transform: none;
+	}
+}

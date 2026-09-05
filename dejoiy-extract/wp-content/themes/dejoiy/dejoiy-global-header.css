@@ -1501,6 +1501,7 @@ body.single-product .page-heading h1.title {
 /* Single-h1 SEO: crafted landing pages carry their own hero h1 */
 body.page-id-36 .page-heading h1.title,
 body.page-id-5426 .page-heading h1.title,
+body.page-id-4445 .page-heading h1.title,
 body.error404 .page-heading h1.title {
 	display: none !important;
 }

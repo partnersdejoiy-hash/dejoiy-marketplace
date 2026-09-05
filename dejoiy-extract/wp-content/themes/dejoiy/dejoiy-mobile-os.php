@@ -12,6 +12,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Dedicated ecosystem pages use their own chrome — no Mobile OS header/footer.
  *
+ * Detection is exact (page slug / explicit flag) — never a URI substring
+ * match, which previously misclassified marketplace routes like
+ * /product-category/dejoiy-library/ (contains "dejoiy-library") as the
+ * Library universe and left the legacy Elementor header visible sitewide.
+ *
  * @return bool
  */
 function dejoiy_mobile_os_is_dedicated_page() {
@@ -19,20 +24,8 @@ function dejoiy_mobile_os_is_dedicated_page() {
 		return false;
 	}
 
-	$uri = strtolower( (string) wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-	$needles = array(
-		'dejoiy-custom-studio',
-		'dejoiy-quick-mart',
-		'dejoiy-services',
-		'dejoiy-refurbished',
-		'dejoiy-library',
-		'dejoiy_library=1',
-	);
-
-	foreach ( $needles as $needle ) {
-		if ( false !== strpos( $uri, $needle ) ) {
-			return true;
-		}
+	if ( ! empty( $_GET['dejoiy_library'] ) && '1' === (string) $_GET['dejoiy_library'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
 	}
 
 	if ( is_page() ) {
@@ -44,7 +37,7 @@ function dejoiy_mobile_os_is_dedicated_page() {
 			'dejoiy-refurbished',
 			'dejoiy-library',
 		);
-		if ( in_array( $slug, $dedicated, true ) ) {
+		if ( '' !== $slug && in_array( $slug, $dedicated, true ) ) {
 			return true;
 		}
 	}
