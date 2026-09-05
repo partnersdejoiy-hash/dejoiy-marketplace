@@ -269,6 +269,12 @@ if ( is_readable( $dah_path ) ) {
 	require_once $dah_path;
 }
 
+// DEJOIY Marketplace Promo Banners (internships + become a seller)
+$dpb_path = get_stylesheet_directory() . '/dejoiy-promo-banners.php';
+if ( is_readable( $dpb_path ) ) {
+	require_once $dpb_path;
+}
+
 // DEJOIY Product Detail — trust strip + Buy Now (optional, fallback safe)
 $pd_path = get_stylesheet_directory() . '/dejoiy-product-detail.php';
 if ( is_readable( $pd_path ) ) {
