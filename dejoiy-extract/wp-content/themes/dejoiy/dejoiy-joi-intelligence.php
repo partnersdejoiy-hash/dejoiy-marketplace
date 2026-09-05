@@ -876,3 +876,16 @@ function dejoiy_joi_register_nexus_handlers() {
 	add_action( 'wp_ajax_nopriv_dejoiy_library_joi', 'dejoiy_joi_nexus_search_handler' );
 }
 add_action( 'init', 'dejoiy_joi_register_nexus_handlers', 100 );
+
+/**
+ * Single-h1 SEO: the JOI page is an Elementor-canvas iframe app with no
+ * heading of its own; give the page one real (screen-reader) h1.
+ * Echoed directly on body open because the canvas template bypasses
+ * the_content().
+ */
+function dejoiy_joi_page_h1_body() {
+	if ( is_page( 4987 ) && ! is_admin() ) {
+		echo '<h1 class="dejoiy-joi-h1 screen-reader-text" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">JOI &mdash; DEJOIY AI Assistant for Shopping, Selling and Support</h1>';
+	}
+}
+add_action( 'wp_body_open', 'dejoiy_joi_page_h1_body', 1 );

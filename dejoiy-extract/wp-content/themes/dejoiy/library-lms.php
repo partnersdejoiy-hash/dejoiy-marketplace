@@ -707,7 +707,6 @@ function dejoiy_lms_render_route() {
 	}
 
 	get_header();
-	echo dejoiy_lms_render(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	get_footer();
 	exit;
 }

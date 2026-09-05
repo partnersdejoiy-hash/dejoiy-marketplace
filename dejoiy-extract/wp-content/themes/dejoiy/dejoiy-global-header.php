@@ -629,16 +629,8 @@ function dejoiy_gh_print_header() {
 	if ( ! dejoiy_global_header_enabled() ) {
 		return;
 	}
-	// Skip checkout focus
-	if ( function_exists( 'is_checkout' ) && is_checkout() && ! is_wc_endpoint_url( 'order-received' ) ) {
-		return;
-	}
-	// Skip dedicated ecosystem pages
+	// Skip dedicated ecosystem pages (Library, Studio, Nexus apps own their chrome)
 	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) && dejoiy_mobile_os_is_dedicated_page() ) {
-		return;
-	}
-	// Skip cart page (cart experience has its own)
-	if ( function_exists( 'is_cart' ) && is_cart() ) {
 		return;
 	}
 	static $done = false;
@@ -659,13 +651,7 @@ function dejoiy_gh_hide_legacy() {
 	if ( ! dejoiy_global_header_enabled() ) {
 		return;
 	}
-	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
-		return;
-	}
 	if ( function_exists( 'dejoiy_mobile_os_is_dedicated_page' ) && dejoiy_mobile_os_is_dedicated_page() ) {
-		return;
-	}
-	if ( function_exists( 'is_cart' ) && is_cart() ) {
 		return;
 	}
 	echo '<style id="dejoiy-gh-guard">';
@@ -784,3 +770,18 @@ function dejoiy_gh_logout_redirect( $redirect_to, $requested, $user ) {
 	return home_url( '/' );
 }
 add_filter( 'logout_redirect', 'dejoiy_gh_logout_redirect', 20, 3 );
+
+/**
+ * Single-h1 SEO: the WCFM vendor-membership page is a bare shortcode table
+ * with no heading; give it one real h1 above the plans.
+ *
+ * @param string $content Existing page content.
+ * @return string
+ */
+function dejoiy_vendor_membership_page_h1( $content ) {
+	if ( is_page( 4341 ) && in_the_loop() && is_main_query() && ! is_admin() ) {
+		$content = '<h1 class="dvm-title">DEJOIY Vendor Membership Plans</h1>' . $content;
+	}
+	return $content;
+}
+add_filter( 'the_content', 'dejoiy_vendor_membership_page_h1', 9 );

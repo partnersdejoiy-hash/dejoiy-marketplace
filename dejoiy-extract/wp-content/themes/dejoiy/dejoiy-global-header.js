@@ -641,7 +641,11 @@
 	syncCartBadge();
 
 	// Single-h1 SEO: hide generic theme page title on crafted landing pages.
-	if (document.body.classList.contains('page-id-5413')) {
+	var craftedPages = ['page-id-5413', 'page-id-36', 'page-id-5426', 'error404'];
+	var isCrafted = craftedPages.some(function (cls) {
+		return document.body.classList.contains(cls);
+	});
+	if (isCrafted) {
 		var pageTitles = qsa('.page-heading h1.title, .page-head h1.title, .title-wrapper h1.title');
 		pageTitles.forEach(function (el) {
 			el.style.display = 'none';
