@@ -808,43 +808,80 @@
   cursor: pointer;
 }
 
-/* ---------------- Trust ---------------- */
+/* ---------------- DEJOIY Advantage band ---------------- */
 
-.mph-trust {
+.mph-advantage {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+  border-top: 1px solid rgba(15, 23, 42, 0.05);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.mph-advantage__in {
+  max-width: 1200px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px 16px;
+  padding: 18px var(--mph-gap) 20px;
 }
 
-.mph-trust__item {
+.mph-advantage__item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 12px;
-  background: var(--mph-surface);
-  border: 1px solid var(--mph-line);
-  border-radius: var(--mph-radius);
-  box-shadow: var(--mph-shadow);
+  gap: 12px;
+  padding: 6px 4px;
 }
 
-.mph-trust__icon {
-  font-size: 1.4rem;
+.mph-advantage__icon {
   flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #ff7c02, #ff2d55);
+  box-shadow: 0 6px 14px rgba(255, 60, 40, 0.28);
 }
 
-.mph-trust__copy {
+.mph-advantage__icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.mph-advantage__copy {
   display: flex;
   flex-direction: column;
+  gap: 1px;
 }
 
-.mph-trust__copy b {
-  font-size: 0.84rem;
+.mph-advantage__copy b {
+  font-size: 0.86rem;
+  font-weight: 800;
   color: var(--mph-ink);
+  letter-spacing: -0.01em;
 }
 
-.mph-trust__copy small {
+.mph-advantage__copy small {
   font-size: 0.72rem;
   color: var(--mph-muted);
+}
+
+@media (min-width: 768px) {
+  .mph-advantage__in {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0 24px;
+    padding: 22px 0 24px;
+  }
+
+  .mph-advantage__item {
+    justify-content: center;
+    padding: 6px 10px;
+  }
+
+  .mph-advantage__copy b {
+    font-size: 0.92rem;
+  }
 }
 
 /* ---------------- Sell CTA ---------------- */

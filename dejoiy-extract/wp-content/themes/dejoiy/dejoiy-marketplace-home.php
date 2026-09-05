@@ -996,6 +996,35 @@ function dejoiy_marketplace_home_html() {
 		</section>
 
 		<?php
+		/* ============ DEJOIY ADVANTAGE (trust band) ============ */
+		?>
+		<section class="mph-advantage" aria-label="<?php esc_attr_e( 'Why shop on DEJOIY', 'dejoiy' ); ?>">
+			<div class="mph-advantage__in">
+				<?php foreach ( dejoiy_mph_trust() as $t ) : ?>
+					<div class="mph-advantage__item">
+						<span class="mph-advantage__icon" aria-hidden="true">
+							<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+								<?php if ( 'truck' === $t['icon'] ) : ?>
+									<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
+								<?php elseif ( 'lock' === $t['icon'] ) : ?>
+									<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+								<?php elseif ( 'return' === $t['icon'] ) : ?>
+									<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 1-15 2.72L3 15"/><path d="M3 13a9 9 0 0 1 15-2.72L21 13"/>
+								<?php else : ?>
+									<path d="M12 2 14.4 8.1 21 9.27l-5 4.87 1.18 6.88L12 17.77 6.82 21.02 8 14.14 3 9.27 9.6 8.1z"/>
+								<?php endif; ?>
+							</svg>
+						</span>
+						<div class="mph-advantage__copy">
+							<b><?php echo esc_html( $t['title'] ); ?></b>
+							<small><?php echo esc_html( $t['sub'] ); ?></small>
+						</div>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<?php
 		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
 		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
@@ -1103,39 +1132,12 @@ function dejoiy_marketplace_home_html() {
 		</section>
 
 		<?php
-		/* ============ TRUST ============ */
-		?>
-		<section class="mph-section mph-trust" aria-label="<?php esc_attr_e( 'Why shop on DEJOIY', 'dejoiy' ); ?>">
-			<?php foreach ( dejoiy_mph_trust() as $t ) : ?>
-				<div class="mph-trust__item">
-					<span class="mph-trust__icon" aria-hidden="true">
-						<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-							<?php if ( 'truck' === $t['icon'] ) : ?>
-								<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
-							<?php elseif ( 'lock' === $t['icon'] ) : ?>
-								<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-							<?php elseif ( 'return' === $t['icon'] ) : ?>
-								<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 1-15 2.72L3 15"/><path d="M3 13a9 9 0 0 1 15-2.72L21 13"/>
-							<?php else : ?>
-								<path d="M12 2 14.4 8.1 21 9.27l-5 4.87 1.18 6.88L12 17.77 6.82 21.02 8 14.14 3 9.27 9.6 8.1z"/>
-							<?php endif; ?>
-						</svg>
-					</span>
-					<div class="mph-trust__copy">
-						<b><?php echo esc_html( $t['title'] ); ?></b>
-						<small><?php echo esc_html( $t['sub'] ); ?></small>
-					</div>
-				</div>
-			<?php endforeach; ?>
-		</section>
-
-		<?php
 		/* ============ SELL CTA ============ */
 		?>
 		<section class="mph-section mph-sell" aria-labelledby="mph-h-sell">
 			<div class="mph-sell__in">
 				<h2 id="mph-h-sell" class="mph-sell__title"><?php esc_html_e( 'Build your business on DEJOIY', 'dejoiy' ); ?></h2>
-				<p class="mph-sell__sub"><?php esc_html_e( 'Sell products, offer services or publish books — grow with India\u2019s next-gen marketplace.', 'dejoiy' ); ?></p>
+				<p class="mph-sell__sub"><?php esc_html_e( 'Sell products, offer services or publish books — grow with India’s next-gen marketplace.', 'dejoiy' ); ?></p>
 				<div class="mph-sell__actions">
 					<a class="mph-btn mph-btn--light" href="<?php echo esc_url( $seller ); ?>"><?php esc_html_e( 'Become a Seller', 'dejoiy' ); ?></a>
 					<a class="mph-btn mph-btn--outline" href="<?php echo esc_url( $vreg ); ?>"><?php esc_html_e( 'Vendor Registration', 'dejoiy' ); ?></a>
