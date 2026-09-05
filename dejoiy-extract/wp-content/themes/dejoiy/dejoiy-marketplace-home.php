@@ -958,6 +958,33 @@ function dejoiy_marketplace_home_html() {
 	?>
 	<div class="mph" data-mph>
 		<?php
+		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
+		?>
+		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
+			<div class="mph-apps__head">
+				<h2 class="mph-apps__title"><?php esc_html_e( 'Shop by Category', 'dejoiy' ); ?></h2>
+				<span class="mph-apps__tag"><?php esc_html_e( 'Quick picks', 'dejoiy' ); ?></span>
+			</div>
+			<div class="mph-apps__scroller" data-mph-cats>
+				<?php foreach ( $cats as $c ) : ?>
+					<a class="mph-app" href="<?php echo esc_url( $c['url'] ); ?>">
+						<span class="mph-app__bubble" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>"><span class="mph-ic-wrap"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span></span>
+						<span class="mph-app__label"><?php echo esc_html( $c['name'] ); ?></span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+			<div class="mph-catgrid" aria-hidden="false">
+				<?php foreach ( $cats as $c ) : ?>
+					<a class="mph-catgrid__tile" href="<?php echo esc_url( $c['url'] ); ?>" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>">
+						<span class="mph-catgrid__icon"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+						<span class="mph-catgrid__name"><?php echo esc_html( $c['name'] ); ?></span>
+						<span class="mph-catgrid__go">→</span>
+					</a>
+				<?php endforeach; ?>
+			</div>
+		</section>
+
+		<?php
 		/* ============ HERO ============ */
 		?>
 		<section class="mph-hero" aria-label="Featured" data-mph-hero>
@@ -1028,36 +1055,9 @@ function dejoiy_marketplace_home_html() {
 		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
 		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
-		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
+/* ============ DEALS + COUNTDOWN ============ */
 		?>
-		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
-			<div class="mph-apps__head">
-				<h2 class="mph-apps__title"><?php esc_html_e( 'Shop by Category', 'dejoiy' ); ?></h2>
-				<span class="mph-apps__tag"><?php esc_html_e( 'Quick picks', 'dejoiy' ); ?></span>
-			</div>
-			<div class="mph-apps__scroller" data-mph-cats>
-				<?php foreach ( $cats as $c ) : ?>
-					<a class="mph-app" href="<?php echo esc_url( $c['url'] ); ?>">
-						<span class="mph-app__bubble" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>"><span class="mph-ic-wrap"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span></span>
-						<span class="mph-app__label"><?php echo esc_html( $c['name'] ); ?></span>
-					</a>
-				<?php endforeach; ?>
-			</div>
-			<div class="mph-catgrid" aria-hidden="false">
-				<?php foreach ( $cats as $c ) : ?>
-					<a class="mph-catgrid__tile" href="<?php echo esc_url( $c['url'] ); ?>" style="--mph-cat-bg:<?php echo esc_attr( $c['bg'] ); ?>">
-						<span class="mph-catgrid__icon"><?php echo dejoiy_mph_icon_or( $c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
-						<span class="mph-catgrid__name"><?php echo esc_html( $c['name'] ); ?></span>
-						<span class="mph-catgrid__go">→</span>
-					</a>
-				<?php endforeach; ?>
-			</div>
-		</section>
-
-		<?php
-		/* ============ DEALS + COUNTDOWN ============ */
-		if ( ! empty( $deals_posts ) ) :
-			?>
+		<?php if ( ! empty( $deals_posts ) ) : ?>
 			<section class="mph-section mph-deals" aria-labelledby="mph-h-deals">
 				<?php
 				echo dejoiy_mph_section_head( 'mph-h-deals', __( '<span>Deals of the Day</span> <span class="mph-head__tag">ends tonight</span>', 'dejoiy' ), $deals );
