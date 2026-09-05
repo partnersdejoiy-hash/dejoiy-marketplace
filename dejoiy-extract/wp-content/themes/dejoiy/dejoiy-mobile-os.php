@@ -668,12 +668,12 @@ function dejoiy_mobile_os_ajax_cart_count() {
  */
 function dejoiy_mobile_os_print_header() {
 	// Single header architecture: Global Header OS owns site-wide chrome.
-	// Mobile OS only keeps its specialized cart/checkout focus modes.
-	if ( ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus()
-		&& function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
+	// The Mobile OS header chrome is retired; the global header (incl. cart/checkout)
+	// provides the one site header. Only the footer chrome hooks remain for cart/checkout.
+	if ( function_exists( 'dejoiy_global_header_enabled' ) && dejoiy_global_header_enabled() ) {
 		return;
 	}
-	if ( ! dejoiy_mobile_os_enabled() && ! dejoiy_mobile_os_is_cart_focus() && ! dejoiy_mobile_os_is_checkout_focus() ) {
+	if ( ! dejoiy_mobile_os_enabled() ) {
 		return;
 	}
 	static $done = false;
@@ -681,11 +681,6 @@ function dejoiy_mobile_os_print_header() {
 		return;
 	}
 	$done = true;
-	if ( dejoiy_mobile_os_is_cart_focus() ) {
-		if ( ! function_exists( 'dejoiy_cart_xp_is_active' ) || ! dejoiy_cart_xp_is_active() ) {
-			return;
-		}
-	}
 	// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	echo dejoiy_mobile_os_header_html();
 }

@@ -35,7 +35,7 @@
       function doSearch(q){
         if(q===lastQ)return;lastQ=q;
         sDrop.innerHTML='<div class="dcs-sd-spin">Searching…</div>';sDrop.hidden=false;
-        var base='https://dejoiy.tech/wp-json/wp/v2/search?search='+encodeURIComponent(q)+'&per_page=10&_fields=id,title,url,subtype,type';
+        var base='https://dejoiy.com/wp-json/wp/v2/search?search='+encodeURIComponent(q)+'&per_page=10&_fields=id,title,url,subtype,type';
         fetch(base).then(function(r){return r.ok?r.json():[];}).then(function(d){render(d,q);}).catch(function(){sDrop.innerHTML='<div class="dcs-sd-msg">Search unavailable</div>';sDrop.hidden=false;});
       }
       sIn.addEventListener('input',function(){clearTimeout(stimer);var q=this.value.trim();if(q.length<2){sDrop.hidden=true;lastQ='';return;}stimer=setTimeout(function(){doSearch(q);},300);});

@@ -1496,3 +1496,64 @@
     font-size: 1.25rem;
   }
 }
+
+/* ---------------- Compact "Shop by Category" scroller (all screens) ---------------- */
+
+.mph-apps__scroller {
+  gap: 10px;
+  flex-wrap: nowrap;
+  padding: 4px 2px 10px;
+}
+
+.mph-app {
+  width: 64px;
+}
+
+.mph-app__bubble {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 5px;
+  font-size: 1.2rem;
+}
+
+.mph-app__bubble .mph-ic {
+  font-size: 1.2rem;
+}
+
+.mph-app__label {
+  font-size: 0.64rem;
+  max-width: 72px;
+  line-height: 1.15;
+}
+
+.mph-apps__head {
+  padding-bottom: 2px;
+}
+
+.mph-apps__title {
+  font-size: 0.95rem;
+}
+
+.mph-apps__tag {
+  font-size: 0.6rem;
+}
+
+.mph-catgrid {
+  display: none;
+}
+
+@media (min-width: 601px) {
+  .mph-apps__title {
+    font-size: 1.05rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mph-catgrid {
+    display: none;
+  }
+
+  .mph-app {
+    display: block;
+  }
+}

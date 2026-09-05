@@ -35,7 +35,7 @@ class Dejoiy_Motion_Adapters {
      * Enqueue motion CSS and JS
      */
     public function enqueue_assets() {
-        $theme_uri = get_template_directory_uri();
+        $theme_uri = get_stylesheet_directory_uri();
 
         // Motion CSS
         wp_enqueue_style(

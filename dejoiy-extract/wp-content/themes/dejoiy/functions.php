@@ -263,6 +263,12 @@ if ( is_readable( $gf_path ) ) {
 	require_once $gf_path;
 }
 
+// DEJOIY Unified Marketplace Archive Hero — shop + every product category
+$dah_path = get_stylesheet_directory() . '/dejoiy-archive-hero.php';
+if ( is_readable( $dah_path ) ) {
+	require_once $dah_path;
+}
+
 // DEJOIY Product Detail — trust strip + Buy Now (optional, fallback safe)
 $pd_path = get_stylesheet_directory() . '/dejoiy-product-detail.php';
 if ( is_readable( $pd_path ) ) {

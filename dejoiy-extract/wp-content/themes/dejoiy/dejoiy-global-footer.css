@@ -305,3 +305,18 @@
     padding-bottom: 0.9rem;
   }
 }
+/* Footer logo sizing (caps enforced after all theme rules) */
+.dgf__logo-img {
+  width: 190px;
+  max-width: 190px;
+  height: auto;
+  max-height: 64px;
+  object-fit: contain;
+}
+@media (max-width: 560px) {
+  .dgf__logo-img {
+    width: 130px;
+    max-width: 130px;
+    max-height: 44px;
+  }
+}

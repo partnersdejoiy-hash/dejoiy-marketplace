@@ -131,7 +131,8 @@ function dejoiy_global_footer_render() {
 	$cats = dejoiy_global_footer_categories();
 	$year = gmdate( 'Y' );
 	$dgf_logo_id = 4592;
-	$dgf_logo = wp_get_attachment_image( $dgf_logo_id, array( 220, 84 ), false, array( 'class' => 'dgf__logo-img', 'alt' => 'DEJOIY logo', 'loading' => 'lazy' ) );
+	$dgf_logo_url = wp_get_attachment_image_url( $dgf_logo_id, array( 220, 84 ) );
+	$dgf_logo = $dgf_logo_url ? '<img class="dgf__logo-img" src="' . esc_url( $dgf_logo_url ) . '" alt="DEJOIY logo" loading="eager" decoding="async">' : '';
 	?>
 	<footer class="dgf" id="dejoiy-global-footer">
 		<div class="dgf__inner">

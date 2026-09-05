@@ -17,7 +17,7 @@ if ( ! defined( 'DEJOIY_CONTACT_XP_VERSION' ) ) {
 }
 
 if ( ! defined( 'DEJOIY_CONTACT_XP_FROM_EMAIL' ) ) {
-	define( 'DEJOIY_CONTACT_XP_FROM_EMAIL', 'no-reply.notifications@dejoiy.tech' );
+	define( 'DEJOIY_CONTACT_XP_FROM_EMAIL', 'no-reply.notifications@dejoiy.com' );
 }
 
 if ( ! defined( 'DEJOIY_CONTACT_XP_ADMIN_EMAIL' ) ) {
@@ -98,7 +98,7 @@ function dejoiy_contact_xp_brand_favicon_url() {
 	if ( $icon ) {
 		return set_url_scheme( $icon, 'https' );
 	}
-	return 'https://dejoiy.tech/wp-content/uploads/2026/05/DEJOIY-FAVICON-100x100.png';
+	return 'https://dejoiy.com/wp-content/uploads/2026/05/DEJOIY-FAVICON-100x100.png';
 }
 
 /**
@@ -282,7 +282,7 @@ function dejoiy_contact_xp_thank_you_html( $name, $subject_label ) {
 				<p style="margin:0 0 24px;text-align:center;">
 					<a href="<?php echo $shop; ?>" style="display:inline-block;background:#a78bfa;color:#0f172a;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:800;font-size:15px;">Continue Shopping</a>
 				</p>
-				<p style="margin:0;font-size:13px;line-height:1.6;color:#94a3b8;">Need urgent help? Reply to this email or write to <a href="mailto:support-care@dejoiy.tech" style="color:#c4b5fd;text-decoration:underline;">support-care@dejoiy.tech</a>.</p>
+				<p style="margin:0;font-size:13px;line-height:1.6;color:#94a3b8;">Need urgent help? Reply to this email or write to <a href="mailto:support-care@dejoiy.com" style="color:#c4b5fd;text-decoration:underline;">support-care@dejoiy.com</a>.</p>
 				<p style="margin:18px 0 0;font-size:12px;line-height:1.5;color:#64748b;">DEJOIY · Delhi, India · <a href="<?php echo $home; ?>" style="color:#c4b5fd;text-decoration:none;">dejoiy.tech</a></p>
 			</div>
 		</div>
@@ -378,7 +378,7 @@ function dejoiy_contact_xp_ajax_submit() {
 		set_transient( $rate_key, 1, MINUTE_IN_SECONDS * 2 );
 		wp_send_json_success(
 			array(
-				'message' => __( 'Your message was received. If you do not see a confirmation email shortly, check spam or contact support-care@dejoiy.tech.', 'dejoiy' ),
+				'message' => __( 'Your message was received. If you do not see a confirmation email shortly, check spam or contact support-care@dejoiy.com.', 'dejoiy' ),
 			)
 		);
 	}
@@ -454,8 +454,8 @@ function dejoiy_contact_xp_html() {
 						<div class="dcu-info-card__body">
 							<h2 class="dcu-info-card__title"><?php esc_html_e( 'Quick Help', 'dejoiy' ); ?></h2>
 							<p class="dcu-info-card__text"><?php esc_html_e( 'You can ask anything you want to know about our products', 'dejoiy' ); ?></p>
-							<p class="dcu-info-card__text"><a href="mailto:support-care@dejoiy.tech">support-care@dejoiy.tech</a></p>
-							<p class="dcu-info-card__text"><a href="mailto:legal@dejoiy.tech">legal@dejoiy.tech</a></p>
+							<p class="dcu-info-card__text"><a href="mailto:support-care@dejoiy.com">support-care@dejoiy.com</a></p>
+							<p class="dcu-info-card__text"><a href="mailto:legal@dejoiy.com">legal@dejoiy.com</a></p>
 						</div>
 					</article>
 				</div>
@@ -565,7 +565,7 @@ function dejoiy_contact_xp_assets() {
 				'i18n'    => array(
 					'sending'  => __( 'Sending…', 'dejoiy' ),
 					'submit'   => __( 'Submit', 'dejoiy' ),
-					'error'    => __( 'Something went wrong. Please try again or email support-care@dejoiy.tech.', 'dejoiy' ),
+					'error'    => __( 'Something went wrong. Please try again or email support-care@dejoiy.com.', 'dejoiy' ),
 				),
 			)
 		);
@@ -599,6 +599,6 @@ function dejoiy_contact_xp_meta_description( $description ) {
 	if ( ! dejoiy_contact_xp_is_active() ) {
 		return $description;
 	}
-	return __( 'Contact DEJOIY in Delhi, India. Product help, order support, partnerships, and legal inquiries — support-care@dejoiy.tech', 'dejoiy' );
+	return __( 'Contact DEJOIY in Delhi, India. Product help, order support, partnerships, and legal inquiries — support-care@dejoiy.com', 'dejoiy' );
 }
 add_filter( 'aioseo_description', 'dejoiy_contact_xp_meta_description', 20 );

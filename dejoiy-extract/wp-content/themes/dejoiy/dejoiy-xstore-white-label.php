@@ -116,7 +116,7 @@ function dejoiy_xstore_mask_admin_css() {
 	}
 	echo '<style id="dejoiy-xstore-mask-admin">';
 	echo 'a[href*="8theme.com"],a[href*="xstore.8theme.com"]{display:none!important;}';
-	echo '.etheme-panel-logo img[alt*="8theme"],.etheme-panel-logo img[alt*="XStore"]{content:url("https://dejoiy.tech/wp-content/uploads/2026/05/DEJOIY-OFFICIAL-LOGO.png");max-width:120px;height:auto;}';
+	echo '.etheme-panel-logo img[alt*="8theme"],.etheme-panel-logo img[alt*="XStore"]{content:url("https://dejoiy.com/wp-content/uploads/2026/05/DEJOIY-OFFICIAL-LOGO.png");max-width:120px;height:auto;}';
 	echo '</style>';
 }
 add_action( 'admin_head', 'dejoiy_xstore_mask_admin_css', 99 );

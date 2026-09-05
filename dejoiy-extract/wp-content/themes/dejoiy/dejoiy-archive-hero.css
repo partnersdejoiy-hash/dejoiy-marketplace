@@ -1,0 +1,169 @@
+/* DEJOIY Unified Marketplace Archive Hero */
+
+.dah {
+  --dah-bg-1: #0b1030;
+  --dah-bg-2: #1b1440;
+  --dah-gold: #ffd27d;
+  --dah-pink: #ff4fd8;
+  --dah-blue: #4f8bff;
+  --dah-ink: #f5f6ff;
+  --dah-muted: rgba(245, 246, 255, 0.72);
+  --dah-line: rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(900px 340px at 8% -10%, rgba(79, 139, 255, 0.32), transparent 60%),
+    radial-gradient(760px 320px at 96% -20%, rgba(255, 79, 216, 0.26), transparent 55%),
+    linear-gradient(135deg, var(--dah-bg-1) 0%, var(--dah-bg-2) 100%);
+  color: var(--dah-ink);
+  padding: 26px 0 18px;
+  border-bottom: 1px solid var(--dah-line);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.dah::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.dah__in {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+.dah__copy {
+  max-width: 780px;
+}
+
+.dah__kicker {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dah-gold);
+}
+
+.dah__title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.dah__sub {
+  margin: 10px 0 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--dah-muted);
+  max-width: 60ch;
+}
+
+.dah__meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.dah__count {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--dah-line);
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--dah-ink);
+}
+
+.dah__all {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--dah-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--dah-pink);
+  transition: color 0.15s ease;
+}
+
+.dah__all:hover {
+  color: var(--dah-pink);
+}
+
+.dah__chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 18px 28px 2px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.dah__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.dah__chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--dah-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dah-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.dah__chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.dah__chip--on {
+  background: linear-gradient(135deg, var(--dah-blue), var(--dah-pink));
+  border-color: transparent;
+  color: #fff;
+}
+
+/* Hide the old Elementor promo/sale blue band on product archives */
+.post-type-archive-product .elementor-element-3a4fbad4,
+.tax-product_cat .elementor-element-3a4fbad4 {
+  display: none !important;
+}
+
+@media (max-width: 767px) {
+  .dah {
+    padding: 20px 0 12px;
+  }
+
+  .dah__in {
+    padding: 0 18px;
+  }
+
+  .dah__title {
+    font-size: 1.5rem;
+  }
+
+  .dah__sub {
+    font-size: 0.88rem;
+  }
+
+  .dah__chips {
+    padding: 14px 18px 0;
+  }
+}

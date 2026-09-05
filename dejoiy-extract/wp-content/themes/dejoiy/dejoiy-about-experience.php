@@ -80,7 +80,7 @@ function dejoiy_about_xp_html() {
 	$quickmart = esc_url( home_url( '/quickmart/' ) );
 	$studio    = esc_url( home_url( '/custom-studio/' ) );
 	$home      = esc_url( home_url( '/' ) );
-	$logo      = esc_url( get_site_icon_url( 192 ) ?: 'https://dejoiy.tech/wp-content/uploads/2024/dejoiy-logo.png' );
+	$logo      = esc_url( get_site_icon_url( 192 ) ?: 'https://dejoiy.com/wp-content/uploads/2024/dejoiy-logo.png' );
 
 	ob_start();
 	?>
@@ -347,7 +347,7 @@ function dejoiy_about_xp_html() {
 				<div>
 					<strong>DEJOIY</strong>
 					<p><?php esc_html_e( 'AI-powered marketplace ecosystem. Delhi, India.', 'dejoiy' ); ?></p>
-					<p><a href="mailto:support-care@dejoiy.tech">support-care@dejoiy.tech</a></p>
+					<p><a href="mailto:support-care@dejoiy.com">support-care@dejoiy.com</a></p>
 				</div>
 				<div>
 					<h4><?php esc_html_e( 'Marketplace', 'dejoiy' ); ?></h4>

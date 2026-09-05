@@ -339,9 +339,9 @@ function dejoiy_gh_desktop_header_html() {
 	$logo_id   = (int) get_theme_mod( 'custom_logo' );
 	$logo_html = '';
 	if ( $logo_id > 0 ) {
-		$img = wp_get_attachment_image( $logo_id, array( 200, 72 ), false, array( 'class' => 'gh-logo__img', 'alt' => get_bloginfo( 'name', 'display' ), 'loading' => 'eager', 'decoding' => 'async' ) );
-		if ( $img ) {
-			$logo_html = $img;
+		$logo_url = wp_get_attachment_image_url( $logo_id, array( 200, 72 ) );
+		if ( $logo_url ) {
+			$logo_html = '<img class="gh-logo__img" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( get_bloginfo( 'name', 'display' ) ) . '" loading="eager" decoding="async">';
 		}
 	}
 	if ( ! $logo_html ) {
@@ -757,6 +757,30 @@ function dejoiy_gh_disable_old_headers() {
 	remove_action( 'wp_footer', 'dejoiy_site_chrome_render_footer', 1 );
 }
 add_action( 'after_setup_theme', 'dejoiy_gh_disable_old_headers', 5 );
+
+/**
+ * Single-header architecture: never render the legacy Elementor header
+ * theme-location when the global header is active. This removes the old
+ * nav's hidden DOM (and any stale staging links it carried).
+ *
+ * @param object $locations Locations_Manager instance.
+ */
+function dejoiy_gh_abort_elementor_header_location( $locations ) {
+	if ( ! function_exists( 'dejoiy_global_header_enabled' ) || ! dejoiy_global_header_enabled() ) {
+		return;
+	}
+	if ( ! method_exists( $locations, 'get_documents_for_location' ) || ! method_exists( $locations, 'remove_doc_from_location' ) ) {
+		return;
+	}
+	$docs = $locations->get_documents_for_location( 'header' );
+	if ( empty( $docs ) ) {
+		return;
+	}
+	foreach ( array_keys( $docs ) as $document_id ) {
+		$locations->remove_doc_from_location( 'header', $document_id );
+	}
+}
+add_action( 'elementor/theme/before_do_header', 'dejoiy_gh_abort_elementor_header_location', 1 );
 
 /* ---------------------------------------------------------------
    LOGO redirect on logout

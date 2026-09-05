@@ -611,14 +611,14 @@ function dejoiy_studio_universe_mockups( $posts ) {
  */
 function dejoiy_studio_universe_dock_items() {
 	$items = array(
-		array( '🖼', 'Posters', 'https://dejoiy.tech/product-category/customized-products/' ),
-		array( '🎁', 'Gift Boxes', 'https://dejoiy.tech/product-category/customized-products/corporate-gifts/' ),
-		array( '🧢', 'Caps', 'https://dejoiy.tech/product-category/customized-products/' ),
-		array( '👕', 'Custom T-Shirts', 'https://dejoiy.tech/product-category/customized-products/custom-t-shirts/' ),
-		array( '📱', 'Phone Cases', 'https://dejoiy.tech/product-category/customized-products/phone-cases/' ),
-		array( '☕', 'Mugs', 'https://dejoiy.tech/product-category/customized-products/mugs/' ),
-		array( '🎒', 'Backpacks', 'https://dejoiy.tech/product-category/customized-products/' ),
-		array( '📚', 'Notebooks', 'https://dejoiy.tech/product-category/customized-products/' ),
+		array( '🖼', 'Posters', 'https://dejoiy.com/product-category/customized-products/' ),
+		array( '🎁', 'Gift Boxes', 'https://dejoiy.com/product-category/customized-products/corporate-gifts/' ),
+		array( '🧢', 'Caps', 'https://dejoiy.com/product-category/customized-products/' ),
+		array( '👕', 'Custom T-Shirts', 'https://dejoiy.com/product-category/customized-products/custom-t-shirts/' ),
+		array( '📱', 'Phone Cases', 'https://dejoiy.com/product-category/customized-products/phone-cases/' ),
+		array( '☕', 'Mugs', 'https://dejoiy.com/product-category/customized-products/mugs/' ),
+		array( '🎒', 'Backpacks', 'https://dejoiy.com/product-category/customized-products/' ),
+		array( '📚', 'Notebooks', 'https://dejoiy.com/product-category/customized-products/' ),
 	);
 	$html = '';
 	foreach ( $items as $item ) {

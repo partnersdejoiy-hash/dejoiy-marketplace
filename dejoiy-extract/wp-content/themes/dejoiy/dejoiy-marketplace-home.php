@@ -342,8 +342,12 @@ function dejoiy_mph_categories() {
 		),
 	);
 
-	$out = array();
+	$out  = array();
+	$seen = array();
+
+	// Curated picks first (icon + brand gradient).
 	foreach ( $list as $cat ) {
+		$seen[ $cat['slug'] ] = true;
 		if ( '' === $cat['url'] && taxonomy_exists( 'product_cat' ) ) {
 			$term = get_term_by( 'slug', $cat['slug'], 'product_cat' );
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -357,6 +361,66 @@ function dejoiy_mph_categories() {
 			$cat['url'] = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
 		}
 		$out[] = $cat;
+	}
+
+	// Then append every remaining WooCommerce product category so the
+	// "Shop by Category" scroller covers the whole catalogue.
+	$palette = array(
+		'linear-gradient(135deg,#0ea5e9,#38bdf8)',
+		'linear-gradient(135deg,#a855f7,#818cf8)',
+		'linear-gradient(135deg,#f43f5e,#fb7185)',
+		'linear-gradient(135deg,#22c55e,#4ade80)',
+		'linear-gradient(135deg,#eab308,#facc15)',
+		'linear-gradient(135deg,#64748b,#94a3b8)',
+	);
+	$terms = array();
+	if ( taxonomy_exists( 'product_cat' ) ) {
+		$got = get_terms(
+			array(
+				'taxonomy'   => 'product_cat',
+				'hide_empty' => true,
+				'number'     => 0,
+			)
+		);
+		if ( ! is_wp_error( $got ) && ! empty( $got ) ) {
+			$terms = $got;
+		}
+	}
+	if ( ! empty( $terms ) ) {
+		$extra  = array();
+		$p      = 0;
+		$curated = array();
+		foreach ( $list as $cat ) {
+			$curated[ $cat['slug'] ] = $cat;
+		}
+		foreach ( $terms as $term ) {
+			if ( isset( $seen[ $term->slug ] ) ) {
+				continue;
+			}
+			$seen[ $term->slug ] = true;
+			$link                = get_term_link( $term );
+			if ( is_wp_error( $link ) ) {
+				$link = '';
+			}
+			$meta = isset( $curated[ $term->slug ] ) ? $curated[ $term->slug ] : array();
+			$extra[] = array(
+				'slug' => $term->slug,
+				'name' => $term->name,
+				'icon' => isset( $meta['icon'] ) ? $meta['icon'] : 'box',
+				'url'  => $link,
+				'bg'   => isset( $meta['bg'] ) ? $meta['bg'] : $palette[ $p % count( $palette ) ],
+			);
+			$p++;
+		}
+		usort(
+			$extra,
+			function ( $a, $b ) {
+				return strcasecmp( $a['name'], $b['name'] );
+			}
+		);
+		foreach ( $extra as $cat ) {
+			$out[] = $cat;
+		}
 	}
 	return $out;
 }
@@ -564,6 +628,7 @@ function dejoiy_mph_icon( $name ) {
 		'chev-l' => '<svg class="mph-rarr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>',
 		'chev-r' => '<svg class="mph-rarr" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
 		'check'  => '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>',
+		'box'    => sprintf( $s, '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>' ),
 	);
 	return isset( $icons[ $name ] ) ? $icons[ $name ] : '';
 }
