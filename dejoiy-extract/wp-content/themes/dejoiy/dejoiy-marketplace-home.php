@@ -967,7 +967,8 @@ function dejoiy_marketplace_home_html() {
 						<div class="mph-hero__in">
 							<div class="mph-hero__copy">
 								<p class="mph-hero__kicker"><?php echo esc_html( $s['kicker'] ); ?></p>
-								<h1 class="mph-hero__title"><?php echo esc_html( $s['title'] ); ?></h1>
+								<?php $mph_htag = 0 === $i ? 'h1' : 'h2'; ?>
+								<<?php echo esc_html( $mph_htag ); ?> class="mph-hero__title"><?php echo esc_html( $s['title'] ); ?></<?php echo esc_html( $mph_htag ); ?>>
 								<p class="mph-hero__sub"><?php echo esc_html( $s['sub'] ); ?></p>
 								<div class="mph-hero__chips">
 									<span class="mph-chip"><?php echo esc_html( $s['chip1'] ); ?></span>
@@ -1001,6 +1002,10 @@ function dejoiy_marketplace_home_html() {
 		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
 		?>
 		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
+			<div class="mph-apps__head">
+				<h2 class="mph-apps__title"><?php esc_html_e( 'Shop by Category', 'dejoiy' ); ?></h2>
+				<span class="mph-apps__tag"><?php esc_html_e( 'Quick picks', 'dejoiy' ); ?></span>
+			</div>
 			<div class="mph-apps__scroller" data-mph-cats>
 				<?php foreach ( $cats as $c ) : ?>
 					<a class="mph-app" href="<?php echo esc_url( $c['url'] ); ?>">
