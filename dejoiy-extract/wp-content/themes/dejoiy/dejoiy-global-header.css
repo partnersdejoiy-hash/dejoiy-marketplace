@@ -1490,3 +1490,10 @@ body.page-id-5413 .title-wrapper h1.title,
 body.page-id-5413 .page-heading h1.title {
 	display: none;
 }
+
+/* Single-h1 SEO: suppress duplicate theme title on focused pages */
+body.woocommerce-shop .page-heading h1.title,
+body.woocommerce-cart .page-heading h1.title,
+body.single-product .page-heading h1.title {
+	display: none !important;
+}

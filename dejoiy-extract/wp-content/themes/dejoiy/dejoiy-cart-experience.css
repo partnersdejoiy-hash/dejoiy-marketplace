@@ -862,3 +862,11 @@ body.dejoiy-cart-xp .cart_item.dcart-item--pulse {
 .cart-empty.empty-cart-block > p {
 	text-align: center;
 }
+
+/* Legacy cart page heading (single h1) */
+.dcart-page-title {
+	margin: 0 0 18px;
+	font-size: 1.9rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+}

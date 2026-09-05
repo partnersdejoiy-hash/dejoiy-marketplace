@@ -17,6 +17,8 @@ $button_class       = wc_wp_theme_get_element_class_name( 'button' );
 $return_shop_url    = wc_get_page_id( 'shop' ) > 0 ? get_permalink( wc_get_page_id( 'shop' ) ) : '#';
 ?>
 
+<h1 class="dcart-page-title"><?php esc_html_e( 'Your Cart', 'dejoiy' ); ?></h1>
+
 <div class="cart-empty empty-cart-block wc-empty-cart-message">
 	<h2 class="cart-empty-title"><?php esc_html_e( 'Your shopping cart is empty', 'dejoiy' ); ?></h2>
 	<p><?php esc_html_e( 'We invite you to get acquainted with an assortment of our shop. Surely you can find something for yourself!', 'dejoiy' ); ?></p>

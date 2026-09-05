@@ -438,6 +438,7 @@ function dejoiy_shop_discovery_render_hub() {
 
 	?>
 	<div class="dsh-hub" id="dejoiy-shop-discovery-hub">
+		<h1 class="dsh-hub__title"><?php esc_html_e( 'Shop', 'dejoiy' ); ?></h1>
 		<div class="dsh-loop-controls" id="dsh-loop-controls-slot" aria-label="<?php esc_attr_e( 'Product display options', 'dejoiy' ); ?>"></div>
 	</div>
 	<?php

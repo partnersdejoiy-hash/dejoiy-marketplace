@@ -219,6 +219,25 @@ function dejoiy_cart_xp_hide_legacy() {
 add_action( 'wp_head', 'dejoiy_cart_xp_hide_legacy', 3 );
 
 /**
+ * Single visible <h1> on the legacy cart page.
+ *
+ * The DEJOIY Cart experience already renders its own hero title; this fallback
+ * covers every other cart layout so the page always has exactly one heading.
+ */
+function dejoiy_cart_xp_page_heading() {
+	if ( dejoiy_cart_xp_is_active() ) {
+		return;
+	}
+	if ( ! function_exists( 'is_cart' ) || ! is_cart() || is_wc_endpoint_url() ) {
+		return;
+	}
+	?>
+	<h1 class="dcart-page-title"><?php esc_html_e( 'Your Cart', 'dejoiy' ); ?></h1>
+	<?php
+}
+add_action( 'woocommerce_before_cart', 'dejoiy_cart_xp_page_heading', 3 );
+
+/**
  * Proceed to checkout button text.
  *
  * @param string $translated Translated.
@@ -547,7 +566,7 @@ function dejoiy_cart_xp_empty_hide_default() {
 	if ( ! dejoiy_cart_xp_is_active() ) {
 		return;
 	}
-	echo '<style>body.dejoiy-cart-xp .wc-empty-cart-message,body.dejoiy-cart-xp .cart-empty{display:none!important;}</style>';
+	echo '<style>body.dejoiy-cart-xp .cart-empty.empty-cart-block{display:none!important;}</style>';
 }
 add_action( 'wp_head', 'dejoiy_cart_xp_empty_hide_default', 4 );
 

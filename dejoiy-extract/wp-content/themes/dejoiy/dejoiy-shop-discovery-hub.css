@@ -403,3 +403,11 @@ body.dejoiy-shop-discovery-hub .dsh-product-card .add_to_cart_button {
 		transition: none;
 	}
 }
+
+/* Shop page heading */
+.dsh-hub__title {
+	margin: 0 0 6px;
+	font-size: 1.9rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+}
