@@ -1483,3 +1483,10 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 @media (prefers-color-scheme: dark) {
 	/* Reserved — uncomment when dark mode is ready */
 }
+
+/* Single-h1 SEO: hide generic theme page title on crafted landing pages */
+body.page-id-5413 .page-head h1.title,
+body.page-id-5413 .title-wrapper h1.title,
+body.page-id-5413 .page-heading h1.title {
+	display: none;
+}

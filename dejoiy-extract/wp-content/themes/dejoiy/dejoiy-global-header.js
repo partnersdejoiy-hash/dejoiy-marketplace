@@ -640,6 +640,14 @@
 	setupMobileChips();
 	syncCartBadge();
 
+	// Single-h1 SEO: hide generic theme page title on crafted landing pages.
+	if (document.body.classList.contains('page-id-5413')) {
+		var pageTitles = qsa('.page-heading h1.title, .page-head h1.title, .title-wrapper h1.title');
+		pageTitles.forEach(function (el) {
+			el.style.display = 'none';
+		});
+	}
+
 	// Mark header ready
 	header.classList.add('gh--ready');
 })();

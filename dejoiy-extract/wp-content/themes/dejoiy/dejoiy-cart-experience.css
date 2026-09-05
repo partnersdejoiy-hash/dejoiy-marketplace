@@ -846,3 +846,19 @@ body.dejoiy-cart-xp .cart_item.dcart-item--pulse {
 		grid-template-columns: 1fr;
 	}
 }
+
+/* Child override: empty-cart heading demoted to h2 (single h1 on page) */
+.cart-empty.empty-cart-block .cart-empty-title {
+	display: block;
+	margin: 0 0 10px;
+	font-size: 1.7rem;
+	font-weight: 800;
+	letter-spacing: -0.01em;
+	text-align: center;
+	text-transform: none;
+	color: var(--mph-ink, #172033);
+}
+
+.cart-empty.empty-cart-block > p {
+	text-align: center;
+}

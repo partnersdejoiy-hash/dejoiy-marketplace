@@ -985,7 +985,7 @@
         '<div class="dlu-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="dlu-preview-title">' +
         '<button type="button" class="dlu-preview-close" data-close aria-label="Close">&times;</button>' +
         '<div class="dlu-preview-grid">' +
-        '<img class="dlu-preview-cover" src="" alt="" />' +
+        '<img class="dlu-preview-cover" alt="" />' +
         '<div class="dlu-preview-body">' +
         '<h2 id="dlu-preview-title"></h2>' +
         '<p class="dlu-preview-author"></p>' +
@@ -1017,14 +1017,17 @@
       var cover = card.getAttribute('data-cover') || '';
       var fallback = card.getAttribute('data-cover-fallback') || cover;
       if (coverEl) {
-        coverEl.src = cover;
-        coverEl.dataset.fallback = fallback;
-        coverEl.onerror = function () {
-          if (fallback && coverEl.src !== fallback) {
-            coverEl.src = fallback;
-            coverEl.onerror = null;
-          }
-        };
+        var hasCover = Boolean(cover || fallback);
+        coverEl.hidden = !hasCover;
+        if (hasCover) {
+          coverEl.src = fallback || cover;
+          coverEl.onerror = function () {
+            if (fallback && coverEl.src !== fallback) {
+              coverEl.src = fallback;
+              coverEl.onerror = null;
+            }
+          };
+        }
       }
       if (titleEl) titleEl.textContent = card.getAttribute('data-title') || '';
       if (authorEl) authorEl.textContent = card.getAttribute('data-author') || '';
