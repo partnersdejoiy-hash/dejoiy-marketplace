@@ -164,10 +164,10 @@ class DSO_REST_API {
             $labels[] = date('M j', strtotime($date));
 
             $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) as sales, COUNT(*) as orders
+                "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                AND order_date >= %s AND order_date <= %s",
+                AND created >= %s AND created <= %s",
                 $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
             ));
 

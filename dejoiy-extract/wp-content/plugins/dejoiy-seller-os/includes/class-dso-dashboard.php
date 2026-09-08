@@ -330,11 +330,11 @@ class DSO_Dashboard {
 
         // Use WCFM marketplace orders
         $sales = $wpdb->get_var($wpdb->prepare(
-            "SELECT COALESCE(SUM(order_total), 0)
+            "SELECT COALESCE(SUM(item_total), 0)
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d
             AND order_status IN ('wc-completed', 'wc-processing')
-            AND order_date >= %s AND order_date <= %s",
+            AND created >= %s AND created <= %s",
             $vendor_id, $start, $end
         ));
 
@@ -359,11 +359,11 @@ class DSO_Dashboard {
         }
 
         if ($start) {
-            $where .= " AND order_date >= %s";
+            $where .= " AND created >= %s";
             $params[] = $start;
         }
         if ($end) {
-            $where .= " AND order_date <= %s";
+            $where .= " AND created <= %s";
             $params[] = $end;
         }
 
@@ -453,8 +453,8 @@ class DSO_Dashboard {
 
             // Get pending from withdraw requests
             $pending = floatval($wpdb->get_var($wpdb->prepare(
-                "SELECT COALESCE(SUM(amount), 0) FROM {$wpdb->prefix}wcfm_marketplace_withdraw_request
-                WHERE vendor_id = %d AND status IN (0, 1)",
+                "SELECT COALESCE(SUM(withdraw_amount), 0) FROM {$wpdb->prefix}wcfm_marketplace_withdraw_request
+                WHERE vendor_id = %d AND withdraw_status IN (0, 1)",
                 $vendor_id
             )));
         }
@@ -471,8 +471,9 @@ class DSO_Dashboard {
         if (!$vendor_id) return 0;
 
         $rating = $wpdb->get_var($wpdb->prepare(
-            "SELECT AVG(meta_value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta
-            WHERE vendor_id = %d",
+            "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
+            INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
+            WHERE r.vendor_id = %d AND rrm.key = 'rating'",
             $vendor_id
         ));
 
@@ -519,7 +520,7 @@ class DSO_Dashboard {
 
         return intval($wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_refund_request
-            WHERE vendor_id = %d AND status IN (0, 1)",
+            WHERE vendor_id = %d AND refund_status IN (0, 1)",
             $vendor_id
         )));
     }
@@ -532,7 +533,7 @@ class DSO_Dashboard {
 
         return intval($wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_messages
-            WHERE receiver = %d AND is_read = 0",
+            WHERE message_to = %d",
             $user_id
         )));
     }
@@ -546,23 +547,28 @@ class DSO_Dashboard {
         if (!$vendor_id) return [];
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT order_id, order_status, order_total, customer_name, order_date
+            "SELECT order_id, order_status, item_total, customer_id, created
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d
-            ORDER BY order_date DESC LIMIT %d",
+            ORDER BY created DESC LIMIT %d",
             $vendor_id, $limit
         ));
 
         $orders = [];
         foreach ($rows as $row) {
             $order = wc_get_order($row->order_id);
+            $customer_name = 'Guest';
+            if ($row->customer_id) {
+                $user_data = get_userdata($row->customer_id);
+                $customer_name = $user_data ? $user_data->display_name : 'Guest';
+            }
             $orders[] = [
                 'id' => $row->order_id,
                 'number' => $order ? $order->get_order_number() : $row->order_id,
-                'customer' => $row->customer_name ?: 'Guest',
-                'total' => wc_price($row->order_total),
+                'customer' => $customer_name,
+                'total' => wc_price($row->item_total),
                 'status_badge' => $this->get_status_badge($row->order_status),
-                'date' => $row->order_date,
+                'date' => $row->created,
             ];
         }
 
@@ -578,7 +584,7 @@ class DSO_Dashboard {
         if (!$vendor_id) return [];
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT product_id, SUM(quantity) as total_sold, SUM(order_total) as total_revenue
+            "SELECT product_id, SUM(quantity) as total_sold, SUM(item_total) as total_revenue
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
             GROUP BY product_id
@@ -626,11 +632,11 @@ class DSO_Dashboard {
             $end = $date . ' 23:59:59';
 
             $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) as sales, COUNT(*) as orders
+                "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d
                 AND order_status IN ('wc-completed', 'wc-processing')
-                AND order_date >= %s AND order_date <= %s",
+                AND created >= %s AND created <= %s",
                 $vendor_id, $start, $end
             ));
 

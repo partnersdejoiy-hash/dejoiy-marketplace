@@ -109,7 +109,9 @@ class DSO_Reviews {
         if ($vendor_id) {
             // Average rating
             $avg = $wpdb->get_var($wpdb->prepare(
-                "SELECT AVG(meta_value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE vendor_id = %d",
+                "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
+                INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
+                WHERE r.vendor_id = %d AND rrm.key = 'rating'",
                 $vendor_id
             ));
             $avg_rating = $avg ? floatval($avg) : 0;
@@ -129,21 +131,21 @@ class DSO_Reviews {
 
             // Reviews list
             $rows = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d ORDER BY created_at DESC LIMIT 20",
+                "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d ORDER BY created DESC LIMIT 20",
                 $vendor_id
             ));
 
             foreach ($rows as $row) {
-                $rating = intval($row->rating ?? 0);
+                $rating = intval($row->review_rating ?? 0);
                 if ($rating >= 1 && $rating <= 5) $distribution[$rating]++;
 
                 $reviews[] = [
                     'rating' => $rating,
-                    'review' => $row->review ?? '',
+                    'review' => $row->review_description ?? '',
                     'customer' => get_the_author_meta('display_name', $row->author_id ?? 0),
-                    'product' => get_the_title($row->product_id ?? 0),
-                    'date' => $row->created_at ? date('M j, Y', strtotime($row->created_at)) : '—',
-                    'response' => $row->response ?? '',
+                    'product' => '',
+                    'date' => $row->created ? date('M j, Y', strtotime($row->created)) : '—',
+                    'response' => '',
                 ];
             }
         }

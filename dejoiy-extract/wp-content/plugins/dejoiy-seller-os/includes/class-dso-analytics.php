@@ -124,7 +124,7 @@ class DSO_Analytics {
 
         if ($vendor_id) {
             $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(quantity), 0) as sold
+                "SELECT COALESCE(SUM(item_total), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(quantity), 0) as sold
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')",
                 $vendor_id
@@ -136,7 +136,7 @@ class DSO_Analytics {
 
             // Top products
             $top_products = $wpdb->get_results($wpdb->prepare(
-                "SELECT product_id, SUM(quantity) as orders, SUM(order_total) as revenue
+                "SELECT product_id, SUM(quantity) as orders, SUM(item_total) as revenue
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
                 GROUP BY product_id ORDER BY revenue DESC LIMIT 10",
@@ -154,10 +154,10 @@ class DSO_Analytics {
                 $chart_data['labels'][] = date('M j', strtotime($date));
 
                 $cr = $wpdb->get_row($wpdb->prepare(
-                    "SELECT COALESCE(SUM(order_total), 0) as sales, COUNT(*) as orders
+                    "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
                     FROM {$wpdb->prefix}wcfm_marketplace_orders
                     WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                    AND order_date >= %s AND order_date <= %s",
+                    AND created >= %s AND created <= %s",
                     $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
                 ));
 

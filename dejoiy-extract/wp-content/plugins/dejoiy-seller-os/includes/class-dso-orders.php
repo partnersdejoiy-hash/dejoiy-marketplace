@@ -416,10 +416,10 @@ class DSO_Orders {
         if (!$vendor_id) return [];
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT order_id, order_status, order_total, customer_name, customer_email, order_date
+            "SELECT order_id, order_status, item_total, customer_id, created
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d
-            ORDER BY order_date DESC
+            ORDER BY created DESC
             LIMIT %d",
             $vendor_id, $limit
         ));
@@ -429,14 +429,17 @@ class DSO_Orders {
             $order = wc_get_order($row->order_id);
             if (!$order) continue;
 
+            $customer_name = $order->get_billing_first_name() . ' ' . $order->get_billing_last_name();
+            $customer_email = $order->get_billing_email();
+
             $orders[] = [
                 'id' => $row->order_id,
                 'number' => $order->get_order_number(),
-                'date' => $row->order_date ? date('M j, Y', strtotime($row->order_date)) : '—',
-                'customer' => $row->customer_name ?: ($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()),
-                'email' => $row->customer_email ?: $order->get_billing_email(),
+                'date' => $row->created ? date('M j, Y', strtotime($row->created)) : '—',
+                'customer' => $customer_name ?: 'Guest',
+                'email' => $customer_email ?: '—',
                 'item_count' => $order->get_item_count(),
-                'total' => wc_price($row->order_total),
+                'total' => wc_price($row->item_total),
                 'status' => $row->order_status,
                 'status_badge' => $this->status_badge($row->order_status),
                 'payment_status' => $order->is_paid() ? '<span class="dso-badge dso-badge-green">Paid</span>' : '<span class="dso-badge dso-badge-orange">Unpaid</span>',

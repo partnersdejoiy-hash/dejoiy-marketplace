@@ -83,23 +83,26 @@ class DSO_Customers {
         if (!$vendor_id) return [];
 
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT customer_name, customer_email, customer_id,
+            "SELECT customer_id,
                     COUNT(*) as order_count,
-                    SUM(order_total) as total_spent,
-                    AVG(order_total) as avg_order,
-                    MAX(order_date) as last_order
+                    SUM(item_total) as total_spent,
+                    AVG(item_total) as avg_order,
+                    MAX(created) as last_order
             FROM {$wpdb->prefix}wcfm_marketplace_orders
-            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-            GROUP BY customer_email
+            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND customer_id > 0
+            GROUP BY customer_id
             ORDER BY total_spent DESC",
             $vendor_id
         ));
 
         $customers = [];
         foreach ($rows as $row) {
+            $user_data = get_userdata($row->customer_id);
+            $customer_name = $user_data ? $user_data->display_name : 'Guest';
+            $customer_email = $user_data ? $user_data->user_email : '—';
             $customers[] = [
-                'name' => $row->customer_name ?: 'Guest',
-                'email' => $row->customer_email ?: '—',
+                'name' => $customer_name,
+                'email' => $customer_email,
                 'order_count' => intval($row->order_count),
                 'total_spent' => floatval($row->total_spent),
                 'avg_order' => round(floatval($row->avg_order), 2),

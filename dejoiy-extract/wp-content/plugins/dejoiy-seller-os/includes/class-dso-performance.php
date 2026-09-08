@@ -86,7 +86,7 @@ class DSO_Performance {
         <?php
     }
 
-    private function get_performance_data($vendor_id) {
+    public function get_performance_data($vendor_id) {
         global $wpdb;
         $data = [
             'revenue' => 0, 'orders' => 0, 'aov' => 0, 'rating' => 0,
@@ -98,7 +98,7 @@ class DSO_Performance {
         if (!$vendor_id) return $data;
 
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT COALESCE(SUM(order_total), 0) as revenue, COUNT(*) as orders
+            "SELECT COALESCE(SUM(item_total), 0) as revenue, COUNT(*) as orders
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')",
             $vendor_id
@@ -109,7 +109,9 @@ class DSO_Performance {
 
         // Rating
         $rating = $wpdb->get_var($wpdb->prepare(
-            "SELECT AVG(meta_value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE vendor_id = %d", $vendor_id
+            "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
+            INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
+            WHERE r.vendor_id = %d AND rrm.key = 'rating'", $vendor_id
         ));
         $data['rating'] = $rating ? round(floatval($rating), 1) : 0;
         $data['review_count'] = intval($wpdb->get_var($wpdb->prepare(
@@ -130,7 +132,7 @@ class DSO_Performance {
 
         // Customers
         $data['customers'] = intval($wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(DISTINCT customer_email) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND customer_email != ''", $vendor_id
+            "SELECT COUNT(DISTINCT customer_id) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND customer_id > 0", $vendor_id
         )));
 
         // Chart
@@ -138,10 +140,10 @@ class DSO_Performance {
             $date = date('Y-m-d', strtotime("-{$i} days"));
             $data['chart_data']['labels'][] = date('M j', strtotime($date));
             $cr = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) as sales, COUNT(*) as orders
+                "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                AND order_date >= %s AND order_date <= %s",
+                AND created >= %s AND created <= %s",
                 $vendor_id, $date.' 00:00:00', $date.' 23:59:59'
             ));
             $data['chart_data']['revenue'][] = floatval($cr->sales ?? 0);

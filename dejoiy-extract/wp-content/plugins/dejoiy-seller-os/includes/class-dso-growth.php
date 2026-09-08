@@ -128,7 +128,7 @@ class DSO_Growth {
         if ($vendor_id) {
             // Best sellers
             $rows = $wpdb->get_results($wpdb->prepare(
-                "SELECT product_id, SUM(quantity) as orders, SUM(order_total) as revenue
+                "SELECT product_id, SUM(quantity) as orders, SUM(item_total) as revenue
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
                 GROUP BY product_id ORDER BY revenue DESC LIMIT 5",
@@ -219,7 +219,9 @@ class DSO_Growth {
     private function get_rating($vid) {
         global $wpdb;
         $r = $wpdb->get_var($wpdb->prepare(
-            "SELECT AVG(meta_value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta WHERE vendor_id = %d", $vid
+            "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
+            INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
+            WHERE r.vendor_id = %d AND rrm.key = 'rating'", $vid
         ));
         return $r ? round(floatval($r), 1) : 0;
     }

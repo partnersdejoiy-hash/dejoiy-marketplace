@@ -174,10 +174,10 @@ class DSO_Reports {
         $end_date = date('Y-m-d 23:59:59');
 
         $row = $wpdb->get_row($wpdb->prepare(
-            "SELECT COALESCE(SUM(order_total), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(quantity), 0) as items
+            "SELECT COALESCE(SUM(item_total), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(quantity), 0) as items
             FROM {$wpdb->prefix}wcfm_marketplace_orders
             WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-            AND order_date >= %s AND order_date <= %s",
+            AND created >= %s AND created <= %s",
             $vendor_id, $start_date, $end_date
         ));
 
@@ -188,24 +188,24 @@ class DSO_Reports {
 
         // Status counts
         $pending = intval($wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-pending' AND order_date >= %s", $vendor_id, $start_date
+            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-pending' AND created >= %s", $vendor_id, $start_date
         )));
         $processing = intval($wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-processing' AND order_date >= %s", $vendor_id, $start_date
+            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-processing' AND created >= %s", $vendor_id, $start_date
         )));
         $completed = intval($wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-completed' AND order_date >= %s", $vendor_id, $start_date
+            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-completed' AND created >= %s", $vendor_id, $start_date
         )));
         $cancelled = intval($wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-cancelled' AND order_date >= %s", $vendor_id, $start_date
+            "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_orders WHERE vendor_id = %d AND order_status = 'wc-cancelled' AND created >= %s", $vendor_id, $start_date
         )));
 
         // Top products
         $top_products = [];
         $tp_rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT product_id, SUM(quantity) as orders, SUM(order_total) as revenue
+            "SELECT product_id, SUM(quantity) as orders, SUM(item_total) as revenue
             FROM {$wpdb->prefix}wcfm_marketplace_orders
-            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND order_date >= %s
+            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND created >= %s
             GROUP BY product_id ORDER BY revenue DESC LIMIT 10",
             $vendor_id, $start_date
         ));
@@ -217,14 +217,16 @@ class DSO_Reports {
         // Top customers
         $top_customers = [];
         $tc_rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT customer_name, COUNT(*) as orders, SUM(order_total) as spent
+            "SELECT customer_id, COUNT(*) as orders, SUM(item_total) as spent
             FROM {$wpdb->prefix}wcfm_marketplace_orders
-            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND order_date >= %s
-            GROUP BY customer_email ORDER BY spent DESC LIMIT 10",
+            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND created >= %s AND customer_id > 0
+            GROUP BY customer_id ORDER BY spent DESC LIMIT 10",
             $vendor_id, $start_date
         ));
         foreach ($tc_rows as $tc) {
-            $top_customers[] = ['name' => $tc->customer_name ?: 'Guest', 'orders' => intval($tc->orders), 'spent' => floatval($tc->spent)];
+            $user_data = get_userdata($tc->customer_id);
+            $customer_name = $user_data ? $user_data->display_name : 'Guest';
+            $top_customers[] = ['name' => $customer_name, 'orders' => intval($tc->orders), 'spent' => floatval($tc->spent)];
         }
 
         // Inventory
@@ -252,9 +254,9 @@ class DSO_Reports {
             $date = date('Y-m-d', strtotime("-{$i} days"));
             $chart_data['labels'][] = date('M j', strtotime($date));
             $cr = $wpdb->get_var($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) FROM {$wpdb->prefix}wcfm_marketplace_orders
+                "SELECT COALESCE(SUM(item_total), 0) FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                AND order_date >= %s AND order_date <= %s",
+                AND created >= %s AND created <= %s",
                 $vendor_id, $date.' 00:00:00', $date.' 23:59:59'
             ));
             $chart_data['revenue'][] = floatval($cr);

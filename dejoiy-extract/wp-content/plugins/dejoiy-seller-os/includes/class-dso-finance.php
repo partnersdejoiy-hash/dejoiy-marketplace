@@ -122,9 +122,9 @@ class DSO_Finance {
                 global $wpdb;
                 $wpdb->insert($wpdb->prefix . 'wcfm_marketplace_withdraw_request', [
                     'vendor_id' => $vendor_id,
-                    'amount' => $amount,
-                    'status' => 0,
-                    'requested_date' => current_time('mysql'),
+                    'withdraw_amount' => $amount,
+                    'withdraw_status' => 0,
+                    'created' => current_time('mysql'),
                 ]);
 
                 wp_redirect('?section=withdrawals&requested=1');
@@ -212,7 +212,7 @@ class DSO_Finance {
         if ($vendor_id) {
             // Total earnings
             $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(order_total), 0) as total
+                "SELECT COALESCE(SUM(item_total), 0) as total
                 FROM {$wpdb->prefix}wcfm_marketplace_orders
                 WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')",
                 $vendor_id
@@ -232,7 +232,7 @@ class DSO_Finance {
                     'date' => date('M j, Y', strtotime($lr->created)),
                     'type' => $type,
                     'type_badge' => '<span class="dso-badge dso-badge-' . ($type === 'credit' ? 'green' : 'red') . '">' . ucfirst($type) . '</span>',
-                    'description' => $lr->detail ?? 'Transaction',
+                    'description' => $lr->reference ?? 'Transaction',
                     'credit' => floatval($lr->credit),
                     'debit' => floatval($lr->debit),
                     'balance' => floatval($lr->credit - $lr->debit),
@@ -255,19 +255,19 @@ class DSO_Finance {
                     2 => ['Completed', 'dso-badge-green'],
                     3 => ['Cancelled', 'dso-badge-red'],
                 ];
-                $s = $status_map[$wr->status] ?? ['Unknown', 'dso-badge-gray'];
+                $s = $status_map[$wr->withdraw_status] ?? ['Unknown', 'dso-badge-gray'];
 
                 $withdrawals[] = [
-                    'amount' => floatval($wr->amount),
-                    'date' => date('M j, Y', strtotime($wr->requested_date)),
-                    'status' => $wr->status,
+                    'amount' => floatval($wr->withdraw_amount),
+                    'date' => date('M j, Y', strtotime($wr->created)),
+                    'status' => $wr->withdraw_status,
                     'status_badge' => '<span class="dso-badge ' . $s[1] . '">' . $s[0] . '</span>',
                 ];
 
-                if ($wr->status < 2) {
-                    $pending += floatval($wr->amount);
+                if ($wr->withdraw_status < 2) {
+                    $pending += floatval($wr->withdraw_amount);
                 } else {
-                    $withdrawn += floatval($wr->amount);
+                    $withdrawn += floatval($wr->withdraw_amount);
                 }
             }
 
@@ -277,10 +277,10 @@ class DSO_Finance {
                 $chart_data['labels'][] = date('M j', strtotime($date));
 
                 $cr = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COALESCE(SUM(order_total), 0)
+                    "SELECT COALESCE(SUM(item_total), 0)
                     FROM {$wpdb->prefix}wcfm_marketplace_orders
                     WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                    AND order_date >= %s AND order_date <= %s",
+                    AND created >= %s AND created <= %s",
                     $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
                 ));
 
