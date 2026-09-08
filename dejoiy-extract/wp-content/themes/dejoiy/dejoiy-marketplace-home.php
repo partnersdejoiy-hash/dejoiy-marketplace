@@ -1117,11 +1117,11 @@ function dejoiy_marketplace_home_html() {
 		</section>
 
 		<?php
-		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
-		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-
 		/* ============ PREMIUM CAMPAIGN BANNERS (internships + become a seller) ============ */
 		echo dejoiy_mph_promos(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
+		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 /* ============ DEALS + COUNTDOWN ============ */
 		?>

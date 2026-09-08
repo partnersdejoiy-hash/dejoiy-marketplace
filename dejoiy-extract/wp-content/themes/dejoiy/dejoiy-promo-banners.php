@@ -51,8 +51,8 @@ function dejoiy_promo_banners_markup() {
 		return '';
 	}
 
-	$internship_url = home_url( '/internships/' );
-	$programs_url   = home_url( '/dejoiy-library/?dejoiy_library=1' );
+	$internship_url = 'https://internships.dejoiy.com/';
+	$programs_url   = home_url( '/internships/' );
 	$seller_url     = home_url( '/vendor-register/' );
 	$how_url        = home_url( '/sell-on-dejoiy/' );
 
