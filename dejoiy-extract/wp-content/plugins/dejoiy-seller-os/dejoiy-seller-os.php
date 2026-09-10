@@ -113,42 +113,44 @@ class Dejoiy_Seller_OS {
     }
 
     /**
-     * Check if current user is a vendor
+     * Check if current user is a vendor or store administrator
      */
     public function is_vendor($user_id = 0) {
         if (!$user_id) $user_id = get_current_user_id();
         if (!$user_id) return false;
 
+        // Administrator and Shop Manager have full access
+        if (user_can($user_id, 'manage_options') || user_can($user_id, 'manage_woocommerce')) {
+            return true;
+        }
+
         // Check WCFM vendor capability
-        if (function_exists('wcfm_is_vendor')) {
-            return wcfm_is_vendor($user_id);
+        if (function_exists('wcfm_is_vendor') && wcfm_is_vendor($user_id)) {
+            return true;
         }
 
         // Fallback: check user role
         $user = get_userdata($user_id);
         if (!$user) return false;
 
-        $vendor_roles = ['wcfm_vendor', 'vendor', 'store_manager'];
+        $vendor_roles = ['wcfm_vendor', 'vendor', 'seller', 'store_manager', 'administrator'];
         foreach ($vendor_roles as $role) {
-            if (in_array($role, $user->roles)) return true;
+            if (in_array($role, (array) $user->roles)) return true;
         }
 
         return false;
     }
 
     /**
-     * Get vendor ID for current user
+     * Get vendor ID for current user (in WCFM Marketplace vendor ID is the user ID)
      */
     public function get_vendor_id($user_id = 0) {
         if (!$user_id) $user_id = get_current_user_id();
+        if (!$user_id) return 0;
 
-        if (function_exists('wcfm_get_vendor_id_by_user')) {
-            return wcfm_get_vendor_id_by_user($user_id);
+        if ($this->is_vendor($user_id)) {
+            return $user_id;
         }
-
-        // Fallback: check vendor meta
-        $vendor_id = get_user_meta($user_id, 'wcfm_vendor_id', true);
-        if ($vendor_id) return intval($vendor_id);
 
         return 0;
     }

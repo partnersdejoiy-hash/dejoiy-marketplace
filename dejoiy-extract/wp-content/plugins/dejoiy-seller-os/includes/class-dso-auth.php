@@ -32,23 +32,54 @@ class DSO_Auth {
      */
     public static function get_vendor_store($user_id = 0) {
         if (!$user_id) $user_id = get_current_user_id();
-        $plugin = Dejoiy_Seller_OS::instance();
-        $vendor_id = $plugin->get_vendor_id($user_id);
+        if (!$user_id) return null;
 
-        if (!$vendor_id) return null;
+        $user = get_userdata($user_id);
+        if (!$user) return null;
 
-        $store = get_post($vendor_id);
-        if (!$store) return null;
+        $store_name = $user->display_name;
+        $store_desc = '';
+        $store_logo = '';
+        $store_banner = '';
+        $store_phone = '';
+        $store_address = '';
+        $store_url = home_url('/store/' . $user->user_nicename . '/');
+
+        // Check WCFM Marketplace store
+        if (function_exists('wcfmmp_get_store')) {
+            $wcfm_store = wcfmmp_get_store($user_id);
+            if ($wcfm_store) {
+                $shop_name = $wcfm_store->get_shop_name();
+                if (!empty($shop_name)) $store_name = $shop_name;
+                $store_desc = $wcfm_store->get_shop_description() ?: '';
+                $store_logo = $wcfm_store->get_avatar() ?: '';
+                $store_banner = $wcfm_store->get_banner() ?: '';
+                $store_phone = $wcfm_store->get_phone() ?: '';
+                $link = $wcfm_store->get_link();
+                if (!empty($link)) $store_url = $link;
+            }
+        }
+
+        // Check post store if exists
+        $post_store = get_post($user_id);
+        if ($post_store && $post_store->post_type === 'wcfm_store') {
+            $store_name = get_the_title($user_id);
+            $store_desc = get_the_excerpt($user_id);
+            $store_logo = get_the_post_thumbnail_url($user_id, 'thumbnail');
+            $store_banner = get_the_post_thumbnail_url($user_id, 'full');
+        }
 
         return [
-            'id' => $vendor_id,
-            'name' => get_the_title($vendor_id),
-            'description' => get_the_excerpt($vendor_id),
-            'url' => get_permalink($vendor_id),
-            'logo' => get_the_post_thumbnail_url($vendor_id, 'thumbnail'),
-            'banner' => get_the_post_thumbnail_url($vendor_id, 'full'),
+            'id' => $user_id,
+            'name' => $store_name,
+            'description' => $store_desc,
+            'url' => $store_url,
+            'logo' => $store_logo,
+            'banner' => $store_banner,
             'user_id' => $user_id,
-            'email' => get_the_author_meta('user_email', $user_id),
+            'email' => $user->user_email,
+            'phone' => $store_phone,
+            'address' => $store_address,
         ];
     }
 

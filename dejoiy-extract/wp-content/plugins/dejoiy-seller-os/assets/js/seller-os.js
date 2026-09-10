@@ -1147,6 +1147,450 @@
                     });
                 });
             }
+        },
+
+        // ─── 18. Category Smart Fields Switcher ─────────────
+        toggleSmartFields: function(type) {
+            var groups = ['fashion', 'electronics', 'beauty', 'grocery', 'books'];
+            groups.forEach(function(g) {
+                var el = document.getElementById('smart-group-' + g);
+                if (el) {
+                    el.style.display = (g === type) ? '' : 'none';
+                }
+            });
+            var badge = document.getElementById('dso-smart-badge');
+            if (badge) {
+                badge.textContent = type ? type.toUpperCase() : 'GENERAL';
+            }
+        },
+
+        // ─── 19. Real-Time Discount Calculator ──────────────
+        recalculateDiscount: function() {
+            var mrp = parseFloat((document.getElementById('mrp') || {}).value) || 0;
+            var regular = parseFloat((document.getElementById('regular_price') || {}).value) || 0;
+            var sale = parseFloat((document.getElementById('sale_price') || {}).value) || 0;
+            var effPrice = sale > 0 ? sale : regular;
+
+            var badge = document.getElementById('dso-discount-badge');
+            var text = document.getElementById('dso-discount-text');
+            if (!badge || !text) return;
+
+            if (mrp > 0 && effPrice > 0 && mrp > effPrice) {
+                var pct = Math.round(((mrp - effPrice) / mrp) * 100);
+                var saving = (mrp - effPrice).toFixed(2);
+                badge.textContent = pct + '% OFF';
+                badge.className = 'dso-badge dso-badge-green';
+                text.textContent = 'Buyers save ₹' + saving + ' (' + pct + '% discount against MRP ₹' + mrp.toFixed(2) + ')';
+            } else if (mrp > 0 && effPrice > mrp) {
+                badge.textContent = 'PRICING ALERT';
+                badge.className = 'dso-badge dso-badge-red';
+                text.textContent = 'Selling price cannot exceed MRP by Indian Consumer Protection rules.';
+            } else {
+                badge.textContent = '0% OFF';
+                badge.className = 'dso-badge dso-badge-gray';
+                text.textContent = 'Enter MRP and Selling Price to see customer discount banner';
+            }
+        },
+
+        // ─── 20. Media Uploaders & Removers ────────────────
+        removeFeaturedImage: function() {
+            var input = document.getElementById('featured_image_id');
+            if (input) input.value = '';
+            var preview = document.getElementById('dso-thumb-preview');
+            if (preview) {
+                preview.innerHTML = '<div class="dso-thumb-empty" id="dso-thumb-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="40" height="40"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Drop featured image here or click upload</span></div>';
+            }
+            if (this.initProductEditor) this.initProductEditor();
+        },
+
+        openMediaUploader: function(targetId, previewId) {
+            var self = this;
+            if (typeof wp !== 'undefined' && wp.media) {
+                var frame = wp.media({
+                    title: 'Select Featured Image',
+                    button: { text: 'Use this image' },
+                    multiple: false,
+                    library: { type: 'image' }
+                });
+                frame.on('select', function() {
+                    var att = frame.state().get('selection').first().toJSON();
+                    var input = document.getElementById(targetId);
+                    if (input) input.value = att.id;
+                    var preview = document.getElementById(previewId);
+                    if (preview) {
+                        var url = (att.sizes && att.sizes.medium) ? att.sizes.medium.url : att.url;
+                        preview.innerHTML = '<img src="' + url + '" alt="" id="dso-thumb-img" /><button type="button" class="dso-remove-thumb-btn" onclick="DSO.removeFeaturedImage();">×</button>';
+                    }
+                    if (self.initProductEditor) self.initProductEditor();
+                });
+                frame.open();
+            } else {
+                var fileInp = document.getElementById('featured_file');
+                if (fileInp) fileInp.click();
+            }
+        },
+
+        handleDirectUpload: function(input, previewId) {
+            var self = this;
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var preview = document.getElementById(previewId);
+                    if (preview) {
+                        preview.innerHTML = '<img src="' + e.target.result + '" alt="" id="dso-thumb-img" /><button type="button" class="dso-remove-thumb-btn" onclick="DSO.removeFeaturedImage();">×</button>';
+                    }
+                    if (self.initProductEditor) self.initProductEditor();
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        },
+
+        openGalleryUploader: function() {
+            var self = this;
+            if (typeof wp !== 'undefined' && wp.media) {
+                var frame = wp.media({
+                    title: 'Select Gallery Images',
+                    button: { text: 'Add to Gallery' },
+                    multiple: true,
+                    library: { type: 'image' }
+                });
+                frame.on('select', function() {
+                    var selection = frame.state().get('selection');
+                    var grid = document.getElementById('dso-gallery-grid');
+                    selection.map(function(attachment) {
+                        attachment = attachment.toJSON();
+                        var url = (attachment.sizes && attachment.sizes.thumbnail) ? attachment.sizes.thumbnail.url : attachment.url;
+                        if (grid) {
+                            var item = document.createElement('div');
+                            item.className = 'dso-gallery-item';
+                            item.setAttribute('data-id', attachment.id);
+                            item.innerHTML = '<img src="' + url + '" alt="" /><button type="button" class="dso-gallery-remove" onclick="this.parentElement.remove(); DSO.syncGalleryIds();">×</button>';
+                            grid.appendChild(item);
+                        }
+                    });
+                    self.syncGalleryIds();
+                });
+                frame.open();
+            } else {
+                if (self.toast) self.toast('Media library is accessible inside active WordPress session', 'info');
+            }
+        },
+
+        syncGalleryIds: function() {
+            var ids = [];
+            document.querySelectorAll('#dso-gallery-grid .dso-gallery-item').forEach(function(el) {
+                var id = el.getAttribute('data-id');
+                if (id) ids.push(id);
+            });
+            var input = document.getElementById('gallery_image_ids');
+            if (input) input.value = ids.join(',');
+            if (this.initProductEditor) this.initProductEditor();
+        },
+
+        // ─── 21. Real-Time Listing Quality Score (LQS) ─────
+        initProductEditor: function() {
+            var self = this;
+            function calculateLQS() {
+                var score = 0;
+                var title = (document.getElementById('product_title') || {}).value || '';
+                var desc = (document.getElementById('description') || {}).value || '';
+                var shortDesc = (document.getElementById('short_description') || {}).value || '';
+                var mrp = parseFloat((document.getElementById('mrp') || {}).value) || 0;
+                var regPrice = parseFloat((document.getElementById('regular_price') || {}).value) || 0;
+                var featImg = (document.getElementById('featured_image_id') || {}).value || '';
+                var hasThumbImg = !!document.getElementById('dso-thumb-img');
+                var galleryInput = (document.getElementById('gallery_image_ids') || {}).value || '';
+                var hsn = (document.getElementById('hsn_code') || {}).value || '';
+                var mfr = (document.getElementById('manufacturer') || {}).value || '';
+
+                // 1. Title Check (≥25 chars)
+                var titleCheck = document.getElementById('lqs-check-title');
+                if (title.trim().length >= 25) {
+                    score += 20;
+                    if (titleCheck) titleCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (titleCheck) titleCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                // 2. Main Image
+                var imgCheck = document.getElementById('lqs-check-img');
+                if (featImg || hasThumbImg) {
+                    score += 20;
+                    if (imgCheck) imgCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (imgCheck) imgCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                // 3. Gallery
+                var galCheck = document.getElementById('lqs-check-gallery');
+                var galCount = document.querySelectorAll('#dso-gallery-grid .dso-gallery-item').length;
+                if (galleryInput || galCount > 0) {
+                    score += 15;
+                    if (galCheck) galCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (galCheck) galCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                // 4. MRP & Pricing
+                var mrpCheck = document.getElementById('lqs-check-mrp');
+                if (mrp > 0 && regPrice > 0) {
+                    score += 15;
+                    if (mrpCheck) mrpCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (mrpCheck) mrpCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                // 5. Description & Bullets
+                var descCheck = document.getElementById('lqs-check-desc');
+                if (desc.trim().length >= 50 || shortDesc.trim().length >= 20) {
+                    score += 15;
+                    if (descCheck) descCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (descCheck) descCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                // 6. Compliance
+                var compCheck = document.getElementById('lqs-check-compliance');
+                if (hsn.trim().length >= 4 && mfr.trim().length >= 5) {
+                    score += 15;
+                    if (compCheck) compCheck.className = 'dso-lqs-check dso-lqs-pass';
+                } else {
+                    if (compCheck) compCheck.className = 'dso-lqs-check dso-lqs-fail';
+                }
+
+                score = Math.min(100, score);
+
+                // Update score display
+                var valEl = document.getElementById('dso-lqs-val');
+                var badgeEl = document.getElementById('dso-lqs-badge');
+                if (valEl) valEl.textContent = score;
+                if (badgeEl) {
+                    if (score >= 80) {
+                        badgeEl.textContent = 'OPTIMAL';
+                        badgeEl.className = 'dso-badge dso-badge-green';
+                    } else if (score >= 50) {
+                        badgeEl.textContent = 'GOOD';
+                        badgeEl.className = 'dso-badge dso-badge-orange';
+                    } else {
+                        badgeEl.textContent = 'NEEDS ATTENTION';
+                        badgeEl.className = 'dso-badge dso-badge-red';
+                    }
+                }
+
+                // Live SERP preview update
+                var serpTitle = document.getElementById('dso-serp-title-preview');
+                if (serpTitle) serpTitle.textContent = title ? (title + ' — DEJOIY Marketplace') : 'Your Product Name — DEJOIY Marketplace';
+                var serpDesc = document.getElementById('dso-serp-desc-preview');
+                if (serpDesc) {
+                    var rawDesc = shortDesc || desc;
+                    serpDesc.textContent = rawDesc ? (rawDesc.slice(0, 150) + '...') : 'Buy genuine products on DEJOIY with fast nationwide shipping and secure payments.';
+                }
+            }
+
+            ['product_title', 'description', 'short_description', 'mrp', 'regular_price', 'sale_price', 'hsn_code', 'manufacturer'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', calculateLQS);
+                }
+            });
+
+            self.recalculateDiscount();
+            calculateLQS();
+        },
+
+        // ─── 22. In-Line Quick Stock AJAX ───────────────────
+        saveStockQuick: function(id) {
+            var input = document.getElementById('stock-input-' + id);
+            if (!input) return;
+            var stock = parseInt(input.value) || 0;
+            var self = this;
+            
+            var url = (typeof dsoData !== 'undefined' && dsoData.baseUrl) ? (dsoData.baseUrl + '?action=stock_update') : (self.config.baseUrl + '?action=stock_update');
+            var fd = new FormData();
+            fd.append('product_id', id);
+            fd.append('stock', stock);
+
+            fetch(url, {
+                method: 'POST',
+                body: fd
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.success) {
+                    if (self.toast) self.toast('Stock updated to ' + stock + ' units', 'success');
+                    var row = input.closest('tr');
+                    if (row) {
+                        var tag = row.querySelector('.dso-stock-status-tag');
+                        if (tag) {
+                            if (stock > 0) {
+                                tag.className = 'dso-stock-status-tag tag-instock';
+                                tag.textContent = 'In Stock (' + stock + ')';
+                            } else {
+                                tag.className = 'dso-stock-status-tag tag-outofstock';
+                                tag.textContent = 'Out of Stock';
+                            }
+                        }
+                    }
+                } else {
+                    if (self.toast) self.toast('Error saving stock: ' + (data.error || 'Failed'), 'error');
+                }
+            })
+            .catch(function(err) {
+                if (self.toast) self.toast('Failed to update stock quantity', 'error');
+            });
+        },
+
+        // ─── 23. Seller AI Side Drawer Toggle ───────────────
+        toggleAiDrawer: function(open) {
+            var drawer = document.getElementById('dso-ai-drawer');
+            var backdrop = document.getElementById('dso-ai-backdrop');
+            if (!drawer) return;
+            var shouldOpen = typeof open === 'boolean' ? open : !drawer.classList.contains('dso-open');
+            if (shouldOpen) {
+                drawer.classList.add('dso-open');
+                if (backdrop) backdrop.style.display = 'block';
+                var inp = document.getElementById('dso-ai-user-input');
+                if (inp) inp.focus();
+            } else {
+                drawer.classList.remove('dso-open');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        },
+
+        // ─── 24. Multi-Period Dashboard Charts (Chart.js) ───
+        initDashboardCharts: function(chartData) {
+            var canvas = document.getElementById('dso-sales-chart');
+            if (!canvas || typeof Chart === 'undefined') return;
+
+            var currentPeriod = '7d';
+            var periodData = (chartData && chartData[currentPeriod]) ? chartData[currentPeriod] : {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                sales: [1200, 1850, 2400, 3100, 2800, 4200, 5100],
+                orders: [3, 5, 6, 8, 7, 11, 14]
+            };
+
+            var ctx = canvas.getContext('2d');
+            var gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(124, 58, 237, 0.28)');
+            gradient.addColorStop(1, 'rgba(124, 58, 237, 0.00)');
+
+            var chart = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: periodData.labels,
+                    datasets: [
+                        {
+                            label: 'Gross Sales (₹)',
+                            data: periodData.sales,
+                            borderColor: '#7c3aed',
+                            backgroundColor: gradient,
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#7c3aed',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Orders',
+                            data: periodData.orders,
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            tension: 0.35,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#06b6d4',
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                boxWidth: 12,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 12, family: 'Inter, sans-serif', weight: 600 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#0f172a',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.datasetIndex === 0) {
+                                        return ' Gross Sales: ₹' + (context.raw || 0).toLocaleString();
+                                    }
+                                    return ' Orders: ' + context.raw;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, family: 'Inter, sans-serif' }, color: '#64748b' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 11, family: 'Inter, sans-serif' },
+                                color: '#64748b',
+                                callback: function(v) { return '₹' + v; }
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: {
+                                font: { size: 11, family: 'Inter, sans-serif' },
+                                color: '#06b6d4',
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+
+            this.state.charts['sales'] = chart;
+
+            // Attach period switch buttons
+            document.querySelectorAll('#dso-chart-filters button[data-period]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var period = this.getAttribute('data-period');
+                    document.querySelectorAll('#dso-chart-filters button').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+
+                    if (chartData && chartData[period]) {
+                        var d = chartData[period];
+                        chart.data.labels = d.labels;
+                        chart.data.datasets[0].data = d.sales;
+                        chart.data.datasets[1].data = d.orders;
+                        chart.update();
+                    }
+                });
+            });
         }
     };
 
