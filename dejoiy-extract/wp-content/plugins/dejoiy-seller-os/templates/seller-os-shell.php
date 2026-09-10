@@ -97,7 +97,7 @@ $search_sections_data = [
     ['title' => 'Advertising & Sponsored', 'desc' => 'Boost listing reach & sales', 'url' => '?section=advertising', 'icon' => '📢', 'tags' => 'ads advertising sponsored campaign boost reach impressions'],
     ['title' => 'Growth & Smart Insights', 'desc' => 'Demand analytics & recommendations', 'url' => '?section=growth', 'icon' => '🚀', 'tags' => 'growth insights recommendations demand trending sales opportunities'],
     ['title' => 'Performance & Reports', 'desc' => 'Conversion telemetry & KPI graphs', 'url' => '?section=performance', 'icon' => '📈', 'tags' => 'performance analytics conversion charts graphs kpi reports telemetry'],
-    ['title' => 'Seller University', 'desc' => 'Handbooks, policies & masterclasses', 'url' => '?section=learn', 'icon' => '🎓', 'tags' => 'learn university education training guides handbook tutorials policies'],
+    ['title' => 'Customer Messages', 'desc' => 'Live buyer-seller communication', 'url' => '?section=messages', 'icon' => '💬', 'tags' => 'messages chat buyer customer inbox communication support inquiries'],
     ['title' => 'Support Desk & Tickets', 'desc' => 'Dispute resolution & direct support', 'url' => '?section=support', 'icon' => '🎫', 'tags' => 'support help ticket complaint issue desk agent contact contact seller support'],
     ['title' => 'Settings & Security', 'desc' => 'Seller profile & store credentials', 'url' => '?section=settings', 'icon' => '⚙️', 'tags' => 'settings profile password email phone gst pan verification business']
 ];
@@ -208,6 +208,10 @@ window.dsoSearchData = {
                             <span class="dso-hub-item-icon">📦</span>
                             <span>Orders & Fulfillment</span>
                         </a>
+                        <a href="?section=messages" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">💬</span>
+                            <span>Buyer Messages</span>
+                        </a>
                         <a href="?section=finance" class="dso-hub-item">
                             <span class="dso-hub-item-icon">💳</span>
                             <span>Finance & Bank Account</span>
@@ -273,6 +277,13 @@ window.dsoSearchData = {
                         <span class="dso-nav-label"><?php echo esc_html($item['label']) ?></span>
                         <?php if ($item['id'] === 'notifications' && $unread_count > 0): ?>
                             <span class="dso-nav-badge"><?php echo $unread_count ?></span>
+                        <?php endif; ?>
+                        <?php if ($item['id'] === 'messages'): ?>
+                            <?php 
+                            global $wpdb;
+                            $unread_msg = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(unread_seller) FROM {$wpdb->prefix}dso_conversations WHERE vendor_id = %d", $vendor_id));
+                            ?>
+                            <span class="dso-nav-badge dso-nav-badge-messages" style="<?php echo $unread_msg > 0 ? '' : 'display:none;'; ?>background:#d9006c;"><?php echo $unread_msg ?: ''; ?></span>
                         <?php endif; ?>
                         <?php if (!empty($item['children'])): ?>
                             <svg class="dso-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>

@@ -41,6 +41,7 @@ require_once DSO_PATH . 'includes/class-dso-apps.php';
 require_once DSO_PATH . 'includes/class-dso-b2b.php';
 require_once DSO_PATH . 'includes/class-dso-brands.php';
 require_once DSO_PATH . 'includes/class-dso-learn.php';
+require_once DSO_PATH . 'includes/class-dso-messenger.php';
 require_once DSO_PATH . 'api/rest-api.php';
 
 /**

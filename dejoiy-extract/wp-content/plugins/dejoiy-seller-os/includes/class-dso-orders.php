@@ -176,6 +176,9 @@ class DSO_Orders {
                                             </td>
                                             <td class="dso-text-right">
                                                 <div class="dso-row-actions" style="display:flex;gap:4px;justify-content:flex-end;">
+                                                    <a href="?section=messages&order_id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Chat with Customer">
+                                                        💬 Message
+                                                    </a>
                                                     <a href="?section=order-detail&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Manage Order">
                                                         View
                                                     </a>
@@ -278,6 +281,10 @@ class DSO_Orders {
                 </div>
                 <div class="dso-page-actions">
                     <a href="?section=orders" class="dso-btn dso-btn-outline">← Back to Orders</a>
+                    <a href="?section=messages&order_id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" title="Chat with Customer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        Message Customer
+                    </a>
                     <a href="?section=print-label&id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" target="_blank">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                         Print 4×6 Thermal Label
@@ -411,8 +418,11 @@ class DSO_Orders {
                 <!-- Right: Customer & Delivery Address -->
                 <div class="dso-order-sidebar">
                     <div class="dso-card dso-mb-4">
-                        <div class="dso-card-header">
+                        <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
                             <h3 class="dso-card-title">Customer Details</h3>
+                            <a href="?section=messages&order_id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-sm dso-btn-outline" style="font-size:12px;padding:3px 8px;" title="Chat with customer">
+                                💬 Chat
+                            </a>
                         </div>
                         <div class="dso-card-body">
                             <div class="dso-info-list">

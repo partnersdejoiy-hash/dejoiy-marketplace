@@ -10,6 +10,7 @@ class DSO_Router {
     private static $sections = [
         // Dashboard
         'dashboard'             => ['class' => 'DSO_Dashboard', 'title' => 'Dashboard', 'group' => 'main'],
+        'messages'              => ['class' => 'DSO_Messenger', 'method' => 'render_seller_view', 'title' => 'Buyer-Seller Messages', 'group' => 'main'],
 
         // Catalogue
         'products'              => ['class' => 'DSO_Products', 'title' => 'All Products', 'group' => 'catalogue'],
@@ -183,6 +184,13 @@ class DSO_Router {
                 'group' => 'Core',
                 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
                 'url' => 'dashboard',
+            ],
+            [
+                'id' => 'messages',
+                'label' => 'Messages',
+                'group' => 'Core',
+                'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+                'url' => 'messages',
             ],
             [
                 'id' => 'catalogue',
