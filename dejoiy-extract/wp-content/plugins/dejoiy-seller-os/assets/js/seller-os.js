@@ -1456,6 +1456,146 @@
             });
         },
 
+        // ─── 22b. In-Line Quick Price AJAX (Amazon Manage Inventory style) ───
+        savePriceQuick: function(id) {
+            var input = document.getElementById('price-input-' + id);
+            if (!input) return;
+            var price = parseFloat(input.value) || 0;
+            var self = this;
+
+            var url = (typeof dsoData !== 'undefined' && dsoData.baseUrl) ? (dsoData.baseUrl + '?action=price_update') : (self.config.baseUrl + '?action=price_update');
+            var fd = new FormData();
+            fd.append('product_id', id);
+            fd.append('price', price);
+
+            fetch(url, { method: 'POST', body: fd })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.success) {
+                    if (self.toast) self.toast('Price updated to ₹' + price.toFixed(2), 'success');
+                    input.classList.add('dso-save-flash');
+                    setTimeout(function() { input.classList.remove('dso-save-flash'); }, 1200);
+
+                    // Update fee and net proceeds calculation dynamically
+                    var feeElem = document.getElementById('fee-preview-' + id);
+                    if (feeElem) {
+                        var referralFee = (price * 0.12).toFixed(2);
+                        var netPayout = (price - referralFee).toFixed(2);
+                        feeElem.innerHTML = 'Fee: ₹' + referralFee + ' (12%) • <span class="dso-net">Net: ₹' + netPayout + '</span>';
+                    }
+                } else {
+                    if (self.toast) self.toast('Error saving price: ' + (data.error || 'Failed'), 'error');
+                }
+            })
+            .catch(function() {
+                if (self.toast) self.toast('Failed to update listing price', 'error');
+            });
+        },
+
+        saveInlineInventory: function(id) {
+            this.savePriceQuick(id);
+            this.saveStockQuick(id);
+        },
+
+        // ─── 22c. Competitive Repricer Toggle ────────────────
+        toggleRepricer: function(id, isChecked) {
+            var self = this;
+            var minInput = document.getElementById('repricer-min-' + id);
+            var maxInput = document.getElementById('repricer-max-' + id);
+            var minVal = minInput ? parseFloat(minInput.value) || 0 : 0;
+            var maxVal = maxInput ? parseFloat(maxInput.value) || 0 : 0;
+
+            var url = (typeof dsoData !== 'undefined' && dsoData.baseUrl) ? (dsoData.baseUrl + '?action=toggle_repricer') : (self.config.baseUrl + '?action=toggle_repricer');
+            var fd = new FormData();
+            fd.append('product_id', id);
+            fd.append('active', isChecked ? 1 : 0);
+            fd.append('min_price', minVal);
+            fd.append('max_price', maxVal);
+
+            fetch(url, { method: 'POST', body: fd })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.success) {
+                    if (self.toast) self.toast(isChecked ? 'Automated repricing ACTIVATED for SKU' : 'Repricer paused for SKU', 'success');
+                }
+            })
+            .catch(function() {
+                if (self.toast) self.toast('Could not update repricer status', 'error');
+            });
+        },
+
+        // ─── 22d. Coupon Code Generator ─────────────────────
+        generateCouponCode: function() {
+            var prefixes = ['DEJOIY', 'MEGA', 'FESTIVE', 'SUPER', 'DEAL', 'SAVE'];
+            var p = prefixes[Math.floor(Math.random() * prefixes.length)];
+            var rand = Math.floor(1000 + Math.random() * 9000);
+            var code = p + rand;
+            var codeInput = document.getElementById('coupon_code');
+            if (codeInput) codeInput.value = code;
+        },
+
+        // ─── 22e. Client-side CSV Catalog Parser & Validator ──
+        handleCatalogCsvUpload: function(input) {
+            var file = input.files ? input.files[0] : null;
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var text = e.target.result;
+                var lines = text.split(/\r?\n/).filter(function(l) { return l.trim().length > 0; });
+                if (lines.length <= 1) {
+                    alert('CSV file appears to be empty or only contains headers.');
+                    return;
+                }
+
+                var headers = lines[0].split(',').map(function(h) { return h.trim().replace(/^"|"$/g, ''); });
+                var rows = [];
+                for (var i = 1; i < lines.length; i++) {
+                    var cols = lines[i].split(',').map(function(c) { return c.trim().replace(/^"|"$/g, ''); });
+                    if (cols.length >= 2) rows.push(cols);
+                }
+
+                var previewWrap = document.getElementById('dso-csv-preview-container');
+                var countSpan = document.getElementById('dso-csv-count');
+                var submitBtn = document.getElementById('dso-csv-commit-btn');
+                var rawInput = document.getElementById('dso-csv-raw-data');
+
+                if (countSpan) countSpan.textContent = rows.length + ' Listings Detected';
+                if (rawInput) rawInput.value = text;
+                if (submitBtn) submitBtn.style.display = 'inline-flex';
+
+                var tbody = document.getElementById('dso-csv-preview-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    rows.slice(0, 10).forEach(function(r, idx) {
+                        var name = r[0] || 'Untitled Item';
+                        var cat = r[1] || 'General';
+                        var sku = r[2] || ('DJ-SKU-' + (idx + 1));
+                        var regPrice = r[3] || '0';
+                        var stock = r[5] || '10';
+
+                        var isValid = name && parseFloat(regPrice) > 0;
+                        var badge = isValid 
+                            ? '<span class="dso-badge dso-badge-green">Valid ✓</span>' 
+                            : '<span class="dso-badge dso-badge-red">Missing Title / Price</span>';
+
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = 
+                            '<td>#' + (idx + 1) + '</td>' +
+                            '<td><strong>' + name + '</strong></td>' +
+                            '<td>' + cat + '</td>' +
+                            '<td><code>' + sku + '</code></td>' +
+                            '<td>₹' + regPrice + '</td>' +
+                            '<td>' + stock + ' units</td>' +
+                            '<td>' + badge + '</td>';
+                        tbody.appendChild(tr);
+                    });
+                }
+                if (previewWrap) previewWrap.style.display = 'block';
+            };
+            reader.readAsText(file);
+        },
+
         // ─── 23. Seller AI Side Drawer Toggle ───────────────
         toggleAiDrawer: function(open) {
             var drawer = document.getElementById('dso-ai-drawer');

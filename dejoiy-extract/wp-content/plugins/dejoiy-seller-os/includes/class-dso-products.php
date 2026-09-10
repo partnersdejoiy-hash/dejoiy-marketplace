@@ -1251,9 +1251,43 @@ class DSO_Products {
     /**
      * Inventory Overview
      */
+    /**
+     * Amazon-style "Manage All Inventory" Table
+     */
     public function inventory() {
         $vendor_id = $this->get_active_vendor_id();
-        $products = $this->get_products($vendor_id, 100);
+        $current_tab = sanitize_text_field($_GET['tab'] ?? 'all');
+        $search = sanitize_text_field($_GET['s'] ?? '');
+
+        // Fetch products
+        $all_products = $this->get_products($vendor_id, 200, 0, 'all', $search);
+
+        // Compute counts
+        $total_count = count($all_products);
+        $instock_count = 0;
+        $lowstock_count = 0;
+        $outofstock_count = 0;
+
+        foreach ($all_products as $p) {
+            $qty = intval($p['stock_quantity']);
+            if ($qty > 5) {
+                $instock_count++;
+            } elseif ($qty > 0 && $qty <= 5) {
+                $lowstock_count++;
+                $instock_count++;
+            } else {
+                $outofstock_count++;
+            }
+        }
+
+        // Filter products for active tab
+        $products = array_filter($all_products, function($p) use ($current_tab) {
+            $qty = intval($p['stock_quantity']);
+            if ($current_tab === 'instock') return $qty > 0;
+            if ($current_tab === 'lowstock') return ($qty > 0 && $qty <= 5);
+            if ($current_tab === 'outofstock') return $qty <= 0;
+            return true;
+        });
         ?>
         <div class="dso-page dso-inventory">
             <div class="dso-page-header">
@@ -1263,61 +1297,343 @@ class DSO_Products {
                         <span>/</span>
                         <span>Inventory</span>
                         <span>/</span>
-                        <span>Stock Overview</span>
+                        <span>Manage All Inventory</span>
                     </div>
-                    <h1 class="dso-page-title">Inventory Management</h1>
-                    <p class="dso-page-subtitle">Track, replenish, and adjust stock quantities in real-time across all warehouses</p>
+                    <h1 class="dso-page-title">Manage All Inventory</h1>
+                    <p class="dso-page-subtitle">Amazon-style high-velocity catalog grid. Adjust stock, update prices, and review net seller proceeds in real time.</p>
                 </div>
                 <div class="dso-page-actions">
-                    <a href="?section=inventory-bulk" class="dso-btn dso-btn-primary">Bulk Stock Updater</a>
+                    <a href="?section=catalog-upload" class="dso-btn dso-btn-outline" style="border-color:#0066ff;color:#0066ff;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload Products via CSV/Sheet
+                    </a>
+                    <a href="?section=add-product" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        + Add Single Product
+                    </a>
                 </div>
             </div>
 
+            <?php if (isset($_GET['notice']) && $_GET['notice'] === 'imported'): ?>
+                <div class="dso-alert dso-alert-success dso-mb-4">
+                    🎉 Successfully bulk-imported <strong><?php echo intval($_GET['count'] ?? 0); ?> listings</strong> into your catalog with permanent DPIN identifiers!
+                </div>
+            <?php endif; ?>
+
+            <!-- Status Tabs -->
+            <div class="dso-tabs dso-mb-4" style="display:flex;gap:8px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;overflow-x:auto;">
+                <a href="?section=inventory&tab=all" class="dso-btn dso-btn-sm <?php echo $current_tab === 'all' ? 'dso-btn-primary' : 'dso-btn-outline'; ?>">
+                    All Listings (<?php echo $total_count; ?>)
+                </a>
+                <a href="?section=inventory&tab=instock" class="dso-btn dso-btn-sm <?php echo $current_tab === 'instock' ? 'dso-btn-primary' : 'dso-btn-outline'; ?>">
+                    Active In Stock (<?php echo $instock_count; ?>)
+                </a>
+                <a href="?section=inventory&tab=lowstock" class="dso-btn dso-btn-sm <?php echo $current_tab === 'lowstock' ? 'dso-btn-primary' : 'dso-btn-outline'; ?>" style="<?php echo $lowstock_count > 0 ? 'border-color:#f59e0b;color:#d97706;' : ''; ?>">
+                    ⚠️ Low Stock &le; 5 units (<?php echo $lowstock_count; ?>)
+                </a>
+                <a href="?section=inventory&tab=outofstock" class="dso-btn dso-btn-sm <?php echo $current_tab === 'outofstock' ? 'dso-btn-primary' : 'dso-btn-outline'; ?>" style="<?php echo $outofstock_count > 0 ? 'border-color:#ef4444;color:#dc2626;' : ''; ?>">
+                    🚫 Out of Stock (<?php echo $outofstock_count; ?>)
+                </a>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="dso-card dso-mb-4">
+                <div class="dso-card-body" style="padding:16px;">
+                    <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                        <input type="hidden" name="section" value="inventory" />
+                        <input type="hidden" name="tab" value="<?php echo esc_attr($current_tab); ?>" />
+                        <div style="flex:1;min-width:240px;position:relative;">
+                            <input type="text" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search SKU, Product Title, or DPIN (e.g. DEZC...)" class="dso-input" style="padding-left:36px;" />
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#94a3b8" stroke-width="2" style="position:absolute;left:12px;top:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </div>
+                        <button type="submit" class="dso-btn dso-btn-outline">Filter</button>
+                        <?php if ($search): ?>
+                            <a href="?section=inventory&tab=<?php echo esc_attr($current_tab); ?>" class="dso-btn dso-btn-outline">Reset</a>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Manage All Inventory Table -->
             <div class="dso-card">
                 <div class="dso-card-body dso-p-0">
                     <div class="dso-table-responsive">
-                        <table class="dso-table">
+                        <table class="dso-table dso-inv-table">
                             <thead>
                                 <tr>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th>Current Stock Units</th>
+                                    <th style="width:36px;"><input type="checkbox" id="dso-select-all-inv" onclick="document.querySelectorAll('.dso-inv-checkbox').forEach(c => c.checked = this.checked);" /></th>
                                     <th>Status</th>
-                                    <th>Quick Adjust</th>
-                                    <th class="dso-text-right">Action</th>
+                                    <th>Product Details</th>
+                                    <th>DPIN / SKU</th>
+                                    <th style="width:140px;">Available Units</th>
+                                    <th style="width:180px;">Your Price + Fees</th>
+                                    <th>LQS Score</th>
+                                    <th class="dso-text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($products as $p): ?>
+                                <?php if (empty($products)): ?>
                                     <tr>
-                                        <td>
-                                            <div class="dso-product-cell">
-                                                <div class="dso-product-thumb"><?php echo $p['image_html']; ?></div>
-                                                <span class="dso-product-title"><?php echo esc_html($p['name']); ?></span>
+                                        <td colspan="8" style="padding:48px;text-align:center;color:#64748b;">
+                                            <div style="font-size:36px;margin-bottom:10px;">📦</div>
+                                            <strong>No products match your current inventory filter.</strong>
+                                            <div style="margin-top:10px;">
+                                                <a href="?section=add-product" class="dso-btn dso-btn-primary dso-btn-sm">+ Add New Listing</a>
                                             </div>
-                                        </td>
-                                        <td><code><?php echo esc_html($p['sku'] ?: '—'); ?></code></td>
-                                        <td>
-                                            <strong class="dso-stock-display" id="stock-val-<?php echo $p['id']; ?>"><?php echo intval($p['stock_quantity']); ?></strong>
-                                        </td>
-                                        <td>
-                                            <span class="dso-stock-status-tag <?php echo $p['stock_status_class']; ?>">
-                                                <?php echo $p['stock_label']; ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="dso-stock-adjust-group">
-                                                <input type="number" class="dso-input dso-input-sm dso-quick-stock-field" value="<?php echo intval($p['stock_quantity']); ?>" min="0" id="stock-input-<?php echo $p['id']; ?>" />
-                                                <button type="button" class="dso-btn dso-btn-sm dso-btn-primary" onclick="DSO.saveStockQuick(<?php echo $p['id']; ?>);">Save</button>
-                                            </div>
-                                        </td>
-                                        <td class="dso-text-right">
-                                            <a href="?section=edit-product&id=<?php echo $p['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline">Full Edit</a>
                                         </td>
                                     </tr>
-                                <?php endforeach; ?>
+                                <?php else: ?>
+                                    <?php foreach ($products as $p): 
+                                        $price = floatval($p['regular_price'] ?: $p['price']);
+                                        $referral_fee = round($price * 0.12, 2);
+                                        $net_payout = round($price - $referral_fee, 2);
+                                        $qty = intval($p['stock_quantity']);
+                                        $lqs = min(100, max(40, (strlen($p['name']) > 20 ? 30 : 10) + (!empty($p['image_html']) ? 30 : 0) + ($price > 0 ? 20 : 0) + ($qty > 0 ? 20 : 0)));
+                                    ?>
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="dso-inv-checkbox" value="<?php echo $p['id']; ?>" />
+                                            </td>
+                                            <td>
+                                                <?php if ($qty > 5): ?>
+                                                    <span class="dso-badge dso-badge-green">● Active</span>
+                                                <?php elseif ($qty > 0): ?>
+                                                    <span class="dso-badge dso-badge-amber">⚠️ Low (<?php echo $qty; ?>)</span>
+                                                <?php else: ?>
+                                                    <span class="dso-badge dso-badge-red">✕ Out of Stock</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <div class="dso-product-cell" style="display:flex;align-items:center;gap:12px;">
+                                                    <div class="dso-product-thumb" style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;border:1px solid #e2e8f0;">
+                                                        <?php echo $p['image_html']; ?>
+                                                    </div>
+                                                    <div>
+                                                        <a href="?section=edit-product&id=<?php echo $p['id']; ?>" style="color:#0f172a;font-weight:600;font-size:13.5px;text-decoration:none;">
+                                                            <?php echo esc_html($p['name']); ?>
+                                                        </a>
+                                                        <div style="font-size:11px;color:#64748b;margin-top:2px;">Category: <?php echo esc_html($p['category']); ?></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="display:flex;flex-direction:column;gap:3px;">
+                                                    <span class="dso-dpin-pill" style="cursor:pointer;" onclick="dsoCopyText('<?php echo esc_attr($p['dpin']); ?>', this)" title="Click to copy DPIN">
+                                                        <code><?php echo esc_html($p['dpin'] ?: '—'); ?></code>
+                                                    </span>
+                                                    <small style="color:#64748b;font-family:monospace;font-size:11px;">SKU: <?php echo esc_html($p['sku'] ?: '—'); ?></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="dso-inv-editable-cell">
+                                                    <input type="number" id="stock-input-<?php echo $p['id']; ?>" class="dso-inline-input" value="<?php echo $qty; ?>" min="0" />
+                                                    <button type="button" class="dso-inline-save-btn" onclick="DSO.saveStockQuick(<?php echo $p['id']; ?>);" title="Save Stock">✓</button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="dso-inv-editable-cell">
+                                                    <span style="font-weight:700;color:#64748b;font-size:13px;">₹</span>
+                                                    <input type="number" id="price-input-<?php echo $p['id']; ?>" class="dso-inline-input" value="<?php echo $price; ?>" step="0.5" min="0" />
+                                                    <button type="button" class="dso-inline-save-btn" onclick="DSO.savePriceQuick(<?php echo $p['id']; ?>);" title="Save Price">✓</button>
+                                                </div>
+                                                <div class="dso-fee-preview" id="fee-preview-<?php echo $p['id']; ?>">
+                                                    Fee: ₹<?php echo number_format($referral_fee, 2); ?> (12%) • <span class="dso-net">Net: ₹<?php echo number_format($net_payout, 2); ?></span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="dso-lqs-pill <?php echo $lqs >= 80 ? 'dso-lqs-high' : ($lqs >= 60 ? 'dso-lqs-med' : 'dso-lqs-low'); ?>">
+                                                    <?php echo $lqs; ?>% Quality
+                                                </span>
+                                            </td>
+                                            <td class="dso-text-right">
+                                                <div style="display:flex;gap:6px;justify-content:flex-end;">
+                                                    <a href="?section=edit-product&id=<?php echo $p['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Full Editor">Edit</a>
+                                                    <button type="button" class="dso-btn dso-btn-sm dso-btn-primary" onclick="DSO.saveInlineInventory(<?php echo $p['id']; ?>);" title="Save Price & Stock">Save Both</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Amazon-style Bulk Excel / CSV Catalog Upload Engine
+     */
+    public function catalog_upload() {
+        $vendor_id = $this->get_active_vendor_id();
+
+        // Process CSV import
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dso_catalog_csv_commit'])) {
+            check_admin_referer('dso_csv_upload_action');
+            $raw_csv = wp_unslash($_POST['csv_raw_data'] ?? '');
+            $imported_count = 0;
+
+            if (!empty($raw_csv)) {
+                $lines = explode("\n", str_replace("\r", "", $raw_csv));
+                $header_skipped = false;
+
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) continue;
+
+                    if (!$header_skipped) {
+                        $header_skipped = true;
+                        continue;
+                    }
+
+                    $cols = str_getcsv($line);
+                    if (count($cols) < 2) continue;
+
+                    $title = sanitize_text_field($cols[0] ?? '');
+                    $category_name = sanitize_text_field($cols[1] ?? 'General');
+                    $sku = sanitize_text_field($cols[2] ?? '');
+                    $price = floatval($cols[3] ?? 0);
+                    $sale_price = !empty($cols[4]) ? floatval($cols[4]) : '';
+                    $stock = intval($cols[5] ?? 10);
+                    $short_desc = sanitize_textarea_field($cols[6] ?? '');
+                    $desc = wp_kses_post($cols[7] ?? '');
+
+                    if (empty($title) || $price <= 0) continue;
+
+                    // Generate permanent DEJOIY DPIN
+                    $dpin = 'DE' . strtoupper(substr(md5(uniqid(rand(), true)), 0, 9));
+
+                    // Create product post
+                    $post_id = wp_insert_post([
+                        'post_title'   => $title,
+                        'post_content' => $desc,
+                        'post_excerpt' => $short_desc,
+                        'post_status'  => 'publish',
+                        'post_type'    => 'product',
+                        'post_author'  => get_current_user_id()
+                    ]);
+
+                    if ($post_id && !is_wp_error($post_id)) {
+                        update_post_meta($post_id, '_regular_price', $price);
+                        update_post_meta($post_id, '_price', $sale_price ?: $price);
+                        if (!empty($sale_price)) {
+                            update_post_meta($post_id, '_sale_price', $sale_price);
+                        }
+                        update_post_meta($post_id, '_manage_stock', 'yes');
+                        update_post_meta($post_id, '_stock', $stock);
+                        update_post_meta($post_id, '_stock_status', $stock > 0 ? 'instock' : 'outofstock');
+                        update_post_meta($post_id, '_sku', $sku ?: $dpin);
+                        update_post_meta($post_id, '_dejoiy_dpin', $dpin);
+
+                        // Assign vendor
+                        if ($vendor_id) {
+                            wp_set_object_terms($post_id, intval($vendor_id), 'wcfm_vendor');
+                        }
+
+                        // Category
+                        if ($category_name) {
+                            wp_set_object_terms($post_id, $category_name, 'product_cat');
+                        }
+
+                        $imported_count++;
+                    }
+                }
+            }
+
+            wp_redirect('?section=inventory&notice=imported&count=' . $imported_count);
+            exit;
+        }
+        ?>
+        <div class="dso-page dso-catalog-upload">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a>
+                        <span>/</span>
+                        <a href="?section=inventory">Inventory</a>
+                        <span>/</span>
+                        <span>Bulk Upload</span>
+                    </div>
+                    <h1 class="dso-page-title">Upload Products via Sheet (Bulk Feed)</h1>
+                    <p class="dso-page-subtitle">Add hundreds of listings simultaneously using DEJOIY's official CSV/Excel catalog template.</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="data:text/csv;charset=utf-8,<?php echo rawurlencode("Product Name,Category,SKU,Regular Price,Sale Price,Stock Quantity,Short Description,Full Description\nHandcrafted Blue Ceramic Mug,Home & Living,DJ-MUG-001,499,399,50,Premium handmade coffee mug,100% lead-free ceramic with high-durability glaze.\nFestive Cotton Embroidered Kurti,Fashion,DJ-KUR-101,1299,899,25,Pure cotton breathable ethnic wear,Hand-woven pure cotton fabric with zardozi embroidery."); ?>" download="DEJOIY_Bulk_Listing_Template.csv" class="dso-btn dso-btn-outline" style="border-color:#0066ff;color:#0066ff;">
+                        📥 Download Official CSV Template
+                    </a>
+                </div>
+            </div>
+
+            <!-- Steps Grid -->
+            <div class="dso-grid-3 dso-mb-4">
+                <div class="dso-card">
+                    <div class="dso-card-body" style="padding:20px;">
+                        <span style="font-size:20px;display:block;margin-bottom:8px;">1️⃣</span>
+                        <h4 style="margin:0 0 6px;">Download Template</h4>
+                        <p style="font-size:12.5px;color:#64748b;margin:0;">Get the official CSV template with standard column headers for products, prices, and stock.</p>
+                    </div>
+                </div>
+                <div class="dso-card">
+                    <div class="dso-card-body" style="padding:20px;">
+                        <span style="font-size:20px;display:block;margin-bottom:8px;">2️⃣</span>
+                        <h4 style="margin:0 0 6px;">Fill Product Rows</h4>
+                        <p style="font-size:12.5px;color:#64748b;margin:0;">Open in Microsoft Excel, Google Sheets, or Numbers. Enter your product names, pricing, and stock.</p>
+                    </div>
+                </div>
+                <div class="dso-card">
+                    <div class="dso-card-body" style="padding:20px;">
+                        <span style="font-size:20px;display:block;margin-bottom:8px;">3️⃣</span>
+                        <h4 style="margin:0 0 6px;">Instant DPIN Generation</h4>
+                        <p style="font-size:12.5px;color:#64748b;margin:0;">Upload below. DEJOIY automatically generates verified DPINs and publishes all listings live.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drag & Drop Upload Zone -->
+            <div class="dso-card dso-mb-4">
+                <div class="dso-card-body" style="padding:32px;">
+                    <div class="dso-upload-dropzone" onclick="document.getElementById('dso-catalog-file-input').click();">
+                        <div class="dso-upload-icon">📄</div>
+                        <h3 style="font-size:18px;margin-bottom:6px;color:#0f172a;">Drag & drop your listing CSV file here</h3>
+                        <p style="color:#64748b;font-size:13.5px;margin-bottom:16px;">or click to browse from your computer (CSV, TSV)</p>
+                        <button type="button" class="dso-btn dso-btn-primary">Select CSV File</button>
+                        <input type="file" id="dso-catalog-file-input" accept=".csv,.txt" style="display:none;" onchange="DSO.handleCatalogCsvUpload(this);" />
+                    </div>
+
+                    <!-- Client-side Validation & Preview Table -->
+                    <div id="dso-csv-preview-container" style="display:none;" class="dso-csv-preview-wrap">
+                        <div style="padding:16px 20px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <strong style="color:#0f172a;font-size:15px;">Listing Validation Preview</strong>
+                                <span class="dso-badge dso-badge-blue" id="dso-csv-count" style="margin-left:8px;">0 Rows</span>
+                            </div>
+                            <form method="post">
+                                <?php wp_nonce_field('dso_csv_upload_action'); ?>
+                                <input type="hidden" name="dso_catalog_csv_commit" value="1" />
+                                <input type="hidden" name="csv_raw_data" id="dso-csv-raw-data" />
+                                <button type="submit" id="dso-csv-commit-btn" class="dso-btn dso-btn-primary" style="display:none;">
+                                    🚀 Commit & Publish to Catalog
+                                </button>
+                            </form>
+                        </div>
+                        <div class="dso-table-responsive">
+                            <table class="dso-table">
+                                <thead>
+                                    <tr>
+                                        <th>Row</th>
+                                        <th>Product Title</th>
+                                        <th>Category</th>
+                                        <th>SKU</th>
+                                        <th>Regular Price</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dso-csv-preview-tbody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

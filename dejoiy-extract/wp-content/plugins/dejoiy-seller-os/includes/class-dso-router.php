@@ -13,6 +13,7 @@ class DSO_Router {
 
         // Catalogue
         'products'              => ['class' => 'DSO_Products', 'title' => 'All Products', 'group' => 'catalogue'],
+        'catalog-upload'        => ['class' => 'DSO_Products', 'method' => 'catalog_upload', 'title' => 'Bulk Catalog Upload', 'group' => 'catalogue'],
         'add-product'           => ['class' => 'DSO_Products', 'method' => 'add_product', 'title' => 'Add Product', 'group' => 'catalogue'],
         'edit-product'          => ['class' => 'DSO_Products', 'method' => 'edit_product', 'title' => 'Edit Product', 'group' => 'catalogue'],
         'categories'            => ['class' => 'DSO_Products', 'method' => 'categories', 'title' => 'Categories', 'group' => 'catalogue'],
@@ -31,6 +32,7 @@ class DSO_Router {
 
         // Pricing
         'pricing'               => ['class' => 'DSO_Pricing', 'title' => 'Pricing Overview', 'group' => 'pricing'],
+        'automate-pricing'      => ['class' => 'DSO_Pricing', 'method' => 'automate_pricing', 'title' => 'Automate Pricing', 'group' => 'pricing'],
         'promotions'            => ['class' => 'DSO_Pricing', 'method' => 'promotions', 'title' => 'Promotions', 'group' => 'pricing'],
         'deals'                 => ['class' => 'DSO_Pricing', 'method' => 'deals', 'title' => 'Deals & Flash Sales', 'group' => 'pricing'],
         'coupons'               => ['class' => 'DSO_Pricing', 'method' => 'coupons', 'title' => 'Coupons', 'group' => 'pricing'],
@@ -47,6 +49,7 @@ class DSO_Router {
         'orders-refunds'        => ['class' => 'DSO_Orders', 'method' => 'orders_refunds', 'title' => 'Refund Requests', 'group' => 'orders'],
         'orders-cancelled'      => ['class' => 'DSO_Orders', 'method' => 'orders_cancelled', 'title' => 'Cancelled Orders', 'group' => 'orders'],
         'order-detail'          => ['class' => 'DSO_Orders', 'method' => 'order_detail', 'title' => 'Order Detail', 'group' => 'orders'],
+        'print-invoice'         => ['class' => 'DSO_Orders', 'method' => 'print_invoice', 'title' => 'Tax Invoice', 'group' => 'orders'],
 
         // Fulfillment / Shipping
         'shipping'              => ['class' => 'DSO_Shipping', 'title' => 'Shipping & Delivery', 'group' => 'fulfillment'],
@@ -55,6 +58,7 @@ class DSO_Router {
         'shipping-delivery'     => ['class' => 'DSO_Shipping', 'method' => 'delivery', 'title' => 'Delivery Rates', 'group' => 'fulfillment'],
         'shipping-pickup'       => ['class' => 'DSO_Shipping', 'method' => 'pickup', 'title' => 'Pickup Points', 'group' => 'fulfillment'],
         'shipping-packaging'    => ['class' => 'DSO_Shipping', 'method' => 'packaging', 'title' => 'Packaging Specs', 'group' => 'fulfillment'],
+        'print-label'           => ['class' => 'DSO_Shipping', 'method' => 'print_label', 'title' => 'Print Shipping Label', 'group' => 'fulfillment'],
 
         // Advertising
         'advertising'           => ['class' => 'DSO_Advertising', 'title' => 'Campaign Manager', 'group' => 'advertising'],
@@ -188,6 +192,7 @@ class DSO_Router {
                 'url' => 'products',
                 'children' => [
                     ['id' => 'products', 'label' => 'All Products', 'url' => 'products'],
+                    ['id' => 'catalog-upload', 'label' => 'Bulk CSV Upload', 'url' => 'catalog-upload'],
                     ['id' => 'add-product', 'label' => 'Add Product', 'url' => 'add-product'],
                     ['id' => 'categories', 'label' => 'Categories', 'url' => 'categories'],
                     ['id' => 'collections', 'label' => 'Collections', 'url' => 'collections'],
@@ -219,6 +224,7 @@ class DSO_Router {
                 'url' => 'pricing',
                 'children' => [
                     ['id' => 'pricing', 'label' => 'Pricing Strategy', 'url' => 'pricing'],
+                    ['id' => 'automate-pricing', 'label' => 'Automate Pricing', 'url' => 'automate-pricing'],
                     ['id' => 'promotions', 'label' => 'Promotions', 'url' => 'promotions'],
                     ['id' => 'deals', 'label' => 'Deals & Flash Sales', 'url' => 'deals'],
                     ['id' => 'coupons', 'label' => 'Coupons', 'url' => 'coupons'],
