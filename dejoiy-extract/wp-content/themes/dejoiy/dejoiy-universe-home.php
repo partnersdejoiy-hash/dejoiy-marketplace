@@ -541,6 +541,117 @@ function dejoiy_universe_home_html() {
 			</div>
 		</section>
 
+		<!-- §3.5 Amazon-Style 4-Quadrant Category Discovery Cards -->
+		<section class="du-quad-section du-reveal" aria-label="Featured Marketplace Collections" style="margin: 36px 0 28px;">
+			<div class="du-quad__in" style="max-width: 1400px; margin: 0 auto; padding: 0 20px;">
+				<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+					<!-- Card 1: Electronics & Tech -->
+					<div class="du-quad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 20px rgba(0,0,0,0.03); transition:transform .2s, box-shadow .2s;">
+						<div>
+							<h3 style="font-size:17px; font-weight:800; color:#0f172a; margin:0 0 14px; letter-spacing:-0.2px;">Trending in Tech & Audio</h3>
+							<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+								<a href="<?php echo esc_url( home_url( '/electronics/electronics/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🎧</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Headphones</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/electronics/electronics/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">⌚</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Smartwatches</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/electronics/electronics/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">⚡</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Fast Chargers</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/electronics/electronics/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">💻</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Laptops</span>
+								</a>
+							</div>
+						</div>
+						<a href="<?php echo esc_url( home_url( '/electronics/electronics/' ) ); ?>" style="font-size:13px; font-weight:700; color:#0066ff; text-decoration:none;">See more Electronics →</a>
+					</div>
+
+					<!-- Card 2: Custom Studio -->
+					<div class="du-quad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 20px rgba(0,0,0,0.03); transition:transform .2s, box-shadow .2s;">
+						<div>
+							<h3 style="font-size:17px; font-weight:800; color:#0f172a; margin:0 0 14px; letter-spacing:-0.2px;">Custom Studio • Create Yours</h3>
+							<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+								<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">👕</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Custom T-Shirts</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">☕</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Photo Mugs</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🧥</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Hoodies</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🖼️</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Wall Canvas</span>
+								</a>
+							</div>
+						</div>
+						<a href="<?php echo esc_url( home_url( '/dejoiy-custom-studio/' ) ); ?>" style="font-size:13px; font-weight:700; color:#d9006c; text-decoration:none;">Design in Custom Studio →</a>
+					</div>
+
+					<!-- Card 3: Festival Super Deals -->
+					<div class="du-quad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 20px rgba(0,0,0,0.03); transition:transform .2s, box-shadow .2s;">
+						<div>
+							<h3 style="font-size:17px; font-weight:800; color:#0f172a; margin:0 0 14px; letter-spacing:-0.2px;">Festival Super Deals</h3>
+							<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+								<a href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>" style="background:#fff1f2; border:1px solid #fecdd3; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🔥</span>
+									<span style="font-size:11px; font-weight:700; color:#9f1239;">Flash Sale</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🏷️</span>
+									<span style="font-size:11px; font-weight:700; color:#166534;">Up to 50% Off</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">📦</span>
+									<span style="font-size:11px; font-weight:700; color:#1e40af;">Combos</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>" style="background:#fefce8; border:1px solid #fef08a; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🪙</span>
+									<span style="font-size:11px; font-weight:700; color:#854d0e;">Under ₹499</span>
+								</a>
+							</div>
+						</div>
+						<a href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>" style="font-size:13px; font-weight:700; color:#ea580c; text-decoration:none;">Explore all festival deals →</a>
+					</div>
+
+					<!-- Card 4: Nexus Knowledge & Learning -->
+					<div class="du-quad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:20px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 4px 20px rgba(0,0,0,0.03); transition:transform .2s, box-shadow .2s;">
+						<div>
+							<h3 style="font-size:17px; font-weight:800; color:#0f172a; margin:0 0 14px; letter-spacing:-0.2px;">Nexus Knowledge & Learning</h3>
+							<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+								<a href="<?php echo esc_url( home_url( '/dejoiy-library/?dejoiy_library=1' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">📚</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Books</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-nexus-lms/' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🎓</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Courses</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-library/?dejoiy_library=1' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">📱</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">eBooks</span>
+								</a>
+								<a href="<?php echo esc_url( home_url( '/dejoiy-library/?dejoiy_library=1' ) ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 8px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;">
+									<span style="font-size:26px;">🎙️</span>
+									<span style="font-size:11px; font-weight:700; color:#334155;">Audiobooks</span>
+								</a>
+							</div>
+						</div>
+						<a href="<?php echo esc_url( home_url( '/dejoiy-library/?dejoiy_library=1' ) ); ?>" style="font-size:13px; font-weight:700; color:#7c3aed; text-decoration:none;">Discover Nexus library →</a>
+					</div>
+				</div>
+			</div>
+		</section>
+
 		<!-- §4 Unified recommendations -->
 		<?php if ( ! empty( $trending_posts ) || ! empty( $personal_posts ) || ! empty( $popular_posts ) ) : ?>
 		<section class="du-reco du-reveal" aria-labelledby="du-reco-title">

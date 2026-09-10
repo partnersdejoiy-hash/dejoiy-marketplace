@@ -835,6 +835,16 @@ function dejoiy_mph_hero_slides() {
 			'chip2'  => __( 'UPI · Cards · COD', 'dejoiy' ),
 		),
 		array(
+			'id'     => 'internships',
+			'type'   => 'intern',
+			'kicker' => __( 'DEJOIY INTERNSHIPS', 'dejoiy' ),
+		),
+		array(
+			'id'     => 'sell',
+			'type'   => 'sell',
+			'kicker' => __( 'SELL ON DEJOIY', 'dejoiy' ),
+		),
+		array(
 			'id'     => 'studio',
 			'kicker' => __( 'DEJOIY CUSTOM STUDIO', 'dejoiy' ),
 			'title'  => __( 'Design it. Create it. Own it.', 'dejoiy' ),
@@ -946,6 +956,87 @@ function dejoiy_mph_presents_html( $deals, $studio, $library ) {
 		. '</section>';
 }
 
+/**
+ * Amazon-Style 4-Quadrant High-Density Merchandising Cards
+ *
+ * @return string
+ */
+function dejoiy_mph_quad_discovery_html() {
+	$quads = array(
+		array(
+			'title'      => 'Top Picks in Tech & Electronics',
+			'link_label' => 'See all Electronics →',
+			'link_url'   => home_url( '/electronics/electronics/' ),
+			'tiles'      => array(
+				array( 'title' => 'Audio & Headphones', 'url' => home_url( '/electronics/electronics/' ), 'icon' => '🎧' ),
+				array( 'title' => 'Smartwatches & Fit', 'url' => home_url( '/electronics/electronics/' ), 'icon' => '⌚' ),
+				array( 'title' => 'Fast Chargers',      'url' => home_url( '/electronics/electronics/' ), 'icon' => '⚡' ),
+				array( 'title' => 'Laptops & Tablets',  'url' => home_url( '/electronics/electronics/' ), 'icon' => '💻' ),
+			),
+		),
+		array(
+			'title'      => 'Custom Studio • Made for You',
+			'link_label' => 'Design in Custom Studio →',
+			'link_url'   => home_url( '/dejoiy-custom-studio/' ),
+			'tiles'      => array(
+				array( 'title' => 'Custom T-Shirts',    'url' => home_url( '/dejoiy-custom-studio/' ), 'icon' => '👕' ),
+				array( 'title' => 'Photo Mugs',         'url' => home_url( '/dejoiy-custom-studio/' ), 'icon' => '☕' ),
+				array( 'title' => 'Hoodies & Sweat',    'url' => home_url( '/dejoiy-custom-studio/' ), 'icon' => '🧥' ),
+				array( 'title' => 'Wall Canvas Art',    'url' => home_url( '/dejoiy-custom-studio/' ), 'icon' => '🖼️' ),
+			),
+		),
+		array(
+			'title'      => 'Festival Super Deals',
+			'link_label' => 'Explore all festival deals →',
+			'link_url'   => home_url( '/dejoiy-festival-sale/' ),
+			'tiles'      => array(
+				array( 'title' => 'Flash Sale',         'url' => home_url( '/dejoiy-festival-sale/' ), 'icon' => '🔥' ),
+				array( 'title' => 'Up to 50% Off',      'url' => home_url( '/dejoiy-festival-sale/' ), 'icon' => '🏷️' ),
+				array( 'title' => 'Value Bundles',      'url' => home_url( '/dejoiy-festival-sale/' ), 'icon' => '📦' ),
+				array( 'title' => 'Under ₹499',         'url' => home_url( '/dejoiy-festival-sale/' ), 'icon' => '🪙' ),
+			),
+		),
+		array(
+			'title'      => 'Nexus Knowledge & Courses',
+			'link_label' => 'Discover Nexus library →',
+			'link_url'   => home_url( '/dejoiy-library/?dejoiy_library=1' ),
+			'tiles'      => array(
+				array( 'title' => 'Books & Guides',     'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'icon' => '📚' ),
+				array( 'title' => 'Skill Courses',      'url' => home_url( '/dejoiy-nexus-lms/' ),                 'icon' => '🎓' ),
+				array( 'title' => 'eBooks & PDFs',      'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'icon' => '📱' ),
+				array( 'title' => 'Audiobooks',         'url' => home_url( '/dejoiy-library/?dejoiy_library=1' ), 'icon' => '🎙️' ),
+			),
+		),
+	);
+
+	ob_start();
+	?>
+	<section class="mph-section mph-quads" aria-label="<?php esc_attr_e( 'Featured marketplace discovery', 'dejoiy' ); ?>" style="padding: 16px 0 24px;">
+		<div class="mph-in" style="max-width: 1400px; margin: 0 auto; padding: 0 16px;">
+			<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;">
+				<?php foreach ( $quads as $q ) : ?>
+					<div class="mph-quad-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:14px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 10px rgba(0,0,0,0.03);">
+						<div>
+							<h3 style="font-size:16px; font-weight:800; color:#0f172a; margin:0 0 14px; letter-spacing:-0.2px; line-height:1.3;"><?php echo esc_html( $q['title'] ); ?></h3>
+							<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+								<?php foreach ( $q['tiles'] as $tile ) : ?>
+									<a href="<?php echo esc_url( $tile['url'] ); ?>" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 6px; text-decoration:none; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; transition:transform 0.15s ease;">
+										<span style="font-size:24px; line-height:1;"><?php echo $tile['icon']; ?></span>
+										<span style="font-size:11px; font-weight:600; color:#334155; line-height:1.2;"><?php echo esc_html( $tile['title'] ); ?></span>
+									</a>
+								<?php endforeach; ?>
+							</div>
+						</div>
+						<a href="<?php echo esc_url( $q['link_url'] ); ?>" style="font-size:13px; font-weight:700; color:#0066ff; text-decoration:none; display:inline-flex; align-items:center; gap:4px;"><?php echo esc_html( $q['link_label'] ); ?></a>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</section>
+	<?php
+	return (string) ob_get_clean();
+}
+
 /* ---------------------------------------------------------------
    Main renderer
    --------------------------------------------------------------- */
@@ -1055,7 +1146,12 @@ function dejoiy_marketplace_home_html() {
 		<section class="mph-hero" aria-label="Featured" data-mph-hero>
 			<div class="mph-hero__track" data-mph-hero-track>
 				<?php foreach ( $slides as $i => $s ) : ?>
-					<article class="mph-hero__slide" data-mph-slide style="--mph-slide-bg:<?php echo esc_attr( $s['bg'] ); ?>">
+					<?php if ( ! empty( $s['type'] ) && in_array( $s['type'], array( 'intern', 'sell' ), true ) ) : ?>
+						<article class="mph-hero__slide mph-hero__slide--promo" data-mph-slide style="--mph-slide-bg:transparent">
+							<?php echo dejoiy_mph_promo_slide_render( $s['type'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+						</article>
+					<?php else : ?>
+						<article class="mph-hero__slide" data-mph-slide style="--mph-slide-bg:<?php echo esc_attr( $s['bg'] ); ?>">
 						<div class="mph-hero__in">
 							<div class="mph-hero__copy">
 								<p class="mph-hero__kicker"><?php echo esc_html( $s['kicker'] ); ?></p>
@@ -1078,6 +1174,7 @@ function dejoiy_marketplace_home_html() {
 							</div>
 						</div>
 					</article>
+					<?php endif; ?>
 				<?php endforeach; ?>
 			</div>
 			<div class="mph-hero__nav">
@@ -1117,11 +1214,11 @@ function dejoiy_marketplace_home_html() {
 		</section>
 
 		<?php
-		/* ============ PREMIUM CAMPAIGN BANNERS (internships + become a seller) ============ */
-		echo dejoiy_mph_promos(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-
 		/* ============ POSTER STRIP + SHARE-FRAME CANVAS ============ */
 		echo dejoiy_mph_presents_html( $deals, $studio, $library ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+
+		/* ============ AMAZON-STYLE 4-QUADRANT FEATURE CARDS ============ */
+		echo dejoiy_mph_quad_discovery_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 /* ============ DEALS + COUNTDOWN ============ */
 		?>

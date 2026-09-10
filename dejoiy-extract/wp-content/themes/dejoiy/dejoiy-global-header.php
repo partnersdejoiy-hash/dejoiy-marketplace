@@ -175,13 +175,26 @@ function dejoiy_gh_cart_count() {
 
 function dejoiy_gh_delivery_label() {
 	if ( function_exists( 'WC' ) && WC()->customer ) {
-		$city  = trim( (string) WC()->customer->get_shipping_city() );
-		$state = trim( (string) WC()->customer->get_shipping_state() );
-		if ( $city ) {
-			return $state ? $city . ', ' . $state : $city;
+		$city     = trim( (string) WC()->customer->get_shipping_city() );
+		$postcode = trim( (string) WC()->customer->get_shipping_postcode() );
+		if ( ! $city ) {
+			$city = trim( (string) WC()->customer->get_billing_city() );
+		}
+		if ( ! $postcode ) {
+			$postcode = trim( (string) WC()->customer->get_billing_postcode() );
+		}
+		if ( $city && $postcode ) {
+			return $city . ' ' . $postcode;
+		} elseif ( $city ) {
+			return $city;
+		} elseif ( $postcode ) {
+			return $postcode;
 		}
 	}
-	return __( 'Set location', 'dejoiy' );
+	if ( ! empty( $_COOKIE['dejoiy_pincode'] ) ) {
+		return sanitize_text_field( wp_unslash( $_COOKIE['dejoiy_pincode'] ) );
+	}
+	return __( 'Select your address', 'dejoiy' );
 }
 
 /* ---------------------------------------------------------------

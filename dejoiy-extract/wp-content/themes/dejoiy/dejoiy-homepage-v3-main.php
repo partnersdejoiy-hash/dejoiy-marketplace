@@ -100,6 +100,11 @@ function dejoiy_v3_render() {
     // DEJOIY Worlds
     dejoiy_v3_render_worlds();
 
+    // Amazon-Style 4-Quadrant Discovery Cards
+    if (function_exists('dejoiy_v3_render_amazon_quad_grid')) {
+        dejoiy_v3_render_amazon_quad_grid();
+    }
+
     // Deals Section
     echo '<section class="djv3-section djv3-deals djv3-reveal"><div class="djv3-container">';
     echo '<div class="djv3-section__header"><div><h2 class="djv3-section__title">🏷️ Joy Deals</h2><p class="djv3-section__subtitle">Best prices, curated for you</p></div>';

@@ -169,6 +169,28 @@ function dejoiy_universal_checkout_assets() {
 }
 
 /**
+ * Amazon-style purchase protection trust seal
+ */
+function dejoiy_universal_checkout_trust_seal() {
+	?>
+	<div class="dejoiy-checkout-trust-badge" style="margin:18px 0;padding:14px 18px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12.5px;color:#334155;font-family:'Inter',sans-serif;">
+		<div style="display:flex;align-items:center;gap:10px;">
+			<span style="font-size:20px;">🛡️</span>
+			<div>
+				<strong style="color:#0f172a;font-size:13px;">DEJOIY 100% Purchase Protection</strong>
+				<div style="font-size:11.5px;color:#64748b;margin-top:2px;">Genuine Products • Direct Seller Guarantee • Safe Delivery</div>
+			</div>
+		</div>
+		<div style="display:flex;align-items:center;gap:14px;font-weight:600;font-size:12px;color:#475569;">
+			<span>🔒 256-Bit SSL</span>
+			<span>💳 Razorpay / UPI</span>
+			<span>🔄 7-Day Returns</span>
+		</div>
+	</div>
+	<?php
+}
+
+/**
  * Register universal checkout hooks.
  */
 function dejoiy_universal_checkout_init() {
@@ -182,5 +204,6 @@ function dejoiy_universal_checkout_init() {
 	add_filter( 'body_class', 'dejoiy_universal_checkout_body_class' );
 	add_action( 'woocommerce_before_checkout_form', 'dejoiy_universal_checkout_open', 4 );
 	add_action( 'woocommerce_after_checkout_form', 'dejoiy_universal_checkout_close', 99 );
+	add_action( 'woocommerce_review_order_after_payment', 'dejoiy_universal_checkout_trust_seal', 15 );
 	add_action( 'wp_enqueue_scripts', 'dejoiy_universal_checkout_assets', 1015 );
 }

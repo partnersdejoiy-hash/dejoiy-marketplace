@@ -598,6 +598,19 @@ function dejoiy_marketplace_parse_request( $query_vars ) {
 	$view    = sanitize_key( (string) $query_vars['dejoiy_mkt_view'] );
 	$landing = isset( $query_vars['dejoiy_landing'] ) ? sanitize_title( (string) $query_vars['dejoiy_landing'] ) : '';
 
+	if ( 'product' === $view ) {
+		$dpin = isset( $query_vars['dejoiy_dpin'] ) ? strtoupper( (string) $query_vars['dejoiy_dpin'] ) : '';
+		$pid  = function_exists( 'dejoiy_dpin_resolve_product_id' ) ? dejoiy_dpin_resolve_product_id( $dpin, true ) : 0;
+		if ( $pid < 1 ) {
+			return $query_vars;
+		}
+
+		unset( $query_vars['dejoiy_mkt_view'], $query_vars['dejoiy_landing'], $query_vars['dejoiy_mkt_cat'], $query_vars['dejoiy_product_slug'], $query_vars['dejoiy_dpin'] );
+		$query_vars['post_type'] = 'product';
+		$query_vars['p']         = $pid;
+		return $query_vars;
+	}
+
 	if ( dejoiy_marketplace_is_reserved_slug( $landing ) ) {
 		if ( 'product' === $landing && 'category' === $view ) {
 			$slug = isset( $query_vars['dejoiy_mkt_cat'] ) ? sanitize_title( (string) $query_vars['dejoiy_mkt_cat'] ) : '';
@@ -611,19 +624,6 @@ function dejoiy_marketplace_parse_request( $query_vars ) {
 			}
 		}
 		return dejoiy_marketplace_clear_route_query_vars( $query_vars );
-	}
-
-	if ( 'product' === $view ) {
-		$dpin = isset( $query_vars['dejoiy_dpin'] ) ? strtoupper( (string) $query_vars['dejoiy_dpin'] ) : '';
-		$pid  = function_exists( 'dejoiy_dpin_resolve_product_id' ) ? dejoiy_dpin_resolve_product_id( $dpin, true ) : 0;
-		if ( $pid < 1 ) {
-			return $query_vars;
-		}
-
-		unset( $query_vars['dejoiy_mkt_view'], $query_vars['dejoiy_landing'], $query_vars['dejoiy_mkt_cat'], $query_vars['dejoiy_product_slug'], $query_vars['dejoiy_dpin'] );
-		$query_vars['post_type'] = 'product';
-		$query_vars['p']         = $pid;
-		return $query_vars;
 	}
 
 	if ( 'category' === $view ) {

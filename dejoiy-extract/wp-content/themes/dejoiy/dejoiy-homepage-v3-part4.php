@@ -271,3 +271,79 @@ function dejoiy_v3_render_js() {
     </script>
     <?php
 }
+
+/**
+ * Amazon-style 4-Quadrant High-Density Merchandising Cards
+ */
+function dejoiy_v3_render_amazon_quad_grid() {
+    $quads = array(
+        array(
+            'title' => 'Top Picks in Tech & Electronics',
+            'link_label' => 'Explore all Electronics →',
+            'link_url' => home_url('/electronics/electronics/'),
+            'tiles' => array(
+                array('title' => 'Audio & Headphones', 'url' => home_url('/electronics/electronics/'), 'icon' => '🎧'),
+                array('title' => 'Smartwatches & Fit', 'url' => home_url('/electronics/electronics/'), 'icon' => '⌚'),
+                array('title' => 'Cables & Chargers', 'url' => home_url('/electronics/electronics/'), 'icon' => '⚡'),
+                array('title' => 'Tablets & Laptops', 'url' => home_url('/electronics/electronics/'), 'icon' => '💻'),
+            ),
+        ),
+        array(
+            'title' => 'Custom Studio • Made for You',
+            'link_label' => 'Start Designing in Studio →',
+            'link_url' => home_url('/dejoiy-custom-studio/'),
+            'tiles' => array(
+                array('title' => 'Custom T-Shirts', 'url' => home_url('/dejoiy-custom-studio/'), 'icon' => '👕'),
+                array('title' => 'Photo Mugs', 'url' => home_url('/dejoiy-custom-studio/'), 'icon' => '☕'),
+                array('title' => 'Custom Hoodies', 'url' => home_url('/dejoiy-custom-studio/'), 'icon' => '🧥'),
+                array('title' => 'Canvas Prints', 'url' => home_url('/dejoiy-custom-studio/'), 'icon' => '🖼️'),
+            ),
+        ),
+        array(
+            'title' => 'Festival Super Deals',
+            'link_label' => 'See all Deals (Up to 50% Off) →',
+            'link_url' => home_url('/dejoiy-festival-sale/'),
+            'tiles' => array(
+                array('title' => 'Daily Steals', 'url' => home_url('/dejoiy-festival-sale/'), 'icon' => '🏷️'),
+                array('title' => 'Flash Discounts', 'url' => home_url('/dejoiy-festival-sale/'), 'icon' => '🔥'),
+                array('title' => 'Bundle Offers', 'url' => home_url('/dejoiy-festival-sale/'), 'icon' => '📦'),
+                array('title' => 'Under ₹499', 'url' => home_url('/dejoiy-festival-sale/'), 'icon' => '🪙'),
+            ),
+        ),
+        array(
+            'title' => 'Nexus Knowledge & Courses',
+            'link_label' => 'Browse Nexus Catalog →',
+            'link_url' => home_url('/dejoiy-library/?dejoiy_library=1'),
+            'tiles' => array(
+                array('title' => 'Books & Guides', 'url' => home_url('/dejoiy-library/?dejoiy_library=1'), 'icon' => '📚'),
+                array('title' => 'Skill Courses', 'url' => home_url('/dejoiy-nexus-lms/'), 'icon' => '🎓'),
+                array('title' => 'eBooks & PDFs', 'url' => home_url('/dejoiy-library/?dejoiy_library=1'), 'icon' => '📱'),
+                array('title' => 'Audiobooks', 'url' => home_url('/dejoiy-library/?dejoiy_library=1'), 'icon' => '🎙️'),
+            ),
+        ),
+    );
+    ?>
+    <section class="djv3-quad-section djv3-reveal" style="padding: 28px 0 32px; background: #f8fafc;">
+        <div class="djv3-container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+                <?php foreach ($quads as $quad) : ?>
+                <div class="djv3-quad-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); transition: transform 0.2s, box-shadow 0.2s;">
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 14px; letter-spacing: -0.2px; line-height: 1.3;"><?php echo esc_html($quad['title']); ?></h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+                            <?php foreach ($quad['tiles'] as $tile) : ?>
+                            <a href="<?php echo esc_url($tile['url']); ?>" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 10px; text-decoration: none; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                                <span style="font-size: 26px; line-height: 1;"><?php echo $tile['icon']; ?></span>
+                                <span style="font-size: 11.5px; font-weight: 600; color: #334155; line-height: 1.2;"><?php echo esc_html($tile['title']); ?></span>
+                            </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <a href="<?php echo esc_url($quad['link_url']); ?>" style="font-size: 13px; font-weight: 700; color: #0066ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;"><?php echo esc_html($quad['link_label']); ?></a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+    <?php
+}
