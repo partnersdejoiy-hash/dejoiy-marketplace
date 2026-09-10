@@ -1,10 +1,28 @@
 :root {
-  --dso-primary: #4f46e5;
-  --dso-primary-dark: #4338ca;
-  --dso-primary-light: #818cf8;
-  --dso-accent: #7c3aed;
-  --dso-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  --dso-gradient-hover: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+  /* DEJOIY Official Design Token System */
+  --dejoiy-pink: #ff007a;
+  --dejoiy-magenta: #d9006c;
+  --dejoiy-blue: #0066ff;
+  --dejoiy-blue-hover: #0052cc;
+  --dejoiy-blue-light: #e0edff;
+  --dejoiy-deep-blue: #001553;
+  --dejoiy-deep-blue-dark: #000c30;
+  --dejoiy-deep-blue-surface: #041038;
+  --dejoiy-surface: #ffffff;
+  --dejoiy-background: #f8fafc;
+  --dejoiy-text: #0f172a;
+  --dejoiy-muted: #64748b;
+  --dejoiy-success: #10b981;
+  --dejoiy-warning: #f59e0b;
+  --dejoiy-danger: #ef4444;
+
+  /* Aliases for DSO backward compatibility */
+  --dso-primary: var(--dejoiy-blue);
+  --dso-primary-dark: var(--dejoiy-blue-hover);
+  --dso-primary-light: #38bdf8;
+  --dso-accent: var(--dejoiy-pink);
+  --dso-gradient: linear-gradient(135deg, #0066ff 0%, #d9006c 100%);
+  --dso-gradient-hover: linear-gradient(135deg, #0052cc 0%, #b30059 100%);
   --dso-success: #10b981;
   --dso-success-light: #d1fae5;
   --dso-success-dark: #059669;
@@ -14,13 +32,13 @@
   --dso-danger: #ef4444;
   --dso-danger-light: #fee2e2;
   --dso-danger-dark: #dc2626;
-  --dso-info: #3b82f6;
-  --dso-info-light: #dbeafe;
-  --dso-info-dark: #2563eb;
+  --dso-info: #0066ff;
+  --dso-info-light: #e0edff;
+  --dso-info-dark: #0052cc;
   --dso-teal: #14b8a6;
   --dso-teal-light: #ccfbf1;
-  --dso-purple: #8b5cf6;
-  --dso-purple-light: #ede9fe;
+  --dso-purple: #0066ff;
+  --dso-purple-light: #e0edff;
   --dso-orange: #f97316;
   --dso-orange-light: #ffedd5;
   --dso-yellow: #eab308;
@@ -103,8 +121,8 @@ img { max-width: 100%; height: auto; }
   left: 0;
   right: 0;
   height: var(--dso-topbar-height);
-  background: linear-gradient(90deg, #0b0f19 0%, #0f172a 45%, #1e1b4b 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, #000c2e 0%, #001553 45%, #051d66 100%);
+  border-bottom: 1px solid rgba(0, 102, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -258,7 +276,7 @@ img { max-width: 100%; height: auto; }
   background: var(--dso-gradient);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.35);
 }
 
 .dso-nav-icon {
@@ -443,11 +461,11 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-bottom-nav-item:hover {
-  color: var(--dso-primary, #7c3aed);
+  color: var(--dso-primary, #0066ff);
 }
 
 .dso-bottom-nav-item.dso-bottom-active {
-  color: var(--dso-primary, #7c3aed);
+  color: var(--dso-primary, #0066ff);
   font-weight: 700;
 }
 
@@ -911,12 +929,12 @@ img { max-width: 100%; height: auto; }
 .dso-btn-primary {
   background: var(--dso-gradient);
   color: #fff;
-  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.35);
 }
 
 .dso-btn-primary:hover {
   background: var(--dso-gradient-hover);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.45);
   transform: translateY(-1px);
 }
 
@@ -945,8 +963,8 @@ img { max-width: 100%; height: auto; }
 
 .dso-btn-outline:hover {
   background: var(--dso-gray-50, #f8fafc);
-  border-color: var(--dso-primary, #7c3aed);
-  color: var(--dso-primary, #7c3aed);
+  border-color: var(--dso-primary, #0066ff);
+  color: var(--dso-primary, #0066ff);
 }
 
 .dso-btn-success {
@@ -3136,19 +3154,20 @@ img { max-width: 100%; height: auto; }
    DEJOIY BRAND TOKENS & ADVANCED SELLER CENTRAL COMPONENTS
    ========================================================================== */
 :root {
-  --dj-primary: #7c3aed;
-  --dj-primary-dark: #6d28d9;
-  --dj-primary-light: #a78bfa;
-  --dj-secondary: #ec4899;
-  --dj-accent: #06b6d4;
-  --dj-dark: #0f172a;
+  --dj-primary: var(--dejoiy-blue);
+  --dj-primary-dark: var(--dejoiy-blue-hover);
+  --dj-primary-light: #38bdf8;
+  --dj-secondary: var(--dejoiy-magenta);
+  --dj-pink: var(--dejoiy-pink);
+  --dj-accent: #00d2ff;
+  --dj-dark: var(--dejoiy-deep-blue);
   --dj-bg: #f8fafc;
   --dj-bg-card: #ffffff;
   --dj-border: #e2e8f0;
-  --dj-text: #1e293b;
+  --dj-text: #0f172a;
   --dj-text-muted: #64748b;
-  --dj-gradient: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
-  --dj-gradient-dark: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  --dj-gradient: linear-gradient(135deg, #0066ff 0%, #d9006c 100%);
+  --dj-gradient-dark: linear-gradient(135deg, #000c2c 0%, #001553 50%, #052475 100%);
 }
 
 .dso-brand-logo-img,
@@ -3170,9 +3189,9 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-brand-badge {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
-  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: rgba(0, 102, 255, 0.12);
+  color: #0066ff;
+  border: 1px solid rgba(0, 102, 255, 0.25);
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -3183,7 +3202,7 @@ img { max-width: 100%; height: auto; }
 
 /* Welcome Banner */
 .dso-welcome-banner {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #2e1065 100%);
+  background: linear-gradient(135deg, #000e33 0%, #001553 45%, #052a80 80%, #150630 100%);
   color: #fff;
   padding: 28px 32px;
   border-radius: 16px;
@@ -3195,14 +3214,15 @@ img { max-width: 100%; height: auto; }
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(0, 21, 83, 0.35);
+  border: 1px solid rgba(0, 102, 255, 0.25);
 }
 
 .dso-welcome-badge {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.2px;
-  color: #c084fc;
+  color: #38bdf8;
   margin-bottom: 8px;
 }
 
@@ -3348,12 +3368,12 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-stat-card:hover, .dso-stat-card.active {
-  border-color: #7c3aed;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.08);
+  border-color: #0066ff;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.12);
 }
 
 .dso-stat-card.active {
-  background: #faf5ff;
+  background: #f0f6ff;
 }
 
 .dso-stat-label {
@@ -3402,14 +3422,14 @@ img { max-width: 100%; height: auto; }
   height: 110px;
   border-radius: 50%;
   border: 8px solid #e2e8f0;
-  border-top-color: #7c3aed;
-  border-right-color: #ec4899;
+  border-top-color: #0066ff;
+  border-right-color: #d9006c;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
 }
 
 .dso-lqs-dial-val {
@@ -3538,7 +3558,7 @@ img { max-width: 100%; height: auto; }
 
 .dso-health-bar {
   height: 100%;
-  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  background: linear-gradient(90deg, #0066ff, #d9006c);
   border-radius: 99px;
 }
 
@@ -3629,7 +3649,7 @@ img { max-width: 100%; height: auto; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  background: linear-gradient(135deg, #000c2c, #001553);
   color: #fff;
 }
 
@@ -3659,9 +3679,9 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-ai-prompt-btn:hover {
-  border-color: #7c3aed;
-  background: #faf5ff;
-  color: #7c3aed;
+  border-color: #0066ff;
+  background: #e0edff;
+  color: #0066ff;
 }
 
 .dso-ai-drawer-footer {
@@ -3705,7 +3725,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-quick-stock-input:focus {
-  border-color: #7c3aed;
+  border-color: #0066ff;
   outline: none;
 }
 
@@ -3841,9 +3861,9 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-brand-badge {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(236, 72, 153, 0.25)) !important;
-  color: #c4b5fd !important;
-  border: 1px solid rgba(167, 139, 250, 0.4) !important;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.25), rgba(217, 0, 108, 0.25)) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(0, 102, 255, 0.4) !important;
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -3957,7 +3977,7 @@ img { max-width: 100%; height: auto; }
 .dso-merchant-code {
   font-family: monospace;
   font-weight: 700;
-  color: #c084fc;
+  color: #38bdf8;
   letter-spacing: 0.5px;
 }
 .dso-merchant-sep {
@@ -3978,7 +3998,7 @@ img { max-width: 100%; height: auto; }
   font-size: 13px;
 }
 .dso-user-avatar-placeholder {
-  background: linear-gradient(135deg, #7c3aed, #ec4899) !important;
+  background: linear-gradient(135deg, #0066ff, #d9006c) !important;
   color: #ffffff !important;
   font-weight: 700;
 }
@@ -3997,9 +4017,9 @@ img { max-width: 100%; height: auto; }
   user-select: none;
 }
 .dso-dpin-pill:hover {
-  background: #ede9fe;
-  border-color: #a78bfa;
-  color: #7c3aed;
+  background: #e0edff;
+  border-color: #0066ff;
+  color: #0066ff;
 }
 .dso-dpin-pill code {
   font-family: monospace;
@@ -4013,15 +4033,15 @@ img { max-width: 100%; height: auto; }
   transition: color 0.15s ease;
 }
 .dso-dpin-pill:hover svg {
-  color: #7c3aed;
+  color: #0066ff;
 }
 
 /* Enterprise Professional Footer */
 .dso-footer {
   margin-top: 56px;
-  background: #0b0f19;
+  background: #000c2c;
   color: #94a3b8;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 102, 255, 0.2);
   border-radius: 18px 18px 0 0;
   padding: 44px 36px 28px;
 }
@@ -4059,9 +4079,9 @@ img { max-width: 100%; height: auto; }
   object-fit: contain;
 }
 .dso-footer-badge {
-  background: rgba(124, 58, 237, 0.25);
-  color: #c4b5fd;
-  border: 1px solid rgba(167, 139, 250, 0.4);
+  background: rgba(0, 102, 255, 0.25);
+  color: #38bdf8;
+  border: 1px solid rgba(0, 102, 255, 0.4);
   font-size: 10px;
   font-weight: 800;
   padding: 2px 7px;
@@ -4122,7 +4142,7 @@ img { max-width: 100%; height: auto; }
 }
 .dso-footer-support-phone {
   font-size: 12px;
-  color: #a78bfa;
+  color: #38bdf8;
   font-weight: 600;
   margin-top: 6px;
   display: block;
@@ -4171,8 +4191,8 @@ img { max-width: 100%; height: auto; }
 
 .dso-search-field:focus-within {
   background: rgba(255, 255, 255, 0.14);
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.25);
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25);
 }
 
 .dso-search-icon {
@@ -4268,7 +4288,7 @@ img { max-width: 100%; height: auto; }
 .dso-search-res-item:hover,
 .dso-search-res-item.dso-selected {
   background: #f1f5f9;
-  border-left-color: #7c3aed;
+  border-left-color: #0066ff;
 }
 
 .dso-search-item-thumb {
@@ -4312,8 +4332,8 @@ img { max-width: 100%; height: auto; }
 }
 .dso-search-item-meta code {
   font-family: monospace;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #e0edff;
+  color: #0052cc;
   padding: 1px 5px;
   border-radius: 4px;
   font-weight: 700;
@@ -4357,9 +4377,9 @@ img { max-width: 100%; height: auto; }
 }
 .dso-greeting-store-pill {
   font-size: 11px;
-  background: rgba(124, 58, 237, 0.3);
-  color: #c4b5fd;
-  border: 1px solid rgba(167, 139, 250, 0.4);
+  background: rgba(0, 102, 255, 0.25);
+  color: #38bdf8;
+  border: 1px solid rgba(0, 102, 255, 0.4);
   padding: 1px 6px;
   border-radius: 10px;
   font-weight: 600;
@@ -4387,7 +4407,7 @@ img { max-width: 100%; height: auto; }
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  background: linear-gradient(135deg, #0066ff, #d9006c);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -4433,7 +4453,7 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-hub-header-box {
-  background: linear-gradient(135deg, #0f172a, #1e1b4b);
+  background: linear-gradient(135deg, #000c2c, #001553);
   color: #ffffff;
   padding: 18px 20px;
 }
@@ -4457,9 +4477,9 @@ img { max-width: 100%; height: auto; }
 .dso-hub-merchant-tag {
   font-family: monospace;
   font-weight: 700;
-  color: #c084fc;
-  background: rgba(192, 132, 252, 0.15);
-  border: 1px solid rgba(192, 132, 252, 0.3);
+  color: #38bdf8;
+  background: rgba(0, 102, 255, 0.15);
+  border: 1px solid rgba(0, 102, 255, 0.3);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
@@ -4489,7 +4509,7 @@ img { max-width: 100%; height: auto; }
 }
 .dso-hub-item:hover {
   background: #f1f5f9;
-  color: #7c3aed;
+  color: #0066ff;
   padding-left: 24px;
 }
 .dso-hub-item-icon {
@@ -4528,8 +4548,8 @@ img { max-width: 100%; height: auto; }
   left: 0 !important;
   right: 0 !important;
   height: 64px !important;
-  background: linear-gradient(90deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: linear-gradient(90deg, #000c2e 0%, #001553 45%, #051d66 100%) !important;
+  border-bottom: 1px solid rgba(0, 102, 255, 0.2) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -4537,7 +4557,7 @@ img { max-width: 100%; height: auto; }
   overflow: visible !important;
   padding: 0 20px !important;
   z-index: 1000 !important;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 21, 83, 0.45) !important;
   backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
 }
@@ -4582,14 +4602,14 @@ img { max-width: 100%; height: auto; }
   filter: brightness(0) invert(1) !important;
 }
 .dso-brand-badge {
-  background: rgba(124, 58, 237, 0.25) !important;
-  color: #c4b5fd !important;
+  background: rgba(0, 102, 255, 0.25) !important;
+  color: #38bdf8 !important;
   font-size: 10px !important;
   font-weight: 800 !important;
   letter-spacing: 0.8px !important;
   padding: 3px 8px !important;
   border-radius: 6px !important;
-  border: 1px solid rgba(167, 139, 250, 0.3) !important;
+  border: 1px solid rgba(0, 102, 255, 0.35) !important;
   display: inline-block !important;
 }
 
@@ -4610,19 +4630,22 @@ img { max-width: 100%; height: auto; }
 }
 
 .dso-topbar-link {
-  color: #c4b5fd !important;
+  color: #ffffff !important;
   font-size: 13px !important;
   font-weight: 600 !important;
   text-decoration: none !important;
-  background: rgba(124, 58, 237, 0.15) !important;
-  border: 1px solid rgba(167, 139, 250, 0.3) !important;
-  padding: 5px 12px !important;
+  background: linear-gradient(135deg, #0066ff 0%, #d9006c 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  padding: 5px 14px !important;
   border-radius: 20px !important;
   transition: all 0.2s ease !important;
   white-space: nowrap !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3) !important;
 }
 .dso-topbar-link:hover {
-  background: rgba(124, 58, 237, 0.28) !important;
+  background: linear-gradient(135deg, #0052cc 0%, #b30059 100%) !important;
+  color: #ffffff !important;
+}
   color: #ffffff !important;
 }
 
@@ -4657,8 +4680,8 @@ img { max-width: 100%; height: auto; }
     bottom: 0 !important;
     width: 260px !important;
     height: calc(100vh - 64px) !important;
-    background: #0b1120 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: linear-gradient(180deg, #000c2c 0%, #001553 60%, #000a26 100%) !important;
+    border-right: 1px solid rgba(0, 102, 255, 0.18) !important;
     z-index: 900 !important;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow-y: auto !important;
@@ -4694,8 +4717,8 @@ img { max-width: 100%; height: auto; }
     bottom: 0 !important;
     width: 280px !important;
     height: 100vh !important;
-    background: #0b1120 !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(180deg, #000c2c 0%, #001553 60%, #000a26 100%) !important;
+    border-right: 1px solid rgba(0, 102, 255, 0.2) !important;
     z-index: 1200 !important;
     transform: translateX(-100%) !important;
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -4714,8 +4737,8 @@ img { max-width: 100%; height: auto; }
     align-items: center !important;
     justify-content: space-between !important;
     padding: 16px 18px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    background: #070b14 !important;
+    border-bottom: 1px solid rgba(0, 102, 255, 0.2) !important;
+    background: #000922 !important;
     flex-shrink: 0 !important;
   }
   .dso-sidebar-close {
@@ -4733,7 +4756,7 @@ img { max-width: 100%; height: auto; }
   .dso-sidebar-overlay {
     position: fixed !important;
     inset: 0 !important;
-    background: rgba(15, 23, 42, 0.7) !important;
+    background: rgba(0, 12, 44, 0.75) !important;
     backdrop-filter: blur(4px) !important;
     z-index: 1190 !important;
     display: none;
@@ -4761,7 +4784,7 @@ img { max-width: 100%; height: auto; }
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
-  color: #64748b !important;
+  color: #38bdf8 !important;
   display: block !important;
 }
 .dso-nav-link {
@@ -4770,7 +4793,7 @@ img { max-width: 100%; height: auto; }
   gap: 12px !important;
   padding: 9px 12px !important;
   border-radius: 9px !important;
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
   font-size: 13.5px !important;
   font-weight: 500 !important;
   transition: all 0.15s ease !important;
@@ -4779,15 +4802,15 @@ img { max-width: 100%; height: auto; }
   width: 100% !important;
 }
 .dso-nav-link:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(0, 102, 255, 0.12) !important;
   color: #ffffff !important;
 }
 .dso-nav-active .dso-nav-link,
 .dso-nav-active > .dso-nav-link {
-  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+  background: linear-gradient(135deg, #0066ff 0%, #d9006c 100%) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.45) !important;
 }
 .dso-nav-icon {
   font-size: 16px !important;
@@ -4814,13 +4837,13 @@ img { max-width: 100%; height: auto; }
 }
 .dso-nav-child:hover,
 .dso-nav-child.dso-nav-active {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: #c4b5fd !important;
+  background: rgba(0, 102, 255, 0.15) !important;
+  color: #38bdf8 !important;
 }
 .dso-sidebar-footer {
   padding: 14px 12px !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-  background: #080c16 !important;
+  border-top: 1px solid rgba(0, 102, 255, 0.15) !important;
+  background: #000a26 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 4px !important;

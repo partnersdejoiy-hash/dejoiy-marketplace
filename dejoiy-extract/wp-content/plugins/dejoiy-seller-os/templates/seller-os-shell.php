@@ -181,10 +181,10 @@ window.dsoSearchData = {
                         </div>
                     </div>
                     <div class="dso-hub-content-list">
-                        <a href="<?php echo esc_url($live_store_url); ?>" target="_blank" rel="noopener" class="dso-hub-item" style="color:#7c3aed;font-weight:700;">
+                        <a href="<?php echo esc_url($live_store_url); ?>" target="_blank" rel="noopener" class="dso-hub-item" style="color:#0066ff;font-weight:700;">
                             <span class="dso-hub-item-icon">🌐</span>
                             <span>Visit Live Storefront</span>
-                            <span class="dso-hub-badge-pill" style="background:#ede9fe;color:#7c3aed;">↗</span>
+                            <span class="dso-hub-badge-pill" style="background:rgba(0,102,255,0.12);color:#0066ff;">↗</span>
                         </a>
                         <button type="button" class="dso-hub-item" id="dso-hub-trigger-ai">
                             <span class="dso-hub-item-icon">✨</span>
@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headerSearchResults.innerHTML = 
                 '<div class="dso-search-empty">' +
                     '🔍 No results found for "<strong>' + escapeHtml(q) + '</strong>"<br>' +
-                    '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="display:inline-block;margin-top:8px;color:#7c3aed;font-weight:600;text-decoration:underline;">Search full catalog &rarr;</a>' +
+                    '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="display:inline-block;margin-top:8px;color:#0066ff;font-weight:600;text-decoration:underline;">Search full catalog &rarr;</a>' +
                 '</div>';
             headerSearchResults.style.display = 'block';
             currentHighlightIndex = -1;
@@ -634,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function() {
         html += 
             '<div style="padding:8px 16px;border-top:1px solid #f1f5f9;background:#f8fafc;font-size:12px;display:flex;align-items:center;justify-content:space-between;">' +
                 '<span style="color:#64748b;">Press <kbd style="background:#e2e8f0;padding:1px 5px;border-radius:3px;font-family:monospace;">Enter</kbd> to search catalog</span>' +
-                '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="color:#7c3aed;font-weight:600;text-decoration:none;">View all results &rarr;</a>' +
+                '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="color:#0066ff;font-weight:600;text-decoration:none;">View all results &rarr;</a>' +
             '</div>';
 
         headerSearchResults.innerHTML = html;
@@ -825,13 +825,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!conv) return;
 
             var userMsg = document.createElement('div');
-            userMsg.style.cssText = 'background:#7c3aed;color:#fff;padding:10px 14px;border-radius:12px 12px 2px 12px;font-size:13px;align-self:flex-end;max-width:85%;line-height:1.4;';
+            userMsg.style.cssText = 'background:linear-gradient(135deg, #0066ff 0%, #d9006c 100%);color:#fff;padding:10px 14px;border-radius:12px 12px 2px 12px;font-size:13px;align-self:flex-end;max-width:85%;line-height:1.4;';
             userMsg.textContent = prompt;
             conv.appendChild(userMsg);
 
             var botMsg = document.createElement('div');
             botMsg.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:12px 14px;border-radius:12px 12px 12px 2px;font-size:13px;line-height:1.5;max-width:90%;';
-            botMsg.innerHTML = '<span style="color:#7c3aed;font-weight:700;">DEJOIY AI:</span> Analyzing real-time catalog & sales telemetry...<br><br>💡 <strong>Insight:</strong> 12 listings can gain up to +18% CTR by adding bullet points and high-res gallery images. Consider enrolling in upcoming Mega Deals.';
+            botMsg.innerHTML = '<span style="color:#0066ff;font-weight:700;">DEJOIY AI:</span> Analyzing real-time catalog & sales telemetry...<br><br>💡 <strong>Insight:</strong> 12 listings can gain up to +18% CTR by adding bullet points and high-res gallery images. Consider enrolling in upcoming Mega Deals.';
             conv.appendChild(botMsg);
 
             if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
@@ -850,13 +850,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!conv) return;
 
             var userMsg = document.createElement('div');
-            userMsg.style.cssText = 'background:#7c3aed;color:#fff;padding:10px 14px;border-radius:12px 12px 2px 12px;font-size:13px;align-self:flex-end;max-width:85%;line-height:1.4;';
+            userMsg.style.cssText = 'background:linear-gradient(135deg, #0066ff 0%, #d9006c 100%);color:#fff;padding:10px 14px;border-radius:12px 12px 2px 12px;font-size:13px;align-self:flex-end;max-width:85%;line-height:1.4;';
             userMsg.textContent = val;
             conv.appendChild(userMsg);
 
             var botMsg = document.createElement('div');
             botMsg.style.cssText = 'background:#f8fafc;border:1px solid #e2e8f0;color:#1e293b;padding:12px 14px;border-radius:12px 12px 12px 2px;font-size:13px;line-height:1.5;max-width:90%;';
-            botMsg.innerHTML = '<span style="color:#7c3aed;font-weight:700;">DEJOIY AI:</span> Understood! Analyzing your store data regarding "' + val.replace(/</g, '&lt;') + '"... Everything is in good standing with 94/100 Health Score.';
+            botMsg.innerHTML = '<span style="color:#0066ff;font-weight:700;">DEJOIY AI:</span> Understood! Analyzing your store data regarding "' + val.replace(/</g, '&lt;') + '"... Everything is in good standing with 94/100 Health Score.';
             conv.appendChild(botMsg);
 
             if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;

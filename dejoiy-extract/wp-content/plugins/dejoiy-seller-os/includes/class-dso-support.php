@@ -176,7 +176,7 @@ class DSO_Support {
                         <h3 class="dso-card-title">Resolution Policies & Direct Contacts</h3>
                     </div>
                     <div class="dso-card-body">
-                        <div class="dso-info-box dso-mb-4" style="background:#f8fafc;border-left:4px solid #7c3aed;padding:16px;border-radius:8px;">
+                        <div class="dso-info-box dso-mb-4" style="background:#f8fafc;border-left:4px solid #0066ff;padding:16px;border-radius:8px;">
                             <h4 style="margin:0 0 6px;color:#0f172a;font-size:14px;">⏱️ Seller Support SLAs</h4>
                             <p style="margin:0;font-size:13px;color:#475569;line-height:1.5;">Every case submitted is assigned a unique tracking case number (e.g. <code>CASE-2026-XXXXX</code>). Our seller operations team is active 24×7 for high-priority logistics and payout inquiries.</p>
                         </div>
@@ -233,7 +233,7 @@ class DSO_Support {
                                     <?php foreach ($tickets as $t): ?>
                                         <tr>
                                             <td>
-                                                <a href="?section=support&case=<?php echo urlencode($t['case_number']); ?>" style="font-weight:700;font-family:monospace;color:#7c3aed;">
+                                                <a href="?section=support&case=<?php echo urlencode($t['case_number']); ?>" style="font-weight:700;font-family:monospace;color:#0066ff;">
                                                     <?php echo esc_html($t['case_number']); ?>
                                                 </a>
                                             </td>
@@ -411,7 +411,7 @@ class DSO_Support {
                         $is_system = ($msg->sender_type === 'system');
                     ?>
                         <div class="dso-message-item" style="display:flex;gap:14px;align-items:flex-start;<?php echo $is_support ? 'background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;' : 'background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;'; ?>">
-                            <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;<?php echo $is_support ? 'background:#16a34a;color:#fff;' : 'background:#7c3aed;color:#fff;'; ?>">
+                            <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;<?php echo $is_support ? 'background:#16a34a;color:#fff;' : 'background:#0066ff;color:#fff;'; ?>">
                                 <?php echo $is_support ? 'DJ' : 'ME'; ?>
                             </div>
                             <div style="flex:1;">

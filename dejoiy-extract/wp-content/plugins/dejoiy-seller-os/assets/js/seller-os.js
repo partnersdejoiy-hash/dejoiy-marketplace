@@ -550,9 +550,9 @@
             this._buildChart('dso-sales-chart', 'line', {
                 labels: chartData.labels,
                 datasets: [{
-                    label: 'Sales', data: chartData.sales, borderColor: '#4f46e5', backgroundColor: gradient,
+                    label: 'Sales', data: chartData.sales, borderColor: '#0066ff', backgroundColor: gradient,
                     borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 6,
-                    pointHoverBackgroundColor: '#4f46e5', pointHoverBorderColor: '#fff', pointHoverBorderWidth: 3
+                    pointHoverBackgroundColor: '#0066ff', pointHoverBorderColor: '#fff', pointHoverBorderWidth: 3
                 }]
             }, opts);
             this.bindPeriodFilter('dso-dashboard-period', 'dashboard');
@@ -609,13 +609,13 @@
             if (!chartData || typeof Chart === 'undefined') return;
             var canvas = document.getElementById('dso-reports-chart');
             if (!canvas) return;
-            var gradient = this._makeGradient(canvas.getContext('2d'), 'rgba(139,92,246,0.15)', 'rgba(139,92,246,0)');
+            var gradient = this._makeGradient(canvas.getContext('2d'), 'rgba(0,102,255,0.15)', 'rgba(0,102,255,0)');
             var opts = this._chartDefaults();
             opts.scales.y.ticks.callback = function(v) { return this.config.currency + v.toLocaleString(); }.bind(this);
             this._buildChart('dso-reports-chart', 'line', {
                 labels: chartData.labels,
                 datasets: [{
-                    label: 'Revenue', data: chartData.values || chartData.revenue, borderColor: '#8b5cf6',
+                    label: 'Revenue', data: chartData.values || chartData.revenue, borderColor: '#0066ff',
                     backgroundColor: gradient, borderWidth: 2.5, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5
                 }]
             }, opts);
@@ -1487,8 +1487,8 @@
 
             var ctx = canvas.getContext('2d');
             var gradient = ctx.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, 'rgba(124, 58, 237, 0.28)');
-            gradient.addColorStop(1, 'rgba(124, 58, 237, 0.00)');
+            gradient.addColorStop(0, 'rgba(0, 102, 255, 0.25)');
+            gradient.addColorStop(1, 'rgba(0, 102, 255, 0.00)');
 
             var chart = new Chart(canvas, {
                 type: 'line',
@@ -1498,13 +1498,13 @@
                         {
                             label: 'Gross Sales (₹)',
                             data: periodData.sales,
-                            borderColor: '#7c3aed',
+                            borderColor: '#0066ff',
                             backgroundColor: gradient,
                             borderWidth: 2.5,
                             fill: true,
                             tension: 0.35,
                             pointRadius: 4,
-                            pointBackgroundColor: '#7c3aed',
+                            pointBackgroundColor: '#0066ff',
                             yAxisID: 'y'
                         },
                         {

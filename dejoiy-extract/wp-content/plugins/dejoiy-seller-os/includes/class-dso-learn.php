@@ -65,7 +65,7 @@ class DSO_Learn {
                 <div class="dso-card-body">
                     <div class="dso-grid-2">
                         <div class="dso-info-box" style="background:#f8fafc;padding:18px;border-radius:12px;border:1px solid #e2e8f0;">
-                            <h4 style="margin:0 0 8px;color:#7c3aed;font-size:15px;">1. Optimizing Listing Quality Score (LQS)</h4>
+                            <h4 style="margin:0 0 8px;color:#0066ff;font-size:15px;">1. Optimizing Listing Quality Score (LQS)</h4>
                             <p style="margin:0 0 10px;font-size:13px;color:#475569;line-height:1.6;">
                                 Listings with LQS ≥ 85 receive <strong>3.8x more impressions</strong> on DEJOIY search. Key factors include:
                             </p>
@@ -78,7 +78,7 @@ class DSO_Learn {
                         </div>
 
                         <div class="dso-info-box" style="background:#f8fafc;padding:18px;border-radius:12px;border:1px solid #e2e8f0;">
-                            <h4 style="margin:0 0 8px;color:#7c3aed;font-size:15px;">2. Understanding DPIN (DEJOIY Product ID)</h4>
+                            <h4 style="margin:0 0 8px;color:#0066ff;font-size:15px;">2. Understanding DPIN (DEJOIY Product ID)</h4>
                             <p style="margin:0 0 10px;font-size:13px;color:#475569;line-height:1.6;">
                                 Every listing created on DEJOIY is immediately assigned a permanent, unique 11-character identifier (e.g. <code>DEZCZEZDQ3L</code>):
                             </p>
@@ -204,7 +204,7 @@ class DSO_Learn {
             <div class="dso-grid-3">
                 <div class="dso-card">
                     <div class="dso-card-body">
-                        <div class="dso-video-thumb dso-mb-3" style="width:100%; height:120px; background:linear-gradient(135deg, #1e1b4b, #2e1065); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px;">
+                        <div class="dso-video-thumb dso-mb-3" style="width:100%; height:120px; background:linear-gradient(135deg, #000c2c, #001553); border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px;">
                             ▶️
                         </div>
                         <h4 style="margin:0 0 6px;">Mastering Product Creation & DPIN</h4>

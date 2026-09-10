@@ -176,8 +176,8 @@ class DSO_Store {
             <?php endif; ?>
 
             <!-- Live Preview Banner Card -->
-            <div class="dso-card dso-mb-4" style="overflow:hidden;border:1px solid rgba(124, 58, 237, 0.2);box-shadow:0 10px 25px -5px rgba(0,0,0,0.08);">
-                <div style="position:relative;height:180px;background:url('<?php echo esc_url($banner_url); ?>') center/cover no-repeat;background-color:#1e1b4b;">
+            <div class="dso-card dso-mb-4" style="overflow:hidden;border:1px solid rgba(0, 102, 255, 0.2);box-shadow:0 10px 25px -5px rgba(0,0,0,0.08);">
+                <div style="position:relative;height:180px;background:url('<?php echo esc_url($banner_url); ?>') center/cover no-repeat;background-color:#001553;">
                     <div style="position:absolute;inset:0;background:linear-gradient(to top, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.2) 60%, transparent 100%);"></div>
                     <div style="position:absolute;bottom:20px;left:24px;right:24px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;">
                         <div style="display:flex;align-items:center;gap:16px;">
@@ -185,7 +185,7 @@ class DSO_Store {
                                 <?php if (!empty($logo_url)): ?>
                                     <img src="<?php echo esc_url($logo_url); ?>" alt="" style="width:100%;height:100%;object-fit:cover;" />
                                 <?php else: ?>
-                                    <div style="font-size:28px;font-weight:800;color:#7c3aed;"><?php echo strtoupper(substr($store_name, 0, 1) ?: 'D'); ?></div>
+                                    <div style="font-size:28px;font-weight:800;color:#0066ff;"><?php echo strtoupper(substr($store_name, 0, 1) ?: 'D'); ?></div>
                                 <?php endif; ?>
                             </div>
                             <div>

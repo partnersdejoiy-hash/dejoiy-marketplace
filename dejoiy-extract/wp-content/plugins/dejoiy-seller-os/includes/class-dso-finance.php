@@ -252,7 +252,7 @@ class DSO_Finance {
                         <div class="dso-grid-2">
                             <!-- Bank Details -->
                             <div>
-                                <h4 style="margin:0 0 14px;color:#7c3aed;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Bank Details</h4>
+                                <h4 style="margin:0 0 14px;color:#0066ff;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Bank Details</h4>
                                 <div class="dso-form-group">
                                     <label for="bank_beneficiary">Account Beneficiary Name *</label>
                                     <input type="text" id="bank_beneficiary" name="bank_beneficiary" class="dso-input" required value="<?php echo esc_attr($beneficiary); ?>" placeholder="Exact name as printed in bank passbook / cheque" />
@@ -288,7 +288,7 @@ class DSO_Finance {
 
                             <!-- Tax & Compliance Identifiers -->
                             <div>
-                                <h4 style="margin:0 0 14px;color:#7c3aed;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tax & Statutory Compliance</h4>
+                                <h4 style="margin:0 0 14px;color:#0066ff;font-size:14px;text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Tax & Statutory Compliance</h4>
                                 <div class="dso-form-group">
                                     <label for="bank_pan">Business / Individual PAN *</label>
                                     <input type="text" id="bank_pan" name="bank_pan" class="dso-input" required value="<?php echo esc_attr($pan); ?>" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase;font-family:monospace;" />
