@@ -59,6 +59,13 @@ function dejoiy_header_os_v4_account_menu() {
 				: $account,
 		),
 		array(
+			'key'   => 'messages',
+			'label' => 'Contact Seller',
+			'url'   => function_exists( 'wc_get_account_endpoint_url' )
+				? wc_get_account_endpoint_url( 'messages' )
+				: home_url( '/my-account/messages/' ),
+		),
+		array(
 			'key'   => 'favorites',
 			'label' => 'Favorites',
 			'url'   => home_url( '/my-account/?et-wishlist-page' ),

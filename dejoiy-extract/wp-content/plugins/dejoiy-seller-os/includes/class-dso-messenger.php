@@ -24,10 +24,11 @@ class DSO_Messenger {
         // Frontend hooks for dejoiy.com
         add_action('wp_footer', [$this, 'render_buyer_floating_widget'], 99);
         add_action('woocommerce_single_product_summary', [$this, 'render_product_chat_button'], 35);
-        add_action('woocommerce_after_add_to_cart_button', [$this, 'render_product_chat_button_cart'], 10);
-        add_action('woocommerce_product_meta_end', [$this, 'render_product_chat_button'], 10);
-        add_action('woocommerce_share', [$this, 'render_product_chat_button'], 10);
         add_filter('woocommerce_my_account_my_orders_actions', [$this, 'add_order_message_action'], 20, 2);
+
+        // Confirmed Order hooks: Order confirmation (Thank You) & Order details view
+        add_action('woocommerce_thankyou', [$this, 'render_order_sellers_box'], 15);
+        add_action('woocommerce_order_details_after_order_table', [$this, 'render_order_sellers_box'], 15);
 
         // My Account Messages Tab
         add_action('init', [$this, 'register_account_endpoints']);
@@ -1625,20 +1626,10 @@ class DSO_Messenger {
           }
         }
         </style>
-        <!-- DEJOIY Buyer-Seller Real-Time Messenger Widget -->
-        <div id="dejoiy-buyer-widget-root">
-            <!-- Floating Launch Button -->
-            <button type="button" id="djy-chat-launcher" aria-label="Message Seller">
-                <div class="djy-launcher-pulse"></div>
-                <div class="djy-launcher-icon">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                </div>
-                <span class="djy-launcher-label"><?php echo is_product() ? 'Ask Seller' : 'Message Seller'; ?></span>
-                <span class="djy-launcher-unread" id="djy-launcher-unread" style="display:none;">0</span>
-            </button>
-
-            <!-- Floating Chat Window Card -->
-            <div id="djy-chat-modal" style="display:none;">
+        <!-- DEJOIY Buyer-Seller Real-Time Messenger Widget (Modal Container Only) -->
+        <div id="dejoiy-buyer-widget-root" style="pointer-events:none;">
+            <!-- Floating Chat Window Card (Opened via Order / Menu Contact Seller) -->
+            <div id="djy-chat-modal" style="display:none;pointer-events:auto;">
                 <!-- Header -->
                 <div class="djy-cm-header">
                     <div class="djy-cm-brand">
@@ -1742,11 +1733,68 @@ class DSO_Messenger {
             if (launcherBtn) launcherBtn.addEventListener('click', function(){ toggleModal(true); });
             if (closeBtn) closeBtn.addEventListener('click', function(){ toggleModal(false); });
 
-            // Expose globally for "Ask Seller" buttons
+            // Expose globally for "Contact Seller" buttons
             window.dejoiyOpenSellerChat = function(prodId, vendorId, orderId) {
                 if (prodId) currentProdId = prodId;
                 if (vendorId) currentVendorId = vendorId;
                 if (orderId) currentOrderId = orderId;
+                toggleModal(true);
+            };
+
+            window.dejoiyOpenSellerChatForOrder = function(orderId, orderNum, prodId, prodTitle, prodThumb, prodPrice, vendorId, storeName) {
+                if (orderId) currentOrderId = orderId;
+                if (prodId) currentProdId = prodId;
+                if (vendorId) currentVendorId = vendorId;
+
+                var banner = document.getElementById('djy-cm-product-banner');
+                var titleEl = document.getElementById('djy-context-name');
+                var priceEl = document.getElementById('djy-context-price');
+                var imgEl = document.getElementById('djy-context-img');
+                var brandSub = document.querySelector('.djy-cm-online');
+
+                if (banner && (prodTitle || orderNum)) {
+                    banner.style.display = 'flex';
+                    if (titleEl) titleEl.textContent = prodTitle || ('Order #' + orderNum);
+                    if (priceEl) priceEl.textContent = (prodPrice ? prodPrice + ' • ' : '') + 'Sold by ' + (storeName || 'Verified Seller');
+                    if (imgEl) {
+                        if (prodThumb) {
+                            imgEl.src = prodThumb;
+                            imgEl.style.display = 'block';
+                        } else {
+                            imgEl.style.display = 'none';
+                        }
+                    }
+                }
+                if (brandSub && storeName) {
+                    brandSub.innerHTML = '<span class="djy-cm-dot"></span> ' + escapeHtml(storeName) + ' • Dedicated Merchant';
+                }
+
+                activeConvId = 0;
+                activeToken = '';
+                messagesBox.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;font-size:12.5px;">Connecting with ' + escapeHtml(storeName || 'Seller') + '...</div>';
+
+                fetch(restBase + 'threads?role=buyer&order_id=' + orderId, { credentials: 'same-origin' })
+                    .then(function(r){ return r.json(); })
+                    .then(function(data){
+                        if (data.success && data.threads && data.threads.length > 0) {
+                            var found = data.threads.find(function(t){ return t.vendor_id == vendorId; }) || data.threads[0];
+                            if (found) {
+                                activeConvId = found.id;
+                                activeToken = found.thread_token;
+                                loadMessages(true);
+                                return;
+                            }
+                        }
+                        messagesBox.innerHTML = '<div style="padding:20px 16px;text-align:center;background:#f8fafc;border-radius:12px;margin:12px;border:1px dashed #cbd5e1;">' +
+                            '<div style="font-size:28px;margin-bottom:6px;">💬</div>' +
+                            '<strong style="font-size:13.5px;color:#0f172a;">Contact ' + escapeHtml(storeName || 'Seller') + '</strong>' +
+                            '<p style="font-size:12px;color:#64748b;margin:4px 0 0 0;">Direct inquiry regarding Order #' + escapeHtml(orderNum) + '. Ask about delivery date, tracking, or items.</p>' +
+                        '</div>';
+                    })
+                    .catch(function(){
+                        messagesBox.innerHTML = '';
+                    });
+
                 toggleModal(true);
             };
 
@@ -1921,11 +1969,53 @@ class DSO_Messenger {
     }
 
     /**
-     * RENDER: Product Single Page "Chat with Seller" Button
+     * Helper: Resolve vendor ID and Store Name for any product
+     */
+    public static function get_item_vendor_info($product_id) {
+        $vendor_id = 0;
+        if (function_exists('wcfm_get_vendor_id_by_post')) {
+            $vendor_id = intval(wcfm_get_vendor_id_by_post($product_id));
+        }
+        if (!$vendor_id) {
+            $vendor_id = intval(get_post_field('post_author', $product_id));
+        }
+        if (!$vendor_id) {
+            $vendor_id = 2; // Default verified merchant
+        }
+
+        $store_name = '';
+        if (function_exists('wcfm_get_vendor_store_name')) {
+            $store_name = wcfm_get_vendor_store_name($vendor_id);
+        }
+        if (empty($store_name) && function_exists('wcfm_get_vendor_store_info')) {
+            $info = wcfm_get_vendor_store_info($vendor_id);
+            if (!empty($info['store_name'])) $store_name = $info['store_name'];
+            elseif (!empty($info['name'])) $store_name = $info['name'];
+        }
+        if (empty($store_name)) {
+            $u = get_userdata($vendor_id);
+            if ($u) $store_name = $u->display_name;
+        }
+        if (empty($store_name)) {
+            $store_name = 'DEJOIY Verified Merchant';
+        }
+
+        return [
+            'vendor_id' => $vendor_id,
+            'store_name' => $store_name,
+        ];
+    }
+
+    /**
+     * RENDER: Product Single Page "Contact Seller" (Only for confirmed buyers of this product)
      */
     public function render_product_chat_button() {
         static $rendered = false;
         if ($rendered) return;
+
+        if (!is_user_logged_in()) {
+            return; // Not logged in -> No contact seller button
+        }
 
         global $product;
         if (!$product) {
@@ -1933,47 +2023,136 @@ class DSO_Messenger {
         }
         if (!$product) return;
 
-        $rendered = true;
+        $user_id = get_current_user_id();
         $prod_id = $product->get_id();
-        $author_id = get_post_field('post_author', $prod_id) ?: 2;
-        $store_name = 'Verified Seller';
-        if (class_exists('DSO_Auth')) {
-            $store = DSO_Auth::get_vendor_store($author_id);
-            if ($store && !empty($store['name'])) $store_name = $store['name'];
+
+        // Check if current user has an order for this product
+        if (!function_exists('wc_customer_bought_product') || !wc_customer_bought_product('', $user_id, $prod_id)) {
+            return; // Not purchased - do not show contact seller button
         }
+
+        $rendered = true;
+        $vendor_info = self::get_item_vendor_info($prod_id);
+        $vendor_id = $vendor_info['vendor_id'];
+        $store_name = $vendor_info['store_name'];
+        $p_title = $product->get_name();
+        $p_price = '₹' . number_format(floatval($product->get_price()), 2);
+        $img_id = $product->get_image_id();
+        $p_img = $img_id ? wp_get_attachment_image_url($img_id, 'thumbnail') : '';
+
+        // Find most recent order ID for this customer and product
+        global $wpdb;
+        $order_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT o.ID FROM {$wpdb->prefix}posts o
+             INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON o.ID = oi.order_id
+             INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
+             INNER JOIN {$wpdb->prefix}postmeta pm ON o.ID = pm.post_id AND pm.meta_key = '_customer_user'
+             WHERE oim.meta_key IN ('_product_id', '_variation_id') AND oim.meta_value = %d
+             AND pm.meta_value = %d
+             ORDER BY o.ID DESC LIMIT 1",
+            $prod_id,
+            $user_id
+        )) ?: 0;
+        $order_num = $order_id ? (wc_get_order($order_id) ? wc_get_order($order_id)->get_order_number() : $order_id) : '';
         ?>
-        <div class="djy-product-chat-strip" style="margin:16px 0;">
-            <button type="button" class="djy-btn-chat-seller" onclick="if(window.dejoiyOpenSellerChat){ window.dejoiyOpenSellerChat(<?php echo $prod_id; ?>, <?php echo $author_id; ?>); }">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <span>Chat with Seller (<?php echo esc_html($store_name); ?>)</span>
+        <div class="djy-product-buyer-contact-strip" style="margin:16px 0;padding:12px 16px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div>
+                <div style="font-size:12px;font-weight:700;color:#16a34a;display:flex;align-items:center;gap:6px;">
+                    <span>✓ Verified Purchase</span>
+                    <?php if ($order_num) : ?>
+                        <span style="color:#64748b;font-weight:500;">(Order #<?php echo esc_html($order_num); ?>)</span>
+                    <?php endif; ?>
+                </div>
+                <div style="font-size:12.5px;color:#334155;margin-top:2px;">
+                    Dedicated Seller: <strong><?php echo esc_html($store_name); ?></strong>
+                </div>
+            </div>
+            <button type="button" class="button" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:linear-gradient(135deg, #001553 0%, #0066ff 100%);color:#ffffff;border:none;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;" onclick="if(window.dejoiyOpenSellerChatForOrder){ window.dejoiyOpenSellerChatForOrder(<?php echo (int) $order_id; ?>, '<?php echo esc_js($order_num); ?>', <?php echo (int) $prod_id; ?>, '<?php echo esc_js($p_title); ?>', '<?php echo esc_js($p_img); ?>', '<?php echo esc_js($p_price); ?>', <?php echo (int) $vendor_id; ?>, '<?php echo esc_js($store_name); ?>'); }">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>Contact Seller</span>
             </button>
         </div>
         <?php
     }
 
-    public function render_product_chat_button_cart() {
-        $this->render_product_chat_button();
+    /**
+     * RENDER: Confirmed Order Dedicated Sellers Box (Thank You Page & Order Details)
+     */
+    public function render_order_sellers_box($order_id_or_order) {
+        $order = is_a($order_id_or_order, 'WC_Order') ? $order_id_or_order : wc_get_order($order_id_or_order);
+        if (!$order) return;
+
+        static $rendered_orders = [];
+        $order_id = $order->get_id();
+        if (isset($rendered_orders[$order_id])) return;
+        $rendered_orders[$order_id] = true;
+
+        $items = $order->get_items();
+        if (empty($items)) return;
+
+        $order_id = $order->get_id();
+        $order_num = $order->get_order_number();
+        ?>
+        <div class="djy-order-sellers-section" style="margin:28px 0;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+            <div style="background:linear-gradient(135deg, #000c2c 0%, #001553 100%);color:#ffffff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:18px;">💬</div>
+                    <div>
+                        <h4 style="margin:0;font-size:15px;font-weight:800;color:#ffffff;letter-spacing:-0.2px;">Dedicated Sellers for Your Order #<?php echo esc_html($order_num); ?></h4>
+                        <p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">Direct message support for shipping updates, customization, or warranty inquiries.</p>
+                    </div>
+                </div>
+                <span style="font-size:11px;font-weight:700;background:rgba(16,185,129,0.2);color:#34d399;padding:4px 10px;border-radius:12px;border:1px solid rgba(52,211,153,0.3);">✓ Order Confirmed</span>
+            </div>
+            <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px;">
+                <?php
+                foreach ($items as $item) :
+                    $prod_id = $item->get_product_id();
+                    $product = $item->get_product();
+                    $vendor_info = self::get_item_vendor_info($prod_id);
+                    $vendor_id = $vendor_info['vendor_id'];
+                    $store_name = $vendor_info['store_name'];
+                    $img = $product ? wp_get_attachment_image_url($product->get_image_id(), 'thumbnail') : '';
+                    $item_name = $item->get_name();
+                    $item_price = '₹' . number_format((float) $item->get_total(), 2);
+                ?>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;flex-wrap:wrap;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <?php if ($img) : ?>
+                            <img src="<?php echo esc_url($img); ?>" style="width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid #cbd5e1;" alt="" />
+                        <?php else : ?>
+                            <div style="width:52px;height:52px;border-radius:10px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;">📦</div>
+                        <?php endif; ?>
+                        <div>
+                            <div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.3;"><?php echo esc_html($item_name); ?></div>
+                            <div style="font-size:12.5px;color:#64748b;margin-top:3px;">
+                                Dedicated Seller: <strong style="color:#001553;"><?php echo esc_html($store_name); ?></strong>
+                                <span style="display:inline-block;margin-left:6px;padding:1px 6px;background:#e0f2fe;color:#0369a1;border-radius:8px;font-size:10.5px;font-weight:700;">Verified Seller</span>
+                            </div>
+                            <div style="font-size:12px;color:#94a3b8;margin-top:2px;"><?php echo esc_html($item_price); ?> • Qty: <?php echo (int) $item->get_quantity(); ?></div>
+                        </div>
+                    </div>
+                    <button type="button" class="button" style="display:inline-flex;align-items:center;gap:8px;padding:9px 18px;background:linear-gradient(135deg, #001553 0%, #0066ff 100%);color:#ffffff;border:none;border-radius:24px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 4px 12px rgba(0,102,255,0.25);" onclick="if(window.dejoiyOpenSellerChatForOrder){ window.dejoiyOpenSellerChatForOrder(<?php echo (int) $order_id; ?>, '<?php echo esc_js($order_num); ?>', <?php echo (int) $prod_id; ?>, '<?php echo esc_js($item_name); ?>', '<?php echo esc_js($img); ?>', '<?php echo esc_js($item_price); ?>', <?php echo (int) $vendor_id; ?>, '<?php echo esc_js($store_name); ?>'); }">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>Contact Seller</span>
+                    </button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php
     }
 
     /**
-     * HOOK: Add "Message Seller" action to customer orders list
+     * HOOK: Add "Contact Seller" action to customer orders list
      */
     public function add_order_message_action($actions, $order) {
         if (!$order) return $actions;
         $order_id = $order->get_id();
-        $vendor_id = 2;
-        foreach ($order->get_items() as $item) {
-            $pid = $item->get_product_id();
-            $author = get_post_field('post_author', $pid);
-            if ($author) {
-                $vendor_id = $author;
-                break;
-            }
-        }
-        $actions['message_seller'] = [
-            'url' => '#chat-order-' . $order_id,
-            'name' => '💬 Message Seller',
-            'action' => 'message-seller',
+        $actions['contact_seller'] = [
+            'url' => wc_get_account_endpoint_url('messages') . '?order_id=' . $order_id,
+            'name' => '💬 Contact Seller',
+            'action' => 'contact-seller',
         ];
         return $actions;
     }
@@ -1990,52 +2169,179 @@ class DSO_Messenger {
         foreach ($items as $key => $val) {
             $new_items[$key] = $val;
             if ($key === 'orders') {
-                $new_items['messages'] = '💬 Seller Messages';
+                $new_items['messages'] = 'Contact Seller';
             }
         }
         return $new_items;
     }
 
+    /**
+     * RENDER: Dedicated Customer Messages & Confirmed Orders Hub (/my-account/messages/)
+     */
     public function render_account_messages_endpoint() {
         $user_id = get_current_user_id();
+        $user = wp_get_current_user();
+        $email = $user ? $user->user_email : '';
+
+        $customer_orders = [];
+        if ($user_id || $email) {
+            $customer_orders = wc_get_orders([
+                'customer' => array_filter([$user_id, $email]),
+                'limit' => 20,
+                'status' => ['completed', 'processing', 'on-hold', 'pending', 'cancelled']
+            ]);
+        }
+
+        $focused_order_id = isset($_GET['order_id']) ? intval($_GET['order_id']) : 0;
         ?>
-        <div class="djy-account-messages-view">
-            <h2>💬 Your Messages with DEJOIY Sellers</h2>
-            <p>Direct communication with verified marketplace sellers regarding your orders and product inquiries.</p>
-            <div id="djy-account-threads-list" style="margin-top:20px;">
-                <p>Loading your message history...</p>
+        <div class="djy-account-messages-hub" style="font-family:'Inter',sans-serif;margin-bottom:40px;">
+            <div style="background:linear-gradient(135deg, #000c2c 0%, #001553 100%);color:#ffffff;padding:24px;border-radius:16px;margin-bottom:24px;box-shadow:0 8px 30px rgba(0,21,83,0.15);">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <div style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:22px;">💬</div>
+                    <div>
+                        <h2 style="color:#ffffff;margin:0;font-size:20px;font-weight:800;letter-spacing:-0.3px;">Buyer-Seller Message Center</h2>
+                        <p style="color:#94a3b8;margin:4px 0 0 0;font-size:13.5px;">Contact dedicated marketplace sellers for your confirmed orders regarding delivery, tracking, and warranty.</p>
+                    </div>
+                </div>
             </div>
+
+            <!-- View Toggle Tabs -->
+            <div style="display:flex;gap:10px;margin-bottom:20px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
+                <button type="button" id="djy-tab-orders-btn" class="button" style="background:#001553;color:#ffffff;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:700;border:none;cursor:pointer;" onclick="djySwitchTab('orders')">📦 Your Confirmed Orders (<?php echo count($customer_orders); ?>)</button>
+                <button type="button" id="djy-tab-convs-btn" class="button" style="background:#f1f5f9;color:#475569;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:700;border:none;cursor:pointer;" onclick="djySwitchTab('convs')">💬 Active Conversations</button>
+            </div>
+
+            <!-- TAB 1: Confirmed Orders & Dedicated Sellers -->
+            <div id="djy-pane-orders" style="display:block;">
+                <?php if (empty($customer_orders)) : ?>
+                    <div style="padding:40px 20px;text-align:center;background:#f8fafc;border-radius:14px;border:1.5px dashed #cbd5e1;">
+                        <div style="font-size:36px;margin-bottom:10px;">📦</div>
+                        <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 6px 0;">No Confirmed Orders Found</h3>
+                        <p style="font-size:13px;color:#64748b;max-width:480px;margin:0 auto 16px auto;">
+                            Contact Seller is enabled once an order is confirmed on DEJOIY. Place an order to communicate directly with verified marketplace merchants regarding order tracking and delivery.
+                        </p>
+                        <a href="<?php echo esc_url(home_url('/shop/')); ?>" class="button" style="background:#0066ff;color:#ffffff;border-radius:20px;padding:10px 22px;font-weight:700;text-decoration:none;display:inline-block;">Browse Marketplace & Shop</a>
+                    </div>
+                <?php else : ?>
+                    <div style="display:flex;flex-direction:column;gap:18px;">
+                        <?php foreach ($customer_orders as $o) : 
+                            $oid = $o->get_id();
+                            $onum = $o->get_order_number();
+                            $ostatus = $o->get_status();
+                            $ototal = '₹' . number_format((float) $o->get_total(), 2);
+                            $odate = wc_format_datetime($o->get_date_created(), 'M d, Y');
+                            $is_focused = ($focused_order_id && $focused_order_id === $oid);
+                        ?>
+                        <div style="background:#ffffff;border:1.5px solid <?php echo $is_focused ? '#0066ff' : '#e2e8f0'; ?>;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.03);<?php if ($is_focused) echo 'box-shadow:0 0 0 3px rgba(0,102,255,0.15);'; ?>">
+                            <div style="background:#f8fafc;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid #e2e8f0;">
+                                <div style="display:flex;align-items:center;gap:10px;">
+                                    <span style="font-weight:800;color:#0f172a;font-size:14px;">Order #<?php echo esc_html($onum); ?></span>
+                                    <span style="font-size:12px;color:#64748b;">• Placed on <?php echo esc_html($odate); ?></span>
+                                    <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:#e2e8f0;color:#334155;text-transform:capitalize;"><?php echo esc_html($ostatus); ?></span>
+                                </div>
+                                <div style="font-weight:800;color:#001553;font-size:14px;">Total: <?php echo esc_html($ototal); ?></div>
+                            </div>
+                            <div style="padding:14px 18px;display:flex;flex-direction:column;gap:12px;">
+                                <?php foreach ($o->get_items() as $item) : 
+                                    $pid = $item->get_product_id();
+                                    $prod = $item->get_product();
+                                    $vinfo = self::get_item_vendor_info($pid);
+                                    $vid = $vinfo['vendor_id'];
+                                    $sname = $vinfo['store_name'];
+                                    $pimg = $prod ? wp_get_attachment_image_url($prod->get_image_id(), 'thumbnail') : '';
+                                    $iname = $item->get_name();
+                                    $iprice = '₹' . number_format((float) $item->get_total(), 2);
+                                ?>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#fbfcfe;border:1px solid #f1f5f9;border-radius:10px;flex-wrap:wrap;gap:10px;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <?php if ($pimg) : ?>
+                                            <img src="<?php echo esc_url($pimg); ?>" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #cbd5e1;" alt="" />
+                                        <?php else : ?>
+                                            <div style="width:46px;height:46px;border-radius:8px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+                                        <?php endif; ?>
+                                        <div>
+                                            <div style="font-size:13.5px;font-weight:700;color:#0f172a;line-height:1.2;"><?php echo esc_html($iname); ?></div>
+                                            <div style="font-size:12px;color:#64748b;margin-top:2px;">
+                                                Dedicated Seller: <strong style="color:#001553;"><?php echo esc_html($sname); ?></strong>
+                                                <span style="color:#10b981;font-weight:700;margin-left:4px;">✓ Verified Merchant</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="button" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:linear-gradient(135deg, #001553 0%, #0066ff 100%);color:#ffffff;border:none;border-radius:20px;font-weight:700;font-size:12.5px;cursor:pointer;" onclick="if(window.dejoiyOpenSellerChatForOrder){ window.dejoiyOpenSellerChatForOrder(<?php echo (int) $oid; ?>, '<?php echo esc_js($onum); ?>', <?php echo (int) $pid; ?>, '<?php echo esc_js($iname); ?>', '<?php echo esc_js($pimg); ?>', '<?php echo esc_js($iprice); ?>', <?php echo (int) $vid; ?>, '<?php echo esc_js($sname); ?>'); }">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        <span>Contact Seller</span>
+                                    </button>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- TAB 2: Conversation History -->
+            <div id="djy-pane-convs" style="display:none;">
+                <div id="djy-account-threads-list">
+                    <p style="color:#64748b;font-size:13px;">Loading conversation history...</p>
+                </div>
+            </div>
+
             <script>
-            (function() {
+            function djySwitchTab(tab) {
+                var btnOrders = document.getElementById('djy-tab-orders-btn');
+                var btnConvs = document.getElementById('djy-tab-convs-btn');
+                var paneOrders = document.getElementById('djy-pane-orders');
+                var paneConvs = document.getElementById('djy-pane-convs');
+                if (tab === 'orders') {
+                    btnOrders.style.background = '#001553';
+                    btnOrders.style.color = '#ffffff';
+                    btnConvs.style.background = '#f1f5f9';
+                    btnConvs.style.color = '#475569';
+                    paneOrders.style.display = 'block';
+                    paneConvs.style.display = 'none';
+                } else {
+                    btnConvs.style.background = '#001553';
+                    btnConvs.style.color = '#ffffff';
+                    btnOrders.style.background = '#f1f5f9';
+                    btnOrders.style.color = '#475569';
+                    paneOrders.style.display = 'none';
+                    paneConvs.style.display = 'block';
+                    loadBuyerAccountThreads();
+                }
+            }
+
+            function loadBuyerAccountThreads() {
                 var restBase = '/wp-json/dejoiy/v1/messenger/';
                 fetch(restBase + 'threads?role=buyer', { credentials: 'same-origin' })
                     .then(function(r){ return r.json(); })
                     .then(function(data){
                         var box = document.getElementById('djy-account-threads-list');
                         if (!data.success || !data.threads || data.threads.length === 0) {
-                            box.innerHTML = '<div style="padding:30px;text-align:center;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">' +
+                            box.innerHTML = '<div style="padding:32px;text-align:center;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">' +
                                                 '<div style="font-size:32px;margin-bottom:8px;">📬</div>' +
-                                                '<strong>No messages found</strong>' +
-                                                '<p style="font-size:13px;color:#64748b;margin-top:4px;">When you contact a seller on any product page, your conversation will appear here.</p>' +
+                                                '<strong style="font-size:14px;color:#0f172a;">No past conversations found</strong>' +
+                                                '<p style="font-size:12.5px;color:#64748b;margin-top:4px;">Click "Contact Seller" on any of your confirmed orders above to start messaging.</p>' +
                                             '</div>';
                             return;
                         }
 
                         var html = '<div style="display:flex;flex-direction:column;gap:12px;">';
                         data.threads.forEach(function(t) {
-                            html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;">' +
+                            var unreadTag = (parseInt(t.unread_buyer) > 0) ? ' <span style="background:#d9006c;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:6px;">' + t.unread_buyer + ' new</span>' : '';
+                            html += '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
                                         '<div>' +
-                                            '<div style="font-weight:700;color:#0f172a;font-size:15px;">' + t.vendor_name + '</div>' +
-                                            '<div style="font-size:13px;color:#64748b;margin-top:2px;">' + (t.product_name ? '📦 ' + t.product_name : (t.order_number ? '📋 Order #' + t.order_number : t.subject)) + '</div>' +
-                                            '<div style="font-size:12px;color:#94a3b8;margin-top:4px;">' + t.last_message_display + ' • ' + t.time_ago + '</div>' +
+                                            '<div style="font-weight:700;color:#0f172a;font-size:14.5px;">' + escapeHtml(t.vendor_name) + unreadTag + '</div>' +
+                                            '<div style="font-size:12.5px;color:#64748b;margin-top:2px;">' + (t.order_number ? '📋 Order #' + escapeHtml(t.order_number) : (t.product_name ? '📦 ' + escapeHtml(t.product_name) : escapeHtml(t.subject))) + '</div>' +
+                                            '<div style="font-size:12px;color:#94a3b8;margin-top:4px;">' + escapeHtml(t.last_message_display) + ' • ' + escapeHtml(t.time_ago) + '</div>' +
                                         '</div>' +
-                                        '<button type="button" class="button" onclick="if(window.dejoiyOpenSellerChat){ window.dejoiyOpenSellerChat(' + t.product_id + ', ' + t.vendor_id + '); }">Open Chat 💬</button>' +
+                                        '<button type="button" class="button" style="padding:7px 16px;border-radius:20px;font-size:12.5px;font-weight:700;" onclick="if(window.dejoiyOpenSellerChatForOrder){ window.dejoiyOpenSellerChatForOrder(' + (t.order_id || 0) + ', \'' + (t.order_number || '') + '\', ' + (t.product_id || 0) + ', \'' + escapeHtml(t.product_name || '') + '\', \'' + escapeHtml(t.product_image || '') + '\', \'\', ' + t.vendor_id + ', \'' + escapeHtml(t.vendor_name) + '\'); }">Open Chat 💬</button>' +
                                     '</div>';
                         });
                         html += '</div>';
                         box.innerHTML = html;
                     });
-            })();
+            }
             </script>
         </div>
         <?php

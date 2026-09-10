@@ -128,6 +128,7 @@ function dejoiy_gh_account_menu() {
 	$items   = array(
 		array( 'key' => 'account', 'label' => __( 'My Account', 'dejoiy' ), 'url' => $account ),
 		array( 'key' => 'orders',  'label' => __( 'My Orders', 'dejoiy' ),  'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : $account ),
+		array( 'key' => 'messages','label' => __( 'Contact Seller', 'dejoiy' ),'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'messages' ) : home_url( '/my-account/messages/' ) ),
 		array( 'key' => 'wishlist','label' => __( 'Wishlist', 'dejoiy' ),    'url' => home_url( '/my-account/?et-wishlist-page' ) ),
 		array( 'key' => 'settings','label' => __( 'Settings', 'dejoiy' ),    'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'edit-account' ) : $account ),
 	);
