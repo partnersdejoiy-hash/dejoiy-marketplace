@@ -675,7 +675,7 @@ function dejoiy_marketplace_redirect_legacy_product_path() {
 	}
 
 	$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
-	if ( ! preg_match( '#^/product/([^/?#]+)/?#i', $uri, $matches ) ) {
+	if ( ! preg_match( '~^/product/([^/?#]+)/?~i', $uri, $matches ) ) {
 		return;
 	}
 

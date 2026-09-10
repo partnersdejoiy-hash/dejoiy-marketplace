@@ -275,6 +275,15 @@ if ( is_readable( $dpb_path ) ) {
 	require_once $dpb_path;
 }
 
+
+
+// DEJOIY Image Fix — stop XStore lazy placeholders + colourful canva cards for
+// products without a photo (shop, categories, cart, single product, quick view)
+$dib_path = get_stylesheet_directory() . '/dejoiy-image-fix.php';
+if ( is_readable( $dib_path ) ) {
+	require_once $dib_path;
+}
+
 // DEJOIY Product Detail — trust strip + Buy Now (optional, fallback safe)
 $pd_path = get_stylesheet_directory() . '/dejoiy-product-detail.php';
 if ( is_readable( $pd_path ) ) {

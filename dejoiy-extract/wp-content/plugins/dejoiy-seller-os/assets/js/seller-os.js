@@ -1594,6 +1594,49 @@
         }
     };
 
+    // ─── Global Clipboard Copy Helper ─────────────────────
+    window.dsoCopyText = function(text, elem) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyFeedback(elem);
+            }).catch(function() {
+                fallbackCopy(text, elem);
+            });
+        } else {
+            fallbackCopy(text, elem);
+        }
+    };
+
+    function fallbackCopy(text, elem) {
+        var textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showCopyFeedback(elem);
+        } catch (e) {}
+        document.body.removeChild(textarea);
+    }
+
+    function showCopyFeedback(elem) {
+        if (!elem) return;
+        var originalHtml = elem.innerHTML;
+        elem.innerHTML = '<code>Copied! ✓</code>';
+        elem.style.background = '#d1fae5';
+        elem.style.borderColor = '#10b981';
+        elem.style.color = '#065f46';
+        setTimeout(function() {
+            elem.innerHTML = originalHtml;
+            elem.style.background = '';
+            elem.style.borderColor = '';
+            elem.style.color = '';
+        }, 1500);
+    }
+
     // ─── Auto-init on DOMContentLoaded ────────────────────
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() { DSO.init(); });

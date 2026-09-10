@@ -65,8 +65,26 @@ class DSO_Products {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add New Product
                     </a>
-                </div>
             </div>
+
+            <?php if (isset($_GET['notice']) && $_GET['notice'] === 'created'): 
+                $assigned_dpin = sanitize_text_field($_GET['dpin'] ?? '');
+            ?>
+                <div class="dso-notice dso-notice-success dso-mb-4" style="background:#ecfdf5;border:1px solid #10b981;border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:24px;">🎉</span>
+                        <div>
+                            <strong style="color:#065f46;font-size:15px;display:block;">Product Published Successfully!</strong>
+                            <span style="font-size:13px;color:#047857;">Assigned DEJOIY Product Identification Number (DPIN): <code style="font-size:14px;font-weight:700;background:#d1fae5;padding:2px 8px;border-radius:4px;color:#065f46;"><?php echo esc_html($assigned_dpin); ?></code></span>
+                        </div>
+                    </div>
+                    <?php if (!empty($assigned_dpin)): ?>
+                        <button type="button" class="dso-btn dso-btn-sm" style="background:#10b981;color:#fff;" onclick="dsoCopyText('<?php echo esc_attr($assigned_dpin); ?>', this)">
+                            Copy DPIN 📋
+                        </button>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <!-- Stats Bar -->
             <div class="dso-stats-row">
@@ -162,6 +180,7 @@ class DSO_Products {
                                     <tr>
                                         <th class="dso-th-check"><input type="checkbox" id="dso-select-all" /></th>
                                         <th style="min-width: 280px;">Product</th>
+                                        <th style="width: 140px;">DPIN</th>
                                         <th>SKU</th>
                                         <th>Price</th>
                                         <th>Inventory</th>
@@ -174,7 +193,7 @@ class DSO_Products {
                                 <tbody>
                                     <?php if (empty($products)): ?>
                                         <tr>
-                                            <td colspan="9">
+                                            <td colspan="10">
                                                 <div class="dso-empty-state">
                                                     <div class="dso-empty-icon">📦</div>
                                                     <h3>No products found</h3>
@@ -207,6 +226,12 @@ class DSO_Products {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                </td>
+                                                <td>
+                                                    <span class="dso-dpin-pill" onclick="dsoCopyText('<?php echo esc_attr($p['dpin']); ?>', this)" title="Click to copy DPIN">
+                                                        <code><?php echo esc_html($p['dpin'] ?: '—'); ?></code>
+                                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <span class="dso-sku-badge"><?php echo esc_html($p['sku'] ?: '—'); ?></span>
@@ -280,7 +305,8 @@ class DSO_Products {
             check_admin_referer('dso_add_product_nonce');
             $new_id = $this->save_product_data(0, $vendor_id);
             if ($new_id) {
-                wp_redirect('?section=products&notice=created');
+                $dpin = get_post_meta($new_id, '_dejoiy_dpin', true);
+                wp_redirect('?section=products&notice=created&dpin=' . urlencode($dpin));
                 exit;
             }
         }
@@ -1487,6 +1513,23 @@ class DSO_Products {
 
         if (!$product_id || is_wp_error($product_id)) return 0;
 
+        // Ensure permanent DPIN (DEJOIY Product Identification Number)
+        $dpin = get_post_meta($product_id, '_dejoiy_dpin', true);
+        if (empty($dpin)) {
+            if (function_exists('dejoiy_ensure_product_dpin')) {
+                $dpin = dejoiy_ensure_product_dpin($product_id);
+            } else {
+                $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                $len = strlen($chars);
+                $dpin = 'D';
+                for ($i = 0; $i < 10; $i++) {
+                    $dpin .= $chars[random_int(0, $len - 1)];
+                }
+            }
+            update_post_meta($product_id, '_dejoiy_dpin', $dpin);
+            update_post_meta($product_id, '_dpin', $dpin);
+        }
+
         // Associate Vendor
         if ($vendor_id) {
             update_post_meta($product_id, '_vendor_id', $vendor_id);
@@ -1723,7 +1766,7 @@ class DSO_Products {
 
         // Search
         if ($search) {
-            $where[] = "(p.post_title LIKE %s OR p.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key = '_sku' AND meta_value LIKE %s))";
+            $where[] = "(p.post_title LIKE %s OR p.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key IN ('_sku', '_dejoiy_dpin', '_dpin') AND meta_value LIKE %s))";
             $params[] = '%' . $wpdb->esc_like($search) . '%';
             $params[] = '%' . $wpdb->esc_like($search) . '%';
         }
@@ -1785,6 +1828,7 @@ class DSO_Products {
             $list[] = [
                 'id' => $p->get_id(),
                 'name' => $p->get_name(),
+                'dpin' => get_post_meta($pid, '_dejoiy_dpin', true) ?: (function_exists('dejoiy_get_product_dpin') ? dejoiy_get_product_dpin($pid) : ''),
                 'sku' => $p->get_sku(),
                 'price_html' => $p->get_price_html() ?: '₹0.00',
                 'regular_price' => $p->get_regular_price(),

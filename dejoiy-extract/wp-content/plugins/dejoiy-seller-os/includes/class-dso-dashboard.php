@@ -31,11 +31,19 @@ class DSO_Dashboard {
             <!-- Personalized Welcome Banner -->
             <div class="dso-welcome-banner">
                 <div class="dso-welcome-content">
-                    <div class="dso-welcome-badge">DEJOIY SELLER CENTRAL OPERATING SYSTEM</div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                        <span class="dso-welcome-badge">DEJOIY SELLER CENTRAL OPERATING SYSTEM</span>
+                        <span class="dso-badge" style="background:rgba(192,132,252,0.2);color:#e9d5ff;border:1px solid rgba(192,132,252,0.4);font-family:monospace;font-size:11px;font-weight:700;"><?php echo esc_html(sprintf('DJ-VND-%04d', $vendor_id)); ?></span>
+                        <span class="dso-badge dso-badge-green" style="font-size:11px;">Verified Merchant ✓</span>
+                        <span class="dso-badge" style="background:rgba(56,189,248,0.2);color:#bae6fd;border:1px solid rgba(56,189,248,0.4);font-size:11px;font-weight:700;">Platinum Tier (<?php echo $health['score']; ?>/100 Health)</span>
+                    </div>
                     <h1 class="dso-welcome-title"><?php echo esc_html($this->get_greeting()); ?>, <?php echo esc_html($store_name); ?> 👋</h1>
                     <p class="dso-welcome-desc">Your marketplace command center is synchronized. Here is your operational pulse for today, <span class="dso-welcome-date"><?php echo date('l, F j, Y'); ?></span>.</p>
                 </div>
                 <div class="dso-welcome-actions">
+                    <a href="<?php echo esc_url(function_exists('wcfmmp_get_store_url') ? wcfmmp_get_store_url($vendor_id) : 'https://dejoiy.com'); ?>" target="_blank" rel="noopener" class="dso-btn dso-btn-outline" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.25);">
+                        View Live Storefront ↗
+                    </a>
                     <a href="?section=add-product" class="dso-btn dso-btn-primary">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Product
