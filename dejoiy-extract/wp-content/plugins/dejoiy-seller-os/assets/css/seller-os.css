@@ -4775,8 +4775,9 @@ img { max-width: 100%; height: auto; }
 /* Sidebar Dark Enterprise Nav Items */
 .dso-sidebar-nav {
   flex: 1 !important;
-  padding: 12px 10px !important;
+  padding: 12px 10px 40px !important;
   overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 .dso-nav-group-header {
   padding: 14px 12px 6px !important;
@@ -4853,6 +4854,12 @@ img { max-width: 100%; height: auto; }
    UNIVERSAL DEVICE RESPONSIVENESS (MOBILE, TABLET, LAPTOP, TV)
    ========================================================= */
 
+/* Global Mobile Standards */
+html, body, #dso-app {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-text-size-adjust: 100% !important;
+}
+
 @media (max-width: 960px) {
   .dso-greeting-store-pill,
   .dso-topbar-greeting-pill {
@@ -4864,127 +4871,891 @@ img { max-width: 100%; height: auto; }
   .dso-topbar-link {
     display: none !important;
   }
-  .dso-header-search-wrap {
-    max-width: 260px !important;
-  }
 }
 
-/* Small Phones (320px - 599px) */
-@media (max-width: 599px) {
+/* =========================================================
+   SMARTPHONES (< 768px) — NATIVE MOBILE APP EXPERIENCE
+   ========================================================= */
+@media (max-width: 767px) {
   html, body, #dso-app, .dso-main {
     max-width: 100vw !important;
     overflow-x: hidden !important;
-  }
-  .dso-topbar {
-    padding: 0 8px !important;
-    height: 56px !important;
-    max-width: 100vw !important;
     box-sizing: border-box !important;
   }
+
+  /* Prevent iOS auto-zoom on input focus */
+  input, select, textarea, .dso-input, .dso-inline-input {
+    font-size: 16px !important;
+  }
+
+  /* Native Top App Bar */
+  .dso-topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding: env(safe-area-inset-top, 0px) 12px 0 !important;
+    background: linear-gradient(135deg, #000c2c 0%, #001553 100%) !important;
+    border-bottom: 1px solid rgba(0, 102, 255, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    z-index: 1050 !important;
+    box-sizing: border-box !important;
+  }
+
   .dso-topbar-left {
-    gap: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
     flex-shrink: 0 !important;
   }
-  .dso-topbar-brand img {
-    height: 22px !important;
-  }
-  .dso-brand-badge {
-    display: none !important;
-  }
-  .dso-topbar-greeting-pill,
-  .dso-topbar-merchant-pill,
-  .dso-topbar-link,
-  .dso-topbar-icon-btn#dso-seller-ai-btn,
-  .dso-topbar-icon-btn.dso-notif-btn,
-  a.dso-notif-btn {
-    display: none !important;
-  }
-  .dso-hub-btn-label {
-    display: none !important;
-  }
-  .dso-hub-menu-btn {
-    padding: 2px 4px !important;
-  }
-  .dso-topbar-center {
-    padding: 0 4px !important;
-    min-width: 0 !important;
-  }
-  .dso-header-search-wrap {
-    max-width: 130px !important;
-    width: 100% !important;
-  }
-  .dso-welcome-actions {
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-  .dso-welcome-actions .dso-btn {
-    flex: 1 1 100% !important;
-    text-align: center !important;
+
+  .dso-menu-toggle {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: center !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    padding: 0 !important;
   }
-  .dso-kpi-grid,
-  .dso-kpi-grid-4 {
-    grid-template-columns: 1fr !important;
+
+  .dso-topbar-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
   }
-  .dso-action-cards-grid {
-    grid-template-columns: 1fr !important;
+
+  .dso-brand-logo-img {
+    height: 22px !important;
+    width: auto !important;
   }
-  .dso-action-card {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 12px !important;
+
+  .dso-brand-badge {
+    display: inline-block !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    padding: 2px 6px !important;
+    border-radius: 5px !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+    letter-spacing: 0.5px !important;
   }
-  .dso-action-card a.dso-btn {
-    width: 100% !important;
-    text-align: center !important;
-  }
-  .dso-search-kbd {
+
+  /* Hide center search by default on mobile — show trigger icon button */
+  .dso-topbar-center {
     display: none !important;
   }
-  .dso-header-search-input {
-    font-size: 12px !important;
+
+  /* Active full-screen live search overlay */
+  .dso-topbar.dso-mobile-search-active .dso-topbar-left,
+  .dso-topbar.dso-mobile-search-active .dso-topbar-right {
+    display: none !important;
   }
+
+  .dso-topbar.dso-mobile-search-active .dso-topbar-center {
+    display: flex !important;
+    position: absolute !important;
+    inset: 0 !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) 10px 6px !important;
+    background: #000c2c !important;
+    z-index: 1100 !important;
+    align-items: center !important;
+  }
+
+  .dso-topbar.dso-mobile-search-active .dso-header-search-wrap {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .dso-topbar.dso-mobile-search-active .dso-search-field {
+    height: 42px !important;
+    background: #001553 !important;
+    border-color: #0066ff !important;
+  }
+
+  .dso-mobile-search-close {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    height: 36px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    padding: 0 4px !important;
+  }
+
   .dso-header-search-results {
     position: fixed !important;
-    top: 56px !important;
+    top: calc(56px + env(safe-area-inset-top, 0px)) !important;
     left: 8px !important;
     right: 8px !important;
     max-width: calc(100vw - 16px) !important;
+    max-height: 70vh !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+    z-index: 1200 !important;
   }
+
+  /* Right Header Controls */
+  .dso-topbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dso-mobile-search-trigger {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+  }
+
+  .dso-topbar-icon-btn.dso-notif-btn,
+  a.dso-notif-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    position: relative !important;
+  }
+
+  .dso-notif-badge {
+    position: absolute !important;
+    top: 5px !important;
+    right: 5px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid #000c2c !important;
+    padding: 0 3px !important;
+  }
+
+  .dso-hub-menu-btn {
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .dso-hub-avatar {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    border: 2px solid #0066ff !important;
+    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3) !important;
+  }
+
+  .dso-hub-btn-label,
+  .dso-hub-menu-btn > svg,
+  .dso-topbar-greeting-pill,
+  .dso-topbar-merchant-pill,
+  .dso-topbar-link,
+  #dso-seller-ai-btn {
+    display: none !important;
+  }
+
+  .dso-dropdown-hub {
+    position: fixed !important;
+    top: calc(56px + env(safe-area-inset-top, 0px) + 8px) !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-height: calc(100vh - 140px) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  /* Main Container Layout & Safe-Area Padding */
+  .dso-main {
+    margin-top: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: calc(100vh - 56px) !important;
+  }
+
   .dso-page {
-    padding: 14px 10px 84px !important;
+    padding: 14px 12px 24px !important;
   }
+
+  /* Native Bottom Navigation Bar */
+  .dso-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 4px 6px calc(2px + env(safe-area-inset-bottom, 0px)) !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.85) !important;
+    box-shadow: 0 -4px 25px rgba(0, 15, 80, 0.08) !important;
+    z-index: 1100 !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .dso-bottom-nav-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 !important;
+    height: 100% !important;
+    padding: 2px 0 !important;
+    color: #64748b !important;
+    text-decoration: none !important;
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .dso-bottom-nav-icon-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 38px !important;
+    height: 26px !important;
+    border-radius: 13px !important;
+    margin-bottom: 2px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .dso-bottom-nav-item svg {
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 2 !important;
+    stroke: currentColor !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .dso-bottom-nav-item.dso-bottom-active {
+    color: #0066ff !important;
+    font-weight: 700 !important;
+  }
+
+  .dso-bottom-nav-item.dso-bottom-active .dso-bottom-nav-icon-wrap {
+    background: rgba(0, 102, 255, 0.12) !important;
+  }
+
+  .dso-bottom-nav-item.dso-bottom-active svg {
+    stroke: #0066ff !important;
+    stroke-width: 2.3 !important;
+    transform: scale(1.06) !important;
+  }
+
+  .dso-bottom-nav-item:active {
+    transform: scale(0.92) !important;
+  }
+
+  /* Dashboard Cards & Layout */
   .dso-welcome-banner {
     padding: 18px 14px !important;
+    border-radius: 16px !important;
   }
+
   .dso-welcome-title {
-    font-size: 19px !important;
+    font-size: 20px !important;
+    line-height: 1.3 !important;
   }
-  .dso-footer {
-    padding: 28px 16px 84px !important;
+
+  .dso-welcome-desc {
+    font-size: 13px !important;
+    margin-bottom: 14px !important;
+    line-height: 1.45 !important;
   }
-  .dso-footer-grid {
+
+  .dso-welcome-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .dso-welcome-actions .dso-btn {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    text-align: center !important;
+    border-radius: 10px !important;
+  }
+
+  .dso-welcome-actions .dso-btn:first-child {
+    flex: 1 1 100% !important;
+  }
+
+  /* KPI Grids */
+  .dso-kpi-grid,
+  .dso-kpi-grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .dso-kpi-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .dso-kpi-value {
+    font-size: 22px !important;
+  }
+
+  .dso-action-cards-grid {
     grid-template-columns: 1fr !important;
-    gap: 20px !important;
+    gap: 10px !important;
   }
-  .dso-main {
-    margin-top: 56px !important;
+
+  .dso-action-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .dso-action-card-desc {
+    white-space: normal !important;
+    -webkit-line-clamp: 2 !important;
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .dso-action-card a.dso-btn {
+    width: 100% !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Horizontal Filter Pills */
+  .dso-filter-tabs,
+  .dso-inv-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding-bottom: 6px !important;
+    scrollbar-width: none !important;
+    white-space: nowrap !important;
+  }
+
+  .dso-filter-tabs::-webkit-scrollbar,
+  .dso-inv-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* Bottom Nav Button Reset */
+  .dso-bottom-nav button,
+  button.dso-bottom-nav-item {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    font-family: inherit !important;
+  }
+
+  /* Manage All Inventory — Mobile Listing Cards */
+  .dso-inv-table thead {
+    display: none !important;
+  }
+
+  .dso-inv-table,
+  .dso-inv-table tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .dso-inv-table tr {
+    display: grid !important;
+    grid-template-columns: auto auto 1fr !important;
+    grid-template-rows: auto auto auto auto !important;
+    gap: 10px 8px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 21, 83, 0.04) !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+  }
+
+  .dso-inv-table td {
+    display: block !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Row 1: Checkbox + Status badge (left), DPIN pill (right) */
+  .dso-inv-table td:nth-child(1) {
+    grid-column: 1 / 2 !important;
+    grid-row: 1 / 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  .dso-inv-table td:nth-child(2) {
+    grid-column: 2 / 3 !important;
+    grid-row: 1 / 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  .dso-inv-table td:nth-child(4) {
+    grid-column: 3 / 4 !important;
+    grid-row: 1 / 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+  }
+
+  /* Row 2: Product cell spanning 100% */
+  .dso-inv-table td:nth-child(3) {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 / 3 !important;
+    border-top: 1px solid #f1f5f9 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding: 10px 0 !important;
+  }
+
+  .dso-inv-table .dso-product-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .dso-inv-table .dso-product-thumb {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Bottom row: Stock (left) & Price (right) boxes */
+  .dso-inv-table td:nth-child(5) {
+    grid-column: 1 / 2 !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+  }
+
+  .dso-inv-table td:nth-child(6) {
+    grid-column: 2 / 3 !important;
+    background: #f8fafc !important;
+    border: 1px solid #edf2f7 !important;
+    border-radius: 10px !important;
+    padding: 8px 10px !important;
+  }
+
+  .dso-inv-table .dso-inv-editable-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .dso-inv-table .dso-inline-input {
+    flex: 1 !important;
+    width: 100% !important;
+    min-height: 38px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+  }
+
+  .dso-inv-table .dso-inline-save-btn {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dso-inv-table td:nth-child(7) {
+    display: none !important;
+  }
+
+  .dso-inv-table td:nth-child(8) {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed #f1f5f9 !important;
+  }
+
+  .dso-inv-table td:nth-child(8) .dso-btn {
+    flex: 1 !important;
+    min-height: 40px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    text-align: center !important;
+  }
+
+  /* Orders Management — Mobile Order Cards */
+  .dso-table-orders thead {
+    display: none !important;
+  }
+
+  .dso-table-orders,
+  .dso-table-orders tbody {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .dso-table-orders tr.dso-order-row {
+    display: flex !important;
+    flex-direction: column !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 2px 8px rgba(0, 21, 83, 0.04) !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .dso-table-orders td {
+    display: block !important;
+    border: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .dso-table-orders td:nth-child(1) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    padding-bottom: 8px !important;
+    font-size: 15px !important;
+  }
+
+  .dso-table-orders td:nth-child(2) {
+    display: flex !important;
+    gap: 8px !important;
+    font-size: 12px !important;
+    color: #64748b !important;
+  }
+
+  .dso-table-orders td:nth-child(3) {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+  }
+
+  .dso-table-orders td:nth-child(4) {
+    font-size: 12px !important;
+    color: #475569 !important;
+    background: #f8fafc !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+  }
+
+  .dso-table-orders td:nth-child(5) {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    color: #001553 !important;
+    padding: 4px 0 !important;
+  }
+
+  .dso-table-orders td:nth-child(8) {
+    padding-top: 10px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    margin-top: 4px !important;
+  }
+
+  .dso-table-orders .dso-row-actions {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .dso-table-orders .dso-row-actions .dso-btn {
+    flex: 1 !important;
+    min-height: 42px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    text-align: center !important;
+  }
+
+  /* Sleek Native Mobile App Footer */
+  .dso-desktop-footer-grid,
+  .dso-desktop-only {
+    display: none !important;
+  }
+
+  .dso-footer {
+    padding: 24px 16px 84px !important;
+    background: #000c2c !important;
+    border-top: 1px solid rgba(0, 102, 255, 0.2) !important;
+  }
+
+  .dso-mobile-app-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .dso-mobile-footer-brand-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .dso-mobile-footer-logo {
+    height: 22px !important;
+  }
+
+  .dso-mobile-footer-badge {
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  }
+
+  .dso-mobile-footer-desc {
+    font-size: 12px !important;
+    color: #94a3b8 !important;
+    max-width: 320px !important;
+    margin: 0 0 14px !important;
+    line-height: 1.4 !important;
+  }
+
+  .dso-mobile-footer-pill-links {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .dso-mobile-footer-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 8px 14px !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #e2e8f0 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+  }
+
+  .dso-mobile-footer-badges {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+    color: #64748b !important;
+    margin-bottom: 8px !important;
+  }
+
+  .dso-mobile-footer-copyright {
+    font-size: 11px !important;
+    color: #64748b !important;
   }
 }
 
-/* Tablets (600px - 1024px) */
-@media (min-width: 600px) and (max-width: 1024px) {
+/* Orders & Tabs Mobile Horizontal Swipe Strips */
+.dso-stats-row {
+  display: flex !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  gap: 10px !important;
+  padding-bottom: 6px !important;
+  scroll-snap-type: x mandatory !important;
+  scrollbar-width: none !important;
+}
+.dso-stats-row::-webkit-scrollbar {
+  display: none !important;
+}
+.dso-stat-card {
+  flex: 0 0 145px !important;
+  scroll-snap-align: start !important;
+}
+
+.dso-tabs {
+  display: flex !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  white-space: nowrap !important;
+  scrollbar-width: none !important;
+  gap: 6px !important;
+  padding-bottom: 6px !important;
+}
+.dso-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+.dso-tab {
+  flex-shrink: 0 !important;
+}
+
+/* =========================================================
+   TABLETS (768px - 1024px) — iPad Portrait & iPad Air
+   ========================================================= */
+@media (min-width: 768px) and (max-width: 1024px) {
+  html, body, #dso-app, .dso-topbar, .dso-main {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
   .dso-topbar {
     padding: 0 16px !important;
+    height: 60px !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    box-sizing: border-box !important;
   }
+
+  .dso-mobile-search-trigger,
+  .dso-mobile-search-close,
+  .dso-mobile-app-footer,
+  .dso-topbar-greeting-pill,
+  .dso-topbar-link,
+  .dso-hub-btn-label,
+  .dso-hub-menu-btn > svg {
+    display: none !important;
+  }
+
+  .dso-topbar-center {
+    display: flex !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: 280px !important;
+    justify-content: center !important;
+  }
+
   .dso-header-search-wrap {
-    max-width: 240px !important;
+    max-width: 260px !important;
+    width: 100% !important;
   }
+
+  .dso-topbar-right {
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dso-hub-avatar {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .dso-main {
+    margin-left: 0 !important;
+    margin-top: 60px !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .dso-page {
-    padding: 20px 16px 80px !important;
+    padding: 20px 16px 84px !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
   }
+
+  .dso-welcome-banner {
+    padding: 22px 20px !important;
+  }
+
+  .dso-kpi-grid,
+  .dso-kpi-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .dso-action-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .dso-action-card {
+    padding: 14px 18px !important;
+  }
+
+  .dso-action-card-desc {
+    white-space: normal !important;
+  }
+
+  .dso-table-responsive {
+    -webkit-overflow-scrolling: touch !important;
+    overflow-x: auto !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+  }
+
   .dso-footer-grid {
     grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+  }
+
+  .dso-bottom-nav {
+    display: flex !important;
+    height: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px 24px calc(4px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
