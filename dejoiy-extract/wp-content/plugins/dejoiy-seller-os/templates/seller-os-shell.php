@@ -21,14 +21,98 @@ if (!isset($display_name)) {
     $store_logo = $store && !empty($store['logo']) ? $store['logo'] : '';
 }
 $vendor_id = Dejoiy_Seller_OS::instance()->get_vendor_id($user_id) ?: $user_id;
-$live_store_url = function_exists('wcfmmp_get_store_url') ? wcfmmp_get_store_url($vendor_id) : 'https://dejoiy.com';
+
+// Compute actual storefront URL
+$store_slug = '';
+if (!empty($store_name)) {
+    $store_slug = sanitize_title($store_name);
+} elseif (!empty($display_name)) {
+    $store_slug = sanitize_title($display_name);
+}
+
+$live_store_url = '';
+if (function_exists('wcfmmp_get_store_url')) {
+    $live_store_url = wcfmmp_get_store_url($vendor_id);
+}
+if (empty($live_store_url) || strpos($live_store_url, 'http') === false) {
+    $live_store_url = 'https://dejoiy.com/store/' . ($store_slug ?: 'seller') . '/';
+} else {
+    $parsed = parse_url($live_store_url);
+    $path = !empty($parsed['path']) ? rtrim($parsed['path'], '/') . '/' : ('/store/' . ($store_slug ?: 'seller') . '/');
+    $live_store_url = 'https://dejoiy.com' . $path;
+}
+
 $merchant_code = sprintf('DJ-VND-%04d', $vendor_id);
+
+// Time-based greeting
+$hour = (int) current_time('G');
+if ($hour >= 5 && $hour < 12) {
+    $salutation = 'Good morning';
+} elseif ($hour >= 12 && $hour < 17) {
+    $salutation = 'Good afternoon';
+} elseif ($hour >= 17 && $hour < 21) {
+    $salutation = 'Good evening';
+} else {
+    $salutation = 'Good night';
+}
+
+// Prepare Search Data for client-side search
+$search_products_data = [];
+$vendor_products = get_posts([
+    'post_type' => 'product',
+    'post_status' => ['publish', 'draft', 'pending', 'private'],
+    'author' => $vendor_id,
+    'posts_per_page' => 100,
+]);
+foreach ($vendor_products as $vp) {
+    $wc_prod = wc_get_product($vp->ID);
+    if (!$wc_prod) continue;
+    $dpin = get_post_meta($vp->ID, '_dejoiy_dpin', true) ?: (get_post_meta($vp->ID, '_dpin', true) ?: '');
+    $sku = $wc_prod->get_sku() ?: '';
+    $img_id = $wc_prod->get_image_id();
+    $thumb = $img_id ? wp_get_attachment_image_url($img_id, 'thumbnail') : '';
+    $raw_price = $wc_prod->get_price_html() ?: ('₹' . number_format(floatval($wc_prod->get_price()), 2));
+    $clean_price = html_entity_decode(wp_strip_all_tags($raw_price), ENT_QUOTES, 'UTF-8');
+    $search_products_data[] = [
+        'id' => $vp->ID,
+        'title' => $wc_prod->get_name(),
+        'dpin' => $dpin,
+        'sku' => $sku,
+        'price' => $clean_price,
+        'thumb' => $thumb,
+        'url' => '?section=products&action=edit&id=' . $vp->ID,
+        'status' => $vp->post_status
+    ];
+}
+
+$search_sections_data = [
+    ['title' => 'Dashboard Overview', 'desc' => 'Sales, live metrics & alerts', 'url' => '?section=dashboard', 'icon' => '📊', 'tags' => 'home metrics overview stats revenue sales graph'],
+    ['title' => 'Products & Catalog', 'desc' => 'Manage inventory & DPINs', 'url' => '?section=products', 'icon' => '📦', 'tags' => 'products catalog inventory items dpin sku add stock'],
+    ['title' => 'Add New Product', 'desc' => 'Instant DPIN generation & publishing', 'url' => '?section=products&action=new', 'icon' => '➕', 'tags' => 'create product publish dpin new listing draft upload'],
+    ['title' => 'Orders & Shipments', 'desc' => 'Fulfill customer orders & tracking', 'url' => '?section=orders', 'icon' => '📋', 'tags' => 'orders shipments tracking dispatch delivery customer fulfill invoice'],
+    ['title' => 'Finance & Payouts', 'desc' => 'Bank verification & earnings balance', 'url' => '?section=finance', 'icon' => '💰', 'tags' => 'finance bank payout balance wallet earnings withdrawal tax ifsc pan account'],
+    ['title' => 'Storefront Studio', 'desc' => 'Customise public DEJOIY store', 'url' => '?section=store', 'icon' => '🎨', 'tags' => 'store storefront banner logo design customize url bio slug brand'],
+    ['title' => 'Logistics & Shipping', 'desc' => 'Pincodes & courier partners', 'url' => '?section=shipping', 'icon' => '🚚', 'tags' => 'shipping delivery courier pincode courier partner fee logistics'],
+    ['title' => 'Pricing & Bulk Deals', 'desc' => 'Dynamic rules & volume discounts', 'url' => '?section=pricing', 'icon' => '🏷️', 'tags' => 'pricing discount sale bulk b2b offer coupon tier'],
+    ['title' => 'Advertising & Sponsored', 'desc' => 'Boost listing reach & sales', 'url' => '?section=advertising', 'icon' => '📢', 'tags' => 'ads advertising sponsored campaign boost reach impressions'],
+    ['title' => 'Growth & Smart Insights', 'desc' => 'Demand analytics & recommendations', 'url' => '?section=growth', 'icon' => '🚀', 'tags' => 'growth insights recommendations demand trending sales opportunities'],
+    ['title' => 'Performance & Reports', 'desc' => 'Conversion telemetry & KPI graphs', 'url' => '?section=performance', 'icon' => '📈', 'tags' => 'performance analytics conversion charts graphs kpi reports telemetry'],
+    ['title' => 'Seller University', 'desc' => 'Handbooks, policies & masterclasses', 'url' => '?section=learn', 'icon' => '🎓', 'tags' => 'learn university education training guides handbook tutorials policies'],
+    ['title' => 'Support Desk & Tickets', 'desc' => 'Dispute resolution & direct support', 'url' => '?section=support', 'icon' => '🎫', 'tags' => 'support help ticket complaint issue desk agent contact contact seller support'],
+    ['title' => 'Settings & Security', 'desc' => 'Seller profile & store credentials', 'url' => '?section=settings', 'icon' => '⚙️', 'tags' => 'settings profile password email phone gst pan verification business']
+];
 ?>
+<script>
+window.dsoSearchData = {
+    products: <?php echo json_encode($search_products_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>,
+    sections: <?php echo json_encode($search_sections_data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>
+};
+</script>
 <div id="dso-app" class="dso-app">
     <!-- Top Bar -->
     <header class="dso-topbar">
         <div class="dso-topbar-left">
-            <button class="dso-menu-toggle" id="dso-menu-toggle" aria-label="Toggle navigation menu">
+            <button class="dso-menu-toggle" id="dso-menu-toggle" aria-label="Toggle navigation menu" title="Toggle navigation">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <a href="?section=dashboard" class="dso-topbar-brand" title="DEJOIY Seller Central">
@@ -37,29 +121,53 @@ $merchant_code = sprintf('DJ-VND-%04d', $vendor_id);
             </a>
         </div>
         <div class="dso-topbar-center">
-            <button class="dso-search-trigger" id="dso-search-toggle" aria-label="Search and command palette">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <span>Search products, orders, settings...</span>
-                <kbd>⌘K</kbd>
-            </button>
+            <div class="dso-header-search-wrap" id="dso-header-search-wrap">
+                <div class="dso-search-field">
+                    <svg class="dso-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="dso-header-search-input" class="dso-header-search-input" placeholder="Search products, DPIN, orders, tools..." autocomplete="off" spellcheck="false" aria-label="Search DEJOIY Seller Hub" />
+                    <button type="button" id="dso-search-clear-btn" class="dso-search-clear-btn" style="display:none;" aria-label="Clear search">&times;</button>
+                    <kbd class="dso-search-kbd">⌘K</kbd>
+                </div>
+                <div id="dso-header-search-results" class="dso-header-search-results" style="display:none;"></div>
+            </div>
         </div>
         <div class="dso-topbar-right">
+            <!-- Dynamic Logged-in Seller Greeting Pill -->
+            <div class="dso-topbar-greeting-pill" title="<?php echo esc_attr($store_name . ' (' . $merchant_code . ')'); ?>">
+                <span class="dso-greeting-wave">👋</span>
+                <span class="dso-greeting-salutation"><?php echo esc_html($salutation); ?>,</span>
+                <span class="dso-greeting-name"><?php echo esc_html($display_name); ?></span>
+                <span class="dso-greeting-store-pill"><?php echo esc_html($store_name); ?></span>
+            </div>
+
+            <!-- Merchant Status Badge -->
             <div class="dso-topbar-merchant-pill">
                 <span class="dso-merchant-code"><?php echo esc_html($merchant_code); ?></span>
                 <span class="dso-merchant-sep">•</span>
                 <span class="dso-merchant-status">🟢 Verified</span>
             </div>
-            <a href="<?php echo esc_url($live_store_url); ?>" target="_blank" rel="noopener" class="dso-topbar-link">Storefront ↗</a>
+
+            <!-- Actual Live Storefront Link -->
+            <a href="<?php echo esc_url($live_store_url); ?>" target="_blank" rel="noopener" class="dso-topbar-link" title="Open Live Storefront: <?php echo esc_attr($live_store_url); ?>">
+                Storefront ↗
+            </a>
+
             <div class="dso-topbar-divider"></div>
+
+            <!-- Quick Seller AI Drawer Toggle -->
             <button class="dso-topbar-icon-btn" id="dso-seller-ai-btn" title="Open DEJOIY Seller AI Copilot">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="10" y1="22" x2="14" y2="22"/></svg>
             </button>
+
+            <!-- Notifications -->
             <a href="?section=notifications" class="dso-topbar-icon-btn dso-notif-btn" title="Notifications">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
                 <?php if ($unread_count > 0): ?>
-                    <span class="dso-notif-badge"><?php echo $unread_count ?></span>
+                    <span class="dso-notif-badge"><?php echo $unread_count; ?></span>
                 <?php endif; ?>
             </a>
+
+            <!-- Settings Dropdown -->
             <div class="dso-topbar-dropdown" id="dso-settings-dropdown">
                 <button class="dso-topbar-icon-btn" id="dso-settings-toggle" title="Settings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -74,6 +182,8 @@ $merchant_code = sprintf('DJ-VND-%04d', $vendor_id);
                     <a href="<?php echo wp_logout_url(home_url()); ?>" class="dso-dropdown-item dso-dropdown-danger">Log Out</a>
                 </div>
             </div>
+
+            <!-- Help & University Dropdown -->
             <div class="dso-topbar-dropdown" id="dso-help-dropdown">
                 <button class="dso-topbar-icon-btn" id="dso-help-toggle" title="Help & Guides">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -82,16 +192,94 @@ $merchant_code = sprintf('DJ-VND-%04d', $vendor_id);
                     <div class="dso-dropdown-header">Help & University</div>
                     <a href="?section=learn" class="dso-dropdown-item">Seller University</a>
                     <a href="?section=support" class="dso-dropdown-item">Support Desk Tickets</a>
-                    <a href="https://dejoiy.com" target="_blank" rel="noopener" class="dso-dropdown-item">DEJOIY Marketplace</a>
+                    <a href="https://dejoiy.com" target="_blank" rel="noopener" class="dso-dropdown-item">DEJOIY Marketplace ↗</a>
                 </div>
             </div>
-            <div class="dso-topbar-user">
-                <?php if (!empty($store_logo)): ?>
-                    <img src="<?php echo esc_url($store_logo) ?>" alt="" class="dso-user-avatar" />
-                <?php else: ?>
-                    <div class="dso-user-avatar dso-user-avatar-placeholder"><?php echo strtoupper(substr($display_name, 0, 1)) ?></div>
-                <?php endif; ?>
-                <span class="dso-user-name"><?php echo esc_html($display_name) ?></span>
+
+            <!-- Consolidated Right-Hand Actions Dropdown Menu -->
+            <div class="dso-topbar-dropdown" id="dso-quick-hub-dropdown-wrap" style="position:relative;">
+                <button type="button" class="dso-hub-menu-btn" id="dso-quick-hub-toggle" aria-label="Seller Hub Actions Menu" aria-expanded="false" title="Account & Quick Hub Menu">
+                    <div class="dso-hub-avatar">
+                        <?php if (!empty($store_logo)): ?>
+                            <img src="<?php echo esc_url($store_logo); ?>" alt="" />
+                        <?php else: ?>
+                            <span><?php echo strtoupper(substr($display_name, 0, 1)); ?></span>
+                        <?php endif; ?>
+                    </div>
+                    <span class="dso-hub-btn-label"><?php echo esc_html(mb_strimwidth($display_name, 0, 14, '...')); ?></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+
+                <div class="dso-dropdown-hub" id="dso-quick-hub-dropdown">
+                    <div class="dso-hub-header-box">
+                        <div class="dso-hub-seller-title">👋 <?php echo esc_html($salutation . ', ' . $display_name); ?></div>
+                        <div class="dso-hub-store-name">🏪 <?php echo esc_html($store_name); ?></div>
+                        <div class="dso-hub-meta-badges">
+                            <span class="dso-hub-merchant-tag"><?php echo esc_html($merchant_code); ?></span>
+                            <span style="font-size:11px;color:#34d399;font-weight:600;">🟢 Verified Seller</span>
+                        </div>
+                    </div>
+                    <div class="dso-hub-content-list">
+                        <a href="<?php echo esc_url($live_store_url); ?>" target="_blank" rel="noopener" class="dso-hub-item" style="color:#7c3aed;font-weight:700;">
+                            <span class="dso-hub-item-icon">🌐</span>
+                            <span>Visit Live Storefront</span>
+                            <span class="dso-hub-badge-pill" style="background:#ede9fe;color:#7c3aed;">↗</span>
+                        </a>
+                        <button type="button" class="dso-hub-item" id="dso-hub-trigger-ai">
+                            <span class="dso-hub-item-icon">✨</span>
+                            <span>Seller AI Copilot</span>
+                            <span class="dso-hub-badge-pill" style="background:#fef3c7;color:#d97706;">Smart</span>
+                        </button>
+                        <a href="?section=notifications" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">🔔</span>
+                            <span>Notifications</span>
+                            <?php if ($unread_count > 0): ?>
+                                <span class="dso-hub-badge-pill" style="background:#ef4444;color:#ffffff;"><?php echo $unread_count; ?> new</span>
+                            <?php endif; ?>
+                        </a>
+                        <div class="dso-hub-divider"></div>
+                        <div style="padding:6px 20px 2px;font-size:10px;font-weight:800;letter-spacing:0.5px;color:#94a3b8;text-transform:uppercase;">Quick Actions</div>
+                        <a href="?section=products&action=new" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">➕</span>
+                            <span>Add New Product (DPIN)</span>
+                        </a>
+                        <a href="?section=orders" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">📦</span>
+                            <span>Orders & Fulfillment</span>
+                        </a>
+                        <a href="?section=finance" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">💳</span>
+                            <span>Finance & Bank Account</span>
+                        </a>
+                        <a href="?section=performance" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">📊</span>
+                            <span>Analytics & Performance</span>
+                        </a>
+                        <a href="?section=store" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">🎨</span>
+                            <span>Storefront Studio</span>
+                        </a>
+                        <a href="?section=settings" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">⚙️</span>
+                            <span>Seller Settings</span>
+                        </a>
+                        <div class="dso-hub-divider"></div>
+                        <div style="padding:6px 20px 2px;font-size:10px;font-weight:800;letter-spacing:0.5px;color:#94a3b8;text-transform:uppercase;">Support & Learning</div>
+                        <a href="?section=learn" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">🎓</span>
+                            <span>Seller University</span>
+                        </a>
+                        <a href="?section=support" class="dso-hub-item">
+                            <span class="dso-hub-item-icon">🎫</span>
+                            <span>Support Desk Tickets</span>
+                        </a>
+                        <div class="dso-hub-divider"></div>
+                        <a href="<?php echo wp_logout_url(home_url()); ?>" class="dso-hub-item dso-hub-danger">
+                            <span class="dso-hub-item-icon">🚪</span>
+                            <span>Sign Out</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -311,25 +499,53 @@ $merchant_code = sprintf('DJ-VND-%04d', $vendor_id);
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Sidebar toggle
-    var toggle = document.getElementById('dso-menu-toggle');
+    // Sidebar toggle for both Mobile/Tablet (drawer) and Desktop (collapse)
+    var menuToggle = document.getElementById('dso-menu-toggle');
     var sidebar = document.getElementById('dso-sidebar');
     var overlay = document.getElementById('dso-sidebar-overlay');
-    var close = document.getElementById('dso-sidebar-close');
+    var sidebarClose = document.getElementById('dso-sidebar-close');
+    var app = document.getElementById('dso-app');
 
-    if (toggle && sidebar) {
-        toggle.addEventListener('click', function() {
-            sidebar.classList.toggle('dso-sidebar-open');
-            if (overlay) overlay.classList.toggle('dso-visible');
-        });
+    function toggleSidebar() {
+        if (!sidebar) return;
+        if (window.innerWidth >= 1280) {
+            // Desktop Collapse / Expand
+            if (app) app.classList.toggle('dso-sidebar-collapsed');
+            sidebar.classList.toggle('dso-sidebar-collapsed');
+        } else {
+            // Mobile / Tablet Slide-over
+            var isOpen = sidebar.classList.contains('open') || sidebar.classList.contains('dso-sidebar-open');
+            if (isOpen) {
+                sidebar.classList.remove('open', 'dso-sidebar-open');
+                if (overlay) overlay.classList.remove('visible', 'dso-visible');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.add('open', 'dso-sidebar-open');
+                if (overlay) overlay.classList.add('visible', 'dso-visible');
+                document.body.style.overflow = 'hidden';
+            }
+        }
     }
 
     function closeSidebar() {
-        if (sidebar) sidebar.classList.remove('dso-sidebar-open');
-        if (overlay) overlay.classList.remove('dso-visible');
+        if (sidebar) sidebar.classList.remove('open', 'dso-sidebar-open');
+        if (overlay) overlay.classList.remove('visible', 'dso-visible');
+        document.body.style.overflow = '';
     }
+
+    if (menuToggle) menuToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSidebar();
+    });
     if (overlay) overlay.addEventListener('click', closeSidebar);
-    if (close) close.addEventListener('click', closeSidebar);
+    if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+
+    // Auto-close sidebar on mobile when navigating
+    document.querySelectorAll('.dso-nav-link, .dso-nav-child').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth < 1280) closeSidebar();
+        });
+    });
 
     // Nav children toggle
     document.querySelectorAll('.dso-nav-link').forEach(function(link) {
@@ -352,8 +568,8 @@ document.addEventListener('DOMContentLoaded', function() {
         settingsToggle.addEventListener('click', function(e) {
             e.stopPropagation();
             settingsMenu.classList.toggle('dso-dropdown-open');
-            var helpMenu = document.getElementById('dso-help-menu');
             if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
+            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
         });
     }
 
@@ -364,45 +580,249 @@ document.addEventListener('DOMContentLoaded', function() {
         helpToggle.addEventListener('click', function(e) {
             e.stopPropagation();
             helpMenu.classList.toggle('dso-dropdown-open');
-            var settingsMenu = document.getElementById('dso-settings-menu');
             if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
+            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
         });
     }
 
-    document.addEventListener('click', function() {
-        if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
-        if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
-    });
+    // Consolidated Right-Hand Quick Hub Dropdown
+    var quickHubToggle = document.getElementById('dso-quick-hub-toggle');
+    var quickHubMenu = document.getElementById('dso-quick-hub-dropdown');
+    var hubTriggerAi = document.getElementById('dso-hub-trigger-ai');
 
-    // Command Palette
-    var cpPalette = document.getElementById('dso-command-palette');
-    var cpInput = document.getElementById('dso-cp-input');
-    var cpResults = document.getElementById('dso-cp-results');
-    var cpBackdrop = document.getElementById('dso-cp-backdrop');
-    var searchToggle = document.getElementById('dso-search-toggle');
-
-    function openCP() {
-        if (cpPalette) {
-            cpPalette.classList.add('dso-cp-open');
-            if (cpInput) cpInput.focus();
-        }
-    }
-    function closeCP() {
-        if (cpPalette) {
-            cpPalette.classList.remove('dso-cp-open');
-            if (cpInput) cpInput.value = '';
-        }
+    if (quickHubToggle && quickHubMenu) {
+        quickHubToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isOpen = quickHubMenu.classList.toggle('dso-open');
+            quickHubToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
+            if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
+            if (headerSearchResults) headerSearchResults.style.display = 'none';
+        });
     }
 
-    document.addEventListener('keydown', function(e) {
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    if (hubTriggerAi) {
+        hubTriggerAi.addEventListener('click', function(e) {
             e.preventDefault();
-            openCP();
+            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
+            toggleAi(true);
+        });
+    }
+
+    // Interactive Header Live Search
+    var headerSearchInput = document.getElementById('dso-header-search-input');
+    var headerSearchResults = document.getElementById('dso-header-search-results');
+    var headerSearchClear = document.getElementById('dso-search-clear-btn');
+    var currentHighlightIndex = -1;
+
+    function renderHeaderSearchResults(query) {
+        if (!headerSearchResults) return;
+        var q = (query || '').trim().toLowerCase();
+        if (!q) {
+            headerSearchResults.style.display = 'none';
+            headerSearchResults.innerHTML = '';
+            currentHighlightIndex = -1;
+            return;
         }
-        if (e.key === 'Escape') closeCP();
+
+        var searchData = window.dsoSearchData || { products: [], sections: [] };
+        var products = searchData.products || [];
+        var sections = searchData.sections || [];
+
+        // Match products by Title, DPIN, SKU
+        var matchedProducts = products.filter(function(p) {
+            var title = (p.title || '').toLowerCase();
+            var dpin = (p.dpin || '').toLowerCase();
+            var sku = (p.sku || '').toLowerCase();
+            return title.indexOf(q) !== -1 || dpin.indexOf(q) !== -1 || sku.indexOf(q) !== -1;
+        }).slice(0, 6);
+
+        // Match sections by Title or Tags
+        var matchedSections = sections.filter(function(s) {
+            var title = (s.title || '').toLowerCase();
+            var desc = (s.desc || '').toLowerCase();
+            var tags = (s.tags || '').toLowerCase();
+            return title.indexOf(q) !== -1 || desc.indexOf(q) !== -1 || tags.indexOf(q) !== -1;
+        }).slice(0, 4);
+
+        if (matchedProducts.length === 0 && matchedSections.length === 0) {
+            headerSearchResults.innerHTML = 
+                '<div class="dso-search-empty">' +
+                    '🔍 No results found for "<strong>' + escapeHtml(q) + '</strong>"<br>' +
+                    '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="display:inline-block;margin-top:8px;color:#7c3aed;font-weight:600;text-decoration:underline;">Search full catalog &rarr;</a>' +
+                '</div>';
+            headerSearchResults.style.display = 'block';
+            currentHighlightIndex = -1;
+            return;
+        }
+
+        var html = '';
+
+        if (matchedProducts.length > 0) {
+            html += '<div class="dso-search-group-title">Products & Catalog (' + matchedProducts.length + ')</div>';
+            matchedProducts.forEach(function(p) {
+                var thumbHtml = p.thumb 
+                    ? '<img src="' + p.thumb + '" alt="" />'
+                    : '📦';
+                var dpinHtml = p.dpin ? '<code>' + escapeHtml(p.dpin) + '</code>' : '';
+                var skuHtml = p.sku ? '<span>SKU: ' + escapeHtml(p.sku) + '</span>' : '';
+                html += 
+                    '<a href="' + p.url + '" class="dso-search-res-item">' +
+                        '<div class="dso-search-item-thumb">' + thumbHtml + '</div>' +
+                        '<div class="dso-search-item-body">' +
+                            '<div class="dso-search-item-title">' + highlightMatch(p.title, q) + '</div>' +
+                            '<div class="dso-search-item-meta">' +
+                                dpinHtml +
+                                (dpinHtml && skuHtml ? ' • ' : '') +
+                                skuHtml +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="dso-search-item-price">' + escapeHtml(p.price) + '</div>' +
+                    '</a>';
+            });
+        }
+
+        if (matchedSections.length > 0) {
+            html += '<div class="dso-search-group-title">Seller Tools & Hub (' + matchedSections.length + ')</div>';
+            matchedSections.forEach(function(s) {
+                html += 
+                    '<a href="' + s.url + '" class="dso-search-res-item">' +
+                        '<div class="dso-search-item-thumb" style="font-size:18px;">' + s.icon + '</div>' +
+                        '<div class="dso-search-item-body">' +
+                            '<div class="dso-search-item-title">' + highlightMatch(s.title, q) + '</div>' +
+                            '<div class="dso-search-item-meta">' + escapeHtml(s.desc) + '</div>' +
+                        '</div>' +
+                    '</a>';
+            });
+        }
+
+        html += 
+            '<div style="padding:8px 16px;border-top:1px solid #f1f5f9;background:#f8fafc;font-size:12px;display:flex;align-items:center;justify-content:space-between;">' +
+                '<span style="color:#64748b;">Press <kbd style="background:#e2e8f0;padding:1px 5px;border-radius:3px;font-family:monospace;">Enter</kbd> to search catalog</span>' +
+                '<a href="?section=products&search=' + encodeURIComponent(q) + '" style="color:#7c3aed;font-weight:600;text-decoration:none;">View all results &rarr;</a>' +
+            '</div>';
+
+        headerSearchResults.innerHTML = html;
+        headerSearchResults.style.display = 'block';
+        currentHighlightIndex = -1;
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    function highlightMatch(text, query) {
+        if (!text || !query) return escapeHtml(text);
+        var idx = text.toLowerCase().indexOf(query.toLowerCase());
+        if (idx === -1) return escapeHtml(text);
+        return escapeHtml(text.substring(0, idx)) + 
+               '<mark style="background:#fef08a;color:#854d0e;padding:0 2px;border-radius:2px;font-weight:700;">' + 
+               escapeHtml(text.substring(idx, idx + query.length)) + 
+               '</mark>' + 
+               escapeHtml(text.substring(idx + query.length));
+    }
+
+    if (headerSearchInput) {
+        headerSearchInput.addEventListener('input', function() {
+            var val = this.value;
+            if (headerSearchClear) {
+                headerSearchClear.style.display = val.length > 0 ? 'inline-block' : 'none';
+            }
+            renderHeaderSearchResults(val);
+        });
+
+        headerSearchInput.addEventListener('focus', function() {
+            if (this.value.trim().length > 0) {
+                renderHeaderSearchResults(this.value);
+            }
+        });
+
+        headerSearchInput.addEventListener('keydown', function(e) {
+            var items = headerSearchResults ? headerSearchResults.querySelectorAll('.dso-search-res-item') : [];
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (items.length > 0) {
+                    currentHighlightIndex = (currentHighlightIndex + 1) % items.length;
+                    items.forEach(function(el, idx) {
+                        el.classList.toggle('dso-selected', idx === currentHighlightIndex);
+                    });
+                    if (items[currentHighlightIndex]) items[currentHighlightIndex].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (items.length > 0) {
+                    currentHighlightIndex = (currentHighlightIndex - 1 + items.length) % items.length;
+                    items.forEach(function(el, idx) {
+                        el.classList.toggle('dso-selected', idx === currentHighlightIndex);
+                    });
+                    if (items[currentHighlightIndex]) items[currentHighlightIndex].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Enter') {
+                if (currentHighlightIndex >= 0 && items[currentHighlightIndex]) {
+                    e.preventDefault();
+                    window.location.href = items[currentHighlightIndex].getAttribute('href');
+                } else if (this.value.trim().length > 0) {
+                    e.preventDefault();
+                    window.location.href = '?section=products&search=' + encodeURIComponent(this.value.trim());
+                }
+            } else if (e.key === 'Escape') {
+                if (headerSearchResults) headerSearchResults.style.display = 'none';
+                this.blur();
+            }
+        });
+    }
+
+    if (headerSearchClear) {
+        headerSearchClear.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (headerSearchInput) {
+                headerSearchInput.value = '';
+                headerSearchInput.focus();
+            }
+            this.style.display = 'none';
+            if (headerSearchResults) {
+                headerSearchResults.style.display = 'none';
+                headerSearchResults.innerHTML = '';
+            }
+        });
+    }
+
+    // Dismiss dropdowns and live search on outside click
+    document.addEventListener('click', function(e) {
+        if (quickHubMenu && !quickHubMenu.contains(e.target) && (!quickHubToggle || !quickHubToggle.contains(e.target))) {
+            quickHubMenu.classList.remove('dso-open');
+            if (quickHubToggle) quickHubToggle.setAttribute('aria-expanded', 'false');
+        }
+        if (headerSearchResults && !headerSearchResults.contains(e.target) && (!headerSearchInput || !headerSearchInput.contains(e.target))) {
+            headerSearchResults.style.display = 'none';
+        }
+        if (settingsMenu && !settingsMenu.contains(e.target) && (!settingsToggle || !settingsToggle.contains(e.target))) {
+            settingsMenu.classList.remove('dso-dropdown-open');
+        }
+        if (helpMenu && !helpMenu.contains(e.target) && (!helpToggle || !helpToggle.contains(e.target))) {
+            helpMenu.classList.remove('dso-dropdown-open');
+        }
     });
-    if (searchToggle) searchToggle.addEventListener('click', openCP);
-    if (cpBackdrop) cpBackdrop.addEventListener('click', closeCP);
+
+    // Command palette & keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (headerSearchInput) {
+                headerSearchInput.focus();
+                headerSearchInput.select();
+            }
+        }
+        if (e.key === 'Escape') {
+            if (headerSearchResults) headerSearchResults.style.display = 'none';
+            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
+            if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
+            if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
+            if (typeof DSO !== 'undefined' && DSO.toggleAiDrawer) DSO.toggleAiDrawer(false);
+        }
+    });
 
     // Search in command palette
     var searchTimer;

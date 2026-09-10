@@ -85,7 +85,11 @@
         // ─── 1. Sidebar Toggle ─────────────────────────────
         initSidebar: function() {
             var self = this;
-            document.querySelectorAll('[data-dso-toggle="sidebar"]').forEach(function(btn) {
+            var toggleElements = document.querySelectorAll('[data-dso-toggle="sidebar"], #dso-menu-toggle');
+            toggleElements.forEach(function(btn) {
+                // Avoid double-binding if inline handler exists
+                if (btn.getAttribute('data-dso-bound') === 'true') return;
+                btn.setAttribute('data-dso-bound', 'true');
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     self.toggleSidebar();
@@ -95,35 +99,47 @@
             if (overlay) {
                 overlay.addEventListener('click', function() { self.closeSidebar(); });
             }
+            var closeBtn = document.getElementById('dso-sidebar-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() { self.closeSidebar(); });
+            }
             var sidebar = document.getElementById('dso-sidebar');
             if (sidebar) {
-                sidebar.querySelectorAll('.nav-item > a').forEach(function(link) {
+                sidebar.querySelectorAll('.nav-item > a, .dso-nav-link, .dso-nav-child').forEach(function(link) {
                     link.addEventListener('click', function() {
-                        if (window.innerWidth < 1024) self.closeSidebar();
+                        if (window.innerWidth < 1280) self.closeSidebar();
                     });
                 });
             }
         },
 
         toggleSidebar: function() {
-            this.state.sidebarOpen ? this.closeSidebar() : this.openSidebar();
+            var sidebar = document.getElementById('dso-sidebar');
+            var app = document.getElementById('dso-app');
+            if (window.innerWidth >= 1280) {
+                if (app) app.classList.toggle('dso-sidebar-collapsed');
+                if (sidebar) sidebar.classList.toggle('dso-sidebar-collapsed');
+            } else {
+                var isOpen = sidebar ? (sidebar.classList.contains('open') || sidebar.classList.contains('dso-sidebar-open')) : false;
+                isOpen ? this.closeSidebar() : this.openSidebar();
+            }
         },
 
         openSidebar: function() {
             var sidebar = document.getElementById('dso-sidebar');
             var overlay = document.getElementById('dso-sidebar-overlay');
-            if (sidebar) sidebar.classList.add('open');
-            if (overlay) overlay.classList.add('active');
-            document.body.classList.add('dso-sidebar-open');
+            if (sidebar) sidebar.classList.add('open', 'dso-sidebar-open');
+            if (overlay) overlay.classList.add('visible', 'dso-visible', 'active');
+            document.body.style.overflow = 'hidden';
             this.state.sidebarOpen = true;
         },
 
         closeSidebar: function() {
             var sidebar = document.getElementById('dso-sidebar');
             var overlay = document.getElementById('dso-sidebar-overlay');
-            if (sidebar) sidebar.classList.remove('open');
-            if (overlay) overlay.classList.remove('active');
-            document.body.classList.remove('dso-sidebar-open');
+            if (sidebar) sidebar.classList.remove('open', 'dso-sidebar-open');
+            if (overlay) overlay.classList.remove('visible', 'dso-visible', 'active');
+            document.body.style.overflow = '';
             this.state.sidebarOpen = false;
         },
 
