@@ -113,11 +113,19 @@
   padding: 12px var(--mph-gap) 0;
 }
 
-.mph-hero__track {
-  display: flex;
+.mph-hero__viewport {
+  position: relative;
+  width: 100%;
   border-radius: var(--mph-radius-lg);
   overflow: hidden;
   box-shadow: var(--mph-shadow);
+}
+
+.mph-hero__track {
+  display: flex;
+  width: 100%;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
 }
 
 .mph-hero__slide {

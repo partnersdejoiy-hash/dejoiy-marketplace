@@ -1144,7 +1144,8 @@ function dejoiy_marketplace_home_html() {
 		/* ============ HERO ============ */
 		?>
 		<section class="mph-hero" aria-label="Featured" data-mph-hero>
-			<div class="mph-hero__track" data-mph-hero-track>
+			<div class="mph-hero__viewport">
+				<div class="mph-hero__track" data-mph-hero-track>
 				<?php foreach ( $slides as $i => $s ) : ?>
 					<?php if ( ! empty( $s['type'] ) && in_array( $s['type'], array( 'intern', 'sell' ), true ) ) : ?>
 						<article class="mph-hero__slide mph-hero__slide--promo" data-mph-slide style="--mph-slide-bg:transparent">
@@ -1176,6 +1177,7 @@ function dejoiy_marketplace_home_html() {
 					</article>
 					<?php endif; ?>
 				<?php endforeach; ?>
+				</div>
 			</div>
 			<div class="mph-hero__nav">
 				<button type="button" class="mph-hero__arrow mph-hero__arrow--prev" data-mph-hero-prev aria-label="<?php esc_attr_e( 'Previous slide', 'dejoiy' ); ?>">‹</button>
