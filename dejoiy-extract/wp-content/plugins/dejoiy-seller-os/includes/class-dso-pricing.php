@@ -151,7 +151,7 @@ class DSO_Pricing {
                             <table class="dso-table">
                                 <thead>
                                     <tr>
-                                        <th class="dso-th-check"><input type="checkbox" id="dso-select-all" /></th>
+                                        <th class="dso-th-check"><input type="checkbox" id="dso-select-all" aria-label="Select all products" /></th>
                                         <th>Product</th>
                                         <th>SKU</th>
                                         <th>MRP (₹)</th>
@@ -164,7 +164,7 @@ class DSO_Pricing {
                                     <?php foreach ($products as $p): ?>
                                         <tr>
                                             <td class="dso-td-check">
-                                                <input type="checkbox" name="product_ids[]" value="<?php echo $p['id']; ?>" class="dso-product-check" />
+                                                <input type="checkbox" name="product_ids[]" value="<?php echo $p['id']; ?>" class="dso-product-check" aria-label="<?php echo esc_attr('Select ' . $p['name']); ?>" />
                                             </td>
                                             <td>
                                                 <div class="dso-product-cell">

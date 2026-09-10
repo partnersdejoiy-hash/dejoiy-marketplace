@@ -48,7 +48,7 @@ class DSO_Dashboard {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add Product
                     </a>
-                    <a href="?section=orders" class="dso-btn dso-btn-outline">
+                    <a href="?section=orders" class="dso-btn dso-btn-outline" style="background:rgba(255,255,255,0.1);color:#fff;border-color:rgba(255,255,255,0.25);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
                         Manage Orders
                     </a>
@@ -82,7 +82,7 @@ class DSO_Dashboard {
             <?php endif; ?>
 
             <!-- Key Performance Metrics Row -->
-            <div class="dso-kpi-grid dso-mb-4">
+            <div class="dso-kpi-grid dso-kpi-grid-4 dso-mb-4">
                 <div class="dso-kpi-card">
                     <div class="dso-kpi-header">
                         <span class="dso-kpi-label">Gross Marketplace Volume</span>

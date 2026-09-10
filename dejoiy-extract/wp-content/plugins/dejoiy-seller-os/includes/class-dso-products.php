@@ -65,6 +65,7 @@ class DSO_Products {
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Add New Product
                     </a>
+                </div>
             </div>
 
             <?php if (isset($_GET['notice']) && $_GET['notice'] === 'created'): 
@@ -178,7 +179,7 @@ class DSO_Products {
                             <table class="dso-table dso-table-products">
                                 <thead>
                                     <tr>
-                                        <th class="dso-th-check"><input type="checkbox" id="dso-select-all" /></th>
+                                        <th class="dso-th-check"><input type="checkbox" id="dso-select-all" aria-label="Select all products" /></th>
                                         <th style="min-width: 280px;">Product</th>
                                         <th style="width: 140px;">DPIN</th>
                                         <th>SKU</th>
@@ -206,7 +207,7 @@ class DSO_Products {
                                         <?php foreach ($products as $p): ?>
                                             <tr class="dso-product-row" data-id="<?php echo $p['id']; ?>">
                                                 <td class="dso-td-check">
-                                                    <input type="checkbox" name="product_ids[]" value="<?php echo $p['id']; ?>" class="dso-product-check" />
+                                                    <input type="checkbox" name="product_ids[]" value="<?php echo $p['id']; ?>" class="dso-product-check" aria-label="<?php echo esc_attr('Select ' . $p['name']); ?>" />
                                                 </td>
                                                 <td class="dso-td-product">
                                                     <div class="dso-product-cell">

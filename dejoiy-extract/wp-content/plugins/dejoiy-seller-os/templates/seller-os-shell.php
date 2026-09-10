@@ -137,14 +137,6 @@ window.dsoSearchData = {
                 <span class="dso-greeting-wave">👋</span>
                 <span class="dso-greeting-salutation"><?php echo esc_html($salutation); ?>,</span>
                 <span class="dso-greeting-name"><?php echo esc_html($display_name); ?></span>
-                <span class="dso-greeting-store-pill"><?php echo esc_html($store_name); ?></span>
-            </div>
-
-            <!-- Merchant Status Badge -->
-            <div class="dso-topbar-merchant-pill">
-                <span class="dso-merchant-code"><?php echo esc_html($merchant_code); ?></span>
-                <span class="dso-merchant-sep">•</span>
-                <span class="dso-merchant-status">🟢 Verified</span>
             </div>
 
             <!-- Actual Live Storefront Link -->
@@ -152,49 +144,18 @@ window.dsoSearchData = {
                 Storefront ↗
             </a>
 
-            <div class="dso-topbar-divider"></div>
-
             <!-- Quick Seller AI Drawer Toggle -->
-            <button class="dso-topbar-icon-btn" id="dso-seller-ai-btn" title="Open DEJOIY Seller AI Copilot">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="10" y1="22" x2="14" y2="22"/></svg>
+            <button class="dso-topbar-icon-btn" id="dso-seller-ai-btn" title="Open DEJOIY Seller AI Copilot" aria-label="Open DEJOIY Seller AI Copilot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="10" y1="22" x2="14" y2="22"/></svg>
             </button>
 
             <!-- Notifications -->
-            <a href="?section=notifications" class="dso-topbar-icon-btn dso-notif-btn" title="Notifications">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+            <a href="?section=notifications" class="dso-topbar-icon-btn dso-notif-btn" title="Notifications" aria-label="View notifications">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
                 <?php if ($unread_count > 0): ?>
                     <span class="dso-notif-badge"><?php echo $unread_count; ?></span>
                 <?php endif; ?>
             </a>
-
-            <!-- Settings Dropdown -->
-            <div class="dso-topbar-dropdown" id="dso-settings-dropdown">
-                <button class="dso-topbar-icon-btn" id="dso-settings-toggle" title="Settings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.32 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-                </button>
-                <div class="dso-dropdown-menu" id="dso-settings-menu">
-                    <div class="dso-dropdown-header">Store & Settings</div>
-                    <a href="?section=settings" class="dso-dropdown-item">Account Info</a>
-                    <a href="?section=store" class="dso-dropdown-item">Store Profile & SEO</a>
-                    <a href="?section=shipping" class="dso-dropdown-item">Logistics & Shipping</a>
-                    <a href="?section=pricing" class="dso-dropdown-item">Pricing Rules</a>
-                    <div class="dso-dropdown-divider"></div>
-                    <a href="<?php echo wp_logout_url(home_url()); ?>" class="dso-dropdown-item dso-dropdown-danger">Log Out</a>
-                </div>
-            </div>
-
-            <!-- Help & University Dropdown -->
-            <div class="dso-topbar-dropdown" id="dso-help-dropdown">
-                <button class="dso-topbar-icon-btn" id="dso-help-toggle" title="Help & Guides">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                </button>
-                <div class="dso-dropdown-menu" id="dso-help-menu">
-                    <div class="dso-dropdown-header">Help & University</div>
-                    <a href="?section=learn" class="dso-dropdown-item">Seller University</a>
-                    <a href="?section=support" class="dso-dropdown-item">Support Desk Tickets</a>
-                    <a href="https://dejoiy.com" target="_blank" rel="noopener" class="dso-dropdown-item">DEJOIY Marketplace ↗</a>
-                </div>
-            </div>
 
             <!-- Consolidated Right-Hand Actions Dropdown Menu -->
             <div class="dso-topbar-dropdown" id="dso-quick-hub-dropdown-wrap" style="position:relative;">
@@ -508,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function toggleSidebar() {
         if (!sidebar) return;
-        if (window.innerWidth >= 1280) {
+        if (window.innerWidth >= 1024) {
             // Desktop Collapse / Expand
             if (app) app.classList.toggle('dso-sidebar-collapsed');
             sidebar.classList.toggle('dso-sidebar-collapsed');
@@ -543,7 +504,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-close sidebar on mobile when navigating
     document.querySelectorAll('.dso-nav-link, .dso-nav-child').forEach(function(link) {
         link.addEventListener('click', function() {
-            if (window.innerWidth < 1280) closeSidebar();
+            if (window.innerWidth < 1024) closeSidebar();
         });
     });
 
@@ -561,30 +522,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Settings dropdown
-    var settingsToggle = document.getElementById('dso-settings-toggle');
-    var settingsMenu = document.getElementById('dso-settings-menu');
-    if (settingsToggle && settingsMenu) {
-        settingsToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            settingsMenu.classList.toggle('dso-dropdown-open');
-            if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
-            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
-        });
-    }
-
-    // Help dropdown
-    var helpToggle = document.getElementById('dso-help-toggle');
-    var helpMenu = document.getElementById('dso-help-menu');
-    if (helpToggle && helpMenu) {
-        helpToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            helpMenu.classList.toggle('dso-dropdown-open');
-            if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
-            if (quickHubMenu) quickHubMenu.classList.remove('dso-open');
-        });
-    }
-
     // Consolidated Right-Hand Quick Hub Dropdown
     var quickHubToggle = document.getElementById('dso-quick-hub-toggle');
     var quickHubMenu = document.getElementById('dso-quick-hub-dropdown');
@@ -595,8 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             var isOpen = quickHubMenu.classList.toggle('dso-open');
             quickHubToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            if (settingsMenu) settingsMenu.classList.remove('dso-dropdown-open');
-            if (helpMenu) helpMenu.classList.remove('dso-dropdown-open');
             if (headerSearchResults) headerSearchResults.style.display = 'none';
         });
     }

@@ -107,7 +107,7 @@
             if (sidebar) {
                 sidebar.querySelectorAll('.nav-item > a, .dso-nav-link, .dso-nav-child').forEach(function(link) {
                     link.addEventListener('click', function() {
-                        if (window.innerWidth < 1280) self.closeSidebar();
+                        if (window.innerWidth < 1024) self.closeSidebar();
                     });
                 });
             }
@@ -116,7 +116,7 @@
         toggleSidebar: function() {
             var sidebar = document.getElementById('dso-sidebar');
             var app = document.getElementById('dso-app');
-            if (window.innerWidth >= 1280) {
+            if (window.innerWidth >= 1024) {
                 if (app) app.classList.toggle('dso-sidebar-collapsed');
                 if (sidebar) sidebar.classList.toggle('dso-sidebar-collapsed');
             } else {
