@@ -9,12 +9,18 @@ class DSO_Orders {
 
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
+        if ($this->is_admin()) {
+            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
+                return intval($_COOKIE['dso_admin_vendor_context']);
+            }
+            return 0;
+        }
         $plugin = Dejoiy_Seller_OS::instance();
-        return $plugin->get_vendor_id($user_id);
+        return $plugin->get_vendor_id($user_id) ?: $user_id;
     }
 
     protected function is_admin() {
-        return current_user_can('manage_woocommerce') || current_user_can('administrator');
+        return current_user_can('administrator') || current_user_can('manage_options');
     }
 
     /**
@@ -498,7 +504,7 @@ class DSO_Orders {
             $order_id = $order->get_id();
 
             // Check if vendor owns any products in this order
-            if (!$this->is_admin() && $vendor_id) {
+            if ($vendor_id > 0) {
                 $has_vendor_item = false;
                 foreach ($order->get_items() as $item) {
                     $pid = $item->get_product_id();
@@ -567,7 +573,7 @@ class DSO_Orders {
         $cancelled = 0;
 
         foreach ($orders as $order) {
-            if (!$this->is_admin() && $vendor_id) {
+            if ($vendor_id > 0) {
                 $has_item = false;
                 foreach ($order->get_items() as $item) {
                     $pid = $item->get_product_id();

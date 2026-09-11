@@ -163,16 +163,55 @@ class DSO_REST_API {
             $date = date('Y-m-d', strtotime("-{$i} days"));
             $labels[] = date('M j', strtotime($date));
 
-            $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
-                FROM {$wpdb->prefix}wcfm_marketplace_orders
-                WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                AND created >= %s AND created <= %s",
-                $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
-            ));
+            $day_sales = 0.0;
+            $day_orders = 0;
 
-            $sales[] = floatval($row->sales ?? 0);
-            $orders[] = intval($row->orders ?? 0);
+            // Check if wcfm table exists first
+            static $has_wcfm_tbl = null;
+            if ($has_wcfm_tbl === null) {
+                $has_wcfm_tbl = (bool) $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wcfm_marketplace_orders'");
+            }
+
+            if ($has_wcfm_tbl) {
+                $row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
+                    FROM {$wpdb->prefix}wcfm_marketplace_orders
+                    WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
+                    AND created >= %s AND created <= %s",
+                    $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
+                ));
+                if ($row && ($row->sales > 0 || $row->orders > 0)) {
+                    $day_sales = floatval($row->sales);
+                    $day_orders = intval($row->orders);
+                }
+            }
+
+            if ($day_sales == 0 && $day_orders == 0) {
+                $pids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT ID FROM {$wpdb->prefix}posts WHERE post_type = 'product' AND (post_author = %d OR ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key IN ('_vendor_id', '_wcfm_vendor') AND meta_value = %s))",
+                    $vendor_id, strval($vendor_id)
+                ));
+                if (!empty($pids)) {
+                    $pid_in = implode(',', array_map('intval', $pids));
+                    $day_stats = $wpdb->get_row($wpdb->prepare(
+                        "SELECT COALESCE(SUM(oim2.meta_value), 0) as sales, COUNT(DISTINCT oi.order_id) as orders
+                         FROM {$wpdb->prefix}woocommerce_order_items oi
+                         INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id AND oim.meta_key = '_product_id' AND oim.meta_value IN ($pid_in)
+                         INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim2 ON oi.order_item_id = oim2.order_item_id AND oim2.meta_key = '_line_total'
+                         INNER JOIN {$wpdb->prefix}posts p ON oi.order_id = p.ID
+                         WHERE p.post_status IN ('wc-completed', 'wc-processing')
+                         AND p.post_date >= %s AND p.post_date <= %s",
+                        $date . ' 00:00:00', $date . ' 23:59:59'
+                    ));
+                    if ($day_stats) {
+                        $day_sales = floatval($day_stats->sales ?? 0);
+                        $day_orders = intval($day_stats->orders ?? 0);
+                    }
+                }
+            }
+
+            $sales[] = $day_sales;
+            $orders[] = $day_orders;
         }
 
         return rest_ensure_response(compact('labels', 'sales', 'orders'));

@@ -133,6 +133,12 @@ class DSO_Router {
         'settings-shipping'     => ['class' => 'DSO_Shipping', 'title' => 'Shipping Settings', 'group' => 'settings'],
         'notifications'         => ['class' => 'DSO_Notifications', 'title' => 'Notifications', 'group' => 'settings'],
         'support'               => ['class' => 'DSO_Support', 'title' => 'Support & Help Desk', 'group' => 'settings'],
+
+        // Marketplace Admin (Master Multi-Vendor Control Plane)
+        'marketplace-vendors'     => ['class' => 'DSO_Marketplace', 'method' => 'vendors', 'title' => 'Marketplace Vendors & Approvals', 'group' => 'marketplace'],
+        'marketplace-withdrawals' => ['class' => 'DSO_Marketplace', 'method' => 'withdrawals', 'title' => 'Payouts & Settlement Disbursals', 'group' => 'marketplace'],
+        'marketplace-settings'    => ['class' => 'DSO_Marketplace', 'method' => 'settings', 'title' => 'Marketplace Engine Settings', 'group' => 'marketplace'],
+        'marketplace-ledger'      => ['class' => 'DSO_Marketplace', 'method' => 'ledger', 'title' => 'Platform Revenue & Split Ledger', 'group' => 'marketplace'],
     ];
 
     /**
@@ -192,6 +198,25 @@ class DSO_Router {
                 'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
                 'url' => 'messages',
             ],
+        ];
+
+        if (current_user_can('administrator') || current_user_can('manage_options')) {
+            $items[] = [
+                'id' => 'marketplace-master',
+                'label' => 'Marketplace Master',
+                'group' => '👑 Marketplace Master',
+                'icon' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+                'url' => 'marketplace-vendors',
+                'children' => [
+                    ['id' => 'marketplace-vendors', 'label' => 'Marketplace Vendors', 'url' => 'marketplace-vendors'],
+                    ['id' => 'marketplace-withdrawals', 'label' => 'Payout Disbursals', 'url' => 'marketplace-withdrawals'],
+                    ['id' => 'marketplace-settings', 'label' => 'Marketplace Settings', 'url' => 'marketplace-settings'],
+                    ['id' => 'marketplace-ledger', 'label' => 'Platform Revenue', 'url' => 'marketplace-ledger'],
+                ],
+            ];
+        }
+
+        $items = array_merge($items, [
             [
                 'id' => 'catalogue',
                 'label' => 'Catalogue',
@@ -398,7 +423,9 @@ class DSO_Router {
                     ['id' => 'support', 'label' => 'Support Desk', 'url' => 'support'],
                 ],
             ],
-        ];
+        ]);
+
+
 
         return $items;
     }

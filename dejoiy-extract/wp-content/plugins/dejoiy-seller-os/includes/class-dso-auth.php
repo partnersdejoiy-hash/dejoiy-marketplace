@@ -45,16 +45,35 @@ class DSO_Auth {
         $store_address = '';
         $store_url = home_url('/store/' . $user->user_nicename . '/');
 
-        // Check WCFM Marketplace store
+        // Check saved store usermeta first
+        $saved_store_name = get_user_meta($user_id, 'store_name', true);
+        if (!empty($saved_store_name)) $store_name = $saved_store_name;
+
+        $settings = get_user_meta($user_id, 'wcfmmp_profile_settings', true);
+        if (is_string($settings)) $settings = maybe_unserialize($settings);
+        if (is_array($settings)) {
+            if (!empty($settings['store_name'])) $store_name = $settings['store_name'];
+            if (!empty($settings['shop_description'])) $store_desc = $settings['shop_description'];
+            if (!empty($settings['banner'])) $store_banner = $settings['banner'];
+            if (!empty($settings['gravatar'])) $store_logo = $settings['gravatar'];
+            if (!empty($settings['phone'])) $store_phone = $settings['phone'];
+        }
+
+        // Check fallback DSO meta
+        if (empty($store_banner)) $store_banner = get_user_meta($user_id, 'dso_store_banner', true) ?: '';
+        if (empty($store_logo)) $store_logo = get_user_meta($user_id, 'dso_store_logo', true) ?: '';
+        if (empty($store_phone)) $store_phone = get_user_meta($user_id, 'dso_store_phone', true) ?: '';
+
+        // Check WCFM Marketplace store object if available
         if (function_exists('wcfmmp_get_store')) {
             $wcfm_store = wcfmmp_get_store($user_id);
             if ($wcfm_store) {
                 $shop_name = $wcfm_store->get_shop_name();
                 if (!empty($shop_name)) $store_name = $shop_name;
-                $store_desc = $wcfm_store->get_shop_description() ?: '';
-                $store_logo = $wcfm_store->get_avatar() ?: '';
-                $store_banner = $wcfm_store->get_banner() ?: '';
-                $store_phone = $wcfm_store->get_phone() ?: '';
+                if (empty($store_desc)) $store_desc = $wcfm_store->get_shop_description() ?: '';
+                if (empty($store_logo)) $store_logo = $wcfm_store->get_avatar() ?: '';
+                if (empty($store_banner)) $store_banner = $wcfm_store->get_banner() ?: '';
+                if (empty($store_phone)) $store_phone = $wcfm_store->get_phone() ?: '';
                 $link = $wcfm_store->get_link();
                 if (!empty($link)) $store_url = $link;
             }

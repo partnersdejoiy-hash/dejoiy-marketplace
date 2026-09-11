@@ -9,19 +9,27 @@ class DSO_Dashboard {
 
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
+        if ($this->is_admin()) {
+            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
+                return intval($_COOKIE['dso_admin_vendor_context']);
+            }
+            return 0;
+        }
         $plugin = Dejoiy_Seller_OS::instance();
-        return $plugin->get_vendor_id($user_id);
+        return $plugin->get_vendor_id($user_id) ?: $user_id;
     }
 
     protected function is_admin() {
-        return current_user_can('manage_woocommerce') || current_user_can('administrator');
+        return current_user_can('administrator') || current_user_can('manage_options');
     }
 
     public function render() {
         $user_id = get_current_user_id();
         $vendor_id = $this->get_active_vendor_id();
-        $store = DSO_Auth::get_vendor_store($user_id);
-        $store_name = $store ? $store['name'] : get_userdata($user_id)->display_name;
+        $effective_id = $vendor_id ?: $user_id;
+        $store = DSO_Auth::get_vendor_store($effective_id);
+        $user_obj = get_userdata($effective_id);
+        $store_name = $store ? $store['name'] : ($user_obj ? $user_obj->display_name : 'Seller');
 
         $data = $this->get_dashboard_data($vendor_id, $user_id);
         $health = $this->get_store_health($vendor_id);
@@ -360,14 +368,34 @@ class DSO_Dashboard {
         // Calculate Revenue from Orders
         $total_sales = 0;
         $all_orders = wc_get_orders(['limit' => -1, 'return' => 'objects']);
+        $scoped_orders = [];
         foreach ($all_orders as $ord) {
             if ($ord->get_status() !== 'cancelled' && $ord->get_status() !== 'trash') {
-                $total_sales += floatval($ord->get_total());
+                if ($vendor_id > 0) {
+                    $has_item = false;
+                    $vendor_item_total = 0;
+                    foreach ($ord->get_items() as $item) {
+                        $pid = $item->get_product_id();
+                        $author = get_post_field('post_author', $pid);
+                        $meta_v = get_post_meta($pid, '_vendor_id', true);
+                        if ($author == $vendor_id || $meta_v == $vendor_id) {
+                            $has_item = true;
+                            $vendor_item_total += floatval($item->get_total());
+                        }
+                    }
+                    if ($has_item) {
+                        $total_sales += $vendor_item_total;
+                        $scoped_orders[] = $ord;
+                    }
+                } else {
+                    $total_sales += floatval($ord->get_total());
+                    $scoped_orders[] = $ord;
+                }
             }
         }
 
         // Chart Data Generator (7D, 30D, 90D, 1Y)
-        $chart_data = $this->generate_chart_timeline_data($all_orders);
+        $chart_data = $this->generate_chart_timeline_data($scoped_orders);
 
         return [
             'total_sales' => $total_sales,

@@ -68,32 +68,25 @@ $args = [
             'operator' => 'NOT IN',
         ],
     ],
-    'meta_query'     => [
-        'relation' => 'OR',
-        [
-            'key'     => '_vendor_id',
-            'value'   => $vendor_id,
-            'compare' => '=',
-        ],
-        [
-            'key'     => 'post_author_custom_check',
-            'compare' => 'EXISTS',
-        ]
-    ]
 ];
-
-// If vendor query by author
-add_filter('posts_where', function($where) use ($vendor_id) {
-    global $wpdb;
-    $where .= $wpdb->prepare(" AND ({$wpdb->posts}.post_author = %d OR {$wpdb->posts}.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key = '_vendor_id' AND meta_value = %s))", $vendor_id, strval($vendor_id));
-    return $where;
-});
 
 if (isset($_GET['sq']) && !empty($_GET['sq'])) {
     $args['s'] = sanitize_text_field($_GET['sq']);
 }
 
+$dso_filter_vendor_query = function($where) use ($vendor_id) {
+    global $wpdb;
+    $where .= $wpdb->prepare(
+        " AND ({$wpdb->posts}.post_author = %d OR {$wpdb->posts}.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key IN ('_vendor_id', '_wcfm_vendor') AND meta_value = %s))",
+        $vendor_id,
+        strval($vendor_id)
+    );
+    return $where;
+};
+
+add_filter('posts_where', $dso_filter_vendor_query);
 $vendor_query = new WP_Query($args);
+remove_filter('posts_where', $dso_filter_vendor_query);
 $total_products = $vendor_query->found_posts;
 
 get_header('shop');

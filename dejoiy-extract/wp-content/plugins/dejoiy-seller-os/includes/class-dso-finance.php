@@ -8,6 +8,12 @@ class DSO_Finance {
 
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
+        if (current_user_can('administrator') || current_user_can('manage_options')) {
+            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
+                return intval($_COOKIE['dso_admin_vendor_context']);
+            }
+            return 0;
+        }
         $plugin = Dejoiy_Seller_OS::instance();
         return $plugin->get_vendor_id($user_id) ?: $user_id;
     }
@@ -19,11 +25,22 @@ class DSO_Finance {
         global $wpdb;
 
         // Query vendor orders
-        $order_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT DISTINCT post_id FROM {$wpdb->prefix}postmeta 
-             WHERE meta_key IN ('_vendor_id', '_wcfm_vendor') AND meta_value = %d",
-            $vendor_id
-        ));
+        $order_ids = [];
+        if ($vendor_id > 0) {
+            $order_ids = $wpdb->get_col($wpdb->prepare(
+                "SELECT DISTINCT post_id FROM {$wpdb->prefix}postmeta 
+                 WHERE meta_key IN ('_vendor_id', '_wcfm_vendor') AND meta_value = %d",
+                $vendor_id
+            ));
+
+            if (empty($order_ids)) {
+                $pids = $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->prefix}posts WHERE post_type = 'product' AND post_author = %d", $vendor_id));
+                if (!empty($pids)) {
+                    $pid_placeholders = implode(',', array_map('intval', $pids));
+                    $order_ids = $wpdb->get_col("SELECT DISTINCT order_id FROM {$wpdb->prefix}woocommerce_order_items oi JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id WHERE oim.meta_key = '_product_id' AND oim.meta_value IN ({$pid_placeholders})");
+                }
+            }
+        }
 
         $total_sales = 0.0;
         $available_balance = 0.0;

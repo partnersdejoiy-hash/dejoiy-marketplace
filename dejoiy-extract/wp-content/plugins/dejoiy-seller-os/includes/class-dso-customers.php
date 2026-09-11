@@ -79,36 +79,52 @@ class DSO_Customers {
     }
 
     public function get_customers($vendor_id) {
-        global $wpdb;
         if (!$vendor_id) return [];
 
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT customer_id,
-                    COUNT(*) as order_count,
-                    SUM(item_total) as total_spent,
-                    AVG(item_total) as avg_order,
-                    MAX(created) as last_order
-            FROM {$wpdb->prefix}wcfm_marketplace_orders
-            WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing') AND customer_id > 0
-            GROUP BY customer_id
-            ORDER BY total_spent DESC",
-            $vendor_id
-        ));
+        $orders = wc_get_orders(['limit' => -1, 'status' => ['processing', 'completed']]);
+        $cust_data = [];
+
+        foreach ($orders as $order) {
+            $has_vendor_item = false;
+            $vendor_total = 0;
+            foreach ($order->get_items() as $item) {
+                $pid = $item->get_product_id();
+                $author = get_post_field('post_author', $pid);
+                $meta_v = get_post_meta($pid, '_vendor_id', true);
+                if ($author == $vendor_id || $meta_v == $vendor_id) {
+                    $has_vendor_item = true;
+                    $vendor_total += floatval($item->get_total());
+                }
+            }
+            if (!$has_vendor_item) continue;
+
+            $cid = $order->get_customer_id();
+            $email = $order->get_billing_email();
+            $key = $cid > 0 ? 'user_' . $cid : 'guest_' . md5($email);
+
+            if (!isset($cust_data[$key])) {
+                $cust_data[$key] = [
+                    'name' => trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()) ?: 'Customer',
+                    'email' => $email ?: '—',
+                    'order_count' => 0,
+                    'total_spent' => 0.0,
+                    'last_order_date' => $order->get_date_created() ? $order->get_date_created()->date('M j, Y') : '—',
+                ];
+            }
+
+            $cust_data[$key]['order_count']++;
+            $cust_data[$key]['total_spent'] += $vendor_total;
+        }
 
         $customers = [];
-        foreach ($rows as $row) {
-            $user_data = get_userdata($row->customer_id);
-            $customer_name = $user_data ? $user_data->display_name : 'Guest';
-            $customer_email = $user_data ? $user_data->user_email : '—';
-            $customers[] = [
-                'name' => $customer_name,
-                'email' => $customer_email,
-                'order_count' => intval($row->order_count),
-                'total_spent' => floatval($row->total_spent),
-                'avg_order' => round(floatval($row->avg_order), 2),
-                'last_order_date' => $row->last_order ? date('M j, Y', strtotime($row->last_order)) : '—',
-            ];
+        foreach ($cust_data as $cd) {
+            $cd['avg_order'] = $cd['order_count'] > 0 ? round($cd['total_spent'] / $cd['order_count'], 2) : 0;
+            $customers[] = $cd;
         }
+
+        usort($customers, function($a, $b) {
+            return $b['total_spent'] <=> $a['total_spent'];
+        });
 
         return $customers;
     }

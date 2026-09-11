@@ -12,15 +12,21 @@ class DSO_Products {
      */
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
+        if ($this->is_admin()) {
+            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
+                return intval($_COOKIE['dso_admin_vendor_context']);
+            }
+            return 0;
+        }
         $plugin = Dejoiy_Seller_OS::instance();
-        return $plugin->get_vendor_id($user_id);
+        return $plugin->get_vendor_id($user_id) ?: $user_id;
     }
 
     /**
      * Check if user has marketplace admin privileges
      */
     protected function is_admin() {
-        return current_user_can('manage_woocommerce') || current_user_can('administrator');
+        return current_user_can('administrator') || current_user_can('manage_options');
     }
 
     /**
@@ -1958,6 +1964,10 @@ class DSO_Products {
             update_post_meta($product_id, '_product_image_gallery', $gids);
         }
 
+        // Ensure product is visible in marketplace catalog & storefront
+        wp_remove_object_terms($product_id, ['exclude-from-catalog', 'exclude-from-search'], 'product_visibility');
+        clean_post_cache($product_id);
+
         // Recalculate and store LQS
         $this->calculate_lqs($product_id);
 
@@ -2065,8 +2075,8 @@ class DSO_Products {
         $where = ["p.post_type = 'product'"];
         $params = [];
 
-        // Check user admin status
-        if (!$this->is_admin() && $vendor_id) {
+        // Check vendor scoping
+        if ($vendor_id > 0) {
             $where[] = "(p.post_author = %d OR p.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key = '_vendor_id' AND meta_value = %s))";
             $params[] = $vendor_id;
             $params[] = strval($vendor_id);
@@ -2180,7 +2190,7 @@ class DSO_Products {
         $where = "p.post_type = 'product'";
         $params = [];
 
-        if (!$this->is_admin() && $vendor_id) {
+        if ($vendor_id > 0) {
             $where .= " AND (p.post_author = %d OR p.ID IN (SELECT post_id FROM {$wpdb->prefix}postmeta WHERE meta_key = '_vendor_id' AND meta_value = %s))";
             $params = [$vendor_id, strval($vendor_id)];
         }

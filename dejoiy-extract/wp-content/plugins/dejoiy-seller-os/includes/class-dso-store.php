@@ -17,7 +17,9 @@ class DSO_Store {
         $vendor_id = $this->get_active_vendor_id();
 
         // Get public store URL
-        $live_store_url = function_exists('wcfmmp_get_store_url') ? wcfmmp_get_store_url($vendor_id) : home_url('/store/' . $vendor_id);
+        $u = get_userdata($vendor_id);
+        $slug = $u ? $u->user_nicename : $vendor_id;
+        $live_store_url = function_exists('wcfmmp_get_store_url') ? wcfmmp_get_store_url($vendor_id) : home_url('/store/' . $slug . '/');
 
         // Fetch current WCFM profile settings
         $wcfm_settings = get_user_meta($vendor_id, 'wcfmmp_profile_settings', true);
@@ -107,7 +109,7 @@ class DSO_Store {
         }
 
         // Current values
-        $store_name = $wcfm_settings['store_name'] ?? get_user_meta($vendor_id, 'store_name', true) ?: '';
+        $store_name = !empty($wcfm_settings['store_name']) ? $wcfm_settings['store_name'] : (get_user_meta($vendor_id, 'store_name', true) ?: ($u ? $u->display_name : ''));
         $store_tagline = get_user_meta($vendor_id, 'dso_store_tagline', true) ?: 'Official Brand Store on DEJOIY Marketplace';
         $store_desc = $wcfm_settings['shop_description'] ?? '';
         $store_email = $wcfm_settings['customer_support']['email'] ?? get_user_meta($vendor_id, 'dso_store_email', true) ?: get_userdata($vendor_id)->user_email;

@@ -107,46 +107,79 @@ class DSO_Reviews {
         $distribution = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
 
         if ($vendor_id) {
-            // Average rating
-            $avg = $wpdb->get_var($wpdb->prepare(
-                "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
-                INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
-                WHERE r.vendor_id = %d AND rrm.key = 'rating'",
-                $vendor_id
-            ));
-            $avg_rating = $avg ? floatval($avg) : 0;
+            $has_wcfm_tbl = $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->prefix}wcfm_marketplace_reviews'");
+            if ($has_wcfm_tbl) {
+                // Average rating
+                $avg = $wpdb->get_var($wpdb->prepare(
+                    "SELECT AVG(rrm.value) FROM {$wpdb->prefix}wcfm_marketplace_review_rating_meta rrm
+                    INNER JOIN {$wpdb->prefix}wcfm_marketplace_reviews r ON rrm.review_id = r.ID
+                    WHERE r.vendor_id = %d AND rrm.key = 'rating'",
+                    $vendor_id
+                ));
+                $avg_rating = $avg ? floatval($avg) : 0;
 
-            // Counts
-            $total_reviews = intval($wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d AND approved = 1",
-                $vendor_id
-            )));
+                // Counts
+                $total_reviews = intval($wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d AND approved = 1",
+                    $vendor_id
+                )));
 
-            $pending_count = intval($wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d AND approved = 0",
-                $vendor_id
-            )));
+                $pending_count = intval($wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d AND approved = 0",
+                    $vendor_id
+                )));
 
-            $approved_count = $total_reviews;
+                $approved_count = $total_reviews;
 
-            // Reviews list
-            $rows = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d ORDER BY created DESC LIMIT 20",
-                $vendor_id
-            ));
+                // Reviews list
+                $rows = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}wcfm_marketplace_reviews WHERE vendor_id = %d ORDER BY created DESC LIMIT 20",
+                    $vendor_id
+                ));
 
-            foreach ($rows as $row) {
-                $rating = intval($row->review_rating ?? 0);
-                if ($rating >= 1 && $rating <= 5) $distribution[$rating]++;
+                if (!empty($rows)) {
+                    foreach ($rows as $row) {
+                        $rating = intval($row->review_rating ?? 0);
+                        if ($rating >= 1 && $rating <= 5) $distribution[$rating]++;
 
-                $reviews[] = [
-                    'rating' => $rating,
-                    'review' => $row->review_description ?? '',
-                    'customer' => get_the_author_meta('display_name', $row->author_id ?? 0),
-                    'product' => '',
-                    'date' => $row->created ? date('M j, Y', strtotime($row->created)) : '—',
-                    'response' => '',
-                ];
+                        $reviews[] = [
+                            'rating' => $rating,
+                            'review' => $row->review_description ?? '',
+                            'customer' => get_the_author_meta('display_name', $row->author_id ?? 0),
+                            'product' => '',
+                            'date' => $row->created ? date('M j, Y', strtotime($row->created)) : '—',
+                            'response' => '',
+                        ];
+                    }
+                }
+            }
+
+            // Fallback / standard WooCommerce product reviews
+            if (empty($reviews)) {
+                $pids = $wpdb->get_col($wpdb->prepare("SELECT ID FROM {$wpdb->prefix}posts WHERE post_type = 'product' AND post_author = %d", $vendor_id));
+                if (!empty($pids)) {
+                    $pids_in = implode(',', array_map('intval', $pids));
+                    $comm_rows = $wpdb->get_results("SELECT c.*, cm.meta_value as rating FROM {$wpdb->prefix}comments c LEFT JOIN {$wpdb->prefix}commentmeta cm ON c.comment_ID = cm.comment_id AND cm.meta_key = 'rating' WHERE c.comment_post_ID IN ({$pids_in}) AND c.comment_type = 'review' AND c.comment_approved = '1' ORDER BY c.comment_date DESC LIMIT 20");
+                    if (!empty($comm_rows)) {
+                        $total_reviews = count($comm_rows);
+                        $approved_count = $total_reviews;
+                        $rating_sum = 0;
+                        foreach ($comm_rows as $cr) {
+                            $r = intval($cr->rating ?: 5);
+                            $rating_sum += $r;
+                            if ($r >= 1 && $r <= 5) $distribution[$r]++;
+                            $reviews[] = [
+                                'rating' => $r,
+                                'review' => $cr->comment_content,
+                                'customer' => $cr->comment_author,
+                                'product' => get_the_title($cr->comment_post_ID),
+                                'date' => date('M j, Y', strtotime($cr->comment_date)),
+                                'response' => '',
+                            ];
+                        }
+                        $avg_rating = $total_reviews > 0 ? round($rating_sum / $total_reviews, 1) : 0;
+                    }
+                }
             }
         }
 

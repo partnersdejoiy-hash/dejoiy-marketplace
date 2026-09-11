@@ -43,6 +43,7 @@ require_once DSO_PATH . 'includes/class-dso-brands.php';
 require_once DSO_PATH . 'includes/class-dso-learn.php';
 require_once DSO_PATH . 'includes/class-dso-messenger.php';
 require_once DSO_PATH . 'includes/class-dso-marketplace.php';
+require_once DSO_PATH . 'includes/class-dso-registration.php';
 require_once DSO_PATH . 'api/rest-api.php';
 
 /**
@@ -68,9 +69,16 @@ class Dejoiy_Seller_OS {
         // Register custom rewrite rules and query vars
         add_filter('query_vars', [$this, 'register_query_vars']);
         add_action('init', [$this, 'register_rewrite_rules']);
+        add_action('init', [$this, 'register_roles']);
+        add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('template_redirect', [$this, 'handle_template_redirect']);
+        add_action('template_redirect', [$this, 'handle_legacy_store_manager_redirect']);
         add_filter('template_include', [$this, 'load_storefront_template'], 9999);
         add_filter('wcfmmp_store_template', [$this, 'load_storefront_template'], 9999);
+
+        // Order processing hooks for native commission & notification tracking
+        add_action('woocommerce_checkout_order_processed', [$this, 'handle_order_processed'], 20, 1);
+        add_action('woocommerce_new_order', [$this, 'handle_order_processed'], 20, 1);
 
         // Register activation/deactivation
         register_activation_hook(__FILE__, [$this, 'activate']);
@@ -84,6 +92,11 @@ class Dejoiy_Seller_OS {
     public function init() {
         // Add endpoint
         add_rewrite_endpoint('seller-hub', EP_ROOT | EP_PAGES);
+
+        // Initialize registration shortcodes & processor
+        if (class_exists('DSO_Registration')) {
+            DSO_Registration::init();
+        }
     }
 
     public function register_query_vars($vars) {
@@ -117,6 +130,128 @@ class Dejoiy_Seller_OS {
             }
         }
         return $template;
+    }
+
+    /**
+     * Register vendor roles and capabilities so marketplace functions without WCFM
+     */
+    public function register_roles() {
+        $seller_caps = [
+            'read'                      => true,
+            'edit_posts'                => true,
+            'delete_posts'              => false,
+            'upload_files'              => true,
+            'publish_posts'             => true,
+            'edit_products'             => true,
+            'publish_products'          => true,
+            'read_products'             => true,
+            'edit_published_products'   => true,
+            'assign_product_terms'      => true,
+        ];
+
+        if (!get_role('seller')) {
+            add_role('seller', 'DEJOIY Seller', $seller_caps);
+        }
+        if (!get_role('wcfm_vendor')) {
+            add_role('wcfm_vendor', 'DEJOIY Seller (Legacy)', $seller_caps);
+        }
+    }
+
+    /**
+     * Register DEJOIY Seller Central entry point in WordPress Admin
+     */
+    public function register_admin_menu() {
+        add_menu_page(
+            'DEJOIY Seller Hub',
+            '🏪 Seller Central',
+            'edit_products',
+            'dejoiy-seller-hub',
+            function() {
+                echo '<script>window.location.href="https://sellerhub.dejoiy.com/";</script>';
+                echo '<div class="wrap" style="padding:40px;text-align:center;font-family:sans-serif;">' .
+                     '<h2>Redirecting to DEJOIY Seller Central...</h2>' .
+                     '<p><a href="https://sellerhub.dejoiy.com/" class="button button-primary button-hero">Open Seller Hub Now →</a></p>' .
+                     '</div>';
+            },
+            'dashicons-store',
+            55
+        );
+    }
+
+    /**
+     * Gracefully route legacy /store-manager/ links to Seller Hub
+     */
+    public function handle_legacy_store_manager_redirect() {
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (preg_match('#^/store-manager/?#', $uri)) {
+            wp_redirect('https://sellerhub.dejoiy.com/', 301);
+            exit;
+        }
+    }
+
+    /**
+     * Automatically track commissions, tag order items with vendor IDs, and notify sellers on order creation
+     */
+    public function handle_order_processed($order_id) {
+        $order = wc_get_order($order_id);
+        if (!$order) return;
+
+        $settings = class_exists('DSO_Marketplace') ? DSO_Marketplace::get_marketplace_settings() : [];
+        $default_comm = floatval($settings['default_commission_percent'] ?? 10.0);
+        $vendor_orders = [];
+
+        foreach ($order->get_items() as $item_id => $item) {
+            $product_id = $item->get_product_id();
+            if (!$product_id) continue;
+
+            $vendor_id = intval(get_post_meta($product_id, '_vendor_id', true));
+            if (!$vendor_id) {
+                $vendor_id = intval(get_post_field('post_author', $product_id));
+            }
+            if (!$vendor_id) $vendor_id = 2; // Default store
+
+            // Tag item with vendor ID
+            wc_update_order_item_meta($item_id, '_vendor_id', $vendor_id);
+            wc_update_order_item_meta($item_id, '_wcfm_vendor', $vendor_id);
+
+            // Calculate commission
+            $custom_comm = get_user_meta($vendor_id, 'dso_custom_commission', true);
+            $comm_rate = ($custom_comm !== '' && is_numeric($custom_comm)) ? floatval($custom_comm) : $default_comm;
+
+            $line_total = floatval($item->get_total());
+            $platform_fee = ($line_total * $comm_rate) / 100.0;
+            $vendor_earning = max(0, $line_total - $platform_fee);
+
+            wc_update_order_item_meta($item_id, '_dso_commission_rate', $comm_rate);
+            wc_update_order_item_meta($item_id, '_dso_platform_fee', $platform_fee);
+            wc_update_order_item_meta($item_id, '_dso_vendor_earning', $vendor_earning);
+
+            $vendor_orders[$vendor_id] = true;
+        }
+
+        // Tag order postmeta
+        if (!empty($vendor_orders)) {
+            $vids = array_keys($vendor_orders);
+            update_post_meta($order_id, '_vendor_ids', $vids);
+            if (count($vids) === 1) {
+                update_post_meta($order_id, '_vendor_id', $vids[0]);
+                update_post_meta($order_id, '_wcfm_vendor', $vids[0]);
+            }
+
+            // Create in-app notification for each vendor
+            if (class_exists('DSO_Notifications')) {
+                $notif = new DSO_Notifications();
+                foreach ($vids as $vid) {
+                    $notif->create(
+                        $vid,
+                        'order',
+                        'New Order #' . $order->get_order_number(),
+                        'You have received an order for ₹' . number_format($order->get_total(), 2),
+                        'https://sellerhub.dejoiy.com/?section=orders'
+                    );
+                }
+            }
+        }
     }
 
     /**

@@ -123,46 +123,73 @@ class DSO_Analytics {
         $chart_data = ['labels' => [], 'revenue' => [], 'orders' => []];
 
         if ($vendor_id) {
-            $row = $wpdb->get_row($wpdb->prepare(
-                "SELECT COALESCE(SUM(item_total), 0) as revenue, COUNT(*) as orders, COALESCE(SUM(quantity), 0) as sold
-                FROM {$wpdb->prefix}wcfm_marketplace_orders
-                WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')",
-                $vendor_id
-            ));
+            $orders = wc_get_orders(['limit' => -1, 'status' => ['processing', 'completed']]);
+            $prod_sales = [];
+            $daily_sales = [];
+            $daily_orders = [];
+            for ($i = 29; $i >= 0; $i--) {
+                $d = date('Y-m-d', strtotime("-{$i} days"));
+                $daily_sales[$d] = 0.0;
+                $daily_orders[$d] = 0;
+            }
 
-            $total_revenue = floatval($row->revenue ?? 0);
-            $total_orders = intval($row->orders ?? 0);
-            $products_sold = intval($row->sold ?? 0);
+            foreach ($orders as $order) {
+                $has_vendor_item = false;
+                $order_vendor_total = 0;
+                $order_date = $order->get_date_created() ? $order->get_date_created()->date('Y-m-d') : '';
+
+                foreach ($order->get_items() as $item) {
+                    $pid = $item->get_product_id();
+                    $author = get_post_field('post_author', $pid);
+                    $meta_v = get_post_meta($pid, '_vendor_id', true);
+                    if ($author == $vendor_id || $meta_v == $vendor_id) {
+                        $has_vendor_item = true;
+                        $qty = $item->get_quantity();
+                        $tot = floatval($item->get_total());
+                        $order_vendor_total += $tot;
+                        $products_sold += $qty;
+
+                        if (!isset($prod_sales[$pid])) {
+                            $prod_sales[$pid] = ['orders' => 0, 'revenue' => 0.0, 'product_id' => $pid];
+                        }
+                        $prod_sales[$pid]['orders'] += $qty;
+                        $prod_sales[$pid]['revenue'] += $tot;
+                    }
+                }
+
+                if ($has_vendor_item) {
+                    $total_orders++;
+                    $total_revenue += $order_vendor_total;
+                    if (isset($daily_sales[$order_date])) {
+                        $daily_sales[$order_date] += $order_vendor_total;
+                        $daily_orders[$order_date]++;
+                    }
+                }
+            }
 
             // Top products
-            $top_products = $wpdb->get_results($wpdb->prepare(
-                "SELECT product_id, SUM(quantity) as orders, SUM(item_total) as revenue
-                FROM {$wpdb->prefix}wcfm_marketplace_orders
-                WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                GROUP BY product_id ORDER BY revenue DESC LIMIT 10",
-                $vendor_id
-            ));
-
-            foreach ($top_products as &$tp) {
-                $product = wc_get_product($tp->product_id);
-                $tp->name = $product ? $product->get_name() : 'Product #' . $tp->product_id;
+            uasort($prod_sales, function($a, $b) {
+                return $b['revenue'] <=> $a['revenue'];
+            });
+            $top_products = [];
+            $count = 0;
+            foreach ($prod_sales as $pid => $ps) {
+                if ($count++ >= 10) break;
+                $prod = wc_get_product($pid);
+                $top_products[] = (object)[
+                    'product_id' => $pid,
+                    'name' => $prod ? $prod->get_name() : 'Product #' . $pid,
+                    'orders' => $ps['orders'],
+                    'revenue' => $ps['revenue'],
+                ];
             }
 
             // Chart data - last 30 days
             for ($i = 29; $i >= 0; $i--) {
-                $date = date('Y-m-d', strtotime("-{$i} days"));
-                $chart_data['labels'][] = date('M j', strtotime($date));
-
-                $cr = $wpdb->get_row($wpdb->prepare(
-                    "SELECT COALESCE(SUM(item_total), 0) as sales, COUNT(*) as orders
-                    FROM {$wpdb->prefix}wcfm_marketplace_orders
-                    WHERE vendor_id = %d AND order_status IN ('wc-completed', 'wc-processing')
-                    AND created >= %s AND created <= %s",
-                    $vendor_id, $date . ' 00:00:00', $date . ' 23:59:59'
-                ));
-
-                $chart_data['revenue'][] = floatval($cr->sales ?? 0);
-                $chart_data['orders'][] = intval($cr->orders ?? 0);
+                $d = date('Y-m-d', strtotime("-{$i} days"));
+                $chart_data['labels'][] = date('M j', strtotime($d));
+                $chart_data['revenue'][] = $daily_sales[$d] ?? 0;
+                $chart_data['orders'][] = $daily_orders[$d] ?? 0;
             }
         }
 
