@@ -21,9 +21,9 @@ class DSO_Messenger {
         // Register REST routes
         add_action('rest_api_init', [$this, 'register_rest_routes']);
 
-        // Frontend hooks for dejoiy.com
-        add_action('wp_footer', [$this, 'render_buyer_floating_widget'], 99);
-        add_action('woocommerce_single_product_summary', [$this, 'render_product_chat_button'], 35);
+        // Frontend hooks for dejoiy.com — Disabled per user request (no chat with seller button on dejoiy.com)
+        // add_action('wp_footer', [$this, 'render_buyer_floating_widget'], 99);
+        // add_action('woocommerce_single_product_summary', [$this, 'render_product_chat_button'], 35);
         add_filter('woocommerce_my_account_my_orders_actions', [$this, 'add_order_message_action'], 20, 2);
 
         // Confirmed Order hooks: Order confirmation (Thank You) & Order details view

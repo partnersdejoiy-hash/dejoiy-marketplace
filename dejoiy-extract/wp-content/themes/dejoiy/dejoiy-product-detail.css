@@ -640,38 +640,59 @@
 }
 
 /* ==========================================================================
-   AUTHENTIC AMAZON BUTTONS (ADD TO CART & BUY NOW)
+   AUTHENTIC DEJOIY BRAND BUTTONS (ADD TO CART & BUY NOW)
+   No Green Hover Ever — True DEJOIY Electric Blue & Signature Gradient
    ========================================================================== */
 
+body.single-product,
+body.dejoiy-mobile-product-view {
+  --et_active-color: #2563eb !important;
+  --single-add-to-cart-background-color: #2563eb !important;
+  --single-add-to-cart-hover-background-color: #1d4ed8 !important;
+  --et_btn-bg-color-hover: #1d4ed8 !important;
+  --et_btn-br-color-hover: #1d4ed8 !important;
+  --et_btn-active-bg-color-hover: #1d4ed8 !important;
+}
+
+/* Primary Add to Cart — DEJOIY Electric Royal Blue */
 .single-product button.single_add_to_cart_button:not(.et-single-buy-now),
 .single-product .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now),
+.single-product .etheme-add-to-cart-form button.single_add_to_cart_button:not(.et-single-buy-now),
 body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now),
 body.dejoiy-mobile-product-view .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now) {
-  background: #ffd814 !important;
-  background-color: #ffd814 !important;
-  background-image: none !important;
-  border: 1px solid #fcd200 !important;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+  background-color: #2563eb !important;
+  border: 1px solid #1d4ed8 !important;
   border-radius: 999px !important;
-  color: #0f1111 !important;
+  color: #ffffff !important;
   font-family: inherit !important;
   font-size: 14px !important;
-  font-weight: 600 !important;
-  padding: 12px 24px !important;
-  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  padding: 13px 26px !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
 }
 
 .single-product button.single_add_to_cart_button:not(.et-single-buy-now):hover,
+.single-product button.single_add_to_cart_button:not(.et-single-buy-now):focus,
+.single-product button.single_add_to_cart_button:not(.et-single-buy-now):active,
 .single-product .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now):hover,
-body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now):hover {
-  background: #f7ca00 !important;
-  background-color: #f7ca00 !important;
-  border-color: #f2c200 !important;
-  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.7) !important;
-  color: #0f1111 !important;
+.single-product .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now):focus,
+.single-product .etheme-add-to-cart-form button.single_add_to_cart_button:not(.et-single-buy-now):hover,
+body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now):hover,
+body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now):focus,
+body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now):active {
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+  background-color: #1d4ed8 !important;
+  border-color: #1e40af !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
 }
 
+/* Secondary / Express Buy Now — DEJOIY Electric Gradient (Purple/Pink) */
 .single-product button.et-single-buy-now,
 .single-product .buy_now_button,
 .single-product .button.buy-now,
@@ -684,45 +705,53 @@ body.dejoiy-mobile-product-view .button.buy-now,
 body.dejoiy-mobile-product-view .djy-buynow,
 body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now,
 body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.et-single-buy-now {
-  background: #ffa41c !important;
-  background-color: #ffa41c !important;
-  background-image: none !important;
-  border: 1px solid #ff8f00 !important;
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%) !important;
+  background-color: #7c3aed !important;
+  border: none !important;
   border-radius: 999px !important;
-  color: #0f1111 !important;
+  color: #ffffff !important;
   font-family: inherit !important;
   font-size: 14px !important;
-  font-weight: 600 !important;
-  padding: 12px 24px !important;
-  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+  padding: 13px 26px !important;
+  box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3) !important;
   cursor: pointer !important;
-  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease !important;
 }
 
 .single-product button.et-single-buy-now:hover,
+.single-product button.et-single-buy-now:focus,
+.single-product button.et-single-buy-now:active,
 .single-product .buy_now_button:hover,
 .single-product .button.buy-now:hover,
 .single-product .djy-buynow:hover,
 .single-product .buy-now-button-stretched .et-single-buy-now:hover,
 .single-product .etheme-add-to-cart-form button.et-single-buy-now:hover,
 body.dejoiy-mobile-product-view button.et-single-buy-now:hover,
+body.dejoiy-mobile-product-view button.et-single-buy-now:focus,
+body.dejoiy-mobile-product-view button.et-single-buy-now:active,
 body.dejoiy-mobile-product-view .buy_now_button:hover,
 body.dejoiy-mobile-product-view .button.buy-now:hover,
 body.dejoiy-mobile-product-view .djy-buynow:hover,
 body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now:hover,
 body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.et-single-buy-now:hover {
-  background: #fa8900 !important;
-  background-color: #fa8900 !important;
-  border-color: #e57b00 !important;
-  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.7) !important;
-  color: #0f1111 !important;
+  background: linear-gradient(135deg, #6d28d9 0%, #db2777 100%) !important;
+  background-color: #6d28d9 !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.45) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
 }
 
-/* Ensure button text is dark inside XStore spans */
+/* Ensure button text and nested elements are bright white inside XStore */
 .single-product .single_add_to_cart_button .button-text,
 .single-product .et-single-buy-now .button-text,
-body.dejoiy-mobile-product-view .button-text {
-  color: #0f1111 !important;
+.single-product .single_add_to_cart_button span,
+.single-product .et-single-buy-now span,
+body.dejoiy-mobile-product-view .button-text,
+body.dejoiy-mobile-product-view .single_add_to_cart_button span {
+  color: #ffffff !important;
 }
 
 /* ==========================================================================
@@ -814,24 +843,34 @@ body.dejoiy-mobile-product-view .button-text {
   }
 
   .djy-pdp-mobile-sticky__cart-btn {
-    background: #ffd814 !important;
-    border: 1px solid #fcd200 !important;
-    color: #0f1111 !important;
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+    background-color: #2563eb !important;
+    border: none !important;
+    color: #ffffff !important;
     font-size: 12px !important;
-    font-weight: 600 !important;
-    padding: 7px 12px !important;
+    font-weight: 700 !important;
+    padding: 8px 14px !important;
     border-radius: 999px !important;
     cursor: pointer !important;
     white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .djy-pdp-mobile-sticky__cart-btn:hover {
+    background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+    background-color: #1d4ed8 !important;
+    color: #ffffff !important;
   }
 
   .djy-pdp-mobile-sticky__buy-btn {
-    background: #ffa41c !important;
-    border: 1px solid #ff8f00 !important;
-    color: #0f1111 !important;
+    background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%) !important;
+    background-color: #7c3aed !important;
+    border: none !important;
+    color: #ffffff !important;
     font-size: 12px !important;
-    font-weight: 600 !important;
-    padding: 7px 12px !important;
+    font-weight: 700 !important;
+    padding: 8px 14px !important;
     border-radius: 999px !important;
     text-decoration: none !important;
     display: inline-flex !important;
@@ -839,6 +878,14 @@ body.dejoiy-mobile-product-view .button-text {
     justify-content: center !important;
     cursor: pointer !important;
     white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3) !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .djy-pdp-mobile-sticky__buy-btn:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #db2777 100%) !important;
+    background-color: #6d28d9 !important;
+    color: #ffffff !important;
   }
 
   /* Ensure page content has bottom padding so sticky bar never covers details */
@@ -892,5 +939,26 @@ body.dejoiy-mobile-product-view .button-text {
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 6px !important;
   }
+}
+
+/* Chat with Seller Suppression */
+.msg-widget-root,
+.msg-launcher,
+#msg-launcher,
+.djy-btn-chat-seller,
+.dso-chat-btn,
+.chat-with-seller,
+.wcfm_catalog_enquiry,
+.wcfm_enquiry_button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0) !important;
 }
 

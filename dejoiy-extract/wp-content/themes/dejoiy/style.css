@@ -6,6 +6,37 @@ Author:       DEJOIY
 Author URI:   https://dejoiy.com
 Template:     xstore
 Version:      1.0.1
-Text Domain:  dejoiy
 Tags: e-commerce, two-columns, left-sidebar, right-sidebar, custom-background, custom-colors, custom-header, custom-menu, custom-logo, featured-images, full-width-template, threaded-comments, accessibility-ready, rtl-language-support, footer-widgets, sticky-post, theme-options, translation-ready, ecommerce, woocommerce, shop, elementor, business, corporate, blog, news, light, dark
 */
+/* DEJOIY Global Overrides: Suppress Chat with Seller Across Entire Site */
+.msg-widget-root,
+.msg-launcher,
+#msg-launcher,
+.djy-btn-chat-seller,
+.dso-chat-btn,
+.chat-with-seller,
+.wcfm_catalog_enquiry,
+.wcfm_enquiry_button {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0) !important;
+}
+
+/* Eliminate XStore Default Green Active Hover Across Site */
+body.single-product,
+body.dejoiy-mobile-product-view,
+body.dejoiy-cart-xp {
+    --et_active-color: #2563eb !important;
+    --single-add-to-cart-background-color: #2563eb !important;
+    --single-add-to-cart-hover-background-color: #1d4ed8 !important;
+    --et_btn-bg-color-hover: #1d4ed8 !important;
+    --et_btn-br-color-hover: #1d4ed8 !important;
+    --et_btn-active-bg-color-hover: #1d4ed8 !important;
+}

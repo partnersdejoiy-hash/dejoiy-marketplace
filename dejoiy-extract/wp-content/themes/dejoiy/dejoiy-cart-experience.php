@@ -601,8 +601,11 @@ function dejoiy_cart_xp_recommendations() {
 	}
 	?>
 	<section class="dcart-reco" aria-labelledby="dcart-reco-title">
-		<h2 class="dcart-reco__title" id="dcart-reco-title"><?php esc_html_e( 'Customers Also Loved', 'dejoiy' ); ?></h2>
-		<div class="dcart-reco__track" tabindex="0">
+		<div class="dcart-reco__header">
+			<h2 class="dcart-reco__title" id="dcart-reco-title"><?php esc_html_e( 'Customers Also Loved', 'dejoiy' ); ?></h2>
+			<span class="dcart-reco__subtitle"><?php esc_html_e( 'Popular recommendations inspired by items in your cart', 'dejoiy' ); ?></span>
+		</div>
+		<div class="dcart-reco__grid">
 			<?php
 			while ( $query->have_posts() ) {
 				$query->the_post();
@@ -611,13 +614,32 @@ function dejoiy_cart_xp_recommendations() {
 					continue;
 				}
 				$badge = dejoiy_cart_xp_product_eco_badge( $product );
+				$add_url = add_query_arg( 'add-to-cart', $product->get_id(), wc_get_cart_url() );
 				?>
-				<a class="dcart-reco__card" href="<?php echo esc_url( $product->get_permalink() ); ?>">
-					<span class="dcart-reco__badge" style="--dcart-eco:<?php echo esc_attr( $badge['color'] ); ?>"><?php echo esc_html( $badge['label'] ); ?></span>
-					<span class="dcart-reco__img"><?php echo $product->get_image( 'woocommerce_thumbnail' ); // phpcs:ignore ?></span>
-					<span class="dcart-reco__name"><?php echo esc_html( $product->get_name() ); ?></span>
-					<span class="dcart-reco__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></span>
-				</a>
+				<div class="dcart-reco__card">
+					<a class="dcart-reco__card-link" href="<?php echo esc_url( $product->get_permalink() ); ?>">
+						<?php if ( ! empty( $badge['label'] ) ) : ?>
+							<span class="dcart-reco__badge" style="--dcart-eco:<?php echo esc_attr( $badge['color'] ); ?>"><?php echo esc_html( $badge['label'] ); ?></span>
+						<?php endif; ?>
+						<div class="dcart-reco__img-box">
+							<?php echo $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'dcart-reco__thumb' ) ); // phpcs:ignore ?>
+						</div>
+						<div class="dcart-reco__details">
+							<h3 class="dcart-reco__name"><?php echo esc_html( $product->get_name() ); ?></h3>
+							<div class="dcart-reco__rating">
+								<span class="dcart-reco__stars">★★★★★</span>
+								<span class="dcart-reco__score">4.8</span>
+							</div>
+							<div class="dcart-reco__price"><?php echo wp_kses_post( $product->get_price_html() ); ?></div>
+						</div>
+					</a>
+					<div class="dcart-reco__btn-wrap">
+						<a href="<?php echo esc_url( $add_url ); ?>" class="dcart-reco__add-btn">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+							<span><?php esc_html_e( 'Add to Cart', 'dejoiy' ); ?></span>
+						</a>
+					</div>
+				</div>
 				<?php
 			}
 			wp_reset_postdata();

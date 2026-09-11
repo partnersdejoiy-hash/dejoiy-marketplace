@@ -962,3 +962,360 @@ body.dejoiy-cart-xp .cart-item-details > div:not(:first-child) {
 	margin: 0 !important;
 	padding: 0 !important;
 }
+
+/* ==========================================================================
+   Universal Cart Recommendations ("Customers Also Loved")
+   Responsive across Mobile, Tablet, and Desktop
+   ========================================================================== */
+.dcart-reco {
+	margin: 2.25rem 0 1.5rem !important;
+	padding: 1.5rem !important;
+	background: #ffffff !important;
+	border: 1px solid var(--dcart-card-border, #e2e8f0) !important;
+	border-radius: var(--dcart-radius, 14px) !important;
+	box-shadow: var(--dcart-shadow, 0 4px 16px rgba(15, 23, 42, 0.04)) !important;
+	box-sizing: border-box !important;
+	clear: both !important;
+	width: 100% !important;
+}
+
+.dcart-reco__header {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.25rem !important;
+	margin-bottom: 1.25rem !important;
+	padding-bottom: 0.85rem !important;
+	border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.dcart-reco__title {
+	font-size: clamp(1.2rem, 2.5vw, 1.45rem) !important;
+	font-weight: 800 !important;
+	color: var(--dcart-ink, #0f1111) !important;
+	margin: 0 !important;
+	letter-spacing: -0.02em !important;
+	line-height: 1.2 !important;
+}
+
+.dcart-reco__subtitle {
+	font-size: 0.85rem !important;
+	font-weight: 500 !important;
+	color: var(--dcart-muted, #565959) !important;
+}
+
+.dcart-reco__grid {
+	display: grid !important;
+	grid-template-columns: repeat(4, 1fr) !important;
+	gap: 1.15rem !important;
+	width: 100% !important;
+	box-sizing: border-box !important;
+}
+
+.dcart-reco__card {
+	display: flex !important;
+	flex-direction: column !important;
+	justify-content: space-between !important;
+	background: #ffffff !important;
+	border: 1px solid #e2e8f0 !important;
+	border-radius: 12px !important;
+	padding: 0.85rem !important;
+	position: relative !important;
+	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+	box-sizing: border-box !important;
+	overflow: hidden !important;
+}
+
+.dcart-reco__card:hover {
+	transform: translateY(-3px) !important;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+	border-color: #cbd5e1 !important;
+}
+
+.dcart-reco__card-link {
+	text-decoration: none !important;
+	color: inherit !important;
+	display: flex !important;
+	flex-direction: column !important;
+	flex: 1 1 auto !important;
+}
+
+.dcart-reco__badge {
+	position: absolute !important;
+	top: 0.65rem !important;
+	left: 0.65rem !important;
+	z-index: 2 !important;
+	font-size: 0.68rem !important;
+	font-weight: 700 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.03em !important;
+	padding: 0.2rem 0.5rem !important;
+	border-radius: 6px !important;
+	background: rgba(255, 255, 255, 0.94) !important;
+	color: var(--dcart-eco, #166534) !important;
+	border: 1px solid rgba(0, 0, 0, 0.08) !important;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+	backdrop-filter: blur(4px) !important;
+}
+
+.dcart-reco__img-box {
+	width: 100% !important;
+	aspect-ratio: 1 / 1 !important;
+	border-radius: 8px !important;
+	background: #f8fafc !important;
+	overflow: hidden !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	margin-bottom: 0.75rem !important;
+}
+
+.dcart-reco__thumb,
+.dcart-reco__img-box img {
+	width: 100% !important;
+	height: 100% !important;
+	max-width: 100% !important;
+	max-height: 100% !important;
+	object-fit: contain !important;
+	transition: transform 0.25s ease !important;
+	display: block !important;
+}
+
+.dcart-reco__card:hover .dcart-reco__thumb,
+.dcart-reco__card:hover .dcart-reco__img-box img {
+	transform: scale(1.05) !important;
+}
+
+.dcart-reco__details {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 0.35rem !important;
+	flex: 1 1 auto !important;
+}
+
+.dcart-reco__name {
+	font-size: 0.88rem !important;
+	font-weight: 600 !important;
+	color: var(--dcart-ink, #0f1111) !important;
+	margin: 0 !important;
+	line-height: 1.35 !important;
+	display: -webkit-box !important;
+	-webkit-line-clamp: 2 !important;
+	-webkit-box-orient: vertical !important;
+	overflow: hidden !important;
+	min-height: 2.4em !important;
+	transition: color 0.15s ease !important;
+}
+
+.dcart-reco__card-link:hover .dcart-reco__name {
+	color: #2563eb !important;
+}
+
+.dcart-reco__rating {
+	display: flex !important;
+	align-items: center !important;
+	gap: 0.35rem !important;
+}
+
+.dcart-reco__stars {
+	color: #f59e0b !important;
+	font-size: 0.78rem !important;
+	letter-spacing: 1px !important;
+}
+
+.dcart-reco__score {
+	font-size: 0.75rem !important;
+	font-weight: 700 !important;
+	color: #64748b !important;
+}
+
+.dcart-reco__price {
+	font-size: 0.98rem !important;
+	font-weight: 800 !important;
+	color: var(--dcart-ink, #0f1111) !important;
+	margin-top: auto !important;
+	padding-top: 0.25rem !important;
+	display: flex !important;
+	align-items: baseline !important;
+	flex-wrap: wrap !important;
+	gap: 0.35rem !important;
+}
+
+.dcart-reco__price del {
+	color: #94a3b8 !important;
+	font-weight: 400 !important;
+	font-size: 0.82rem !important;
+	text-decoration: line-through !important;
+}
+
+.dcart-reco__price ins {
+	text-decoration: none !important;
+	color: #b12704 !important;
+	font-weight: 800 !important;
+}
+
+.dcart-reco__price .woocommerce-Price-amount {
+	color: inherit !important;
+}
+
+.dcart-reco__btn-wrap {
+	margin-top: 0.75rem !important;
+	padding-top: 0.5rem !important;
+	border-top: 1px solid #f1f5f9 !important;
+}
+
+.dcart-reco__add-btn {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 0.4rem !important;
+	width: 100% !important;
+	padding: 0.5rem 0.85rem !important;
+	border-radius: 8px !important;
+	background: #eff6ff !important;
+	color: #1d4ed8 !important;
+	border: 1px solid #bfdbfe !important;
+	font-size: 0.82rem !important;
+	font-weight: 700 !important;
+	text-decoration: none !important;
+	transition: all 0.15s ease !important;
+	box-sizing: border-box !important;
+	cursor: pointer !important;
+}
+
+.dcart-reco__add-btn:hover {
+	background: #2563eb !important;
+	color: #ffffff !important;
+	border-color: #2563eb !important;
+	box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+.dcart-reco__add-btn:hover svg {
+	stroke: #ffffff !important;
+}
+
+/* Benefits Strip */
+.dcart-benefits {
+	margin: 1.5rem 0 2.5rem !important;
+	background: #f8fafc !important;
+	border: 1px dashed #cbd5e1 !important;
+	border-radius: 12px !important;
+	padding: 1.25rem 1.5rem !important;
+	text-align: center !important;
+}
+
+.dcart-benefits__title {
+	font-size: 0.88rem !important;
+	font-weight: 800 !important;
+	color: #475569 !important;
+	text-transform: uppercase !important;
+	letter-spacing: 0.05em !important;
+	margin: 0 0 0.85rem !important;
+}
+
+.dcart-benefits__grid {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	justify-content: center !important;
+	gap: 0.75rem 1.75rem !important;
+	list-style: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.dcart-benefits__item {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 0.4rem !important;
+	font-size: 0.85rem !important;
+	font-weight: 600 !important;
+	color: #334155 !important;
+}
+
+.dcart-benefits__item span {
+	color: #10b981 !important;
+	font-weight: 800 !important;
+}
+
+/* Responsive Breakpoints for Recommendations Grid */
+@media (min-width: 768px) and (max-width: 1024px) {
+	.dcart-reco__grid {
+		grid-template-columns: repeat(3, 1fr) !important;
+		gap: 0.95rem !important;
+	}
+}
+
+@media (max-width: 767px) {
+	.dcart-reco {
+		margin: 1.25rem 0 !important;
+		padding: 1rem !important;
+		border-radius: 12px !important;
+	}
+
+	.dcart-reco__grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+		gap: 0.75rem !important;
+	}
+
+	.dcart-reco__card {
+		padding: 0.65rem !important;
+	}
+
+	.dcart-reco__name {
+		font-size: 0.82rem !important;
+		line-height: 1.3 !important;
+		min-height: 2.1em !important;
+	}
+
+	.dcart-reco__price {
+		font-size: 0.88rem !important;
+	}
+
+	.dcart-reco__add-btn {
+		padding: 0.42rem 0.65rem !important;
+		font-size: 0.75rem !important;
+	}
+
+	.dcart-benefits__grid {
+		gap: 0.5rem 1rem !important;
+	}
+
+	.dcart-benefits__item {
+		font-size: 0.78rem !important;
+	}
+}
+
+@media (max-width: 380px) {
+	.dcart-reco__grid {
+		grid-template-columns: repeat(2, 1fr) !important;
+		gap: 0.5rem !important;
+	}
+
+	.dcart-reco__card {
+		padding: 0.5rem !important;
+	}
+
+	.dcart-reco__add-btn span {
+		font-size: 0.72rem !important;
+	}
+}
+
+/* Chat with Seller Suppression Everywhere */
+.msg-widget-root,
+.msg-launcher,
+#msg-launcher,
+.djy-btn-chat-seller,
+.dso-chat-btn,
+.chat-with-seller,
+.wcfm_catalog_enquiry,
+.wcfm_enquiry_button {
+	display: none !important;
+	visibility: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+	width: 0 !important;
+	height: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	position: absolute !important;
+	clip: rect(0, 0, 0, 0) !important;
+}

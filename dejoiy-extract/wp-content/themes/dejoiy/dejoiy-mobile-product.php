@@ -83,42 +83,54 @@ function dejoiy_mobile_product_inline_css() {
 	}
 
 	return "
+	body.dejoiy-mobile-product-view {
+		--et_active-color: #2563eb !important;
+		--single-add-to-cart-background-color: #2563eb !important;
+		--single-add-to-cart-hover-background-color: #1d4ed8 !important;
+		--et_btn-bg-color-hover: #1d4ed8 !important;
+		--et_btn-br-color-hover: #1d4ed8 !important;
+		--et_btn-active-bg-color-hover: #1d4ed8 !important;
+	}
 	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now) {
-		background: #ffd814 !important;
-		background-color: #ffd814 !important;
-		background-image: none !important;
-		color: #0f1111 !important;
-		border: 1px solid #fcd200 !important;
+		background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+		background-color: #2563eb !important;
+		color: #ffffff !important;
+		border: 1px solid #1d4ed8 !important;
 		border-radius: 999px !important;
-		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
-		font-weight: 600 !important;
+		box-shadow: 0 3px 12px rgba(37, 99, 235, 0.28) !important;
+		font-weight: 700 !important;
 	}
 	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):hover,
-	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):focus {
-		background: #f7ca00 !important;
-		background-color: #f7ca00 !important;
-		border-color: #f2c200 !important;
+	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):focus,
+	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):active {
+		background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%) !important;
+		background-color: #1d4ed8 !important;
+		border-color: #1e40af !important;
+		color: #ffffff !important;
+		box-shadow: 0 6px 18px rgba(37, 99, 235, 0.42) !important;
 	}
 	body.dejoiy-mobile-product-view .et-single-buy-now,
 	body.dejoiy-mobile-product-view .buy_now_button,
 	body.dejoiy-mobile-product-view .button.buy-now,
 	body.dejoiy-mobile-product-view .djy-buynow {
-		background: #ffa41c !important;
-		background-color: #ffa41c !important;
-		background-image: none !important;
-		color: #0f1111 !important;
-		border: 1px solid #ff8f00 !important;
+		background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%) !important;
+		background-color: #7c3aed !important;
+		color: #ffffff !important;
+		border: none !important;
 		border-radius: 999px !important;
-		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
-		font-weight: 600 !important;
+		box-shadow: 0 3px 12px rgba(236, 72, 153, 0.28) !important;
+		font-weight: 700 !important;
 	}
 	body.dejoiy-mobile-product-view .et-single-buy-now:hover,
+	body.dejoiy-mobile-product-view .et-single-buy-now:focus,
+	body.dejoiy-mobile-product-view .et-single-buy-now:active,
 	body.dejoiy-mobile-product-view .buy_now_button:hover,
 	body.dejoiy-mobile-product-view .button.buy-now:hover,
 	body.dejoiy-mobile-product-view .djy-buynow:hover {
-		background: #fa8900 !important;
-		background-color: #fa8900 !important;
-		border-color: #e57b00 !important;
+		background: linear-gradient(135deg, #6d28d9 0%, #db2777 100%) !important;
+		background-color: #6d28d9 !important;
+		color: #ffffff !important;
+		box-shadow: 0 6px 18px rgba(236, 72, 153, 0.42) !important;
 	}
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .woocommerce-variation-add-to-cart,
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form form.cart:not(.variations_form) {
@@ -148,13 +160,17 @@ function dejoiy_mobile_product_inline_css() {
 		margin: 0.15rem 0 0 !important;
 		min-height: 3rem !important;
 	}
-	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .button-text {
+	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .button-text,
+	body.dejoiy-mobile-product-view .button-text {
 		display: inline !important;
 		font-size: 0.95rem !important;
 		font-weight: 700 !important;
-		color: #0f1111 !important;
+		color: #ffffff !important;
 	}
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .et-icon { display: none !important; }
+	.msg-widget-root, .msg-launcher, #msg-launcher, .djy-btn-chat-seller, .dso-chat-btn, .chat-with-seller {
+		display: none !important;
+	}
 	";
 }
 
