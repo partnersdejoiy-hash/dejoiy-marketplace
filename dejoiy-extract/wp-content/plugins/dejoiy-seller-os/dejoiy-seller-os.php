@@ -42,6 +42,7 @@ require_once DSO_PATH . 'includes/class-dso-b2b.php';
 require_once DSO_PATH . 'includes/class-dso-brands.php';
 require_once DSO_PATH . 'includes/class-dso-learn.php';
 require_once DSO_PATH . 'includes/class-dso-messenger.php';
+require_once DSO_PATH . 'includes/class-dso-marketplace.php';
 require_once DSO_PATH . 'api/rest-api.php';
 
 /**
@@ -64,9 +65,12 @@ class Dejoiy_Seller_OS {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
         add_action('rest_api_init', [$this, 'register_rest_routes']);
 
-        // Register custom rewrite rules
+        // Register custom rewrite rules and query vars
+        add_filter('query_vars', [$this, 'register_query_vars']);
         add_action('init', [$this, 'register_rewrite_rules']);
         add_action('template_redirect', [$this, 'handle_template_redirect']);
+        add_filter('template_include', [$this, 'load_storefront_template'], 9999);
+        add_filter('wcfmmp_store_template', [$this, 'load_storefront_template'], 9999);
 
         // Register activation/deactivation
         register_activation_hook(__FILE__, [$this, 'activate']);
@@ -82,9 +86,37 @@ class Dejoiy_Seller_OS {
         add_rewrite_endpoint('seller-hub', EP_ROOT | EP_PAGES);
     }
 
+    public function register_query_vars($vars) {
+        $vars[] = 'store';
+        $vars[] = 'seller-hub';
+        return $vars;
+    }
+
     public function register_rewrite_rules() {
-        add_rewrite_rule('^' . DSO_BASE . '/(.+?)/?$', 'index.php? seller-hub=$matches[1]', 'top');
-        add_rewrite_rule('^' . DSO_BASE . '/?$', 'index.php? seller-hub=dashboard', 'top');
+        add_rewrite_rule('^' . DSO_BASE . '/(.+?)/?$', 'index.php?seller-hub=$matches[1]', 'top');
+        add_rewrite_rule('^' . DSO_BASE . '/?$', 'index.php?seller-hub=dashboard', 'top');
+        add_rewrite_rule('^store/([^/]+)/?$', 'index.php?store=$matches[1]', 'top');
+        add_rewrite_rule('^store/([^/]+)/page/?([0-9]{1,})/?$', 'index.php?store=$matches[1]&paged=$matches[2]', 'top');
+    }
+
+    public function load_storefront_template($template) {
+        $store = get_query_var('store');
+        if (!empty($store)) {
+            global $wp_query;
+            $user = get_user_by('slug', $store);
+            if (!$user) {
+                $user = get_user_by('login', $store);
+            }
+            if ($user) {
+                $wp_query->is_404 = false;
+                status_header(200);
+                $custom = DSO_PATH . 'templates/storefront.php';
+                if (file_exists($custom)) {
+                    return $custom;
+                }
+            }
+        }
+        return $template;
     }
 
     /**

@@ -124,8 +124,16 @@ function dejoiy_get_pdp_seller_info($product) {
 	if (empty($store_name)) {
 		$store_name = 'DEJOIY Verified Merchant';
 	}
-	if ($vendor_id && function_exists('wcfmmp_get_store_url')) {
-		$store_url = wcfmmp_get_store_url($vendor_id);
+	if ($vendor_id) {
+		if (function_exists('wcfmmp_get_store_url')) {
+			$store_url = wcfmmp_get_store_url($vendor_id);
+		}
+		if (empty($store_url)) {
+			$u = get_userdata($vendor_id);
+			if ($u) {
+				$store_url = home_url('/store/' . $u->user_nicename . '/');
+			}
+		}
 	}
 	if (empty($store_url)) {
 		$store_url = home_url('/shop/');
