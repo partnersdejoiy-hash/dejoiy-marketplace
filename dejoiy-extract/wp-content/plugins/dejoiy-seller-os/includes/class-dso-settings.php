@@ -115,4 +115,105 @@ class DSO_Settings {
         </div>
         <?php
     }
+
+    public function tax() {
+        $user_id = get_current_user_id();
+        $plugin = Dejoiy_Seller_OS::instance();
+        $vendor_id = $plugin->get_vendor_id($user_id);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dso_save_tax_settings'])) {
+            check_admin_referer('dso_tax_settings');
+
+            update_user_meta($vendor_id, 'dso_legal_business_name', sanitize_text_field($_POST['legal_business_name'] ?? ''));
+            update_user_meta($vendor_id, 'dso_gstin', sanitize_text_field($_POST['gstin'] ?? ''));
+            update_user_meta($vendor_id, 'dso_pan', sanitize_text_field($_POST['pan'] ?? ''));
+            update_user_meta($vendor_id, 'dso_state_code', sanitize_text_field($_POST['state_code'] ?? ''));
+            update_user_meta($vendor_id, 'dso_invoice_prefix', sanitize_text_field($_POST['invoice_prefix'] ?? 'INV-DJ-'));
+            update_user_meta($vendor_id, 'dso_composition_scheme', isset($_POST['composition_scheme']) ? 'yes' : 'no');
+
+            $success = 'Tax & GST configuration saved successfully.';
+        }
+
+        $legal_name = get_user_meta($vendor_id, 'dso_legal_business_name', true) ?: get_user_meta($vendor_id, 'store_name', true);
+        $gstin = get_user_meta($vendor_id, 'dso_gstin', true);
+        $pan = get_user_meta($vendor_id, 'dso_pan', true);
+        $state_code = get_user_meta($vendor_id, 'dso_state_code', true) ?: '07';
+        $prefix = get_user_meta($vendor_id, 'dso_invoice_prefix', true) ?: 'INV-DJ-';
+        $composition = get_user_meta($vendor_id, 'dso_composition_scheme', true) === 'yes';
+
+        ?>
+        <div class="dso-page dso-tax-settings">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a>
+                        <span>/</span>
+                        <a href="?section=settings">Settings</a>
+                        <span>/</span>
+                        <span>GST & Tax</span>
+                    </div>
+                    <h1 class="dso-page-title">GST & Tax Compliance</h1>
+                    <p class="dso-page-subtitle">Configure GSTIN, legal entity identity, PAN, and tax invoice series</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=settings" class="dso-btn dso-btn-outline">← Back to Settings</a>
+                </div>
+            </div>
+
+            <?php if (!empty($success)): ?>
+                <div class="dso-alert dso-alert-success"><?php echo esc_html($success); ?></div>
+            <?php endif; ?>
+
+            <form method="post" class="dso-form">
+                <?php wp_nonce_field('dso_tax_settings'); ?>
+
+                <div class="dso-card dso-mb-4">
+                    <div class="dso-card-header"><h3 class="dso-card-title">Legal Business Entity</h3></div>
+                    <div class="dso-card-body">
+                        <div class="dso-form-group">
+                            <label for="legal_business_name">Registered Legal Business Name *</label>
+                            <input type="text" id="legal_business_name" name="legal_business_name" class="dso-input" value="<?php echo esc_attr($legal_name); ?>" required />
+                            <small class="dso-text-muted">Exact name as printed on GST Certificate or PAN Card</small>
+                        </div>
+                        <div class="dso-form-row">
+                            <div class="dso-form-group">
+                                <label for="gstin">GSTIN (15-character GST Identification Number)</label>
+                                <input type="text" id="gstin" name="gstin" class="dso-input" value="<?php echo esc_attr($gstin); ?>" maxlength="15" placeholder="e.g. 07AAAAA0000A1Z5" style="text-transform:uppercase;" />
+                            </div>
+                            <div class="dso-form-group">
+                                <label for="pan">Permanent Account Number (PAN) *</label>
+                                <input type="text" id="pan" name="pan" class="dso-input" value="<?php echo esc_attr($pan); ?>" maxlength="10" placeholder="e.g. ABCDE1234F" style="text-transform:uppercase;" required />
+                            </div>
+                        </div>
+                        <div class="dso-form-group">
+                            <label for="state_code">Registration State Code (GST Jurisdiction)</label>
+                            <input type="text" id="state_code" name="state_code" class="dso-input" value="<?php echo esc_attr($state_code); ?>" placeholder="e.g. 07 - Delhi" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dso-card dso-mb-4">
+                    <div class="dso-card-header"><h3 class="dso-card-title">Invoice Series & GST Rules</h3></div>
+                    <div class="dso-card-body">
+                        <div class="dso-form-group">
+                            <label for="invoice_prefix">Tax Invoice Prefix</label>
+                            <input type="text" id="invoice_prefix" name="invoice_prefix" class="dso-input" value="<?php echo esc_attr($prefix); ?>" placeholder="INV-DJ-" />
+                            <small class="dso-text-muted">Prepended to customer tax invoices generated from Seller Hub</small>
+                        </div>
+                        <div class="dso-form-group">
+                            <label class="dso-checkbox-label">
+                                <input type="checkbox" name="composition_scheme" value="yes" <?php echo $composition ? 'checked' : ''; ?> />
+                                Enrolled under GST Composition Scheme (Sub-limit turnover rules apply)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" name="dso_save_tax_settings" value="1" class="dso-btn dso-btn-primary" style="padding:12px 24px;">
+                    Save Tax Configuration 💾
+                </button>
+            </form>
+        </div>
+        <?php
+    }
 }

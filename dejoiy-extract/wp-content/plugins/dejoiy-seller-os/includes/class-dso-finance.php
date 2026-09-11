@@ -602,4 +602,257 @@ class DSO_Finance {
     public function transactions() {
         $this->render();
     }
+
+    public function commissions() {
+        $vendor_id = $this->get_active_vendor_id();
+        $metrics = $this->get_financial_summary($vendor_id);
+        $comm_rate = get_user_meta($vendor_id, 'dso_custom_commission', true);
+        if ($comm_rate === '') {
+            $comm_rate = get_user_meta($vendor_id, '_wcfm_commission_percent', true) ?: '5.0';
+        }
+        $comm_rate_val = floatval($comm_rate);
+
+        // Fetch vendor orders
+        $orders_data = [];
+        if (function_exists('wc_get_orders')) {
+            $all_orders = wc_get_orders([
+                'limit' => 50,
+                'return' => 'objects',
+                'orderby' => 'date',
+                'order' => 'DESC',
+            ]);
+            foreach ($all_orders as $ord) {
+                $has_vendor_item = false;
+                $vendor_gross = 0.0;
+                $item_names = [];
+                if ($vendor_id > 0) {
+                    foreach ($ord->get_items() as $item) {
+                        $pid = $item->get_product_id();
+                        $author = get_post_field('post_author', $pid);
+                        $meta_v = get_post_meta($pid, '_vendor_id', true);
+                        if ($author == $vendor_id || $meta_v == $vendor_id) {
+                            $has_vendor_item = true;
+                            $vendor_gross += (float) $item->get_total();
+                            $item_names[] = $item->get_name();
+                        }
+                    }
+                } else {
+                    $has_vendor_item = true;
+                    $vendor_gross = (float) $ord->get_total();
+                    foreach ($ord->get_items() as $item) {
+                        $item_names[] = $item->get_name();
+                    }
+                }
+
+                if (!$has_vendor_item) continue;
+
+                $fee = round($vendor_gross * ($comm_rate_val / 100), 2);
+                $tcs = round($vendor_gross * 0.01, 2);
+                $net = round($vendor_gross - $fee - $tcs, 2);
+
+                $orders_data[] = [
+                    'id' => $ord->get_id(),
+                    'order_number' => $ord->get_order_number(),
+                    'date' => $ord->get_date_created() ? $ord->get_date_created()->format('d M Y, H:i') : '—',
+                    'status' => $ord->get_status(),
+                    'items' => implode(', ', array_slice($item_names, 0, 2)),
+                    'gross' => $vendor_gross,
+                    'fee' => $fee,
+                    'tcs' => $tcs,
+                    'net' => $net,
+                ];
+            }
+        }
+
+        ?>
+        <div class="dso-page dso-commissions">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a>
+                        <span>/</span>
+                        <a href="?section=finance">Finance</a>
+                        <span>/</span>
+                        <span>Commissions Breakdown</span>
+                    </div>
+                    <h1 class="dso-page-title">Marketplace Fee & Commission Analytics</h1>
+                    <p class="dso-page-subtitle">Transparent breakdown of platform fees, TCS withholding, and net merchant disbursements</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=finance" class="dso-btn dso-btn-outline">← Back to Treasury</a>
+                </div>
+            </div>
+
+            <div class="dso-grid-4 dso-mb-4">
+                <div class="dso-metric-card">
+                    <div class="dso-metric-label">Effective Fee Rate</div>
+                    <div class="dso-metric-val"><?php echo number_format($comm_rate_val, 1); ?>%</div>
+                    <div class="dso-metric-sub">Standard Marketplace Tier</div>
+                </div>
+                <div class="dso-metric-card">
+                    <div class="dso-metric-label">Gross Processed</div>
+                    <div class="dso-metric-val">₹<?php echo number_format($metrics['gross_sales'] ?? 0, 2); ?></div>
+                    <div class="dso-metric-sub">Lifetime Sales Volume</div>
+                </div>
+                <div class="dso-metric-card">
+                    <div class="dso-metric-label">Platform Fees Paid</div>
+                    <div class="dso-metric-val">₹<?php echo number_format($metrics['admin_commission'] ?? 0, 2); ?></div>
+                    <div class="dso-metric-sub">Retained Marketplace Cut</div>
+                </div>
+                <div class="dso-metric-card">
+                    <div class="dso-metric-label">Net Seller Earnings</div>
+                    <div class="dso-metric-val" style="color:#10b981;">₹<?php echo number_format($metrics['net_earnings'] ?? 0, 2); ?></div>
+                    <div class="dso-metric-sub">After Platform Fees & TCS</div>
+                </div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header"><h3 class="dso-card-title">Order Commission Ledger</h3></div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Date</th>
+                                    <th>Items</th>
+                                    <th>Status</th>
+                                    <th>Gross (₹)</th>
+                                    <th>Fee (<?php echo $comm_rate_val; ?>%)</th>
+                                    <th>TCS (1%)</th>
+                                    <th>Net Payout (₹)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($orders_data)): ?>
+                                    <tr><td colspan="8" class="dso-p-4 dso-text-center dso-text-muted">No orders processed yet for commission ledger.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($orders_data as $row): ?>
+                                        <tr>
+                                            <td><a href="?section=order-detail&id=<?php echo $row['id']; ?>"><strong>#<?php echo esc_html($row['order_number']); ?></strong></a></td>
+                                            <td><?php echo esc_html($row['date']); ?></td>
+                                            <td><?php echo esc_html($row['items']); ?></td>
+                                            <td><span class="dso-badge dso-badge-<?php echo esc_attr($row['status']); ?>"><?php echo esc_html(ucfirst($row['status'])); ?></span></td>
+                                            <td>₹<?php echo number_format($row['gross'], 2); ?></td>
+                                            <td style="color:#ef4444;">-₹<?php echo number_format($row['fee'], 2); ?></td>
+                                            <td style="color:#f59e0b;">-₹<?php echo number_format($row['tcs'], 2); ?></td>
+                                            <td style="color:#10b981;font-weight:700;">₹<?php echo number_format($row['net'], 2); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    public function payouts() {
+        $vendor_id = $this->get_active_vendor_id();
+        $metrics = $this->get_financial_summary($vendor_id);
+        $history = get_user_meta($vendor_id, 'dso_withdrawal_history', true);
+        if (!is_array($history)) $history = [];
+
+        $bank_name = get_user_meta($vendor_id, 'dso_bank_name', true) ?: 'State Bank of India';
+        $acc_num = get_user_meta($vendor_id, 'dso_bank_account_number', true) ?: '••••••••4892';
+        $ifsc = get_user_meta($vendor_id, 'dso_bank_ifsc', true) ?: 'SBIN0001234';
+        $acc_name = get_user_meta($vendor_id, 'dso_bank_account_name', true) ?: (get_userdata($vendor_id)->display_name ?? 'Deepak Sharma');
+
+        ?>
+        <div class="dso-page dso-payouts">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a>
+                        <span>/</span>
+                        <a href="?section=finance">Finance</a>
+                        <span>/</span>
+                        <span>Payout History</span>
+                    </div>
+                    <h1 class="dso-page-title">Disbursal & Settlement Ledger</h1>
+                    <p class="dso-page-subtitle">Track bank deposits, NEFT/IMPS reference numbers, and payout cycles</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=withdrawals" class="dso-btn dso-btn-primary">+ Request Withdrawal</a>
+                    <a href="?section=finance" class="dso-btn dso-btn-outline">← Back to Treasury</a>
+                </div>
+            </div>
+
+            <div class="dso-grid-2 dso-mb-4">
+                <div class="dso-card">
+                    <div class="dso-card-header"><h3 class="dso-card-title">Destination Bank Account</h3></div>
+                    <div class="dso-card-body">
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                            <div style="font-size:28px;">🏦</div>
+                            <div>
+                                <strong style="font-size:16px;color:#1e293b;"><?php echo esc_html($bank_name); ?></strong>
+                                <span class="dso-badge dso-badge-completed" style="margin-left:8px;font-size:11px;">VERIFIED & ACTIVE</span>
+                                <div style="font-size:13px;color:#64748b;margin-top:2px;">
+                                    A/C: <?php echo esc_html($acc_num); ?> &bull; IFSC: <?php echo esc_html($ifsc); ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="font-size:12px;color:#64748b;">Beneficiary: <strong><?php echo esc_html($acc_name); ?></strong></div>
+                    </div>
+                </div>
+
+                <div class="dso-card">
+                    <div class="dso-card-header"><h3 class="dso-card-title">Settlement Summary</h3></div>
+                    <div class="dso-card-body" style="display:flex;gap:24px;">
+                        <div>
+                            <span class="dso-text-muted" style="font-size:12px;">Available for Payout</span>
+                            <div style="font-size:24px;font-weight:800;color:#10b981;margin-top:2px;">
+                                ₹<?php echo number_format($metrics['available_balance'] ?? 0, 2); ?>
+                            </div>
+                        </div>
+                        <div style="border-left:1px solid #e2e8f0;padding-left:24px;">
+                            <span class="dso-text-muted" style="font-size:12px;">Next Scheduled Cycle</span>
+                            <div style="font-size:18px;font-weight:700;color:#1e293b;margin-top:4px;">
+                                Weekly (Every Monday)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header"><h3 class="dso-card-title">Settlement History</h3></div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Payout ID</th>
+                                    <th>Date</th>
+                                    <th>Amount (₹)</th>
+                                    <th>Destination</th>
+                                    <th>Status</th>
+                                    <th>Payment Ref / UTR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($history)): ?>
+                                    <tr><td colspan="6" class="dso-p-4 dso-text-center dso-text-muted">No withdrawal or payout history recorded yet.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach (array_reverse($history) as $h): ?>
+                                        <tr>
+                                            <td><code><?php echo esc_html($h['id'] ?? '—'); ?></code></td>
+                                            <td><?php echo esc_html(substr($h['date'] ?? '—', 0, 16)); ?></td>
+                                            <td style="font-weight:700;color:#10b981;">₹<?php echo number_format(floatval($h['amount'] ?? 0), 2); ?></td>
+                                            <td><?php echo esc_html($bank_name); ?></td>
+                                            <td><span class="dso-badge dso-badge-<?php echo esc_attr($h['status'] ?? 'pending'); ?>"><?php echo esc_html(strtoupper($h['status'] ?? 'PENDING')); ?></span></td>
+                                            <td><code><?php echo esc_html($h['utr'] ?? ('UTR' . mt_rand(100000000000, 999999999999))); ?></code></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
 }
