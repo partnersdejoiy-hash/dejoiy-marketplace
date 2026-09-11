@@ -17,13 +17,14 @@
   /**
   /**
    * DEJOIY Custom WooCommerce Order Numbers
-   * Exact Format: (Seven digits date)-(Any random 3 digit number)-(7 digits order number)
-   * Example: 2609115-482-0005493 (xxxxxxx-xxx-xxxxxxx)
+   * Exact Format: YYYYMMDD-XXX-XXXXXXX
+   * (Year 4-digits Month 2-digits Day 2-digits)-(Any random 3 digit number)-(7 digits order number)
+   * Example: 20260911-482-0005493
    */
 
   /**
    * Build custom order number.
-   * Format: xxxxxxx-xxx-xxxxxxx
+   * Format: YYYYMMDD-XXX-XXXXXXX
    */
   function dejoiy_build_custom_order_number( $order ) {
   	if ( is_numeric( $order ) ) {
@@ -36,13 +37,12 @@
   	$order_id = $order->get_id();
 
   	/*
-  	 * Seven digits date of the order:
-  	 * yymmdd + 1-digit ISO day of week (1-7)
-  	 * Example: 2026-09-11 (Friday) => 2609115 (7 digits)
+  	 * Date of the order: YYYYMMDD (8 digits)
+  	 * Example: 2026-09-11 => 20260911
   	 */
   	$created = $order->get_date_created();
   	$timestamp = ( $created && is_a( $created, 'WC_DateTime' ) ) ? $created->getTimestamp() : time();
-  	$date_part = wp_date( 'ymdN', $timestamp );
+  	$date_part = wp_date( 'Ymd', $timestamp );
 
   	/*
   	 * Any random 3 digit number (000-999).
@@ -56,7 +56,7 @@
   	$order_part = str_pad( (string) $order_id, 7, '0', STR_PAD_LEFT );
 
   	/*
-  	 * Format: xxxxxxx-xxx-xxxxxxx
+  	 * Format: YYYYMMDD-XXX-XXXXXXX
   	 */
   	return $date_part . '-' . $random_part . '-' . $order_part;
   }
@@ -75,10 +75,10 @@
   	}
 
   	/*
-  	 * Do not overwrite if already generated in exact xxxxxxx-xxx-xxxxxxx format.
+  	 * Do not overwrite if already generated in exact YYYYMMDD-XXX-XXXXXXX format.
   	 */
   	$existing = $order->get_meta( '_dejoiy_custom_order_number', true );
-  	if ( ! empty( $existing ) && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $existing ) ) {
+  	if ( ! empty( $existing ) && preg_match( '/^\d{8}-\d{3}-\d{7}$/', $existing ) ) {
   		return;
   	}
 
@@ -103,7 +103,7 @@
 
   	$custom_number = $order->get_meta( '_dejoiy_custom_order_number', true );
 
-  	if ( empty( $custom_number ) || ! preg_match( '/^\d{7}-\d{3}-\d{7}$/', $custom_number ) ) {
+  	if ( empty( $custom_number ) || ! preg_match( '/^\d{8}-\d{3}-\d{7}$/', $custom_number ) ) {
   		$custom_number = dejoiy_build_custom_order_number( $order );
   		if ( ! empty( $custom_number ) ) {
   			$order->update_meta_data( '_dejoiy_custom_order_number', $custom_number );

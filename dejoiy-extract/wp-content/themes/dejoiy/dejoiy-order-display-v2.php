@@ -60,7 +60,7 @@ function dejoiy_build_display_order_v2( $order ) {
 	$order_id   = $order->get_id();
 	$created    = $order->get_date_created();
 	$timestamp  = ( $created && is_a( $created, 'WC_DateTime' ) ) ? $created->getTimestamp() : time();
-	$date_part  = wp_date( 'ymdN', $timestamp );
+	$date_part  = wp_date( 'Ymd', $timestamp );
 	$random     = str_pad( (string) wp_rand( 0, 999 ), 3, '0', STR_PAD_LEFT );
 	$order_part = str_pad( (string) $order_id, 7, '0', STR_PAD_LEFT );
 	return $date_part . '-' . $random . '-' . $order_part;
@@ -81,7 +81,7 @@ function dejoiy_generate_display_order_v2( $order_id ) {
 		return;
 	}
 	$existing = $order->get_meta( dejoiy_order_v2_meta_key(), true );
-	if ( ! empty( $existing ) && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $existing ) ) {
+	if ( ! empty( $existing ) && preg_match( '/^\d{8}-\d{3}-\d{7}$/', $existing ) ) {
 		return;
 	}
 	$number = dejoiy_build_display_order_v2( $order );
@@ -107,11 +107,11 @@ function dejoiy_filter_display_order_v2( $order_number, $order ) {
 		return $order_number;
 	}
 	$v2 = $order->get_meta( dejoiy_order_v2_meta_key(), true );
-	if ( $v2 && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $v2 ) ) {
+	if ( $v2 && preg_match( '/^\d{8}-\d{3}-\d{7}$/', $v2 ) ) {
 		return (string) $v2;
 	}
 	$custom = $order->get_meta( '_dejoiy_custom_order_number', true );
-	if ( $custom && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $custom ) ) {
+	if ( $custom && preg_match( '/^\d{8}-\d{3}-\d{7}$/', $custom ) ) {
 		return (string) $custom;
 	}
 	return $order_number;
