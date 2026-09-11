@@ -34,27 +34,35 @@ function dejoiy_library_order_has_nexus_items( $order ) {
  * @return bool
  */
 function dejoiy_library_is_nexus_wc_order_endpoint() {
+	static $cache = null;
+	if ( null !== $cache ) {
+		return $cache;
+	}
 	if ( ! did_action( 'wp' ) || ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
-		return false;
+		return $cache = false;
 	}
 	if ( ! is_wc_endpoint_url( 'order-pay' ) && ! is_wc_endpoint_url( 'order-received' ) ) {
-		return false;
+		return $cache = false;
 	}
 	if ( function_exists( 'dejoiy_library_is_nexus_flow_request' ) && dejoiy_library_is_nexus_flow_request() ) {
-		return true;
+		return $cache = true;
 	}
 	if ( function_exists( 'dejoiy_library_is_active_cart_nexus' ) && dejoiy_library_is_active_cart_nexus() ) {
-		return true;
+		return $cache = true;
 	}
 	$order_id = absint( get_query_var( 'order-pay' ) );
 	if ( ! $order_id ) {
 		$order_id = absint( get_query_var( 'order-received' ) );
 	}
 	if ( $order_id && function_exists( 'wc_get_order' ) ) {
-		return dejoiy_library_order_has_nexus_items( wc_get_order( $order_id ) );
+		$cache = false; // guard against re-entry during wc_get_order()
+		$order = wc_get_order( $order_id );
+		$cache = (bool) ( $order ? dejoiy_library_order_has_nexus_items( $order ) : false );
+		return $cache;
 	}
-	return false;
+	return $cache = false;
 }
+
 
 /**
  * Any Nexus storefront screen (for body class + hiding theme header).

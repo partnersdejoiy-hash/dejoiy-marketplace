@@ -15,15 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return bool
  */
 function dejoiy_library_is_nexus_branding_scope() {
+	static $is_scope = null;
+	if ( null !== $is_scope ) {
+		return $is_scope;
+	}
 	if ( function_exists( 'dejoiy_library_is_nexus_chrome_screen' ) && dejoiy_library_is_nexus_chrome_screen() ) {
-		return true;
+		return $is_scope = true;
 	}
 	if ( function_exists( 'dejoiy_library_should_load_nexus_app' ) && dejoiy_library_should_load_nexus_app() ) {
-		return true;
+		return $is_scope = true;
 	}
 	$uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
-	return '' !== $uri && (bool) preg_match( '#/nexus/|dejoiy-library|dejoiy_library=1#i', $uri );
+	return $is_scope = ( '' !== $uri && (bool) preg_match( '#/nexus/|dejoiy-library|dejoiy_library=1#i', $uri ) );
 }
+
 
 /**
  * Badge count for header (owned + checkout queue).
@@ -98,11 +103,19 @@ function dejoiy_library_nexus_branding_buffer_end() {
  * @return string
  */
 function dejoiy_library_nexus_gettext( $translated, $text, $domain ) {
+	static $in_gettext = false;
+	if ( $in_gettext ) {
+		return $translated;
+	}
+	$in_gettext = true;
+
 	if ( ! dejoiy_library_is_nexus_branding_scope() ) {
+		$in_gettext = false;
 		return $translated;
 	}
 	$domains = array( 'woocommerce', 'wc-frontend-manager', 'wcfm', 'hostinger-reach', 'default' );
 	if ( ! in_array( $domain, $domains, true ) ) {
+		$in_gettext = false;
 		return $translated;
 	}
 	$map = array(
@@ -116,12 +129,16 @@ function dejoiy_library_nexus_gettext( $translated, $text, $domain ) {
 	foreach ( array( $translated, $text ) as $str ) {
 		foreach ( $map as $from => $to ) {
 			if ( false !== stripos( $str, $from ) ) {
-				return str_ireplace( $from, $to, $translated );
+				$res = str_ireplace( $from, $to, $translated );
+				$in_gettext = false;
+				return $res;
 			}
 		}
 	}
+	$in_gettext = false;
 	return $translated;
 }
+
 
 /**
  * Dequeue marketplace plugin chrome on Nexus.

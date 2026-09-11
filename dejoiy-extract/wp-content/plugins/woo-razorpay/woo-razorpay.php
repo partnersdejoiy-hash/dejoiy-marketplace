@@ -734,11 +734,14 @@ function woocommerce_razorpay_init()
 
             if (!filter_var($domain_ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
             {
-                ?>
-                <div class="notice error is-dismissible" >
-                    <p><b><?php _e( 'Could not enable webhook for localhost server.'); ?><b></p>
-                </div>
-                <?php
+                if ( is_admin() )
+                {
+                    ?>
+                    <div class="notice error is-dismissible" >
+                        <p><b><?php _e( 'Could not enable webhook for localhost server.'); ?></b></p>
+                    </div>
+                    <?php
+                }
 
                 rzpLogError('Could not enable webhook for localhost');
                 return;

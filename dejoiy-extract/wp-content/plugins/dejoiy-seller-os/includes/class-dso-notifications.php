@@ -6,6 +6,42 @@ if (!defined('ABSPATH')) exit;
 
 class DSO_Notifications {
 
+    /**
+     * Create a notification record for a seller
+     *
+     * @param int    $vendor_id
+     * @param string $type
+     * @param string $title
+     * @param string $message
+     * @param string $action_url
+     * @return int|bool
+     */
+    public function create($vendor_id, $type = 'info', $title = '', $message = '', $action_url = '') {
+        global $wpdb;
+        $table = $wpdb->prefix . 'dso_notifications';
+        return $wpdb->insert(
+            $table,
+            [
+                'vendor_id'  => intval($vendor_id),
+                'type'       => sanitize_text_field($type),
+                'title'      => sanitize_text_field($title),
+                'message'    => sanitize_textarea_field($message),
+                'action_url' => esc_url_raw($action_url),
+                'is_read'    => 0,
+                'created_at' => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s', '%s', '%s', '%d', '%s']
+        );
+    }
+
+    /**
+     * Static helper to create notification
+     */
+    public static function create_notification($vendor_id, $type = 'info', $title = '', $message = '', $action_url = '') {
+        $instance = new self();
+        return $instance->create($vendor_id, $type, $title, $message, $action_url);
+    }
+
     public function render() {
         $user_id = get_current_user_id();
         $plugin = Dejoiy_Seller_OS::instance();

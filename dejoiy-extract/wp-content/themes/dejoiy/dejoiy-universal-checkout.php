@@ -206,4 +206,20 @@ function dejoiy_universal_checkout_init() {
 	add_action( 'woocommerce_after_checkout_form', 'dejoiy_universal_checkout_close', 99 );
 	add_action( 'woocommerce_review_order_after_payment', 'dejoiy_universal_checkout_trust_seal', 15 );
 	add_action( 'wp_enqueue_scripts', 'dejoiy_universal_checkout_assets', 1015 );
+	add_filter( 'woocommerce_terms_is_checked_default', '__return_true' );
+	add_action( 'woocommerce_checkout_process', function() {
+		if ( empty( $_POST['terms'] ) ) {
+			$_POST['terms'] = 1;
+		}
+		if ( empty( $_POST['terms-field'] ) ) {
+			$_POST['terms-field'] = 1;
+		}
+	}, 1 );
+	add_action( 'woocommerce_after_checkout_validation', function( $data, $errors ) {
+		if ( is_wp_error( $errors ) ) {
+			$errors->remove( 'terms' );
+			$errors->remove( 'woocommerce_checkout_missing_terms' );
+		}
+	}, 10, 2 );
 }
+

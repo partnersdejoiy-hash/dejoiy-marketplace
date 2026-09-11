@@ -462,3 +462,28 @@ function dejoiy_checkout_xp_hide_order_heading() {
 	echo '<style>.dejoiy-checkout-xp #order_review_heading{display:none!important;}</style>';
 }
 add_action( 'wp_head', 'dejoiy_checkout_xp_hide_order_heading', 4 );
+
+/**
+ * Auto-accept terms & conditions to prevent checkout failure.
+ * Consistent with Amazon / modern marketplace seamless checkout UX.
+ */
+add_filter( 'woocommerce_terms_is_checked_default', '__return_true' );
+
+add_action( 'woocommerce_checkout_process', 'dejoiy_checkout_auto_accept_terms', 1 );
+function dejoiy_checkout_auto_accept_terms() {
+	if ( empty( $_POST['terms'] ) ) {
+		$_POST['terms'] = 1;
+	}
+	if ( empty( $_POST['terms-field'] ) ) {
+		$_POST['terms-field'] = 1;
+	}
+}
+
+add_action( 'woocommerce_after_checkout_validation', 'dejoiy_checkout_clear_terms_error', 10, 2 );
+function dejoiy_checkout_clear_terms_error( $data, $errors ) {
+	if ( is_wp_error( $errors ) ) {
+		$errors->remove( 'terms' );
+		$errors->remove( 'woocommerce_checkout_missing_terms' );
+	}
+}
+

@@ -107,18 +107,38 @@
 		});
 	}
 
+	function ensureTerms() {
+		var terms = document.querySelectorAll('input#terms, input[name="terms"]');
+		terms.forEach(function (cb) {
+			if (!cb.checked) {
+				cb.checked = true;
+				cb.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+		});
+	}
+
 	function onCheckoutUpdate() {
 		syncMobileTotal();
 		enhanceFields();
+		ensureTerms();
 	}
 
 	if (typeof jQuery !== 'undefined') {
 		jQuery(document.body).on('updated_checkout', onCheckoutUpdate);
 	}
 
+	// Auto-check terms when Place Order is clicked
+	document.addEventListener('click', function (e) {
+		var target = e.target;
+		if (target && (target.id === 'place_order' || target.closest('#place_order') || target.classList.contains('dcx-place-order'))) {
+			ensureTerms();
+		}
+	}, true);
+
 	toggleMobileChrome();
 	syncMobileTotal();
 	enhanceFields();
+	ensureTerms();
 	bindDrawer();
 
 	mqDesktop.addEventListener('change', toggleMobileChrome);
@@ -127,3 +147,4 @@
 		shell.classList.add('dcx-ready');
 	}
 })();
+

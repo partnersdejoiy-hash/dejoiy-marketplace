@@ -289,17 +289,23 @@ class Dejoiy_Seller_OS {
             }
 
             // Create in-app notification for each vendor
-            if (class_exists('DSO_Notifications')) {
-                $notif = new DSO_Notifications();
-                foreach ($vids as $vid) {
-                    $notif->create(
-                        $vid,
-                        'order',
-                        'New Order #' . $order->get_order_number(),
-                        'You have received an order for ₹' . number_format($order->get_total(), 2),
-                        'https://sellerhub.dejoiy.com/?section=orders'
-                    );
+            try {
+                if (class_exists('DSO_Notifications')) {
+                    $notif = new DSO_Notifications();
+                    if (method_exists($notif, 'create')) {
+                        foreach ($vids as $vid) {
+                            $notif->create(
+                                $vid,
+                                'order',
+                                'New Order #' . $order->get_order_number(),
+                                'You have received an order for ₹' . number_format($order->get_total(), 2),
+                                'https://sellerhub.dejoiy.com/?section=orders'
+                            );
+                        }
+                    }
                 }
+            } catch (\Throwable $notif_err) {
+                error_log('DSO notification error: ' . $notif_err->getMessage());
             }
         }
     }
