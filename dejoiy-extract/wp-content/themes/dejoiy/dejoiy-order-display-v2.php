@@ -54,16 +54,16 @@ function dejoiy_build_display_order_v2( $order ) {
 	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
 		return '';
 	}
-	$order_id  = $order->get_id();
-	$date_part = gmdate( 'Ymd', $order->get_date_created() ? $order->get_date_created()->getTimestamp() : time() );
-	$wc_part   = 'W' . (string) $order_id;
-
-	if ( dejoiy_order_is_digital_v2( $order ) ) {
-		return 'DDO-' . $date_part . '-' . $wc_part;
+	if ( function_exists( 'dejoiy_build_custom_order_number' ) ) {
+		return dejoiy_build_custom_order_number( $order );
 	}
-
-	$random = str_pad( (string) wp_rand( 0, 999 ), 3, '0', STR_PAD_LEFT );
-	return $date_part . '-' . $random . '-' . $wc_part;
+	$order_id   = $order->get_id();
+	$created    = $order->get_date_created();
+	$timestamp  = ( $created && is_a( $created, 'WC_DateTime' ) ) ? $created->getTimestamp() : time();
+	$date_part  = wp_date( 'ymdN', $timestamp );
+	$random     = str_pad( (string) wp_rand( 0, 999 ), 3, '0', STR_PAD_LEFT );
+	$order_part = str_pad( (string) $order_id, 7, '0', STR_PAD_LEFT );
+	return $date_part . '-' . $random . '-' . $order_part;
 }
 
 /**
@@ -80,12 +80,14 @@ function dejoiy_generate_display_order_v2( $order_id ) {
 	if ( ! $order ) {
 		return;
 	}
-	if ( $order->get_meta( dejoiy_order_v2_meta_key(), true ) ) {
+	$existing = $order->get_meta( dejoiy_order_v2_meta_key(), true );
+	if ( ! empty( $existing ) && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $existing ) ) {
 		return;
 	}
 	$number = dejoiy_build_display_order_v2( $order );
 	if ( $number ) {
 		$order->update_meta_data( dejoiy_order_v2_meta_key(), $number );
+		$order->update_meta_data( '_dejoiy_custom_order_number', $number );
 		$order->save();
 	}
 }
@@ -101,12 +103,16 @@ add_action( 'woocommerce_new_order', 'dejoiy_generate_display_order_v2', 25 );
  * @return string
  */
 function dejoiy_filter_display_order_v2( $order_number, $order ) {
-	if ( ! $order ) {
+	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
 		return $order_number;
 	}
 	$v2 = $order->get_meta( dejoiy_order_v2_meta_key(), true );
-	if ( $v2 ) {
+	if ( $v2 && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $v2 ) ) {
 		return (string) $v2;
+	}
+	$custom = $order->get_meta( '_dejoiy_custom_order_number', true );
+	if ( $custom && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $custom ) ) {
+		return (string) $custom;
 	}
 	return $order_number;
 }

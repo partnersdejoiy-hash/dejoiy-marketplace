@@ -15,22 +15,20 @@
   }
 
   /**
+  /**
    * DEJOIY Custom WooCommerce Order Numbers
-   *
-   * Normal Orders Format:
-   * 2605181-482-0000123
-   * [7-digit date]-[3 random digits]-[7-digit order number]
-   *
-   * Subscription Orders Format:
-   * DJS-2605181-0000123
-   * DJS-[7-digit date]-[7-digit order number]
+   * Exact Format: (Seven digits date)-(Any random 3 digit number)-(7 digits order number)
+   * Example: 2609115-482-0005493 (xxxxxxx-xxx-xxxxxxx)
    */
 
   /**
    * Build custom order number.
+   * Format: xxxxxxx-xxx-xxxxxxx
    */
   function dejoiy_build_custom_order_number( $order ) {
-
+  	if ( is_numeric( $order ) ) {
+  		$order = wc_get_order( (int) $order );
+  	}
   	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
   		return '';
   	}
@@ -38,46 +36,27 @@
   	$order_id = $order->get_id();
 
   	/*
-  	 * Date format:
-  	 * yymmdd + day of week (1-7)
-  	 * Example: 2605181
+  	 * Seven digits date of the order:
+  	 * yymmdd + 1-digit ISO day of week (1-7)
+  	 * Example: 2026-09-11 (Friday) => 2609115 (7 digits)
   	 */
-  	$date_part = wp_date( 'ymdN' );
+  	$created = $order->get_date_created();
+  	$timestamp = ( $created && is_a( $created, 'WC_DateTime' ) ) ? $created->getTimestamp() : time();
+  	$date_part = wp_date( 'ymdN', $timestamp );
 
   	/*
-  	 * Order ID padded to 7 digits.
-  	 * Example: 123 => 0000123
-  	 */
-  	$order_part = str_pad( (string) $order_id, 7, '0', STR_PAD_LEFT );
-
-  	/*
-  	 * Detect subscription orders.
-  	 */
-  	$is_subscription = false;
-
-  	if ( function_exists( 'wcs_order_contains_subscription' ) ) {
-  		$is_subscription = wcs_order_contains_subscription(
-  			$order,
-  			array( 'parent', 'renewal', 'switch', 'resubscribe' )
-  		);
-  	}
-
-  	/*
-  	 * Subscription order format:
-  	 * DJS-2605181-0000123
-  	 */
-  	if ( $is_subscription ) {
-  		return 'DJS-' . $date_part . '-' . $order_part;
-  	}
-
-  	/*
-  	 * Random 3-digit number.
+  	 * Any random 3 digit number (000-999).
   	 */
   	$random_part = str_pad( (string) wp_rand( 0, 999 ), 3, '0', STR_PAD_LEFT );
 
   	/*
-  	 * Normal order format:
-  	 * 2605181-482-0000123
+  	 * 7 digits order number (order ID padded with leading zeros to 7 digits).
+  	 * Example: 5493 => 0005493
+  	 */
+  	$order_part = str_pad( (string) $order_id, 7, '0', STR_PAD_LEFT );
+
+  	/*
+  	 * Format: xxxxxxx-xxx-xxxxxxx
   	 */
   	return $date_part . '-' . $random_part . '-' . $order_part;
   }
@@ -86,78 +65,72 @@
    * Save custom order number.
    */
   function dejoiy_generate_custom_order_number( $order_id ) {
-
   	if ( ! $order_id ) {
   		return;
   	}
 
   	$order = wc_get_order( $order_id );
-
   	if ( ! $order ) {
   		return;
   	}
 
   	/*
-  	 * Do not overwrite if already generated.
+  	 * Do not overwrite if already generated in exact xxxxxxx-xxx-xxxxxxx format.
   	 */
   	$existing = $order->get_meta( '_dejoiy_custom_order_number', true );
-
-  	if ( ! empty( $existing ) ) {
+  	if ( ! empty( $existing ) && preg_match( '/^\d{7}-\d{3}-\d{7}$/', $existing ) ) {
   		return;
   	}
 
   	$custom_number = dejoiy_build_custom_order_number( $order );
-
   	if ( ! empty( $custom_number ) ) {
   		$order->update_meta_data( '_dejoiy_custom_order_number', $custom_number );
+  		$order->update_meta_data( '_dejoiy_display_order_v2', $custom_number );
   		$order->save();
   	}
   }
 
-  /**
-   * Generate custom number for checkout orders.
-   */
-  add_action(
-  	'woocommerce_checkout_order_processed',
-  	'dejoiy_generate_custom_order_number',
-  	20,
-  	1
-  );
+  add_action( 'woocommerce_checkout_order_processed', 'dejoiy_generate_custom_order_number', 20, 1 );
+  add_action( 'woocommerce_new_order', 'dejoiy_generate_custom_order_number', 20, 1 );
 
   /**
-   * Generate custom number for manually created orders.
-   */
-  add_action(
-  	'woocommerce_new_order',
-  	'dejoiy_generate_custom_order_number',
-  	20,
-  	1
-  );
-
-  /**
-   * Display custom order number everywhere.
+   * Display custom order number everywhere across WooCommerce.
    */
   function dejoiy_display_custom_order_number( $order_number, $order ) {
-
-  	if ( ! $order ) {
+  	if ( ! $order || ! is_a( $order, 'WC_Order' ) ) {
   		return $order_number;
   	}
 
   	$custom_number = $order->get_meta( '_dejoiy_custom_order_number', true );
 
-  	if ( ! empty( $custom_number ) ) {
-  		return $custom_number;
+  	if ( empty( $custom_number ) || ! preg_match( '/^\d{7}-\d{3}-\d{7}$/', $custom_number ) ) {
+  		$custom_number = dejoiy_build_custom_order_number( $order );
+  		if ( ! empty( $custom_number ) ) {
+  			$order->update_meta_data( '_dejoiy_custom_order_number', $custom_number );
+  			$order->update_meta_data( '_dejoiy_display_order_v2', $custom_number );
+  			$order->save();
+  		}
   	}
 
-  	return $order_number;
+  	return ! empty( $custom_number ) ? $custom_number : $order_number;
   }
 
-  add_filter(
-  	'woocommerce_order_number',
-  	'dejoiy_display_custom_order_number',
-  	10,
-  	2
-  );
+  add_filter( 'woocommerce_order_number', 'dejoiy_display_custom_order_number', PHP_INT_MAX, 2 );
+
+  /**
+   * Allow searching by custom order number in WooCommerce admin
+   */
+  add_filter( 'woocommerce_shop_order_search_fields', function( $search_fields ) {
+  	$search_fields[] = '_dejoiy_custom_order_number';
+  	$search_fields[] = '_dejoiy_display_order_v2';
+  	return $search_fields;
+  } );
+  add_filter( 'woocommerce_order_table_search_query_meta_keys', function( $meta_keys ) {
+  	$meta_keys[] = '_dejoiy_custom_order_number';
+  	$meta_keys[] = '_dejoiy_display_order_v2';
+  	return $meta_keys;
+  } );
+
 
     /* ===== DEJOIY CUSTOM STUDIO v7 ===== */
     function dejoiy_custom_studio_enqueue() {
