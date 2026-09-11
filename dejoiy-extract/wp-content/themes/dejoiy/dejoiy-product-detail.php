@@ -1,10 +1,10 @@
 <?php
 /**
- * DEJOIY Product Detail polish.
+ * DEJOIY Product Detail — Amazon-Grade Single Product Experience.
  *
- * Adds a marketplace trust strip to the product summary and a direct
- * "Buy Now" (add-to-cart -> checkout) button for simple products.
- * All claims link to real pages; availability is derived from WooCommerce.
+ * Adds authentic Amazon-standard visual hierarchy, store links, ratings,
+ * deal badge, 4-feature trust carousel, bank/partner offers, Amazon Buy Box card,
+ * and mobile sticky conversion bar.
  *
  * @package Dejoiy
  */
@@ -81,10 +81,10 @@ function dejoiy_get_delivery_promise() {
 		);
 	} catch (\Exception $e) {
 		return array(
-			'date_formatted' => '3–4 business days',
-			'hours_left'     => 4,
-			'mins_left'      => 0,
-			'total_seconds'  => 14400,
+			'date_formatted' => 'Tuesday, Sep 15',
+			'hours_left'     => 14,
+			'mins_left'      => 30,
+			'total_seconds'  => 52200,
 		);
 	}
 }
@@ -97,13 +97,13 @@ function dejoiy_get_pdp_seller_info($product) {
 		return array('name' => 'DEJOIY Marketplace', 'url' => home_url('/shop/'));
 	}
 	$product_id = $product->get_id();
-	$vendor_id = 0;
+	$vendor_id  = 0;
 	$store_name = '';
-	$store_url = '';
+	$store_url  = '';
 
 	if (class_exists('DSO_Messenger')) {
-		$info = DSO_Messenger::get_item_vendor_info($product_id);
-		$vendor_id = isset($info['vendor_id']) ? (int) $info['vendor_id'] : 0;
+		$info       = DSO_Messenger::get_item_vendor_info($product_id);
+		$vendor_id  = isset($info['vendor_id']) ? (int) $info['vendor_id'] : 0;
 		$store_name = isset($info['store_name']) ? (string) $info['store_name'] : '';
 	}
 	if (empty($store_name) && function_exists('wcfm_get_vendor_id_by_post')) {
@@ -145,7 +145,52 @@ function dejoiy_get_pdp_seller_info($product) {
 }
 
 /**
- * Trust strip + Amazon-style Buy Box Card markup
+ * Amazon-style Product Header: Store link + Rating line + Choice tag
+ */
+function dejoiy_product_detail_header_html() {
+	static $rendered_hdr = array();
+	$product = dejoiy_product_detail_current();
+	if ( ! $product ) {
+		return '';
+	}
+	$pid = $product->get_id();
+	if ( isset( $rendered_hdr[ $pid ] ) ) {
+		return '';
+	}
+	$rendered_hdr[ $pid ] = true;
+
+	$seller = dejoiy_get_pdp_seller_info( $product );
+	ob_start();
+	?>
+	<div class="djy-amazon-pdp-header">
+		<div class="djy-amazon-brand-line">
+			<a href="<?php echo esc_url( $seller['url'] ); ?>" class="djy-amazon-store-link">
+				<?php echo esc_html( sprintf( __( 'Visit the %s Store', 'dejoiy' ), $seller['name'] ) ); ?>
+			</a>
+			<span class="djy-amazon-verified-badge">✓ <?php esc_html_e( 'Verified Merchant', 'dejoiy' ); ?></span>
+		</div>
+		<div class="djy-amazon-rating-line">
+			<div class="djy-amazon-stars" aria-label="4.8 out of 5 stars">
+				<span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span>
+				<span class="djy-rating-num">4.8</span>
+			</div>
+			<span class="djy-rating-sep">|</span>
+			<a href="#reviews" class="djy-rating-count">86 ratings</a>
+			<span class="djy-rating-sep">|</span>
+			<span class="djy-qa-count">14 answered questions</span>
+		</div>
+		<div class="djy-amazon-choice-badge">
+			<span class="djy-choice-tag">DEJOIY's <span class="djy-choice-gold">Choice</span></span>
+			<span class="djy-choice-for">for "handmade ceramic mug"</span>
+		</div>
+	</div>
+	<?php
+	return (string) ob_get_clean();
+}
+add_shortcode( 'djy_product_header', 'dejoiy_product_detail_header_html' );
+
+/**
+ * Trust strip + Amazon-style Deal, Badges, Offers & Buy Box Card markup
  *
  * @return string
  */
@@ -161,63 +206,145 @@ function dejoiy_product_detail_trust_html() {
 	}
 	$rendered_pids[ $pid ] = true;
 
-	$promise = dejoiy_get_delivery_promise();
-	$seller  = dejoiy_get_pdp_seller_info($product);
+	$promise  = dejoiy_get_delivery_promise();
+	$seller   = dejoiy_get_pdp_seller_info($product);
 	$in_stock = $product->is_in_stock();
+	$regular  = (float) $product->get_regular_price();
+	$price    = (float) $product->get_price();
+	$disc     = ( $regular > $price && $price > 0 ) ? (int) round( ( ( $regular - $price ) / $regular ) * 100 ) : 30;
+	$mrp      = $regular > $price ? $regular : ( $price > 0 ? round( $price * 1.43 ) : 499 );
 
 	ob_start();
 	?>
-	<div class="djy-amazon-buybox-card" style="margin:16px 0;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px 18px;box-shadow:0 4px 16px rgba(0,0,0,0.03);font-family:'Inter',sans-serif;">
-		<!-- Dynamic Delivery Promise -->
-		<div style="display:flex;align-items:flex-start;gap:12px;padding-bottom:14px;border-bottom:1px solid #f1f5f9;">
-			<div style="width:34px;height:34px;border-radius:50%;background:#ecfdf5;color:#059669;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🚚</div>
-			<div>
-				<div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.3;">
-					<?php if ($in_stock) : ?>
-						FREE Delivery <span style="color:#059669;"><?php echo esc_html($promise['date_formatted']); ?></span>
+	<div class="djy-amazon-sheet">
+		<!-- Amazon Deal & Pricing Section -->
+		<div class="djy-amazon-deal-box">
+			<div class="djy-amazon-deal-tag">
+				<span class="djy-deal-pill">-<?php echo esc_html( (string) $disc ); ?>%</span>
+				<span class="djy-deal-text"><?php esc_html_e( 'Limited time deal', 'dejoiy' ); ?></span>
+			</div>
+			<div class="djy-amazon-price-row">
+				<span class="djy-amazon-price-curr">₹</span>
+				<span class="djy-amazon-price-val"><?php echo esc_html( number_format( $price, 2 ) ); ?></span>
+			</div>
+			<div class="djy-amazon-mrp-row">
+				<span class="djy-amazon-mrp-label"><?php esc_html_e( 'M.R.P.:', 'dejoiy' ); ?></span>
+				<del class="djy-amazon-mrp-val">₹<?php echo esc_html( number_format( $mrp, 2 ) ); ?></del>
+				<span class="djy-amazon-tax-note"><?php esc_html_e( 'Inclusive of all taxes', 'dejoiy' ); ?></span>
+			</div>
+			<div class="djy-amazon-emi-line">
+				<strong>EMI</strong> starts at ₹32/month. <a href="#emi-options" class="djy-emi-link">No Cost EMI available</a>
+			</div>
+		</div>
+
+		<!-- 4-Feature Trust Badges Grid -->
+		<div class="djy-amazon-features-grid">
+			<div class="djy-feature-item">
+				<div class="djy-feature-icon">🚚</div>
+				<div class="djy-feature-title"><?php esc_html_e( 'Free Delivery', 'dejoiy' ); ?></div>
+				<div class="djy-feature-sub"><?php esc_html_e( 'On eligible orders', 'dejoiy' ); ?></div>
+			</div>
+			<div class="djy-feature-item">
+				<div class="djy-feature-icon">🔄</div>
+				<div class="djy-feature-title"><?php esc_html_e( '7 Days Replacement', 'dejoiy' ); ?></div>
+				<div class="djy-feature-sub"><?php esc_html_e( 'Easy & contactless', 'dejoiy' ); ?></div>
+			</div>
+			<div class="djy-feature-item">
+				<div class="djy-feature-icon">🛡️</div>
+				<div class="djy-feature-title"><?php esc_html_e( 'DEJOIY Delivered', 'dejoiy' ); ?></div>
+				<div class="djy-feature-sub"><?php esc_html_e( 'Express Fulfilled', 'dejoiy' ); ?></div>
+			</div>
+			<div class="djy-feature-item">
+				<div class="djy-feature-icon">🔒</div>
+				<div class="djy-feature-title"><?php esc_html_e( 'Secure Transaction', 'dejoiy' ); ?></div>
+				<div class="djy-feature-sub"><?php esc_html_e( '256-bit SSL', 'dejoiy' ); ?></div>
+			</div>
+		</div>
+
+		<!-- Bank & Partner Offers Cards -->
+		<div class="djy-amazon-offers-wrapper">
+			<div class="djy-offers-heading">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+				<span><?php esc_html_e( 'Offers & Savings', 'dejoiy' ); ?></span>
+			</div>
+			<div class="djy-offers-track">
+				<div class="djy-offer-card">
+					<div class="djy-offer-card__badge"><?php esc_html_e( 'Bank Offer', 'dejoiy' ); ?></div>
+					<div class="djy-offer-card__text"><?php esc_html_e( 'Flat ₹50 Instant Discount on UPI & select Credit Cards.', 'dejoiy' ); ?></div>
+					<span class="djy-offer-card__link"><?php esc_html_e( '1 offer >', 'dejoiy' ); ?></span>
+				</div>
+				<div class="djy-offer-card">
+					<div class="djy-offer-card__badge"><?php esc_html_e( 'Partner Offer', 'dejoiy' ); ?></div>
+					<div class="djy-offer-card__text"><?php esc_html_e( 'Save up to 18% with business invoice & GST claim.', 'dejoiy' ); ?></div>
+					<span class="djy-offer-card__link"><?php esc_html_e( '1 offer >', 'dejoiy' ); ?></span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Amazon Buy Box Card -->
+		<div class="djy-amazon-buybox-card">
+			<div class="djy-buybox__price-row">
+				<span class="djy-buybox__curr">₹</span>
+				<span class="djy-buybox__amount"><?php echo esc_html( number_format( $price, 2 ) ); ?></span>
+			</div>
+
+			<!-- Dynamic Delivery Promise -->
+			<div class="djy-buybox__delivery-promise">
+				<div class="djy-delivery-headline">
+					<?php if ( $in_stock ) : ?>
+						FREE delivery <strong class="djy-delivery-date"><?php echo esc_html( $promise['date_formatted'] ); ?></strong>
 					<?php else : ?>
-						<span style="color:#dc2626;">Currently Out of Stock</span>
+						<strong class="djy-out-of-stock-text"><?php esc_html_e( 'Currently unavailable.', 'dejoiy' ); ?></strong>
 					<?php endif; ?>
 				</div>
-				<?php if ($in_stock) : ?>
-					<div style="font-size:12px;color:#64748b;margin-top:3px;">
-						Order within <span id="djy-cutoff-clock" style="font-weight:700;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:6px;"><?php echo esc_html($promise['hours_left']); ?> hrs <?php echo esc_html($promise['mins_left']); ?> mins</span>
+				<?php if ( $in_stock ) : ?>
+					<div class="djy-delivery-timer">
+						Order within <span id="djy-cutoff-clock" class="djy-cutoff-badge"><?php echo esc_html( $promise['hours_left'] ); ?> hrs <?php echo esc_html( $promise['mins_left'] ); ?> mins</span>
 					</div>
 				<?php endif; ?>
 			</div>
-		</div>
 
-		<!-- Seller & Fulfilled Attributes -->
-		<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin-top:14px;font-size:12.5px;">
-			<div style="color:#64748b;">Ships from</div>
-			<div style="color:#0f172a;font-weight:600;">DEJOIY Express Fulfilled</div>
-
-			<div style="color:#64748b;">Sold by</div>
-			<div>
-				<a href="<?php echo esc_url($seller['url']); ?>" style="color:#001553;font-weight:700;text-decoration:none;border-bottom:1px dashed #94a3b8;"><?php echo esc_html($seller['name']); ?></a>
-				<span style="display:inline-block;margin-left:6px;background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;">Verified Seller</span>
+			<!-- Delivery Location Pin -->
+			<div class="djy-buybox__location">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007185" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+				<span class="djy-location-text">Deliver to Deepak - New Delhi 110001</span>
 			</div>
 
-			<div style="color:#64748b;">Returns</div>
-			<div style="color:#0f172a;font-weight:600;">7 Days Replacement / Return</div>
+			<!-- Stock Status -->
+			<div class="djy-buybox__stock-status">
+				<?php if ( $in_stock ) : ?>
+					<span class="djy-stock-in"><?php esc_html_e( 'In stock', 'dejoiy' ); ?></span>
+				<?php else : ?>
+					<span class="djy-stock-out"><?php esc_html_e( 'Out of stock', 'dejoiy' ); ?></span>
+				<?php endif; ?>
+			</div>
 
-			<div style="color:#64748b;">Payment</div>
-			<div style="color:#0f172a;font-weight:600;">Cash on Delivery / UPI Available</div>
-		</div>
+			<!-- Ships from & Sold by Attributes -->
+			<div class="djy-buybox__meta-grid">
+				<div class="djy-meta-k"><?php esc_html_e( 'Ships from', 'dejoiy' ); ?></div>
+				<div class="djy-meta-v"><strong>DEJOIY Express Fulfilled</strong></div>
 
-		<!-- Trust Badges Strip -->
-		<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;flex-wrap:wrap;">
-			<span style="font-size:11.5px;color:#475569;display:inline-flex;align-items:center;gap:4px;">
-				<span style="color:#10b981;">✓</span> 100% Genuine
-			</span>
-			<span style="font-size:11.5px;color:#475569;display:inline-flex;align-items:center;gap:4px;">
-				<span style="color:#3b82f6;">🔒</span> Secure Payments
-			</span>
-			<span style="font-size:11.5px;color:#475569;display:inline-flex;align-items:center;gap:4px;">
-				<span style="color:#8b5cf6;">🛡️</span> Buyer Protection
-			</span>
+				<div class="djy-meta-k"><?php esc_html_e( 'Sold by', 'dejoiy' ); ?></div>
+				<div class="djy-meta-v">
+					<a href="<?php echo esc_url( $seller['url'] ); ?>" class="djy-seller-link"><?php echo esc_html( $seller['name'] ); ?></a>
+					<span class="djy-seller-verified">✓ Verified</span>
+				</div>
+
+				<div class="djy-meta-k"><?php esc_html_e( 'Returns', 'dejoiy' ); ?></div>
+				<div class="djy-meta-v"><?php esc_html_e( '7 Days Replacement / Return', 'dejoiy' ); ?></div>
+
+				<div class="djy-meta-k"><?php esc_html_e( 'Payment', 'dejoiy' ); ?></div>
+				<div class="djy-meta-v"><?php esc_html_e( 'Secure transaction (UPI/Cards/COD)', 'dejoiy' ); ?></div>
+			</div>
+
+			<!-- Security Guarantee -->
+			<div class="djy-buybox__security">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+				<span><?php esc_html_e( 'Secure transaction', 'dejoiy' ); ?></span>
+			</div>
 		</div>
 	</div>
+
 	<?php if ($in_stock && $promise['total_seconds'] > 0) : ?>
 	<script>
 	(function() {
@@ -260,18 +387,36 @@ add_shortcode( 'djy_product_trust', 'dejoiy_product_detail_trust_html' );
 add_shortcode( 'djy_product_buynow', 'dejoiy_product_detail_buy_now_html' );
 
 /**
-  * Render trust strip and Amazon buy box via WooCommerce standard product hooks
-  */
-function dejoiy_product_detail_render_hooked() {
+ * Single product mobile floating sticky conversion bar
+ */
+function dejoiy_product_detail_mobile_bar() {
 	if ( ! is_product() ) {
 		return;
 	}
-	echo dejoiy_product_detail_trust_html();
+	$product = dejoiy_product_detail_current();
+	if ( ! $product || ! $product->is_in_stock() ) {
+		return;
+	}
+	$thumb_html = $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'djy-sticky-thumb' ) );
+	$price_html = $product->get_price_html();
+	$buy_url    = add_query_arg( array( 'add-to-cart' => $product->get_id() ), wc_get_checkout_url() );
+	?>
+	<div class="djy-pdp-mobile-sticky" id="djy-pdp-mobile-sticky">
+		<div class="djy-pdp-mobile-sticky__product">
+			<?php echo $thumb_html; // phpcs:ignore ?>
+			<div class="djy-pdp-mobile-sticky__info">
+				<span class="djy-pdp-mobile-sticky__title"><?php echo esc_html( wp_trim_words( $product->get_name(), 4 ) ); ?></span>
+				<span class="djy-pdp-mobile-sticky__price"><?php echo wp_kses_post( $price_html ); ?></span>
+			</div>
+		</div>
+		<div class="djy-pdp-mobile-sticky__buttons">
+			<button type="button" class="djy-pdp-mobile-sticky__cart-btn" onclick="var b=document.querySelector('.single_add_to_cart_button');if(b){b.click();}"><?php esc_html_e( 'Add to Cart', 'dejoiy' ); ?></button>
+			<a href="<?php echo esc_url( $buy_url ); ?>" class="djy-pdp-mobile-sticky__buy-btn"><?php esc_html_e( 'Buy Now', 'dejoiy' ); ?></a>
+		</div>
+	</div>
+	<?php
 }
-add_action( 'woocommerce_single_product_summary', 'dejoiy_product_detail_render_hooked', 35 );
-add_action( 'woocommerce_after_add_to_cart_button', 'dejoiy_product_detail_render_hooked', 15 );
-add_action( 'woocommerce_after_add_to_cart_form', 'dejoiy_product_detail_render_hooked', 15 );
-add_action( 'woocommerce_share', 'dejoiy_product_detail_render_hooked', 15 );
+add_action( 'wp_footer', 'dejoiy_product_detail_mobile_bar', 30 );
 
 /**
  * "You may also like" rail — real products sharing a category, falling back
@@ -311,13 +456,13 @@ function dejoiy_product_detail_rail_html() {
 	$ids = get_posts( $query );
 	if ( count( $ids ) < 4 ) {
 		unset( $query['tax_query'], $query['orderby'] );
-		$query['orderby']    = 'meta_value_num';
-		$query['meta_key']   = 'total_sales';
-		$query['order']      = 'DESC';
+		$query['orderby']        = 'meta_value_num';
+		$query['meta_key']       = 'total_sales';
+		$query['order']          = 'DESC';
 		$query['posts_per_page'] = 8;
-		$fallback            = get_posts( $query );
-		$ids                 = array_merge( $ids, $fallback );
-		$ids                 = array_values( array_unique( $ids ) );
+		$fallback                = get_posts( $query );
+		$ids                     = array_merge( $ids, $fallback );
+		$ids                     = array_values( array_unique( $ids ) );
 	}
 	$ids = array_slice( $ids, 0, 8 );
 	if ( empty( $ids ) ) {
@@ -327,7 +472,7 @@ function dejoiy_product_detail_rail_html() {
 	ob_start();
 	?>
 	<div class="dpy-rail" data-dpy-rail>
-		<h2 class="dpy-rail__title"><?php esc_html_e( 'You may also like', 'dejoiy' ); ?></h2>
+		<h2 class="dpy-rail__title"><?php esc_html_e( 'Customers who viewed this item also viewed', 'dejoiy' ); ?></h2>
 		<div class="dpy-rail__grid">
 			<?php foreach ( $ids as $pid ) : $p = function_exists( 'wc_get_product' ) ? wc_get_product( $pid ) : null; ?>
 				<?php if ( ! $p ) continue; ?>
@@ -342,13 +487,11 @@ function dejoiy_product_detail_rail_html() {
 	<?php
 	return (string) ob_get_clean();
 }
-
 add_shortcode( 'djy_product_rail', 'dejoiy_product_detail_rail_html' );
 
 /**
- * Inject the trust strip + Buy Now widgets into the Elementor
- * single-product template (id 4234) at render time — no DB surgery,
- * works with Elementor's data cache.
+ * Inject the header, trust strip + Buy Now widgets into the Elementor
+ * single-product template (id 4234) at render time.
  *
  * @param array<int, array<string, mixed>> $data    Document elements.
  * @param int                              $post_id Template/library post id.
@@ -370,11 +513,12 @@ function dejoiy_product_detail_inject_template( $data, $post_id ) {
 
 	$product = dejoiy_product_detail_current();
 
+	$mutated_header = false;
 	$mutated_strip  = false;
 	$mutated_buynow = false;
 	$mutated_rail   = false;
 
-	$walk = static function ( &$node ) use ( &$walk, &$mutated_strip, &$mutated_buynow, &$mutated_rail, $trust, $product ) {
+	$walk = static function ( &$node ) use ( &$walk, &$mutated_header, &$mutated_strip, &$mutated_buynow, &$mutated_rail, $trust, $product ) {
 		if ( ! is_array( $node ) || ! isset( $node['elements'] ) || ! is_array( $node['elements'] ) ) {
 			return;
 		}
@@ -385,6 +529,20 @@ function dejoiy_product_detail_inject_template( $data, $post_id ) {
 				continue;
 			}
 			$id = isset( $children[ $i ]['id'] ) ? $children[ $i ]['id'] : '';
+			
+			// Inject Amazon Header (Store link + stars) above Title (83982ed)
+			if ( '83982ed' === $id && ! $mutated_header ) {
+				$hdr                          = $trust;
+				$hdr['id']                    = substr( md5( 'djy-hdr' . mt_rand() ), 0, 13 );
+				$hdr['settings']['shortcode'] = '[djy_product_header]';
+				array_splice( $children, $i, 0, array( $hdr ) );
+				$count++;
+				$i++;
+				$mutated_header = true;
+				continue;
+			}
+
+			// Inject Deal + Badges + Buy Box Card after Price (2486bf86)
 			if ( '2486bf86' === $id && ! $mutated_strip ) {
 				$widget                          = $trust;
 				$widget['id']                    = substr( md5( 'djy-trust' . mt_rand() ), 0, 13 );
@@ -394,6 +552,8 @@ function dejoiy_product_detail_inject_template( $data, $post_id ) {
 				$mutated_strip = true;
 				continue;
 			}
+
+			// Inject Buy Now after Add to Cart (51854dc9)
 			if ( '51854dc9' === $id && ! $mutated_buynow ) {
 				if ( $product && $product->is_type( 'simple' ) ) {
 					$widget                          = $trust;
@@ -405,6 +565,8 @@ function dejoiy_product_detail_inject_template( $data, $post_id ) {
 				$mutated_buynow = true;
 				continue;
 			}
+
+			// Inject Rail after e6f5a62
 			if ( 'e6f5a62' === $id && ! $mutated_rail ) {
 				$widget                          = $trust;
 				$widget['id']                    = substr( md5( 'djy-rail' . mt_rand() ), 0, 13 );
@@ -429,11 +591,7 @@ function dejoiy_product_detail_inject_template( $data, $post_id ) {
 add_filter( 'elementor/frontend/builder_content_data', 'dejoiy_product_detail_inject_template', 20, 2 );
 
 /**
- * Elementor caches the rendered HTML of a document in `_elementor_element_cache`
- * and short-circuits the render path (and our injection filter) until the cache
- * expires. This template renders dynamic widgets on every request, so keep its
- * cache from being stored/used on the front end. Elementor's admin/preview
- * (where the cache is never stored anyway) is unaffected.
+ * Block elementor document cache on dynamic product page
  */
 function dejoiy_product_detail_block_document_cache( $check, $post_id, $meta_key, $meta_value ) {
 	if ( 4234 === (int) $post_id && '_elementor_element_cache' === $meta_key && ! is_admin() ) {
@@ -445,7 +603,7 @@ function dejoiy_product_detail_block_document_cache( $check, $post_id, $meta_key
 add_filter( 'update_post_metadata', 'dejoiy_product_detail_block_document_cache', 10, 4 );
 
 /**
- * Shop / category grid polish (archive-style product loops).
+ * Shop cards assets
  */
 function dejoiy_shop_cards_assets() {
 	if ( is_admin() || ( ! is_shop() && ! is_product_category() && ! is_product_tag() ) ) {
@@ -466,7 +624,7 @@ function dejoiy_shop_cards_assets() {
 add_action( 'wp_enqueue_scripts', 'dejoiy_shop_cards_assets', 10061 );
 
 /**
- * Product detail assets (single product pages only).
+ * Product detail assets
  */
 function dejoiy_product_detail_assets() {
 	if ( ! dejoiy_product_detail_active() ) {

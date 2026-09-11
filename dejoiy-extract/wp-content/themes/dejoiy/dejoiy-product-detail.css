@@ -170,3 +170,727 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* DEJOIY PDP Polish: suppress unconfigured XStore legacy widgets and empty brand blocks */
+.single-product .elementor-panel-alert,
+.single-product .elementor-widget-woocommerce-product-etheme_wishlist,
+.single-product .elementor-widget-woocommerce-product-etheme_compare,
+.single-product .elementor-element-5e8e786a,
+.single-product .elementor-element-9b7c80a {
+  display: none !important;
+}
+
+/* Hide empty Brand widget when no brand title is set */
+.single-product .elementor-element-201e50eb:not(:has(.etheme-icon-box-content a, .etheme-icon-box-content span:not(:empty))) {
+  display: none !important;
+}
+
+/* Hide duplicate injected buy now button when native theme buy now is already rendered */
+.single-product .elementor-widget-shortcode:has(.djy-buynow),
+.single-product .djy-buynow {
+  display: none !important;
+}
+
+/* ==========================================================================
+   DEJOIY AMAZON-GRADE PRODUCT DETAIL (PDP) EXPERIENCE
+   ========================================================================== */
+
+/* Product Header (Store link, Rating summary, Choice badge) */
+.djy-amazon-pdp-header {
+  margin: 0 0 12px 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.djy-amazon-brand-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.djy-amazon-store-link {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #007185 !important;
+  text-decoration: none !important;
+  transition: color 0.15s ease;
+}
+
+.djy-amazon-store-link:hover {
+  color: #c7511f !important;
+  text-decoration: underline !important;
+}
+
+.djy-amazon-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 4px;
+  padding: 1px 7px;
+  line-height: 1.4;
+}
+
+.djy-amazon-rating-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: #565959;
+  margin-bottom: 10px;
+}
+
+.djy-amazon-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: #de7921;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.djy-star {
+  color: #de7921;
+}
+
+.djy-rating-num {
+  margin-left: 5px;
+  font-weight: 700;
+  color: #0f1111;
+  font-size: 13px;
+}
+
+.djy-rating-sep {
+  color: #d5d9d9;
+}
+
+.djy-rating-count,
+.djy-qa-count {
+  font-size: 13px;
+  color: #007185;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.djy-rating-count:hover,
+.djy-qa-count:hover {
+  color: #c7511f;
+  text-decoration: underline;
+}
+
+.djy-amazon-choice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.djy-choice-tag {
+  background: #232f3e;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.djy-choice-gold {
+  color: #e47911;
+}
+
+.djy-choice-for {
+  font-size: 12px;
+  color: #565959;
+  font-style: italic;
+}
+
+/* Amazon Deal & Pricing Section */
+.djy-amazon-sheet {
+  margin: 12px 0 20px 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.djy-amazon-deal-box {
+  padding: 12px 0 16px 0;
+  border-bottom: 1px solid #e7e7e7;
+  margin-bottom: 16px;
+}
+
+.djy-amazon-deal-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.djy-deal-pill {
+  background: #cc0c39;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 2px;
+}
+
+.djy-deal-text {
+  color: #cc0c39;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.djy-amazon-price-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.djy-amazon-price-curr {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f1111;
+  margin-top: 4px;
+}
+
+.djy-amazon-price-val {
+  font-size: 30px;
+  font-weight: 500;
+  color: #0f1111;
+  letter-spacing: -0.5px;
+}
+
+.djy-amazon-mrp-row {
+  font-size: 12px;
+  color: #565959;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.djy-amazon-mrp-label {
+  color: #565959;
+}
+
+.djy-amazon-mrp-val {
+  color: #565959;
+  text-decoration: line-through;
+}
+
+.djy-amazon-tax-note {
+  color: #565959;
+  font-size: 11px;
+}
+
+.djy-amazon-emi-line {
+  font-size: 13px;
+  color: #0f1111;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.djy-emi-link {
+  color: #007185;
+  text-decoration: none;
+}
+
+.djy-emi-link:hover {
+  color: #c7511f;
+  text-decoration: underline;
+}
+
+/* 4-Feature Trust Badges Grid */
+.djy-amazon-features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e7e7e7;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.djy-feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 4px;
+}
+
+.djy-feature-icon {
+  font-size: 22px;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.djy-feature-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #007185;
+  line-height: 1.25;
+}
+
+.djy-feature-sub {
+  font-size: 10px;
+  color: #565959;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* Bank & Partner Offers Cards */
+.djy-amazon-offers-wrapper {
+  margin-bottom: 18px;
+}
+
+.djy-offers-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f1111;
+  margin-bottom: 10px;
+}
+
+.djy-offers-track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.djy-offer-card {
+  flex: 0 0 175px;
+  border: 1px solid #d5d9d9;
+  border-radius: 8px;
+  padding: 10px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.djy-offer-card__badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f1111;
+  margin-bottom: 4px;
+}
+
+.djy-offer-card__text {
+  font-size: 11px;
+  color: #565959;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+
+.djy-offer-card__link {
+  font-size: 11px;
+  font-weight: 600;
+  color: #007185;
+}
+
+/* Amazon Buy Box Card */
+.djy-amazon-buybox-card {
+  border: 1px solid #d5d9d9;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.3);
+}
+
+.djy-buybox__price-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.djy-buybox__curr {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f1111;
+  margin-top: 3px;
+}
+
+.djy-buybox__amount {
+  font-size: 26px;
+  font-weight: 600;
+  color: #b12704;
+}
+
+.djy-buybox__delivery-promise {
+  margin-bottom: 10px;
+}
+
+.djy-delivery-headline {
+  font-size: 14px;
+  color: #0f1111;
+  line-height: 1.4;
+  margin-bottom: 3px;
+}
+
+.djy-delivery-date {
+  color: #0f1111;
+  font-weight: 700;
+}
+
+.djy-out-of-stock-text {
+  color: #b12704;
+}
+
+.djy-delivery-timer {
+  font-size: 12px;
+  color: #565959;
+}
+
+.djy-cutoff-badge {
+  color: #b12704;
+  font-weight: 600;
+}
+
+.djy-buybox__location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #007185;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.djy-location-text {
+  color: #007185;
+  font-weight: 500;
+}
+
+.djy-buybox__stock-status {
+  margin-bottom: 12px;
+}
+
+.djy-stock-in {
+  color: #007600;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.djy-stock-out {
+  color: #b12704;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.djy-buybox__meta-grid {
+  display: grid;
+  grid-template-columns: 85px 1fr;
+  gap: 6px 10px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.djy-meta-k {
+  color: #565959;
+}
+
+.djy-meta-v {
+  color: #0f1111;
+}
+
+.djy-seller-link {
+  color: #007185;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.djy-seller-link:hover {
+  color: #c7511f;
+  text-decoration: underline;
+}
+
+.djy-seller-verified {
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.djy-buybox__security {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #007185;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ==========================================================================
+   AUTHENTIC AMAZON BUTTONS (ADD TO CART & BUY NOW)
+   ========================================================================== */
+
+.single-product button.single_add_to_cart_button:not(.et-single-buy-now),
+.single-product .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now),
+body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now),
+body.dejoiy-mobile-product-view .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now) {
+  background: #ffd814 !important;
+  background-color: #ffd814 !important;
+  background-image: none !important;
+  border: 1px solid #fcd200 !important;
+  border-radius: 999px !important;
+  color: #0f1111 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.single-product button.single_add_to_cart_button:not(.et-single-buy-now):hover,
+.single-product .elementor-location-single button.single_add_to_cart_button:not(.et-single-buy-now):hover,
+body.dejoiy-mobile-product-view button.single_add_to_cart_button:not(.et-single-buy-now):hover {
+  background: #f7ca00 !important;
+  background-color: #f7ca00 !important;
+  border-color: #f2c200 !important;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.7) !important;
+  color: #0f1111 !important;
+}
+
+.single-product button.et-single-buy-now,
+.single-product .buy_now_button,
+.single-product .button.buy-now,
+.single-product .djy-buynow,
+.single-product .buy-now-button-stretched .et-single-buy-now,
+.single-product .etheme-add-to-cart-form button.et-single-buy-now,
+body.dejoiy-mobile-product-view button.et-single-buy-now,
+body.dejoiy-mobile-product-view .buy_now_button,
+body.dejoiy-mobile-product-view .button.buy-now,
+body.dejoiy-mobile-product-view .djy-buynow,
+body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now,
+body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.et-single-buy-now {
+  background: #ffa41c !important;
+  background-color: #ffa41c !important;
+  background-image: none !important;
+  border: 1px solid #ff8f00 !important;
+  border-radius: 999px !important;
+  color: #0f1111 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+  cursor: pointer !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.single-product button.et-single-buy-now:hover,
+.single-product .buy_now_button:hover,
+.single-product .button.buy-now:hover,
+.single-product .djy-buynow:hover,
+.single-product .buy-now-button-stretched .et-single-buy-now:hover,
+.single-product .etheme-add-to-cart-form button.et-single-buy-now:hover,
+body.dejoiy-mobile-product-view button.et-single-buy-now:hover,
+body.dejoiy-mobile-product-view .buy_now_button:hover,
+body.dejoiy-mobile-product-view .button.buy-now:hover,
+body.dejoiy-mobile-product-view .djy-buynow:hover,
+body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now:hover,
+body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.et-single-buy-now:hover {
+  background: #fa8900 !important;
+  background-color: #fa8900 !important;
+  border-color: #e57b00 !important;
+  box-shadow: 0 2px 5px rgba(213, 217, 217, 0.7) !important;
+  color: #0f1111 !important;
+}
+
+/* Ensure button text is dark inside XStore spans */
+.single-product .single_add_to_cart_button .button-text,
+.single-product .et-single-buy-now .button-text,
+body.dejoiy-mobile-product-view .button-text {
+  color: #0f1111 !important;
+}
+
+/* ==========================================================================
+   MOBILE STICKY CONVERSION BAR (Above .dm-bottom navigation)
+   ========================================================================== */
+
+.djy-pdp-mobile-sticky {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .djy-pdp-mobile-sticky {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 9999 !important;
+    background: rgba(255, 255, 255, 0.97) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-top: 1px solid #e7e7e7 !important;
+    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.08) !important;
+    padding: 8px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .djy-pdp-mobile-sticky__product {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .djy-pdp-mobile-sticky .djy-sticky-thumb {
+    width: 40px !important;
+    height: 40px !important;
+    object-fit: contain !important;
+    border-radius: 6px !important;
+    border: 1px solid #eee !important;
+    flex-shrink: 0 !important;
+    background: #fff !important;
+  }
+
+  .djy-pdp-mobile-sticky__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .djy-pdp-mobile-sticky__title {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #0f1111 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1.2 !important;
+  }
+
+  .djy-pdp-mobile-sticky__price {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #b12704 !important;
+    line-height: 1.2 !important;
+  }
+
+  .djy-pdp-mobile-sticky__price del {
+    color: #888 !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    margin-right: 4px !important;
+  }
+
+  .djy-pdp-mobile-sticky__price ins {
+    text-decoration: none !important;
+  }
+
+  .djy-pdp-mobile-sticky__buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .djy-pdp-mobile-sticky__cart-btn {
+    background: #ffd814 !important;
+    border: 1px solid #fcd200 !important;
+    color: #0f1111 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 7px 12px !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+  }
+
+  .djy-pdp-mobile-sticky__buy-btn {
+    background: #ffa41c !important;
+    border: 1px solid #ff8f00 !important;
+    color: #0f1111 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    padding: 7px 12px !important;
+    border-radius: 999px !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+  }
+
+  /* Ensure page content has bottom padding so sticky bar never covers details */
+  body.single-product {
+    padding-bottom: 70px !important;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE FIX: TABLET 2-COLUMN BALANCED LAYOUT (768px - 1024px)
+   ========================================================================== */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Prevent Elementor column blowout on tablet */
+  .single-product .elementor-element-4cc955a6 > .elementor-container {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: 20px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 16px !important;
+  }
+
+  /* Gallery column (Left) */
+  .single-product .elementor-element-4cc955a6 .elementor-element-31fd0aea {
+    flex: 0 0 42% !important;
+    width: 42% !important;
+    max-width: 380px !important;
+  }
+
+  .single-product .elementor-element-31fd0aea .woocommerce-product-gallery {
+    max-width: 380px !important;
+    margin: 0 auto !important;
+  }
+
+  .single-product .elementor-element-31fd0aea .woocommerce-product-gallery img {
+    max-height: 400px !important;
+    object-fit: contain !important;
+    width: 100% !important;
+  }
+
+  /* Details column (Right) */
+  .single-product .elementor-element-4cc955a6 .elementor-element-7dbf87a3 {
+    flex: 1 1 58% !important;
+    width: 58% !important;
+  }
+
+  .djy-amazon-features-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+  }
+}
+

@@ -126,6 +126,19 @@ class DSO_REST_API {
             return new WP_Error('not_found', 'Product not found', ['status' => 404]);
         }
 
+        // SECURITY: Verify vendor ownership — seller A must NEVER update seller B's product
+        $plugin = Dejoiy_Seller_OS::instance();
+        $vendor_id = $plugin->get_vendor_id();
+        $product_author = intval(get_post_field('post_author', $product_id));
+        $product_vendor = intval(get_post_meta($product_id, '_vendor_id', true));
+        $product_wcfm_vendor = intval(get_post_meta($product_id, '_wcfm_vendor', true));
+
+        if ($vendor_id !== $product_author && $vendor_id !== $product_vendor && $vendor_id !== $product_wcfm_vendor) {
+            if (!current_user_can('manage_options')) {
+                return new WP_Error('forbidden', 'You do not own this product.', ['status' => 403]);
+            }
+        }
+
         $product->set_stock_quantity($stock);
         $product->set_stock_status($stock > 0 ? 'instock' : 'outofstock');
         $product->save();

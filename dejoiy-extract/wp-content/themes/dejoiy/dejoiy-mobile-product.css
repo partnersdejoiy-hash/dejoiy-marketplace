@@ -183,30 +183,34 @@
 
 	body.dejoiy-mobile-product-view button.et-single-buy-now,
 	body.dejoiy-mobile-product-view .buy_now_button,
-	body.dejoiy-mobile-product-view .button.buy-now {
-		background: linear-gradient(135deg, var(--dm-brand-blue) 0%, var(--dm-brand-pink) 100%) !important;
-		color: #fff !important;
-		border: none !important;
-		border-radius: 14px !important;
-		font-family: var(--dm-font) !important;
-		font-weight: 700 !important;
+	body.dejoiy-mobile-product-view .button.buy-now,
+	body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now {
+		background: #ffa41c !important;
+		background-color: #ffa41c !important;
+		background-image: none !important;
+		color: #0f1111 !important;
+		border: 1px solid #ff8f00 !important;
+		border-radius: 999px !important;
+		font-family: inherit !important;
+		font-weight: 600 !important;
 		font-size: 1rem !important;
-		min-height: 52px !important;
+		min-height: 48px !important;
 		padding: 12px 22px !important;
-		box-shadow: 0 10px 28px rgba(212, 175, 55, 0.35) !important;
-		transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+		transition: transform 0.15s ease, background 0.15s ease !important;
 	}
 
 	body.dejoiy-mobile-product-view button.et-single-buy-now:hover,
 	body.dejoiy-mobile-product-view button.et-single-buy-now:focus,
 	body.dejoiy-mobile-product-view button.et-single-buy-now:active,
 	body.dejoiy-mobile-product-view .buy_now_button:hover,
-	body.dejoiy-mobile-product-view .button.buy-now:hover {
-		background: linear-gradient(135deg, var(--dm-brand-blue-dark) 0%, var(--dm-brand-pink-dark) 100%) !important;
-		color: #fff !important;
-		border: none !important;
-		box-shadow: 0 12px 32px rgba(212, 175, 55, 0.45) !important;
-		transform: translateY(-1px) !important;
+	body.dejoiy-mobile-product-view .button.buy-now:hover,
+	body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now:hover {
+		background: #fa8900 !important;
+		background-color: #fa8900 !important;
+		border-color: #e57b00 !important;
+		color: #0f1111 !important;
+		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.7) !important;
 	}
 
 	body.dejoiy-mobile-product-view .woocommerce div.product {
@@ -707,11 +711,7 @@
 
 }
 
-	/* Brand buttons — all CTAs cyan/pink (override XStore green) */
-	body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now,
-	body.dejoiy-mobile-product-view .etheme-sticky-cart .single_add_to_cart_button,
-	body.dejoiy-mobile-product-view .etheme-sticky-cart .et-single-buy-now,
-	body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle,
+	/* Brand buttons — checkout button */
 	body.dejoiy-mobile-checkout-view #place_order {
 		background: linear-gradient(135deg, var(--dm-brand-blue) 0%, var(--dm-brand-pink) 100%) !important;
 		background-color: transparent !important;
@@ -720,9 +720,6 @@
 		border: none !important;
 	}
 
-	body.dejoiy-mobile-product-view .buy-now-button-stretched .et-single-buy-now:hover,
-	body.dejoiy-mobile-product-view .etheme-sticky-cart .single_add_to_cart_button:hover,
-	body.dejoiy-mobile-product-view .etheme-sticky-cart .et-single-buy-now:hover,
 	body.dejoiy-mobile-checkout-view #place_order:hover,
 	body.dejoiy-mobile-checkout-view #place_order:focus {
 		background: linear-gradient(135deg, var(--dm-brand-blue-dark) 0%, var(--dm-brand-pink-dark) 100%) !important;

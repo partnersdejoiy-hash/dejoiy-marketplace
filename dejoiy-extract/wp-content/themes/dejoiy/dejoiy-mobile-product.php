@@ -70,33 +70,55 @@ add_filter( 'body_class', 'dejoiy_mobile_product_body_class', 22 );
  * @return string
  */
 function dejoiy_mobile_product_inline_css() {
-	$g = 'linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%)';
-	$h = 'linear-gradient(135deg, #1d4ed8 0%, #e11dff 100%)';
-	$sel = 'body.dejoiy-mobile-product-view .single_add_to_cart_button, body.dejoiy-mobile-product-view .et-single-buy-now, body.dejoiy-mobile-product-view .buy_now_button, body.dejoiy-mobile-product-view .button.buy-now, body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle, body.dejoiy-mobile-product-view .etheme-sticky-cart .single_add_to_cart_button, body.dejoiy-mobile-product-view .etheme-sticky-cart .et-single-buy-now, body.dejoiy-mobile-checkout-view #place_order';
-	$cta = 'body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.single_add_to_cart_button:not(.et-single-buy-now), body.dejoiy-mobile-product-view .etheme-add-to-cart-form button.et-single-buy-now';
+	if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+		return "
+		body.dejoiy-mobile-checkout-view { --et_active-color: #2f6bff !important; }
+		body.dejoiy-mobile-checkout-view #place_order {
+			background: linear-gradient(135deg, #2f6bff 0%, #ff4fd8 100%) !important;
+			color: #fff !important;
+			border: none !important;
+			box-shadow: 0 10px 28px rgba(47, 107, 255, 0.28) !important;
+		}
+		";
+	}
+
 	return "
-	body.dejoiy-mobile-product-view, body.dejoiy-mobile-checkout-view { --et_active-color: #2f6bff !important; }
-	{$sel} {
-		background: {$g} !important;
-		background-color: transparent !important;
-		background-image: {$g} !important;
-		color: #fff !important;
-		border: none !important;
-		box-shadow: 0 10px 28px rgba(47, 107, 255, 0.28) !important;
+	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now) {
+		background: #ffd814 !important;
+		background-color: #ffd814 !important;
+		background-image: none !important;
+		color: #0f1111 !important;
+		border: 1px solid #fcd200 !important;
+		border-radius: 999px !important;
+		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+		font-weight: 600 !important;
 	}
-	body.dejoiy-mobile-product-view .price ins,
-	body.dejoiy-mobile-product-view .woocommerce-Price-amount,
-	body.dejoiy-mobile-product-view .price .amount { color: #2f6bff !important; }
-	{$sel}:hover, {$sel}:focus, {$sel}:active {
-		background: {$h} !important;
-		background-color: transparent !important;
-		background-image: {$h} !important;
-		color: #fff !important;
+	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):hover,
+	body.dejoiy-mobile-product-view .single_add_to_cart_button:not(.et-single-buy-now):focus {
+		background: #f7ca00 !important;
+		background-color: #f7ca00 !important;
+		border-color: #f2c200 !important;
 	}
-	{$cta} {
-		background: {$g} !important;
-		background-image: {$g} !important;
-		color: #fff !important;
+	body.dejoiy-mobile-product-view .et-single-buy-now,
+	body.dejoiy-mobile-product-view .buy_now_button,
+	body.dejoiy-mobile-product-view .button.buy-now,
+	body.dejoiy-mobile-product-view .djy-buynow {
+		background: #ffa41c !important;
+		background-color: #ffa41c !important;
+		background-image: none !important;
+		color: #0f1111 !important;
+		border: 1px solid #ff8f00 !important;
+		border-radius: 999px !important;
+		box-shadow: 0 2px 5px rgba(213, 217, 217, 0.5) !important;
+		font-weight: 600 !important;
+	}
+	body.dejoiy-mobile-product-view .et-single-buy-now:hover,
+	body.dejoiy-mobile-product-view .buy_now_button:hover,
+	body.dejoiy-mobile-product-view .button.buy-now:hover,
+	body.dejoiy-mobile-product-view .djy-buynow:hover {
+		background: #fa8900 !important;
+		background-color: #fa8900 !important;
+		border-color: #e57b00 !important;
 	}
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .woocommerce-variation-add-to-cart,
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form form.cart:not(.variations_form) {
@@ -130,7 +152,7 @@ function dejoiy_mobile_product_inline_css() {
 		display: inline !important;
 		font-size: 0.95rem !important;
 		font-weight: 700 !important;
-		color: #fff !important;
+		color: #0f1111 !important;
 	}
 	body.dejoiy-mobile-product-view .etheme-add-to-cart-form .et-icon { display: none !important; }
 	";

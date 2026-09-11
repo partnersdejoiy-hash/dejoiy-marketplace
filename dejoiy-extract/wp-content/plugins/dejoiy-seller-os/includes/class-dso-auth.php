@@ -28,6 +28,33 @@ class DSO_Auth {
     }
 
     /**
+     * Safely resolve admin vendor context from cookie.
+     * Only allows switching vendor context if user is admin AND target is a valid vendor.
+     * Prevents privilege escalation via forged cookies.
+     */
+    public static function get_admin_vendor_context() {
+        if (!current_user_can('manage_options')) {
+            return 0;
+        }
+        $context_id = intval($_COOKIE['dso_admin_vendor_context'] ?? 0);
+        if ($context_id <= 0) {
+            return 0;
+        }
+        // Validate the target user actually exists and has vendor capabilities
+        $target = get_userdata($context_id);
+        if (!$target) {
+            return 0;
+        }
+        $vendor_roles = ['wcfm_vendor', 'vendor', 'seller', 'store_manager'];
+        foreach ($vendor_roles as $role) {
+            if (in_array($role, (array) $target->roles)) {
+                return $context_id;
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Get current vendor's store data
      */
     public static function get_vendor_store($user_id = 0) {

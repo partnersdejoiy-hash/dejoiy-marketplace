@@ -1,0 +1,252 @@
+/* DEJOIY Global Header — Light Glassmorphism + Mobile App Layout v2.0 */
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ============================================
+   CANVAS — Three.js constellation background
+   ============================================ */
+.dgh-wrap { position: relative; width: 100%; overflow: hidden; }
+.dgh-wrap canvas {
+  position: absolute; top: 0; left: 0;
+  width: 100% !important; height: 100% !important;
+  z-index: 0; pointer-events: none;
+}
+
+/* ============================================
+   GLASS OVERLAY — Light, Amazon-style
+   ============================================ */
+.dgh-glass {
+  position: relative; z-index: 5;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(28px) saturate(1.8);
+  -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 16px rgba(0, 0, 0, 0.05);
+  transition: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dgh-glass.is-scrolled {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(36px) saturate(2);
+  -webkit-backdrop-filter: blur(36px) saturate(2);
+  box-shadow: 0 4px 28px rgba(0, 0, 0, 0.08);
+}
+
+.dgh-container {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 1.25rem;
+  display: flex; align-items: center; gap: 0.75rem;
+}
+
+/* ============================================
+   DESKTOP HEADER (≥769px)
+   ============================================ */
+.dgh-mobile { display: none; }
+
+.dgh-top {
+  min-height: 60px;
+  display: flex; align-items: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/* Logo */
+.dgh-logo {
+  display: flex; align-items: center; flex-shrink: 0;
+  text-decoration: none; color: inherit;
+  transition: transform 250ms ease, opacity 250ms ease;
+}
+.dgh-logo:hover { transform: translateY(-1px); opacity: 0.88; }
+.dgh-logo__img { height: 42px; width: auto; display: block; object-fit: contain; }
+
+/* Deliver */
+.dgh-deliver {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.65rem; border-radius: 10px;
+  text-decoration: none; color: #333;
+  border: 1px solid transparent;
+  transition: all 250ms ease;
+}
+.dgh-deliver:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.dgh-deliver svg { color: #007185; flex-shrink: 0; }
+.dgh-deliver small { display: block; font-size: 0.68rem; color: #888; font-weight: 500; }
+.dgh-deliver strong { display: block; font-size: 0.8rem; color: #111; font-weight: 700; }
+
+/* Search */
+.dgh-search {
+  flex: 1; max-width: 680px;
+  display: flex; align-items: stretch;
+  border-radius: 10px; overflow: visible;
+  border: 2px solid #cdcdcd;
+  background: #fff;
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+}
+.dgh-search:hover { border-color: #b0b0b0; }
+.dgh-search:focus-within {
+  border-color: #007185;
+  box-shadow: 0 0 0 3px rgba(0, 113, 133, 0.12);
+}
+.dgh-search__input {
+  flex: 1; min-width: 0; border: none; padding: 0.65rem 1rem;
+  font-size: 0.9rem; font-family: inherit; outline: none;
+  color: #111; background: transparent;
+}
+.dgh-search__input::placeholder { color: #999; }
+.dgh-search__btn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 1rem; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #febd69 0%, #f3a847 100%);
+  border-radius: 0 8px 8px 0;
+  transition: filter 200ms ease;
+}
+.dgh-search__btn:hover { filter: brightness(1.05); }
+.dgh-search__btn svg { color: #333; }
+
+/* Actions */
+.dgh-actions { display: flex; align-items: center; gap: 0.15rem; flex-shrink: 0; }
+.dgh-action {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0.4rem 0.6rem; border-radius: 8px;
+  text-decoration: none; color: #333;
+  transition: all 200ms ease; position: relative;
+}
+.dgh-action:hover { background: rgba(0, 0, 0, 0.04); }
+.dgh-action svg { color: #333; }
+.dgh-action span { font-size: 0.68rem; font-weight: 600; white-space: nowrap; }
+
+/* Cart badge */
+.dgh-badge {
+  position: absolute; top: -2px; right: 0;
+  min-width: 1rem; height: 1rem; padding: 0 0.25rem;
+  border-radius: 999px;
+  background: #f08804; color: #fff;
+  font-size: 0.6rem; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* Nav bar */
+.dgh-nav {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+.dgh-nav .dgh-container {
+  gap: 0.1rem; overflow-x: auto;
+  scrollbar-width: none; padding: 0.4rem 1.25rem;
+}
+.dgh-nav .dgh-container::-webkit-scrollbar { display: none; }
+.dgh-nav__link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.4rem 0.7rem; border-radius: 6px;
+  color: #333; text-decoration: none;
+  font-size: 0.82rem; font-weight: 600;
+  white-space: nowrap; transition: all 200ms ease;
+}
+.dgh-nav__link:hover { background: rgba(0, 0, 0, 0.05); color: #111; }
+.dgh-nav__link--active { background: #e7f4f5; color: #007185; }
+.dgh-nav__link--deals { color: #c45500; }
+.dgh-nav__link--deals:hover { background: rgba(196, 85, 0, 0.08); }
+.dgh-nav__link--joi {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(99, 102, 241, 0.1));
+  color: #6366f1; font-weight: 700;
+}
+
+/* ============================================
+   MOBILE HEADER (≤768px) — App-like
+   ============================================ */
+.dgh-desktop { display: none; }
+.dgh-mobile { display: flex; flex-direction: column; }
+
+/* Mobile top bar */
+.dgh-mobile__top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 1rem;
+  min-height: 52px;
+}
+.dgh-logo--mobile .dgh-logo__img { height: 32px; }
+.dgh-mobile__cart {
+  position: relative; display: flex; align-items: center;
+  padding: 0.4rem; border-radius: 8px;
+  color: #333; text-decoration: none;
+  transition: background 200ms ease;
+}
+.dgh-mobile__cart:hover { background: rgba(0, 0, 0, 0.05); }
+.dgh-mobile__cart svg { color: #333; }
+
+/* Mobile search bar — large, app-like */
+.dgh-mobile__search {
+  display: flex; align-items: center; gap: 0.5rem;
+  margin: 0 0.75rem 0.5rem;
+  padding: 0.65rem 0.85rem;
+  background: #f3f3f3;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dgh-mobile__search-input {
+  flex: 1; border: none; background: transparent;
+  font-size: 0.9rem; font-family: inherit; outline: none; color: #111;
+}
+.dgh-mobile__search-input::placeholder { color: #999; }
+
+/* Bottom navigation — mobile app style */
+.dgh-bottomnav {
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0.3rem 0 0.15rem;
+  background: #fff;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  position: sticky; bottom: 0; z-index: 100;
+}
+.dgh-bottomnav__item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.1rem; padding: 0.3rem 0.5rem;
+  text-decoration: none; color: #666;
+  font-size: 0.62rem; font-weight: 600;
+  transition: color 200ms ease; position: relative;
+  min-width: 48px;
+}
+.dgh-bottomnav__item:hover, .dgh-bottomnav__item.is-active { color: #007185; }
+.dgh-bottomnav__item svg { color: inherit; }
+.dgh-bottomnav__item--deals { color: #c45500; }
+.dgh-badge--nav { top: -4px; right: 2px; font-size: 0.55rem; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (min-width: 769px) {
+  .dgh-desktop { display: block; }
+  .dgh-mobile { display: none !important; }
+}
+@media (max-width: 768px) {
+  .dgh-desktop { display: none !important; }
+  .dgh-mobile { display: flex !important; }
+  .dgh-wrap canvas { display: none; }
+  .dgh-glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .dgh-container { padding: 0 0.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dgh-wrap, .dgh-glass, .dgh-nav__link, .dgh-action, .dgh-logo {
+    animation: none !important; transition: none !important;
+  }
+}
+
+/* ============================================
+   HIDE OLD djv3 header (replaced by global header)
+   ============================================ */
+body .djv3 .djv3-header,
+body .djv3 .djv3-utility,
+body .djv3 .djv3-nav {
+  display: none !important;
+}
+/* Add top padding so page content isn't hidden behind our header */
+body .djv3 {
+  padding-top: 0 !important;
+}

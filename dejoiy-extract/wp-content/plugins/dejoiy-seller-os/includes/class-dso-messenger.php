@@ -109,53 +109,53 @@ class DSO_Messenger {
     public function register_rest_routes() {
         $ns = 'dejoiy/v1/messenger';
 
-        // 1. Get Threads
+        // 1. Get Threads - authenticated users only
         register_rest_route($ns, '/threads', [
             'methods' => 'GET',
             'callback' => [$this, 'rest_get_threads'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 2. Get Messages for a Thread
+        // 2. Get Messages for a Thread - authenticated
         register_rest_route($ns, '/messages', [
             'methods' => 'GET',
             'callback' => [$this, 'rest_get_messages'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 3. Send Message
+        // 3. Send Message - authenticated
         register_rest_route($ns, '/send', [
             'methods' => 'POST',
             'callback' => [$this, 'rest_send_message'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 4. Start Conversation
+        // 4. Start Conversation - authenticated (guests use token-based flow)
         register_rest_route($ns, '/start', [
             'methods' => 'POST',
             'callback' => [$this, 'rest_start_conversation'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 5. Mark Read
+        // 5. Mark Read - authenticated
         register_rest_route($ns, '/mark-read', [
             'methods' => 'POST',
             'callback' => [$this, 'rest_mark_read'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 6. Update Status (open / resolved)
+        // 6. Update Status (open / resolved) - authenticated
         register_rest_route($ns, '/status', [
             'methods' => 'POST',
             'callback' => [$this, 'rest_update_status'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
 
-        // 7. Unread Count Badge
+        // 7. Unread Count Badge - authenticated
         register_rest_route($ns, '/unread', [
             'methods' => 'GET',
             'callback' => [$this, 'rest_get_unread_count'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => 'is_user_logged_in',
         ]);
     }
 
@@ -670,6 +670,13 @@ class DSO_Messenger {
      * RENDER: Seller Central Messages Center (https://sellerhub.dejoiy.com/?section=messages)
      */
     public function render_seller_view() {
+        self::check_tables();
+        // Load the Discord-inspired messenger template
+        include DSO_PATH . 'templates/messenger-seller.php';
+    }
+
+    /* ─── Old render_seller_view (replaced by template) ─── */
+    public function _old_render_seller_view_LEGACY() {
         self::check_tables();
         $vendor_id = $this->get_vendor_id();
         $selected_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
@@ -1276,6 +1283,12 @@ class DSO_Messenger {
         if (strpos($_SERVER['HTTP_HOST'] ?? '', 'sellerhub') !== false) {
             return;
         }
+
+        self::check_tables();
+        // Load Discord-inspired buyer widget template
+        include DSO_PATH . 'templates/messenger-buyer-widget.php';
+        return; // Skip legacy code below (template loaded above)
+        // ─── LEGACY CODE BELOW (unreachable, kept for reference) ───
 
         self::check_tables();
 
@@ -2174,6 +2187,8 @@ class DSO_Messenger {
         }
         return $new_items;
     }
+
+    // ─── END LEGACY CODE ───
 
     /**
      * RENDER: Dedicated Customer Messages & Confirmed Orders Hub (/my-account/messages/)

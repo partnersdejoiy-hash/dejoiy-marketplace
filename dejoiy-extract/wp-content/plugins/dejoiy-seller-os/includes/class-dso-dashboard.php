@@ -10,10 +10,7 @@ class DSO_Dashboard {
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
         if ($this->is_admin()) {
-            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
-                return intval($_COOKIE['dso_admin_vendor_context']);
-            }
-            return 0;
+            return DSO_Auth::get_admin_vendor_context();
         }
         $plugin = Dejoiy_Seller_OS::instance();
         return $plugin->get_vendor_id($user_id) ?: $user_id;
@@ -207,17 +204,17 @@ class DSO_Dashboard {
                             <div class="dso-health-row">
                                 <span class="dso-health-item-label">Fulfillment On-Time</span>
                                 <div class="dso-health-bar-wrap">
-                                    <div class="dso-health-bar" style="width: 98%;"></div>
+                                    <div class="dso-health-bar" style="width: <?php echo $health['fulfillment_rate']; ?>%;"></div>
                                 </div>
-                                <span class="dso-health-item-val">98%</span>
+                                <span class="dso-health-item-val"><?php echo $health['fulfillment_rate']; ?>%</span>
                             </div>
 
                             <div class="dso-health-row">
                                 <span class="dso-health-item-label">Policy Compliance</span>
                                 <div class="dso-health-bar-wrap">
-                                    <div class="dso-health-bar" style="width: 100%;"></div>
+                                    <div class="dso-health-bar" style="width: <?php echo $health['policy_compliance']; ?>%;"></div>
                                 </div>
-                                <span class="dso-health-item-val">100%</span>
+                                <span class="dso-health-item-val"><?php echo $health['policy_compliance']; ?>%</span>
                             </div>
                         </div>
 
@@ -472,6 +469,8 @@ class DSO_Dashboard {
      * Compute Store Health Rating
      */
     public function get_store_health($vendor_id) {
+        global $wpdb;
+
         $p_handler = new DSO_Products();
         $stats = $p_handler->get_product_stats($vendor_id);
 
@@ -480,8 +479,69 @@ class DSO_Dashboard {
             $instock_rate = round((($stats['total'] - $stats['out_of_stock']) / $stats['total']) * 100);
         }
 
-        $lqs_avg = 78;
-        $score = round(($instock_rate * 0.4) + ($lqs_avg * 0.4) + (95 * 0.2));
+        // Compute real LQS average from products
+        $lqs_avg = 0;
+        $lqs_count = 0;
+        if ($vendor_id > 0) {
+            $vendor_products = get_posts([
+                'post_type' => 'product',
+                'author' => $vendor_id,
+                'posts_per_page' => 50,
+                'post_status' => 'publish',
+            ]);
+            foreach ($vendor_products as $vp) {
+                $lqs = intval(get_post_meta($vp->ID, '_dso_lqs_score', true));
+                if ($lqs > 0) {
+                    $lqs_avg += $lqs;
+                    $lqs_count++;
+                }
+            }
+        }
+        $lqs_avg = $lqs_count > 0 ? round($lqs_avg / $lqs_count) : 0;
+
+        // Compute real fulfillment on-time rate from completed orders
+        $fulfillment_rate = 0;
+        $policy_compliance = 100; // Default 100 unless violations found
+        if ($vendor_id > 0 && function_exists('wc_get_orders')) {
+            $completed_orders = wc_get_orders([
+                'limit' => 100,
+                'return' => 'objects',
+                'orderby' => 'date',
+                'order' => 'DESC',
+            ]);
+            $vendor_completed = [];
+            foreach ($completed_orders as $co) {
+                $has_vendor_item = false;
+                foreach ($co->get_items() as $item) {
+                    $pid = $item->get_product_id();
+                    $author = get_post_field('post_author', $pid);
+                    $meta_v = get_post_meta($pid, '_vendor_id', true);
+                    if ($author == $vendor_id || $meta_v == $vendor_id) {
+                        $has_vendor_item = true;
+                        break;
+                    }
+                }
+                if ($has_vendor_item) $vendor_completed[] = $co;
+            }
+
+            if (!empty($vendor_completed)) {
+                $on_time = 0;
+                foreach ($vendor_completed as $ord) {
+                    // Consider order on-time if completed within 7 days of creation
+                    $created = $ord->get_date_created();
+                    $completed = $ord->get_date_completed();
+                    if ($created && $completed) {
+                        $diff_days = $completed->diff($created)->days;
+                        if ($diff_days <= 7) $on_time++;
+                    } else {
+                        $on_time++; // No data = assume on-time
+                    }
+                }
+                $fulfillment_rate = round(($on_time / count($vendor_completed)) * 100);
+            }
+        }
+
+        $score = round(($instock_rate * 0.3) + ($lqs_avg * 0.3) + ($fulfillment_rate * 0.2) + ($policy_compliance * 0.2));
 
         $grade = 'Tier 1 (Platinum)';
         $label = 'Outstanding Marketplace Standing';
@@ -499,6 +559,8 @@ class DSO_Dashboard {
             'rating_label' => $label,
             'instock_rate' => $instock_rate,
             'lqs_avg' => $lqs_avg,
+            'fulfillment_rate' => $fulfillment_rate,
+            'policy_compliance' => $policy_compliance,
         ];
     }
 

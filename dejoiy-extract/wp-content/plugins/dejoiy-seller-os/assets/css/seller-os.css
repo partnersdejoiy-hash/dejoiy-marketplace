@@ -1,28 +1,33 @@
 :root {
-  /* DEJOIY Official Design Token System */
-  --dejoiy-pink: #ff007a;
-  --dejoiy-magenta: #d9006c;
-  --dejoiy-blue: #0066ff;
-  --dejoiy-blue-hover: #0052cc;
-  --dejoiy-blue-light: #e0edff;
-  --dejoiy-deep-blue: #001553;
-  --dejoiy-deep-blue-dark: #000c30;
-  --dejoiy-deep-blue-surface: #041038;
+  /* DEJOIY Official Design Token System
+     Source of truth: DEJOIY-OFFICIAL-LOGO (extracted brand palette).
+     Deep Navy #021761 · Electric Blue #2E5FD0 · Magenta #C0228B · Pink core #FD43C9 */
+  --dejoiy-pink: #FD43C9;
+  --dejoiy-magenta: #C0228B;
+  --dejoiy-blue: #2E5FD0;
+  --dejoiy-blue-hover: #2450C8;
+  --dejoiy-blue-light: #E3EBFC;
+  --dejoiy-deep-blue: #021761;
+  --dejoiy-deep-blue-dark: #001050;
+  --dejoiy-deep-blue-surface: #0A2168;
   --dejoiy-surface: #ffffff;
-  --dejoiy-background: #f8fafc;
-  --dejoiy-text: #0f172a;
-  --dejoiy-muted: #64748b;
-  --dejoiy-success: #10b981;
-  --dejoiy-warning: #f59e0b;
-  --dejoiy-danger: #ef4444;
+  --dejoiy-background: #F5F7FC;
+  --dejoiy-text: #0A1530;
+  --dejoiy-muted: #4A5568;
+  --dejoiy-success: #0E7A5F;
+  --dejoiy-warning: #B45309;
+  --dejoiy-danger: #C42B2B;
+  --dejoiy-info: #2E5FD0;
+  --dejoiy-border: #E1E6F2;
+  --dejoiy-border-light: #EDF0F9;
 
   /* Aliases for DSO backward compatibility */
   --dso-primary: var(--dejoiy-blue);
   --dso-primary-dark: var(--dejoiy-blue-hover);
-  --dso-primary-light: #38bdf8;
-  --dso-accent: var(--dejoiy-pink);
-  --dso-gradient: linear-gradient(135deg, #0066ff 0%, #d9006c 100%);
-  --dso-gradient-hover: linear-gradient(135deg, #0052cc 0%, #b30059 100%);
+  --dso-primary-light: #6D95E8;
+  --dso-accent: var(--dejoiy-magenta);
+  --dso-gradient: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%);
+  --dso-gradient-hover: linear-gradient(135deg, #2450C8 0%, #A01B75 100%);
   --dso-success: #10b981;
   --dso-success-light: #d1fae5;
   --dso-success-dark: #059669;
@@ -32,13 +37,13 @@
   --dso-danger: #ef4444;
   --dso-danger-light: #fee2e2;
   --dso-danger-dark: #dc2626;
-  --dso-info: #0066ff;
-  --dso-info-light: #e0edff;
-  --dso-info-dark: #0052cc;
+  --dso-info: #2E5FD0;
+  --dso-info-light: #E3EBFC;
+  --dso-info-dark: #2450C8;
   --dso-teal: #14b8a6;
   --dso-teal-light: #ccfbf1;
-  --dso-purple: #0066ff;
-  --dso-purple-light: #e0edff;
+  --dso-purple: #2E5FD0;
+  --dso-purple-light: #E3EBFC;
   --dso-orange: #f97316;
   --dso-orange-light: #ffedd5;
   --dso-yellow: #eab308;
@@ -54,9 +59,9 @@
   --dso-gray-800: #1f2937;
   --dso-gray-900: #111827;
   --dso-surface: #ffffff;
-  --dso-surface-secondary: #f9fafb;
-  --dso-border: #e5e7eb;
-  --dso-border-light: #f3f4f6;
+  --dso-surface-secondary: #F5F7FC;
+  --dso-border: #E1E6F2;
+  --dso-border-light: #EDF0F9;
   --dso-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --dso-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --dso-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -98,7 +103,7 @@ html {
 body {
   font-family: var(--dso-font);
   color: var(--dso-gray-800);
-  background: var(--dso-gray-100);
+  background: #F5F7FC;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
@@ -121,8 +126,8 @@ img { max-width: 100%; height: auto; }
   left: 0;
   right: 0;
   height: var(--dso-topbar-height);
-  background: linear-gradient(90deg, #000c2e 0%, #001553 45%, #051d66 100%);
-  border-bottom: 1px solid rgba(0, 102, 255, 0.2);
+  background: linear-gradient(90deg, #001050 0%, #021761 45%, #0A2168 100%);
+  border-bottom: 1px solid rgba(109, 149, 232, 0.25);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -276,7 +281,7 @@ img { max-width: 100%; height: auto; }
   background: var(--dso-gradient);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.35);
+  box-shadow: 0 2px 8px rgba(46, 95, 208, 0.35);
 }
 
 .dso-nav-icon {
@@ -495,20 +500,20 @@ button.dso-bottom-nav-item {
 }
 
 .dso-bottom-nav-item:hover {
-  color: var(--dso-primary, #0066ff);
+  color: var(--dso-primary, #2E5FD0);
 }
 
 .dso-bottom-nav-item.dso-bottom-active {
-  color: var(--dso-primary, #0066ff);
+  color: var(--dso-primary, #2E5FD0);
   font-weight: 700;
 }
 
 .dso-bottom-nav-item.dso-bottom-active .dso-bottom-nav-icon-wrap {
-  background: rgba(0, 102, 255, 0.12) !important;
+  background: rgba(46, 95, 208, 0.12) !important;
 }
 
 .dso-bottom-nav-item.dso-bottom-active svg {
-  stroke: #0066ff !important;
+  stroke: #2E5FD0 !important;
   stroke-width: 2.3 !important;
   transform: scale(1.06) !important;
 }
@@ -968,12 +973,12 @@ button.dso-bottom-nav-item {
 .dso-btn-primary {
   background: var(--dso-gradient);
   color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(46, 95, 208, 0.35);
 }
 
 .dso-btn-primary:hover {
   background: var(--dso-gradient-hover);
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.45);
+  box-shadow: 0 4px 12px rgba(46, 95, 208, 0.45);
   transform: translateY(-1px);
 }
 
@@ -1002,8 +1007,8 @@ button.dso-bottom-nav-item {
 
 .dso-btn-outline:hover {
   background: var(--dso-gray-50, #f8fafc);
-  border-color: var(--dso-primary, #0066ff);
-  color: var(--dso-primary, #0066ff);
+  border-color: var(--dso-primary, #2E5FD0);
+  color: var(--dso-primary, #2E5FD0);
 }
 
 .dso-btn-success {
@@ -3215,18 +3220,18 @@ button.dso-bottom-nav-item {
 :root {
   --dj-primary: var(--dejoiy-blue);
   --dj-primary-dark: var(--dejoiy-blue-hover);
-  --dj-primary-light: #38bdf8;
+  --dj-primary-light: #6D95E8;
   --dj-secondary: var(--dejoiy-magenta);
   --dj-pink: var(--dejoiy-pink);
-  --dj-accent: #00d2ff;
+  --dj-accent: #FD43C9;
   --dj-dark: var(--dejoiy-deep-blue);
-  --dj-bg: #f8fafc;
+  --dj-bg: #F5F7FC;
   --dj-bg-card: #ffffff;
-  --dj-border: #e2e8f0;
-  --dj-text: #0f172a;
-  --dj-text-muted: #64748b;
-  --dj-gradient: linear-gradient(135deg, #0066ff 0%, #d9006c 100%);
-  --dj-gradient-dark: linear-gradient(135deg, #000c2c 0%, #001553 50%, #052475 100%);
+  --dj-border: #E1E6F2;
+  --dj-text: #0A1530;
+  --dj-text-muted: #4A5568;
+  --dj-gradient: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%);
+  --dj-gradient-dark: linear-gradient(135deg, #001050 0%, #021761 55%, #0A2168 100%);
 }
 
 .dso-brand-logo-img,
@@ -3248,9 +3253,9 @@ button.dso-bottom-nav-item {
 }
 
 .dso-brand-badge {
-  background: rgba(0, 102, 255, 0.12);
-  color: #0066ff;
-  border: 1px solid rgba(0, 102, 255, 0.25);
+  background: rgba(253, 67, 201, 0.16);
+  color: #FBB8EC;
+  border: 1px solid rgba(253, 67, 201, 0.38);
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -3261,7 +3266,7 @@ button.dso-bottom-nav-item {
 
 /* Welcome Banner */
 .dso-welcome-banner {
-  background: linear-gradient(135deg, #000e33 0%, #001553 45%, #052a80 80%, #150630 100%);
+  background: linear-gradient(135deg, #001050 0%, #021761 55%, #0A2168 100%);
   color: #fff;
   padding: 28px 32px;
   border-radius: 16px;
@@ -3273,15 +3278,15 @@ button.dso-bottom-nav-item {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  box-shadow: 0 10px 25px -5px rgba(0, 21, 83, 0.35);
-  border: 1px solid rgba(0, 102, 255, 0.25);
+  box-shadow: 0 10px 25px -5px rgba(2, 23, 97, 0.35);
+  border: 1px solid rgba(109, 149, 232, 0.3);
 }
 
 .dso-welcome-badge {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 1.2px;
-  color: #38bdf8;
+  color: #6D95E8;
   margin-bottom: 8px;
 }
 
@@ -3299,7 +3304,7 @@ button.dso-bottom-nav-item {
 }
 
 .dso-welcome-date {
-  color: #38bdf8;
+  color: #6D95E8;
   font-weight: 600;
 }
 
@@ -3427,8 +3432,8 @@ button.dso-bottom-nav-item {
 }
 
 .dso-stat-card:hover, .dso-stat-card.active {
-  border-color: #0066ff;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.12);
+  border-color: #2E5FD0;
+  box-shadow: 0 4px 14px rgba(46, 95, 208, 0.12);
 }
 
 .dso-stat-card.active {
@@ -3481,14 +3486,14 @@ button.dso-bottom-nav-item {
   height: 110px;
   border-radius: 50%;
   border: 8px solid #e2e8f0;
-  border-top-color: #0066ff;
-  border-right-color: #d9006c;
+  border-top-color: #2E5FD0;
+  border-right-color: #C0228B;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: #fff;
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(46, 95, 208, 0.1);
 }
 
 .dso-lqs-dial-val {
@@ -3617,7 +3622,7 @@ button.dso-bottom-nav-item {
 
 .dso-health-bar {
   height: 100%;
-  background: linear-gradient(90deg, #0066ff, #d9006c);
+  background: linear-gradient(90deg, #2E5FD0, #C0228B);
   border-radius: 99px;
 }
 
@@ -3708,7 +3713,7 @@ button.dso-bottom-nav-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #000c2c, #001553);
+  background: linear-gradient(135deg, #001050, #021761);
   color: #fff;
 }
 
@@ -3738,9 +3743,9 @@ button.dso-bottom-nav-item {
 }
 
 .dso-ai-prompt-btn:hover {
-  border-color: #0066ff;
-  background: #e0edff;
-  color: #0066ff;
+  border-color: #2E5FD0;
+  background: #E3EBFC;
+  color: #2E5FD0;
 }
 
 .dso-ai-drawer-footer {
@@ -3784,7 +3789,7 @@ button.dso-bottom-nav-item {
 }
 
 .dso-quick-stock-input:focus {
-  border-color: #0066ff;
+  border-color: #2E5FD0;
   outline: none;
 }
 
@@ -3920,9 +3925,9 @@ button.dso-bottom-nav-item {
 }
 
 .dso-brand-badge {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.25), rgba(217, 0, 108, 0.25)) !important;
-  color: #38bdf8 !important;
-  border: 1px solid rgba(0, 102, 255, 0.4) !important;
+  background: linear-gradient(135deg, rgba(46, 95, 208, 0.25), rgba(192, 34, 139, 0.25)) !important;
+  color: #6D95E8 !important;
+  border: 1px solid rgba(46, 95, 208, 0.4) !important;
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -4036,7 +4041,7 @@ button.dso-bottom-nav-item {
 .dso-merchant-code {
   font-family: monospace;
   font-weight: 700;
-  color: #38bdf8;
+  color: #6D95E8;
   letter-spacing: 0.5px;
 }
 .dso-merchant-sep {
@@ -4057,7 +4062,7 @@ button.dso-bottom-nav-item {
   font-size: 13px;
 }
 .dso-user-avatar-placeholder {
-  background: linear-gradient(135deg, #0066ff, #d9006c) !important;
+  background: linear-gradient(135deg, #2E5FD0, #C0228B) !important;
   color: #ffffff !important;
   font-weight: 700;
 }
@@ -4076,9 +4081,9 @@ button.dso-bottom-nav-item {
   user-select: none;
 }
 .dso-dpin-pill:hover {
-  background: #e0edff;
-  border-color: #0066ff;
-  color: #0066ff;
+  background: #E3EBFC;
+  border-color: #2E5FD0;
+  color: #2E5FD0;
 }
 .dso-dpin-pill code {
   font-family: monospace;
@@ -4092,15 +4097,15 @@ button.dso-bottom-nav-item {
   transition: color 0.15s ease;
 }
 .dso-dpin-pill:hover svg {
-  color: #0066ff;
+  color: #2E5FD0;
 }
 
 /* Enterprise Professional Footer */
 .dso-footer {
   margin-top: 56px;
-  background: #000c2c;
+  background: #001050;
   color: #94a3b8;
-  border-top: 1px solid rgba(0, 102, 255, 0.2);
+  border-top: 1px solid rgba(46, 95, 208, 0.2);
   border-radius: 18px 18px 0 0;
   padding: 44px 36px 28px;
 }
@@ -4138,9 +4143,9 @@ button.dso-bottom-nav-item {
   object-fit: contain;
 }
 .dso-footer-badge {
-  background: rgba(0, 102, 255, 0.25);
-  color: #38bdf8;
-  border: 1px solid rgba(0, 102, 255, 0.4);
+  background: rgba(46, 95, 208, 0.25);
+  color: #6D95E8;
+  border: 1px solid rgba(46, 95, 208, 0.4);
   font-size: 10px;
   font-weight: 800;
   padding: 2px 7px;
@@ -4201,7 +4206,7 @@ button.dso-bottom-nav-item {
 }
 .dso-footer-support-phone {
   font-size: 12px;
-  color: #38bdf8;
+  color: #6D95E8;
   font-weight: 600;
   margin-top: 6px;
   display: block;
@@ -4250,8 +4255,8 @@ button.dso-bottom-nav-item {
 
 .dso-search-field:focus-within {
   background: rgba(255, 255, 255, 0.14);
-  border-color: #0066ff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.25);
+  border-color: #2E5FD0;
+  box-shadow: 0 0 0 3px rgba(46, 95, 208, 0.25);
 }
 
 .dso-search-icon {
@@ -4347,7 +4352,7 @@ button.dso-bottom-nav-item {
 .dso-search-res-item:hover,
 .dso-search-res-item.dso-selected {
   background: #f1f5f9;
-  border-left-color: #0066ff;
+  border-left-color: #2E5FD0;
 }
 
 .dso-search-item-thumb {
@@ -4391,8 +4396,8 @@ button.dso-bottom-nav-item {
 }
 .dso-search-item-meta code {
   font-family: monospace;
-  background: #e0edff;
-  color: #0052cc;
+  background: #E3EBFC;
+  color: #2450C8;
   padding: 1px 5px;
   border-radius: 4px;
   font-weight: 700;
@@ -4436,9 +4441,9 @@ button.dso-bottom-nav-item {
 }
 .dso-greeting-store-pill {
   font-size: 11px;
-  background: rgba(0, 102, 255, 0.25);
-  color: #38bdf8;
-  border: 1px solid rgba(0, 102, 255, 0.4);
+  background: rgba(46, 95, 208, 0.25);
+  color: #6D95E8;
+  border: 1px solid rgba(46, 95, 208, 0.4);
   padding: 1px 6px;
   border-radius: 10px;
   font-weight: 600;
@@ -4466,7 +4471,7 @@ button.dso-bottom-nav-item {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0066ff, #d9006c);
+  background: linear-gradient(135deg, #2E5FD0, #C0228B);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -4512,7 +4517,7 @@ button.dso-bottom-nav-item {
 }
 
 .dso-hub-header-box {
-  background: linear-gradient(135deg, #000c2c, #001553);
+  background: linear-gradient(135deg, #001050, #021761);
   color: #ffffff;
   padding: 18px 20px;
 }
@@ -4536,9 +4541,9 @@ button.dso-bottom-nav-item {
 .dso-hub-merchant-tag {
   font-family: monospace;
   font-weight: 700;
-  color: #38bdf8;
-  background: rgba(0, 102, 255, 0.15);
-  border: 1px solid rgba(0, 102, 255, 0.3);
+  color: #6D95E8;
+  background: rgba(46, 95, 208, 0.15);
+  border: 1px solid rgba(46, 95, 208, 0.3);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 10px;
@@ -4568,7 +4573,7 @@ button.dso-bottom-nav-item {
 }
 .dso-hub-item:hover {
   background: #f1f5f9;
-  color: #0066ff;
+  color: #2E5FD0;
   padding-left: 24px;
 }
 .dso-hub-item-icon {
@@ -4607,8 +4612,8 @@ button.dso-bottom-nav-item {
   left: 0 !important;
   right: 0 !important;
   height: 64px !important;
-  background: linear-gradient(90deg, #000c2e 0%, #001553 45%, #051d66 100%) !important;
-  border-bottom: 1px solid rgba(0, 102, 255, 0.2) !important;
+  background: linear-gradient(90deg, #001050 0%, #021761 45%, #0A2168 100%) !important;
+  border-bottom: 1px solid rgba(109, 149, 232, 0.25) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -4661,14 +4666,14 @@ button.dso-bottom-nav-item {
   filter: brightness(0) invert(1) !important;
 }
 .dso-brand-badge {
-  background: rgba(0, 102, 255, 0.25) !important;
-  color: #38bdf8 !important;
+  background: rgba(46, 95, 208, 0.25) !important;
+  color: #6D95E8 !important;
   font-size: 10px !important;
   font-weight: 800 !important;
   letter-spacing: 0.8px !important;
   padding: 3px 8px !important;
   border-radius: 6px !important;
-  border: 1px solid rgba(0, 102, 255, 0.35) !important;
+  border: 1px solid rgba(46, 95, 208, 0.35) !important;
   display: inline-block !important;
 }
 
@@ -4693,16 +4698,16 @@ button.dso-bottom-nav-item {
   font-size: 13px !important;
   font-weight: 600 !important;
   text-decoration: none !important;
-  background: linear-gradient(135deg, #0066ff 0%, #d9006c 100%) !important;
+  background: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   padding: 5px 14px !important;
   border-radius: 20px !important;
   transition: all 0.2s ease !important;
   white-space: nowrap !important;
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(46, 95, 208, 0.3) !important;
 }
 .dso-topbar-link:hover {
-  background: linear-gradient(135deg, #0052cc 0%, #b30059 100%) !important;
+  background: linear-gradient(135deg, #2450C8 0%, #b30059 100%) !important;
   color: #ffffff !important;
 }
   color: #ffffff !important;
@@ -4739,8 +4744,8 @@ button.dso-bottom-nav-item {
     bottom: 0 !important;
     width: 260px !important;
     height: calc(100vh - 64px) !important;
-    background: linear-gradient(180deg, #000c2c 0%, #001553 60%, #000a26 100%) !important;
-    border-right: 1px solid rgba(0, 102, 255, 0.18) !important;
+    background: linear-gradient(180deg, #001050 0%, #021761 60%, #001040 100%) !important;
+    border-right: 1px solid rgba(46, 95, 208, 0.18) !important;
     z-index: 900 !important;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow-y: auto !important;
@@ -4776,8 +4781,8 @@ button.dso-bottom-nav-item {
     bottom: 0 !important;
     width: 280px !important;
     height: 100vh !important;
-    background: linear-gradient(180deg, #000c2c 0%, #001553 60%, #000a26 100%) !important;
-    border-right: 1px solid rgba(0, 102, 255, 0.2) !important;
+    background: linear-gradient(180deg, #001050 0%, #021761 60%, #001040 100%) !important;
+    border-right: 1px solid rgba(46, 95, 208, 0.2) !important;
     z-index: 1200 !important;
     transform: translateX(-100%) !important;
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -4796,7 +4801,7 @@ button.dso-bottom-nav-item {
     align-items: center !important;
     justify-content: space-between !important;
     padding: 16px 18px !important;
-    border-bottom: 1px solid rgba(0, 102, 255, 0.2) !important;
+    border-bottom: 1px solid rgba(46, 95, 208, 0.2) !important;
     background: #000922 !important;
     flex-shrink: 0 !important;
   }
@@ -4844,7 +4849,7 @@ button.dso-bottom-nav-item {
   font-weight: 800 !important;
   text-transform: uppercase !important;
   letter-spacing: 0.08em !important;
-  color: #38bdf8 !important;
+  color: #6D95E8 !important;
   display: block !important;
 }
 .dso-nav-link {
@@ -4862,15 +4867,15 @@ button.dso-bottom-nav-item {
   width: 100% !important;
 }
 .dso-nav-link:hover {
-  background: rgba(0, 102, 255, 0.12) !important;
+  background: rgba(46, 95, 208, 0.12) !important;
   color: #ffffff !important;
 }
 .dso-nav-active .dso-nav-link,
 .dso-nav-active > .dso-nav-link {
-  background: linear-gradient(135deg, #0066ff 0%, #d9006c 100%) !important;
+  background: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%) !important;
   color: #ffffff !important;
   font-weight: 600 !important;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(46, 95, 208, 0.45) !important;
 }
 .dso-nav-icon {
   font-size: 16px !important;
@@ -4897,13 +4902,13 @@ button.dso-bottom-nav-item {
 }
 .dso-nav-child:hover,
 .dso-nav-child.dso-nav-active {
-  background: rgba(0, 102, 255, 0.15) !important;
-  color: #38bdf8 !important;
+  background: rgba(46, 95, 208, 0.15) !important;
+  color: #6D95E8 !important;
 }
 .dso-sidebar-footer {
   padding: 14px 12px !important;
-  border-top: 1px solid rgba(0, 102, 255, 0.15) !important;
-  background: #000a26 !important;
+  border-top: 1px solid rgba(46, 95, 208, 0.15) !important;
+  background: #001040 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 4px !important;
@@ -4955,8 +4960,8 @@ html, body, #dso-app {
     right: 0 !important;
     height: calc(56px + env(safe-area-inset-top, 0px)) !important;
     padding: env(safe-area-inset-top, 0px) 12px 0 !important;
-    background: linear-gradient(135deg, #000c2c 0%, #001553 100%) !important;
-    border-bottom: 1px solid rgba(0, 102, 255, 0.25) !important;
+    background: linear-gradient(135deg, #001050 0%, #021761 100%) !important;
+    border-bottom: 1px solid rgba(46, 95, 208, 0.25) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
@@ -5017,7 +5022,7 @@ html, body, #dso-app {
     position: absolute !important;
     inset: 0 !important;
     padding: calc(env(safe-area-inset-top, 0px) + 6px) 10px 6px !important;
-    background: #000c2c !important;
+    background: #001050 !important;
     z-index: 1100 !important;
     align-items: center !important;
   }
@@ -5029,8 +5034,8 @@ html, body, #dso-app {
 
   .dso-topbar.dso-mobile-search-active .dso-search-field {
     height: 42px !important;
-    background: #001553 !important;
-    border-color: #0066ff !important;
+    background: #021761 !important;
+    border-color: #2E5FD0 !important;
   }
 
   .dso-mobile-search-close {
@@ -5120,7 +5125,7 @@ html, body, #dso-app {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border: 2px solid #000c2c !important;
+    border: 2px solid #001050 !important;
     padding: 0 3px !important;
   }
 
@@ -5137,8 +5142,8 @@ html, body, #dso-app {
     width: 38px !important;
     height: 38px !important;
     border-radius: 50% !important;
-    border: 2px solid #0066ff !important;
-    box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3) !important;
+    border: 2px solid #2E5FD0 !important;
+    box-shadow: 0 2px 8px rgba(46, 95, 208, 0.3) !important;
   }
 
   .dso-hub-btn-label,
@@ -5231,16 +5236,16 @@ html, body, #dso-app {
   }
 
   .dso-bottom-nav-item.dso-bottom-active {
-    color: #0066ff !important;
+    color: #2E5FD0 !important;
     font-weight: 700 !important;
   }
 
   .dso-bottom-nav-item.dso-bottom-active .dso-bottom-nav-icon-wrap {
-    background: rgba(0, 102, 255, 0.12) !important;
+    background: rgba(46, 95, 208, 0.12) !important;
   }
 
   .dso-bottom-nav-item.dso-bottom-active svg {
-    stroke: #0066ff !important;
+    stroke: #2E5FD0 !important;
     stroke-width: 2.3 !important;
     transform: scale(1.06) !important;
   }
@@ -5532,7 +5537,7 @@ html, body, #dso-app {
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
-    background: #0066ff !important;
+    background: #2E5FD0 !important;
     color: #ffffff !important;
     border: none !important;
     cursor: pointer !important;
@@ -5653,7 +5658,7 @@ html, body, #dso-app {
 
   .dso-table-orders .dso-items-count {
     font-weight: 800 !important;
-    color: #0066ff !important;
+    color: #2E5FD0 !important;
     font-size: 11px !important;
     text-transform: uppercase !important;
     letter-spacing: 0.05em !important;
@@ -5665,7 +5670,7 @@ html, body, #dso-app {
     align-items: center !important;
     font-size: 18px !important;
     font-weight: 800 !important;
-    color: #001553 !important;
+    color: #021761 !important;
     padding: 4px 0 !important;
   }
 
@@ -5698,8 +5703,8 @@ html, body, #dso-app {
 
   .dso-footer {
     padding: 24px 16px 84px !important;
-    background: #000c2c !important;
-    border-top: 1px solid rgba(0, 102, 255, 0.2) !important;
+    background: #001050 !important;
+    border-top: 1px solid rgba(46, 95, 208, 0.2) !important;
   }
 
   .dso-mobile-app-footer {
@@ -5724,7 +5729,7 @@ html, body, #dso-app {
     font-size: 10px !important;
     font-weight: 800 !important;
     background: rgba(56, 189, 248, 0.15) !important;
-    color: #38bdf8 !important;
+    color: #6D95E8 !important;
     padding: 2px 8px !important;
     border-radius: 6px !important;
     border: 1px solid rgba(56, 189, 248, 0.3) !important;
@@ -5976,11 +5981,11 @@ html, body, #dso-app {
 }
 .dso-inline-input:focus {
   outline: none;
-  border-color: #0066ff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.15);
+  border-color: #2E5FD0;
+  box-shadow: 0 0 0 3px rgba(46, 95, 208, 0.15);
 }
 .dso-inline-save-btn {
-  background: #0066ff;
+  background: #2E5FD0;
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -6030,7 +6035,7 @@ html, body, #dso-app {
   position: sticky;
   top: 72px;
   z-index: 80;
-  background: #001553;
+  background: #021761;
   color: #ffffff;
   border-radius: 12px;
   padding: 12px 20px;
@@ -6057,15 +6062,15 @@ html, body, #dso-app {
   transition: all 0.2s ease;
 }
 .dso-upload-dropzone:hover, .dso-upload-dropzone.dragover {
-  border-color: #0066ff;
+  border-color: #2E5FD0;
   background: #eff6ff;
 }
 .dso-upload-icon {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(0, 102, 255, 0.1);
-  color: #0066ff;
+  background: rgba(46, 95, 208, 0.1);
+  color: #2E5FD0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6096,11 +6101,11 @@ html, body, #dso-app {
   transition: all 0.2s ease;
 }
 .dso-repricer-rule-card:hover {
-  border-color: #0066ff;
-  box-shadow: 0 8px 24px -4px rgba(0, 102, 255, 0.12);
+  border-color: #2E5FD0;
+  box-shadow: 0 8px 24px -4px rgba(46, 95, 208, 0.12);
 }
 .dso-repricer-rule-card.active-rule {
-  border-color: #0066ff;
+  border-color: #2E5FD0;
   background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
 }
 .dso-toggle-switch {
@@ -6135,7 +6140,7 @@ html, body, #dso-app {
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 .dso-toggle-switch input:checked + .dso-toggle-slider {
-  background-color: #0066ff;
+  background-color: #2E5FD0;
 }
 .dso-toggle-switch input:checked + .dso-toggle-slider:before {
   transform: translateX(20px);
@@ -6156,7 +6161,7 @@ html, body, #dso-app {
   gap: 8px;
 }
 .dso-deal-badge-preview {
-  background: linear-gradient(135deg, #0066ff 0%, #d9006c 100%);
+  background: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -6335,13 +6340,13 @@ html, body, #dso-app {
 
 .dso-msg-pill:hover,
 .dso-msg-pill.active {
-  background: #0066ff;
-  border-color: #0066ff;
+  background: #2E5FD0;
+  border-color: #2E5FD0;
   color: #ffffff;
 }
 
 .dso-pill-badge {
-  background: #d9006c;
+  background: #C0228B;
   color: #ffffff;
   font-size: 10px;
   font-weight: 800;
@@ -6371,14 +6376,14 @@ html, body, #dso-app {
 
 .dso-msg-thread-item.active {
   background: #eff6ff;
-  border-left: 3px solid #0066ff;
+  border-left: 3px solid #2E5FD0;
 }
 
 .dso-th-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #001553 0%, #0066ff 100%);
+  background: linear-gradient(135deg, #021761 0%, #2E5FD0 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -6386,7 +6391,7 @@ html, body, #dso-app {
   font-weight: 800;
   font-size: 14px;
   flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.2);
+  box-shadow: 0 2px 6px rgba(46, 95, 208, 0.2);
 }
 
 .dso-th-body {
@@ -6449,7 +6454,7 @@ html, body, #dso-app {
 }
 
 .dso-th-unread-badge {
-  background: #d9006c;
+  background: #C0228B;
   color: #ffffff;
   font-size: 11px;
   font-weight: 800;
@@ -6521,7 +6526,7 @@ html, body, #dso-app {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #001553 0%, #0066ff 100%);
+  background: linear-gradient(135deg, #021761 0%, #2E5FD0 100%);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -6619,7 +6624,7 @@ html, body, #dso-app {
 }
 
 .dso-bubble-out .dso-bubble {
-  background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #2E5FD0 0%, #2450C8 100%);
   color: #ffffff;
   border-bottom-right-radius: 4px;
 }
@@ -6679,8 +6684,8 @@ html, body, #dso-app {
 
 .dso-canned-chip:hover {
   background: #eff6ff;
-  border-color: #0066ff;
-  color: #0066ff;
+  border-color: #2E5FD0;
+  color: #2E5FD0;
 }
 
 .dso-chat-composer {
@@ -6709,8 +6714,8 @@ html, body, #dso-app {
 }
 
 .dso-chat-composer textarea:focus {
-  border-color: #0066ff !important;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.15) !important;
+  border-color: #2E5FD0 !important;
+  box-shadow: 0 0 0 3px rgba(46, 95, 208, 0.15) !important;
 }
 
 .dso-chat-composer .dso-btn {
@@ -6739,21 +6744,21 @@ html, body, #dso-app {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #001553 0%, #0066ff 100%);
+  background: linear-gradient(135deg, #021761 0%, #2E5FD0 100%);
   color: #ffffff;
   border: none;
   border-radius: 30px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 700;
-  box-shadow: 0 8px 25px rgba(0, 102, 255, 0.35);
+  box-shadow: 0 8px 25px rgba(46, 95, 208, 0.35);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 #djy-chat-launcher:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 102, 255, 0.45);
+  box-shadow: 0 12px 30px rgba(46, 95, 208, 0.45);
 }
 
 .djy-launcher-pulse {
@@ -6763,18 +6768,18 @@ html, body, #dso-app {
   right: 0;
   bottom: 0;
   border-radius: 30px;
-  box-shadow: 0 0 0 0 rgba(0, 102, 255, 0.6);
+  box-shadow: 0 0 0 0 rgba(46, 95, 208, 0.6);
   animation: djyPulse 2s infinite;
 }
 
 @keyframes djyPulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 102, 255, 0.6); }
-  70% { box-shadow: 0 0 0 12px rgba(0, 102, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 102, 255, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(46, 95, 208, 0.6); }
+  70% { box-shadow: 0 0 0 12px rgba(46, 95, 208, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 95, 208, 0); }
 }
 
 .djy-launcher-unread {
-  background: #d9006c;
+  background: #C0228B;
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -6804,7 +6809,7 @@ html, body, #dso-app {
 }
 
 .djy-cm-header {
-  background: linear-gradient(135deg, #000c2c 0%, #001553 100%);
+  background: linear-gradient(135deg, #001050 0%, #021761 100%);
   color: #ffffff;
   padding: 14px 16px;
   display: flex;
@@ -6898,7 +6903,7 @@ html, body, #dso-app {
 
 .djy-cm-prod-price {
   font-size: 11px;
-  color: #0066ff;
+  color: #2E5FD0;
   font-weight: 600;
 }
 
@@ -6948,7 +6953,7 @@ html, body, #dso-app {
 }
 
 .djy-msg-out .djy-msg-bubble {
-  background: #0066ff;
+  background: #2E5FD0;
   color: #ffffff;
   border-bottom-right-radius: 3px;
 }
@@ -6956,7 +6961,7 @@ html, body, #dso-app {
 .djy-msg-sender {
   font-size: 10px;
   font-weight: 700;
-  color: #0066ff;
+  color: #2E5FD0;
   margin-bottom: 3px;
 }
 
@@ -6995,8 +7000,8 @@ html, body, #dso-app {
 
 .djy-prompt-chip:hover {
   background: #eff6ff;
-  border-color: #0066ff;
-  color: #0066ff;
+  border-color: #2E5FD0;
+  color: #2E5FD0;
 }
 
 .djy-cm-guest-bar {
@@ -7037,14 +7042,14 @@ html, body, #dso-app {
 }
 
 .djy-cm-composer input:focus {
-  border-color: #0066ff !important;
+  border-color: #2E5FD0 !important;
 }
 
 .djy-cm-composer button {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #0066ff;
+  background: #2E5FD0;
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -7070,9 +7075,9 @@ html, body, #dso-app {
   gap: 8px;
   padding: 10px 18px;
   border-radius: 10px;
-  background: rgba(0, 102, 255, 0.08);
-  border: 1.5px solid rgba(0, 102, 255, 0.35);
-  color: #0066ff;
+  background: rgba(46, 95, 208, 0.08);
+  border: 1.5px solid rgba(46, 95, 208, 0.35);
+  color: #2E5FD0;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -7080,10 +7085,10 @@ html, body, #dso-app {
 }
 
 .djy-btn-chat-seller:hover {
-  background: #0066ff;
+  background: #2E5FD0;
   color: #ffffff;
-  border-color: #0066ff;
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+  border-color: #2E5FD0;
+  box-shadow: 0 4px 12px rgba(46, 95, 208, 0.25);
 }
 
 /* 5. MOBILE RESPONSIVENESS (<= 768px) */
@@ -7127,3 +7132,45 @@ html, body, #dso-app {
   }
 }
 
+
+/* ==========================================================================
+   DEJOIY SELLER CENTRAL — PROFESSIONAL ICONOGRAPHY LAYER (v4.3)
+   Replaces emoji glyphs with coherent line icons (logo-derived brand palette).
+   Inline SVGs appended by the icon system keep inline styles for color; these
+   rules normalize geometry, sizing and alignment instead.
+   ========================================================================== */
+.dso-nav-icon svg,
+.dso-hub-item-icon svg,
+.dso-search-item-thumb svg,
+.dso-bottom-nav-item svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+.dso-nav-icon > svg { width: 19px; height: 19px; }
+.dso-bottom-nav-item svg { width: 21px; height: 21px; }
+
+/* Sidebar active rail — brand pink signature */
+.dso-nav-active { position: relative; }
+.dso-nav-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #FD43C9;
+}
+
+/* AI drawer header subtitle: cyan → brand light blue for coherence */
+.dso-ai-drawer-header small { color: #6D95E8 !important; }
+
+/* Admin context bar: purple gradient → DEJOIY navy with magenta edge */
+.dso-admin-context-bar {
+  background: linear-gradient(90deg, #021761 0%, #0A2168 60%, #C0228B 220%) !important;
+}

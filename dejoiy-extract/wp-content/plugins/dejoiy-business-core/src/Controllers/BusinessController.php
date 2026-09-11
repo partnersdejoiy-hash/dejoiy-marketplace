@@ -10,18 +10,27 @@ class BusinessController {
     }
 
     public function getDashboardMetrics($request) {
-        $gross_sales = 41437.00;
-        $active_orders = 17;
-        $total_products = 196;
+        $gross_sales = 0.0;
+        $active_orders = 0;
+        $total_products = 0;
 
         try {
             if (function_exists('wc_get_orders')) {
-                $orders = wc_get_orders(array('limit' => -1, 'return' => 'ids'));
-                if (!empty($orders)) $active_orders = count($orders);
+                $processing = wc_get_orders(array('status' => 'processing', 'limit' => -1, 'return' => 'ids'));
+                $completed = wc_get_orders(array('status' => 'completed', 'limit' => -1, 'return' => 'ids'));
+                $active_orders = count($processing) + count($completed);
+
+                // Calculate real gross sales from completed orders
+                $all_completed = wc_get_orders(array('status' => 'completed', 'limit' => -1, 'return' => 'objects'));
+                foreach ($all_completed as $order) {
+                    $gross_sales += (float) $order->get_total();
+                }
             }
             if (function_exists('wp_count_posts')) {
                 $count = wp_count_posts('product');
-                if ($count && isset($count->publish)) $total_products = (int)$count->publish;
+                if ($count && isset($count->publish)) {
+                    $total_products = (int)$count->publish;
+                }
             }
         } catch (\Exception $e) {}
 
@@ -29,8 +38,8 @@ class BusinessController {
             'grossSales' => $gross_sales,
             'activeOrders' => $active_orders,
             'totalProducts' => $total_products,
-            'growthRate' => '+24.5%',
-            'trustScore' => 98.5
+            'growthRate' => null,
+            'trustScore' => null
         ), 200);
     }
 
@@ -52,14 +61,7 @@ class BusinessController {
             }
         } catch (\Exception $e) {}
 
-        if (empty($products_data)) {
-            $products_data = array(
-                array('id' => 5425, 'name' => 'Holo DPIN Asset', 'sku' => 'DPIN-5425', 'price' => '7888', 'stock' => 45, 'status' => 'publish'),
-                array('id' => 901, 'name' => 'DEJOIY Tokenizer DPIN Pro', 'sku' => 'DPIN-901-TKN', 'price' => '2499', 'stock' => 120, 'status' => 'publish'),
-                array('id' => 902, 'name' => 'DEJOIY Apparel Gold Jacket', 'sku' => 'DPIN-902-JKT', 'price' => '4999', 'stock' => 14, 'status' => 'publish')
-            );
-        }
-
+        // No fake data fallback — show honest empty state
         return new WP_REST_Response($products_data, 200);
     }
 
@@ -81,43 +83,125 @@ class BusinessController {
             }
         } catch (\Exception $e) {}
 
-        if (empty($orders_data)) {
-            $orders_data = array(
-                array('id' => 5391, 'orderNumber' => '#ORD-5391', 'customer' => 'Deepak Sharma', 'total' => '540.00', 'status' => 'completed', 'date' => '2026-08-03 14:20'),
-                array('id' => 9901, 'orderNumber' => '#ORD-9901', 'customer' => 'Rajesh Sharma', 'total' => '14999.00', 'status' => 'completed', 'date' => '2026-08-03 15:10'),
-                array('id' => 9902, 'orderNumber' => '#ORD-9902', 'customer' => 'Priya Patel', 'total' => '8499.00', 'status' => 'processing', 'date' => '2026-08-03 16:05')
-            );
-        }
-
+        // No fake data fallback — show honest empty state
         return new WP_REST_Response($orders_data, 200);
     }
 
     public function getBusinessDna($request) {
+        $user_id = get_current_user_id();
+        $order_count = 0;
+        $total_sales = 0;
+        $product_count = 0;
+
+        try {
+            if (function_exists('wc_get_orders')) {
+                $orders = wc_get_orders(array('limit' => -1, 'return' => 'objects'));
+                $order_count = count($orders);
+                foreach ($orders as $o) {
+                    if ($o->get_status() === 'completed') {
+                        $total_sales += (float) $o->get_total();
+                    }
+                }
+            }
+            if (function_exists('wp_count_posts')) {
+                $count = wp_count_posts('product');
+                $product_count = $count ? (int) $count->publish : 0;
+            }
+        } catch (\Exception $e) {}
+
+        $stage = 'Getting Started';
+        if ($total_sales > 100000) $stage = 'Scaling Brand';
+        elseif ($total_sales > 50000) $stage = 'Growing Business';
+        elseif ($total_sales > 10000) $stage = 'Building Momentum';
+        elseif ($order_count > 10) $stage = 'Early Traction';
+        elseif ($product_count > 0) $stage = 'Catalog Ready';
+
         return new WP_REST_Response(array(
-            'stage' => 'Scaling Brand',
-            'dnaScore' => 96.2,
-            'recommendation' => 'Restock DPIN-902-JKT to maintain 98% order fulfillment rate.'
+            'stage' => $stage,
+            'dnaScore' => null,
+            'recommendation' => $order_count === 0 ? 'Add your first product to get started.' : 'Keep optimizing your listings for better conversions.',
+            'totalProducts' => $product_count,
+            'totalOrders' => $order_count,
+            'grossRevenue' => $total_sales
         ), 200);
     }
 
     public function getVendorIq($request) {
+        $user_id = get_current_user_id();
+        $vendor_id = $user_id;
+
+        // Calculate real metrics
+        $total_orders = 0;
+        $on_time = 0;
+        $completed_orders = 0;
+
+        try {
+            if (function_exists('wc_get_orders')) {
+                $orders = wc_get_orders(array('limit' => 100, 'return' => 'objects'));
+                $total_orders = count($orders);
+                foreach ($orders as $o) {
+                    if ($o->get_status() === 'completed') {
+                        $completed_orders++;
+                        $on_time++;
+                    }
+                }
+            }
+        } catch (\Exception $e) {}
+
+        $fulfillment_rate = $total_orders > 0 ? round(($on_time / $total_orders) * 100, 1) : 0;
+
+        $tier = 'New Seller';
+        if ($total_orders >= 500) $tier = 'Platinum Seller';
+        elseif ($total_orders >= 100) $tier = 'Gold Seller';
+        elseif ($total_orders >= 25) $tier = 'Silver Seller';
+        elseif ($total_orders >= 5) $tier = 'Bronze Seller';
+
         return new WP_REST_Response(array(
-            'vendorIqScore' => 98.5,
-            'tier' => 'Platinum Diamond Seller',
-            'onTimeFulfillment' => '99.4%',
-            'customerSatisfaction' => '4.9★'
+            'vendorIqScore' => null,
+            'tier' => $tier,
+            'onTimeFulfillment' => $fulfillment_rate . '%',
+            'totalOrders' => $total_orders,
+            'completedOrders' => $completed_orders
         ), 200);
     }
 
     public function getTrustScore($request) {
-        return new WP_REST_Response(array('trustScore' => 98.5, 'status' => 'VERIFIED_ENTERPRISE'), 200);
+        $user_id = get_current_user_id();
+        $verified = get_user_meta($user_id, 'dso_verified_seller', true);
+        $has_bank = !empty(get_user_meta($user_id, 'dso_bank_account_number', true));
+        $has_pan = !empty(get_user_meta($user_id, 'dso_pan', true));
+
+        $score = 0;
+        if ($verified === 'yes') $score += 40;
+        if ($has_bank) $score += 30;
+        if ($has_pan) $score += 30;
+
+        $status = 'UNVERIFIED';
+        if ($score >= 80) $status = 'FULLY_VERIFIED';
+        elseif ($score >= 50) $status = 'PARTIALLY_VERIFIED';
+        elseif ($score > 0) $status = 'IN_PROGRESS';
+
+        return new WP_REST_Response(array(
+            'trustScore' => $score > 0 ? $score : null,
+            'status' => $status,
+            'hasBank' => $has_bank,
+            'hasPAN' => $has_pan,
+            'isVerified' => $verified === 'yes'
+        ), 200);
     }
 
     public function getSreMetrics($request) {
+        // Return live system health based on actual WordPress environment
+        $wc_active = function_exists('WooCommerce');
+        $php_version = PHP_VERSION;
+        $memory_limit = ini_get('memory_limit');
+        $memory_used = size_format(memory_get_usage(true));
+
         return new WP_REST_Response(array(
-            'uptime' => '99.99%',
-            'apiP95Latency' => '42ms',
-            'cacheHitRatio' => '94.8%',
+            'phpVersion' => $php_version,
+            'memoryUsage' => $memory_used,
+            'memoryLimit' => $memory_limit,
+            'woocommerceActive' => $wc_active,
             'systemHealth' => 'OPERATIONAL'
         ), 200);
     }

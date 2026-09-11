@@ -42,6 +42,7 @@
     function go(i) {
       index = (i + slides.length) % slides.length;
       track.style.transform = 'translateX(-' + (index * 100) + '%)';
+      slides.forEach(function (s, k) { s.classList.toggle('is-active', k === index); });
       dots.forEach(function (d, k) { d.classList.toggle('is-active', k === index); });
     }
 

@@ -38,7 +38,20 @@ function dejoiy_library_adopt_nexus_product( $product_id ) {
 		}
 
 		$post = get_post( $product_id );
-		if ( $post && 'publish' !== $post->post_status ) {
+		// DEJOIY Seller App: vendor-authored products keep their own publish
+		// state (seller publish validation governs them). Only non-vendor
+		// library titles are force-published on adoption.
+		$is_vendor_owned = false;
+		if ( $post && $post->post_author ) {
+			$dsa_author = get_userdata( (int) $post->post_author );
+			if ( $dsa_author && array_intersect(
+				array( 'wcfm_vendor', 'dc_vendor', 'vendor', 'seller' ),
+				(array) $dsa_author->roles
+			) ) {
+				$is_vendor_owned = true;
+			}
+		}
+		if ( $post && 'publish' !== $post->post_status && ! $is_vendor_owned ) {
 			wp_update_post(
 				array(
 					'ID'          => $product_id,

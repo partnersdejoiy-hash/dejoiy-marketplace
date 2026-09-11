@@ -13,10 +13,7 @@ class DSO_Products {
     protected function get_active_vendor_id() {
         $user_id = get_current_user_id();
         if ($this->is_admin()) {
-            if (!empty($_COOKIE['dso_admin_vendor_context'])) {
-                return intval($_COOKIE['dso_admin_vendor_context']);
-            }
-            return 0;
+            return DSO_Auth::get_admin_vendor_context();
         }
         $plugin = Dejoiy_Seller_OS::instance();
         return $plugin->get_vendor_id($user_id) ?: $user_id;

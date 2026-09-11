@@ -43,9 +43,19 @@ add_action('rest_api_init', function () {
     }
 });
 
-// HANDLE CORS
+// HANDLE CORS — restrict to DEJOIY domains only
 add_action('init', function () {
-    header("Access-Control-Allow-Origin: *");
-    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-WP-Nonce");
+    $allowed_origins = [
+        'https://dejoiy.com',
+        'https://sellerhub.dejoiy.com',
+        'https://www.dejoiy.com',
+        'https://vendors.dejoiy.tech',
+    ];
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (in_array($origin, $allowed_origins)) {
+        header("Access-Control-Allow-Origin: " . $origin);
+        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-WP-Nonce");
+        header("Access-Control-Allow-Credentials: true");
+    }
 });

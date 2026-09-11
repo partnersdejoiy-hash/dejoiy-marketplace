@@ -28,3 +28,22 @@ Thumbs.db
 *.tar.gz
 *.zip
 *.sql.gz
+
+# Agent and harness tooling
+.claude/
+.claude.json
+.docker/
+.gemini/
+.mcp-auth/
+.nvm/
+.opencode/
+.zshrc
+audit-browser/
+deepseek-harness/
+dejoiy-marketplace/
+qa-shots/
+qa_capture.js
+test_write.txt
+install.cmd
+package.json
+package-lock.json

@@ -19,28 +19,32 @@ class RestBootstrap {
         register_rest_route(self::$namespace, '/system/health', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getHealth'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
-        // STEP 8: System Diagnostics
+        // STEP 8: System Diagnostics - Admin only
         register_rest_route(self::$namespace, '/system/diagnostics', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getDiagnostics'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            }
         ));
 
-        // STEP 9: System Version
+        // STEP 9: System Version - Authenticated
         register_rest_route(self::$namespace, '/system/version', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getVersion'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
-        // STEP 10: System Capabilities
+        // STEP 10: System Capabilities - Admin only
         register_rest_route(self::$namespace, '/system/capabilities', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getCapabilities'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            }
         ));
     }
 
@@ -50,49 +54,51 @@ class RestBootstrap {
         register_rest_route(self::$namespace, '/ping', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getPing'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/dashboard-metrics', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getDashboardMetrics'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/products', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getProducts'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/orders', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getOrders'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/intelligence/dna', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getBusinessDna'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/bi/vendor-iq', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getVendorIq'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/security/trust-score', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getTrustScore'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => 'is_user_logged_in'
         ));
 
         register_rest_route(self::$namespace, '/sre/metrics', array(
             'methods' => 'GET',
             'callback' => array($controller, 'getSreMetrics'),
-            'permission_callback' => '__return_true'
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            }
         ));
     }
 }

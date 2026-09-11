@@ -69,6 +69,9 @@ if ( ! function_exists( 'dejoiy_library_is_nexus_product' ) ) {
 		if ( $product_id < 1 ) {
 			return false;
 		}
+		if ( get_post_meta( $product_id, '_dejoiy_ecosystem', true ) === 'marketplace' ) {
+			return false;
+		}
 		if ( get_post_meta( $product_id, '_dejoiy_library_book', true ) ) {
 			return true;
 		}

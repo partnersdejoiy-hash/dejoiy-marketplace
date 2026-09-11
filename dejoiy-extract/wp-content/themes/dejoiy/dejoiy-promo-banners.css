@@ -314,11 +314,24 @@
 	stroke-dashoffset: 340;
 }
 
-.mpb.is-in .mpb-banner--intern .sc-graph path {
+/* Promo slides inside the Featured hero carousel */
+
+.mph-hero__slide--promo {
+	padding: 0;
+}
+
+.mph-hero__slide--promo .mpb-banner {
+	border-radius: 0;
+	border: 0;
+	box-shadow: none;
+	min-height: 100%;
+}
+
+.mph-hero__slide--promo.is-active .mpb-banner--intern .sc-graph path {
 	animation: mpbDrawLoop 7s ease-in-out infinite 0.5s;
 }
 
-.mpb.is-in .mpb-banner--sell .sc-graph path {
+.mph-hero__slide--promo.is-active .mpb-banner--sell .sc-graph path {
 	animation: mpbDrawOnce 1.9s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.3s;
 }
 
@@ -687,6 +700,8 @@
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
 	.mpb-cta { animation: none; }
-	.mpb .sc-graph path { stroke-dashoffset: 0; animation: none !important; }
-	.mpb-banner * { animation-duration: 0.001s !important; }
+	.mpb .sc-graph path,
+	.mph-hero__slide--promo .sc-graph path { stroke-dashoffset: 0; animation: none !important; }
+	.mpb-banner *,
+	.mph-hero__slide--promo * { animation-duration: 0.001s !important; }
 }

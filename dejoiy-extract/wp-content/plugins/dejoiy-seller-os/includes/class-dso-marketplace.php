@@ -128,14 +128,15 @@ class DSO_Marketplace {
                 $vendor_id
             ));
             if (!empty($pids)) {
-                $pid_placeholders = implode(',', array_map('intval', $pids));
-                $order_ids = $wpdb->get_col(
+                $pid_placeholders = implode(',', array_fill(0, count($pids), '%d'));
+                $order_ids = $wpdb->get_col($wpdb->prepare(
                     "SELECT DISTINCT order_id FROM {$wpdb->prefix}woocommerce_order_items 
                      WHERE order_item_type = 'line_item' AND order_item_id IN (
                          SELECT order_item_id FROM {$wpdb->prefix}woocommerce_order_itemmeta 
-                         WHERE meta_key = '_product_id' AND meta_value IN ($pid_placeholders)
-                     )"
-                );
+                         WHERE meta_key = '_product_id' AND meta_value IN ({$pid_placeholders})
+                     )",
+                    ...array_map('intval', $pids)
+                ));
             }
         }
 

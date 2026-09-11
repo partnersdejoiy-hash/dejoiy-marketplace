@@ -1,0 +1,29 @@
+/**
+ * DEJOIY Image Fix — CSS support.
+ *
+ * Rounds + fills the colourful canva placeholder cards and keeps swapped lazy
+ * images tidy. Scoped so it never interferes with editorial content.
+ */
+img.dejoiy-canva-card {
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+	display: block;
+}
+
+img.dejoiy-canva-card.woocommerce-placeholder {
+	/* colourful fallback card replaces the generic grey WooCommerce PNG */
+	aspect-ratio: 1 / 1;
+}
+
+img.lazyload,
+img.lazyload-lqip,
+img.lazyload-simple {
+	/* no grey flash while the real image swaps in */
+	background: transparent;
+}
+
+.product:hover img.lazyload,
+li.product:hover img.lazyload {
+	transition: opacity 0.25s ease;
+}
