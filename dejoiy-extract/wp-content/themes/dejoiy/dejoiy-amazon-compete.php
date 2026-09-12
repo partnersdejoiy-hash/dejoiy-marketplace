@@ -296,3 +296,137 @@ function dejoiy_amazon_compete_skip_sticky_cart_widget( $should_render, $widget 
 	return $should_render;
 }
 add_filter( 'elementor/frontend/widget/should_render', 'dejoiy_amazon_compete_skip_sticky_cart_widget', 10, 2 );
+
+/**
+ * Turn seller-entered product copy into readable sections on the PDP.
+ * Works for any product: headings like Features/Care, bullet lines, size chips.
+ *
+ * @param string $html Raw HTML.
+ * @return string
+ */
+function dejoiy_amazon_compete_format_description_html( $html ) {
+	$html = (string) $html;
+	if ( '' === trim( wp_strip_all_tags( $html ) ) ) {
+		return $html;
+	}
+	if ( false !== strpos( $html, 'class="djy-desc"' ) || false !== strpos( $html, "class='djy-desc'" ) ) {
+		return $html;
+	}
+
+	$plain = trim( wp_strip_all_tags( $html ) );
+	$bold_bits = array();
+	if ( preg_match_all( '#<(b|strong)\b[^>]*>(.*?)</\1>#is', $html, $bm ) ) {
+		$bold_bits = $bm[2];
+	}
+	$bold_plain = trim( wp_strip_all_tags( implode( ' ', $bold_bits ) ) );
+	$work       = $html;
+	if ( strlen( $bold_plain ) >= (int) ( 0.65 * strlen( $plain ) ) ) {
+		$work = preg_replace( '#</?(b|strong)\b[^>]*>#i', '', $work );
+	}
+
+	$work = preg_replace( '#<p[^>]*>\s*(?:<br\s*/?>|&nbsp;|\s)*\s*</p>#i', '', $work );
+	$work = preg_replace( '#<(br|p)\b[^>]*>#i', "\n", $work );
+	$work = preg_replace( '#</p>#i', "\n", $work );
+	$work = str_replace( array( '&nbsp;', '&#160;' ), ' ', $work );
+	$work = html_entity_decode( wp_strip_all_tags( $work ), ENT_QUOTES, 'UTF-8' );
+	$work = preg_replace( "/[ \t]+\n/", "\n", $work );
+	$lines = preg_split( '/\n+/', $work );
+	$lines = array_values(
+		array_filter(
+			array_map(
+				static function ( $line ) {
+					$line = preg_replace( '/\s+/u', ' ', (string) $line );
+					return trim( $line, " \t\n\r\0\x0B\xC2\xA0" );
+				},
+				$lines
+			)
+		)
+	);
+	if ( ! $lines ) {
+		return $html;
+	}
+
+	$heading_re = '/^(about this item|product details?|features?|key features?|highlights?|specifications?|details?|materials?|fabric|care instructions?|how to use|what.?s included|what.?s in the box|package contents?|available sizes?|available colou?rs?|size(?:s)?|colour?s?|dimensions?|description)\s*:?\s*$/i';
+	$list_re    = '/^(?:[•●○■▪►·\-–—*]|[0-9]+[.)])\s+/u';
+	$chip_heads = array( 'available sizes', 'available size', 'available colors', 'available colours', 'available color', 'available colour', 'sizes', 'size', 'colors', 'colours' );
+
+	$out  = array();
+	$list = array();
+	$last_heading = '';
+
+	$flush_list = static function () use ( &$list, &$out ) {
+		if ( ! $list ) {
+			return;
+		}
+		$items = '';
+		foreach ( $list as $item ) {
+			$items .= '<li>' . esc_html( $item ) . '</li>';
+		}
+		$out[] = '<ul class="djy-desc__list">' . $items . '</ul>';
+		$list  = array();
+	};
+
+	foreach ( $lines as $line ) {
+		if ( preg_match( $heading_re, $line ) ) {
+			$flush_list();
+			$last_heading = strtolower( rtrim( $line, " :" ) );
+			$out[]        = '<h3 class="djy-desc__h">' . esc_html( rtrim( $line, " :" ) ) . '</h3>';
+			continue;
+		}
+		if ( preg_match( $list_re, $line ) ) {
+			$list[] = preg_replace( $list_re, '', $line );
+			continue;
+		}
+		$flush_list();
+		$parts = preg_split( '/\s*,\s*/', $line );
+		$chip_ok = count( $parts ) >= 2;
+		if ( $chip_ok ) {
+			foreach ( $parts as $part ) {
+				if ( mb_strlen( $part ) > 22 ) {
+					$chip_ok = false;
+					break;
+				}
+			}
+		}
+		if ( $chip_ok && in_array( $last_heading, $chip_heads, true ) ) {
+			$chips = '';
+			foreach ( $parts as $part ) {
+				$chips .= '<span class="djy-desc__chip">' . esc_html( $part ) . '</span>';
+			}
+			$out[] = '<div class="djy-desc__chips">' . $chips . '</div>';
+			continue;
+		}
+		$out[] = '<p class="djy-desc__p">' . esc_html( $line ) . '</p>';
+	}
+	$flush_list();
+
+	return '<div class="djy-desc">' . implode( '', $out ) . '</div>';
+}
+
+/**
+ * @param string $content Content.
+ * @return string
+ */
+function dejoiy_amazon_compete_filter_product_content( $content ) {
+	if ( is_admin() || wp_doing_ajax() || ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $content;
+	}
+	return dejoiy_amazon_compete_format_description_html( $content );
+}
+add_filter( 'the_content', 'dejoiy_amazon_compete_filter_product_content', 16 );
+
+/**
+ * @param string $content Short description.
+ * @return string
+ */
+function dejoiy_amazon_compete_filter_short_description( $content ) {
+	if ( is_admin() || ! function_exists( 'is_product' ) || ! is_product() ) {
+		return $content;
+	}
+	$plain = trim( wp_strip_all_tags( (string) $content ) );
+	if ( '' === $plain ) {
+		return $content;
+	}
+	return '<p class="djy-desc__p">' . esc_html( $plain ) . '</p>';
+}
+add_filter( 'woocommerce_short_description', 'dejoiy_amazon_compete_filter_short_description', 20 );
