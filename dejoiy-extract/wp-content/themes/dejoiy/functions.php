@@ -362,3 +362,6 @@ function dejoiy_block_author_archives() {
 
 	// Load custom Order Tracking UI
 	require_once get_stylesheet_directory() . '/dejoiy-order-tracking.php';
+
+	// Load Dedicated My Account UI
+	require_once get_stylesheet_directory() . '/dejoiy-dedicated-my-account.php';
