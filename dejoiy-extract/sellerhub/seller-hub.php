@@ -69,15 +69,25 @@ if (!is_user_logged_in() && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1'
 // Handle authentication
 if (!is_user_logged_in()) {
     // Try to authenticate via POST data or cookies
-    if (isset($_POST['log']) && isset($_POST['pwd'])) {
+    $login_input = sanitize_text_field($_POST['log'] ?? ($_POST['identifier'] ?? ''));
+    $pass_input  = $_POST['pwd'] ?? ($_POST['password'] ?? '');
+    if (!empty($login_input) && !empty($pass_input)) {
+        $auth_user = class_exists('DSO_Login') ? DSO_Login::find_user_by_identifier($login_input) : null;
+        $username = $auth_user ? $auth_user->user_login : $login_input;
         $user = wp_signon([
-            'user_login' => sanitize_text_field($_POST['log']),
-            'user_password' => $_POST['pwd'],
-            'remember' => true,
+            'user_login'    => $username,
+            'user_password' => $pass_input,
+            'remember'      => true,
         ]);
         if (is_wp_error($user)) {
             // Show login form
             show_login_form($user->get_error_message());
+            exit;
+        }
+        $plugin = class_exists('Dejoiy_Seller_OS') ? Dejoiy_Seller_OS::instance() : null;
+        if ($plugin && !$plugin->is_vendor($user->ID) && !user_can($user, 'manage_options')) {
+            wp_logout();
+            show_login_form('Access Denied: This account is not registered as a seller on DEJOIY. Please sign in to customer account or register as a vendor.');
             exit;
         }
         // Redirect to seller hub
@@ -98,6 +108,19 @@ if (!$plugin->is_vendor()) {
 
 // Get current section
 $section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : 'dashboard';
+
+// Handle Report Exports (CSV / Excel) before any HTML output or buffering
+if (isset($_GET['action']) && strpos($_GET['action'], 'export_') === 0) {
+    if (class_exists('DSO_Reports')) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        $reports = new DSO_Reports();
+        if ($reports->handle_export()) {
+            exit;
+        }
+    }
+}
 
 // Handle AJAX requests
 if (isset($_GET['action']) && $_GET['action'] === 'stock_update') {
@@ -626,16 +649,6 @@ ob_start();
             </a>
         </div>
     <?php endif; ?>
-
-    <?php
-    // ── Report Export Handler ──
-    if (isset($_GET['action']) && strpos($_GET['action'], 'export_') === 0 && class_exists('DSO_Reports')) {
-        $reports = new DSO_Reports();
-        if ($reports->handle_export()) {
-            exit; // CSV sent, no HTML
-        }
-    }
-    ?>
 
     <!-- Main Content -->
     <main class="dso-main" id="dso-main">
@@ -1172,195 +1185,16 @@ echo $page_html;
 exit;
 
 /**
- * Show login form
+ * Show login form — unified modern DEJOIY authentication experience
  */
 function show_login_form($error = '') {
-    $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8080';
-    ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign In — DEJOIY Seller Central</title>
-        <link rel="icon" type="image/png" href="https://sellerhub.dejoiy.com/wp-content/uploads/2026/05/DEJOIY-FAVICON-100x100.png">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link href="https://<?php echo $host; ?>/wp-content/plugins/dejoiy-seller-os/assets/css/seller-os.css" rel="stylesheet">
-        <style>
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            body {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                background: linear-gradient(135deg, #000c2c 0%, #001553 50%, #031c5c 100%);
-                padding: 24px;
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                color: #1e293b;
-            }
-            .login-card {
-                background: #ffffff;
-                border-radius: 20px;
-                box-shadow: 0 25px 50px -12px rgba(0, 12, 44, 0.45);
-                padding: 44px 36px;
-                width: 100%;
-                max-width: 440px;
-                margin: auto;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-            }
-            .login-header {
-                text-align: center;
-                margin-bottom: 28px;
-            }
-            .login-brand-logo {
-                height: 44px;
-                width: auto;
-                margin-bottom: 14px;
-                object-fit: contain;
-            }
-            .login-badge {
-                display: inline-block;
-                background: rgba(46, 95, 208, 0.1);
-                color: #2E5FD0;
-                font-size: 11px;
-                font-weight: 800;
-                letter-spacing: 1px;
-                padding: 4px 10px;
-                border-radius: 6px;
-                margin-bottom: 12px;
-                border: 1px solid rgba(46, 95, 208, 0.25);
-            }
-            .login-card h1 {
-                font-size: 24px;
-                font-weight: 800;
-                color: #0f172a;
-                letter-spacing: -0.02em;
-            }
-            .login-card .subtitle {
-                color: #64748b;
-                font-size: 14px;
-                margin-top: 6px;
-                line-height: 1.5;
-            }
-            .login-card .error {
-                background: #fef2f2;
-                color: #991b1b;
-                padding: 12px 16px;
-                border-radius: 10px;
-                margin-bottom: 20px;
-                font-size: 13px;
-                border: 1px solid #fca5a5;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .login-card .dso-form-group {
-                margin-bottom: 20px;
-            }
-            .login-card .dso-form-group label {
-                display: block;
-                font-size: 13px;
-                font-weight: 600;
-                color: #334155;
-                margin-bottom: 8px;
-            }
-            .login-card .dso-input {
-                width: 100%;
-                padding: 13px 16px;
-                border: 1.5px solid #e2e8f0;
-                border-radius: 12px;
-                font-size: 14px;
-                font-family: inherit;
-                color: #0f172a;
-                transition: all 0.2s;
-                background: #f8fafc;
-            }
-            .login-card .dso-input:focus {
-                outline: none;
-                border-color: #2E5FD0;
-                background: #ffffff;
-                box-shadow: 0 0 0 4px rgba(46, 95, 208, 0.15);
-            }
-            .login-card .dso-btn {
-                display: block;
-                width: 100%;
-                padding: 14px 20px;
-                background: linear-gradient(135deg, #2E5FD0 0%, #C0228B 100%);
-                color: #fff;
-                border: none;
-                border-radius: 12px;
-                font-size: 15px;
-                font-weight: 700;
-                cursor: pointer;
-                transition: all 0.25s ease;
-                margin-top: 10px;
-                letter-spacing: 0.01em;
-            }
-            .login-card .dso-btn:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 8px 20px rgba(46, 95, 208, 0.35);
-            }
-            .login-card .dso-btn:active {
-                transform: translateY(0);
-            }
-            .login-footer {
-                text-align: center;
-                margin-top: 24px;
-                padding-top: 20px;
-                border-top: 1px solid #f1f5f9;
-                font-size: 13px;
-                color: #64748b;
-            }
-            .login-footer a {
-                color: #2E5FD0;
-                text-decoration: none;
-                font-weight: 600;
-            }
-            .login-footer a:hover {
-                text-decoration: underline;
-            }
-            @media (max-width: 480px) {
-                .login-card { padding: 32px 24px; }
-                .login-card h1 { font-size: 20px; }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="login-card">
-            <div class="login-header">
-                <img src="https://sellerhub.dejoiy.com/wp-content/uploads/2026/05/DEJOIY-OFFICIAL-LOGO-e1778929142857.png" alt="DEJOIY" class="login-brand-logo" />
-                <div><span class="login-badge">SELLER OPERATING SYSTEM</span></div>
-                <h1>Welcome Back</h1>
-                <p class="subtitle">Enter your seller credentials to access DEJOIY Seller Central</p>
-            </div>
-            <?php if ($error): ?>
-                <div class="error">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span><?php echo wp_kses_post($error); ?></span>
-                </div>
-            <?php endif; ?>
-            <form method="post">
-                <div class="dso-form-group">
-                    <label for="log">Merchant Email or Username</label>
-                    <input type="text" id="log" name="log" class="dso-input" placeholder="vendor@dejoiy.com" required autofocus />
-                </div>
-                <div class="dso-form-group">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                        <label for="pwd" style="margin-bottom:0;">Password</label>
-                        <a href="https://dejoiy.com/my-account/lost-password/" target="_blank" style="font-size:12px;color:#2E5FD0;text-decoration:none;font-weight:500;">Forgot?</a>
-                    </div>
-                    <input type="password" id="pwd" name="pwd" class="dso-input" placeholder="••••••••••••" required />
-                </div>
-                <button type="submit" class="dso-btn">Sign In to DEJOIY Seller Hub →</button>
-            </form>
-            <div class="login-footer">
-                <p>New to selling on DEJOIY? <a href="https://dejoiy.com/vendor-register/" target="_blank">Register as a Seller</a></p>
-                <p style="margin-top:8px;"><a href="https://dejoiy.com" target="_blank" style="color:#94a3b8;font-size:12px;">Return to DEJOIY.com ↗</a></p>
-            </div>
-        </div>
-    </body>
-    </html>
-    <?php
+    if (class_exists('DSO_Login')) {
+        DSO_Login::render_standalone_page(['is_seller' => true, 'error' => $error]);
+    } else {
+        $login_file = WP_PLUGIN_DIR . '/dejoiy-seller-os/includes/class-dso-login.php';
+        if (file_exists($login_file)) {
+            require_once $login_file;
+            DSO_Login::render_standalone_page(['is_seller' => true, 'error' => $error]);
+        }
+    }
 }
