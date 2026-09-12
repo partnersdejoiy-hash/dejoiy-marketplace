@@ -95,6 +95,10 @@ class DSO_Performance {
     public function render() {
         $vendor_id = $this->get_active_vendor_id();
         $m = $this->get_metrics( $vendor_id );
+        
+        $dispatch_health = $m['dispatch_rate'] >= 95 ? 'green' : ($m['dispatch_rate'] >= 85 ? 'amber' : 'red');
+        $odr_health = $m['odr'] <= 2.0 ? 'green' : ($m['odr'] <= 5.0 ? 'amber' : 'red');
+        $csat_health = $m['csat'] >= 90 ? 'green' : ($m['csat'] >= 75 ? 'amber' : 'red');
         ?>
         <div class="dso-page dso-performance">
             <div class="dso-page-header">
@@ -106,55 +110,115 @@ class DSO_Performance {
                         <span>/</span>
                         <span>Store Health</span>
                     </div>
-                    <h1 class="dso-page-title">Store Performance Scorecard</h1>
-                    <p class="dso-page-subtitle">Track real-time operational service levels, customer satisfaction scores, and seller badge tiers</p>
+                    <h1 class="dso-page-title">Seller Health Command Centre</h1>
+                    <p class="dso-page-subtitle">Track your operational service levels and compliance with DEJOIY marketplace standards.</p>
                 </div>
             </div>
 
-            <div class="dso-stats-row">
-                <div class="dso-stat-card">
-                    <span class="dso-stat-label">Current Seller Standing</span>
-                    <span class="dso-stat-val dso-text-primary"><?php echo esc_html( $m['tier'] ); ?></span>
-                    <span class="dso-stat-sub">Based on <?php echo $m['total_orders']; ?> live marketplace orders</span>
-                </div>
-                <div class="dso-stat-card">
-                    <span class="dso-stat-label">Order Defect Rate (ODR)</span>
-                    <span class="dso-stat-val <?php echo $m['odr'] > 2.0 ? 'dso-text-warning' : 'dso-text-success'; ?>"><?php echo $m['odr']; ?>%</span>
-                    <span class="dso-stat-sub">Marketplace Standard: &lt; 2.0%</span>
-                </div>
-                <div class="dso-stat-card">
-                    <span class="dso-stat-label">On-Time Dispatch Rate</span>
-                    <span class="dso-stat-val dso-text-success"><?php echo $m['dispatch_rate']; ?>%</span>
-                    <span class="dso-stat-sub"><?php echo $m['completed']; ?> successfully fulfilled orders</span>
-                </div>
-                <div class="dso-stat-card">
-                    <span class="dso-stat-label">Buyer Sentiment CSAT</span>
-                    <span class="dso-stat-val dso-text-success"><?php echo $m['csat']; ?>%</span>
-                    <span class="dso-stat-sub">Positive buyer satisfaction index</span>
+            <!-- Health Score Header -->
+            <div class="dso-card dso-mb-4" style="background:#f8fafc;border:none;">
+                <div class="dso-card-body" style="display:flex;align-items:center;gap:24px;">
+                    <div style="width:80px;height:80px;border-radius:50%;background:<?php echo $m['odr'] <= 2.0 ? '#10b981' : '#f59e0b'; ?>;color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;flex-shrink:0;">
+                        <?php echo $m['odr'] <= 2.0 ? 'A+' : 'B'; ?>
+                    </div>
+                    <div>
+                        <h2 style="margin:0 0 8px;font-size:20px;color:#0f1111;">Overall Seller Standing: <?php echo esc_html( $m['tier'] ); ?></h2>
+                        <p style="margin:0;color:#565959;font-size:14px;">Your account is active and in good standing. Maintain an Order Defect Rate (ODR) below 2% to keep your Platinum Partner status.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="dso-grid-2 dso-mb-4">
-                <div class="dso-card">
-                    <div class="dso-card-header"><h3 class="dso-card-title">Fulfillment SLA Standards</h3></div>
+            <div class="dso-grid-3 dso-mb-4">
+                <!-- Dispatch Rate -->
+                <div class="dso-card" style="border-top:4px solid <?php echo $dispatch_health === 'green' ? '#10b981' : ($dispatch_health === 'amber' ? '#f59e0b' : '#ef4444'); ?>;">
                     <div class="dso-card-body">
-                        <ul class="dso-clean-list">
-                            <li>✓ On-time dispatch compliance: <strong><?php echo $m['dispatch_rate']; ?>%</strong></li>
-                            <li>✓ Defect & Cancellation avoidance: <strong><?php echo 100 - $m['odr']; ?>%</strong></li>
-                            <li>✓ Tracking compliance: <strong><?php echo $m['total_orders'] > 0 ? '100%' : 'N/A'; ?></strong></li>
-                        </ul>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <span style="font-size:13px;font-weight:700;color:#334155;text-transform:uppercase;">On-Time Dispatch</span>
+                                <div style="font-size:28px;font-weight:800;color:#0f1111;margin-top:4px;"><?php echo $m['dispatch_rate']; ?>%</div>
+                            </div>
+                            <span class="dso-badge dso-badge-<?php echo $dispatch_health === 'green' ? 'success' : ($dispatch_health === 'amber' ? 'warning' : 'danger'); ?>" style="font-size:11px;text-transform:uppercase;"><?php echo $dispatch_health === 'green' ? 'Healthy' : ($dispatch_health === 'amber' ? 'Attention' : 'Critical'); ?></span>
+                        </div>
+                        <div style="margin-top:16px;font-size:13px;color:#565959;">
+                            Target: > 95%<br>
+                            <?php echo $m['completed']; ?> out of <?php echo $m['total_orders']; ?> orders shipped on time.
+                        </div>
+                        <?php if ($dispatch_health !== 'green'): ?>
+                        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                            <strong style="color:#b45309;display:block;margin-bottom:4px;font-size:13px;">What is happening?</strong>
+                            <p style="margin:0 0 12px;font-size:12px;color:#565959;">You are missing the 24-hour dispatch SLA on some orders.</p>
+                            <a href="?section=orders-processing" class="dso-btn dso-btn-sm dso-btn-outline" style="width:100%;justify-content:center;">View Delayed Orders</a>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
-                <div class="dso-card">
-                    <div class="dso-card-header"><h3 class="dso-card-title">Account Health Standing</h3></div>
+                <!-- Order Defect Rate -->
+                <div class="dso-card" style="border-top:4px solid <?php echo $odr_health === 'green' ? '#10b981' : ($odr_health === 'amber' ? '#f59e0b' : '#ef4444'); ?>;">
                     <div class="dso-card-body">
-                        <ul class="dso-clean-list">
-                            <li>✓ Policy Compliance: <strong>Zero active policy strikes</strong></li>
-                            <li>✓ Customer Claims: <strong><?php echo $m['defects']; ?> total claims/returns</strong></li>
-                            <li>✓ Support Escalation: <strong>Good Standing</strong></li>
-                        </ul>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <span style="font-size:13px;font-weight:700;color:#334155;text-transform:uppercase;">Order Defect Rate</span>
+                                <div style="font-size:28px;font-weight:800;color:#0f1111;margin-top:4px;"><?php echo $m['odr']; ?>%</div>
+                            </div>
+                            <span class="dso-badge dso-badge-<?php echo $odr_health === 'green' ? 'success' : ($odr_health === 'amber' ? 'warning' : 'danger'); ?>" style="font-size:11px;text-transform:uppercase;"><?php echo $odr_health === 'green' ? 'Healthy' : ($odr_health === 'amber' ? 'Attention' : 'Critical'); ?></span>
+                        </div>
+                        <div style="margin-top:16px;font-size:13px;color:#565959;">
+                            Target: < 2.0%<br>
+                            <?php echo $m['defects']; ?> defects out of <?php echo $m['total_orders']; ?> orders.
+                        </div>
+                        <?php if ($odr_health !== 'green'): ?>
+                        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                            <strong style="color:#b45309;display:block;margin-bottom:4px;font-size:13px;">What is happening?</strong>
+                            <p style="margin:0 0 12px;font-size:12px;color:#565959;">Customer cancellations or returns are negatively impacting your score.</p>
+                            <a href="?section=orders-cancelled" class="dso-btn dso-btn-sm dso-btn-outline" style="width:100%;justify-content:center;">Review Defects</a>
+                        </div>
+                        <?php endif; ?>
                     </div>
+                </div>
+
+                <!-- CSAT -->
+                <div class="dso-card" style="border-top:4px solid <?php echo $csat_health === 'green' ? '#10b981' : ($csat_health === 'amber' ? '#f59e0b' : '#ef4444'); ?>;">
+                    <div class="dso-card-body">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <span style="font-size:13px;font-weight:700;color:#334155;text-transform:uppercase;">Customer Satisfaction</span>
+                                <div style="font-size:28px;font-weight:800;color:#0f1111;margin-top:4px;"><?php echo $m['csat']; ?>%</div>
+                            </div>
+                            <span class="dso-badge dso-badge-<?php echo $csat_health === 'green' ? 'success' : ($csat_health === 'amber' ? 'warning' : 'danger'); ?>" style="font-size:11px;text-transform:uppercase;"><?php echo $csat_health === 'green' ? 'Healthy' : ($csat_health === 'amber' ? 'Attention' : 'Critical'); ?></span>
+                        </div>
+                        <div style="margin-top:16px;font-size:13px;color:#565959;">
+                            Target: > 90%<br>
+                            Based on review sentiment and return reasons.
+                        </div>
+                        <?php if ($csat_health !== 'green'): ?>
+                        <div style="margin-top:16px;padding-top:16px;border-top:1px solid #e2e8f0;">
+                            <strong style="color:#b45309;display:block;margin-bottom:4px;font-size:13px;">What is happening?</strong>
+                            <p style="margin:0 0 12px;font-size:12px;color:#565959;">Recent reviews indicate some product quality or mismatch issues.</p>
+                            <a href="?section=reviews" class="dso-btn dso-btn-sm dso-btn-outline" style="width:100%;justify-content:center;">Review Feedback</a>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dso-card">
+                <div class="dso-card-header"><h3 class="dso-card-title">Policy Compliance</h3></div>
+                <div class="dso-card-body">
+                    <ul class="dso-clean-list" style="margin:0;padding:0;list-style:none;font-size:14px;">
+                        <li style="padding:12px 0;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                            <span>Intellectual Property Violations</span>
+                            <span class="dso-badge dso-badge-gray">0 strikes</span>
+                        </li>
+                        <li style="padding:12px 0;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                            <span>Product Authenticity Customer Complaints</span>
+                            <span class="dso-badge dso-badge-gray">0 complaints</span>
+                        </li>
+                        <li style="padding:12px 0;display:flex;align-items:center;justify-content:space-between;">
+                            <span>Restricted Products Policy Violations</span>
+                            <span class="dso-badge dso-badge-gray">0 violations</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>

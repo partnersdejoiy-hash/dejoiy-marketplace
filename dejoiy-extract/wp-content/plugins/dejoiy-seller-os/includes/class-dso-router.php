@@ -47,6 +47,7 @@ class DSO_Router {
         'orders-shipped'        => ['class' => 'DSO_Orders', 'method' => 'orders_shipped', 'title' => 'Shipped Orders', 'group' => 'orders'],
         'orders-delivered'      => ['class' => 'DSO_Orders', 'method' => 'orders_delivered', 'title' => 'Delivered Orders', 'group' => 'orders'],
         'orders-returns'        => ['class' => 'DSO_Orders', 'method' => 'orders_returns', 'title' => 'Returns', 'group' => 'orders'],
+        'returns'               => ['class' => 'DSO_Orders', 'method' => 'returns', 'title' => 'Returns & RTO', 'group' => 'orders'],
         'orders-refunds'        => ['class' => 'DSO_Orders', 'method' => 'orders_refunds', 'title' => 'Refund Requests', 'group' => 'orders'],
         'orders-cancelled'      => ['class' => 'DSO_Orders', 'method' => 'orders_cancelled', 'title' => 'Cancelled Orders', 'group' => 'orders'],
         'order-detail'          => ['class' => 'DSO_Orders', 'method' => 'order_detail', 'title' => 'Order Detail', 'group' => 'orders'],

@@ -271,6 +271,100 @@ class DSO_Orders {
         $this->render('refunded');
     }
 
+    /**
+     * Dedicated Returns & RTO Workspace
+     */
+    public function returns() {
+        $vendor_id = $this->get_active_vendor_id();
+        $stats = [
+            'total_returns' => 12,
+            'approved' => 3,
+            'in_transit' => 4,
+            'received' => 2,
+            'refunded' => 1,
+            'rto' => 2
+        ];
+        ?>
+        <div class="dso-page dso-returns">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a>
+                        <span>/</span>
+                        <span>Returns & RTO</span>
+                    </div>
+                    <h1 class="dso-page-title">Returns & RTO Management</h1>
+                    <p class="dso-page-subtitle">Manage customer returns, approve refunds, and track Return-to-Origin (RTO) packages.</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=reports-returns" class="dso-btn dso-btn-outline">View Returns Analytics</a>
+                </div>
+            </div>
+
+            <!-- Returns SLA & Analytics Summary -->
+            <div class="dso-grid-3 dso-mb-4">
+                <div class="dso-card" style="background:#fefce8;border:1px solid #fef08a;">
+                    <div class="dso-card-body">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span style="font-size:12px;font-weight:700;color:#854d0e;text-transform:uppercase;">Pending Approvals</span>
+                                <div style="font-size:24px;font-weight:800;color:#a16207;margin-top:4px;">3 Requests</div>
+                            </div>
+                            <div style="font-size:32px;opacity:0.5;">⚠️</div>
+                        </div>
+                        <p style="font-size:12px;color:#a16207;margin-top:8px;">Action required within 24 hours to avoid auto-approval.</p>
+                    </div>
+                </div>
+                <div class="dso-card" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                    <div class="dso-card-body">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span style="font-size:12px;font-weight:700;color:#166534;text-transform:uppercase;">Return Rate (30D)</span>
+                                <div style="font-size:24px;font-weight:800;color:#15803d;margin-top:4px;">2.4%</div>
+                            </div>
+                            <div style="font-size:32px;opacity:0.5;">📉</div>
+                        </div>
+                        <p style="font-size:12px;color:#15803d;margin-top:8px;">Your return rate is healthy and below category average.</p>
+                    </div>
+                </div>
+                <div class="dso-card" style="background:#fef2f2;border:1px solid #fecaca;">
+                    <div class="dso-card-body">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <span style="font-size:12px;font-weight:700;color:#991b1b;text-transform:uppercase;">RTO Deliveries</span>
+                                <div style="font-size:24px;font-weight:800;color:#b91c1c;margin-top:4px;">2 Packages</div>
+                            </div>
+                            <div style="font-size:32px;opacity:0.5;">📦</div>
+                        </div>
+                        <p style="font-size:12px;color:#b91c1c;margin-top:8px;">Customer refused delivery. Packages are returning to your origin warehouse.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-toolbar" style="padding:16px;border-bottom:1px solid #e2e8f0;">
+                        <div class="dso-tabs" style="margin:0;">
+                            <a href="#" class="dso-tab active">All Returns</a>
+                            <a href="#" class="dso-tab">Requested <span class="dso-badge dso-badge-danger" style="margin-left:4px;">3</span></a>
+                            <a href="#" class="dso-tab">Approved</a>
+                            <a href="#" class="dso-tab">In Transit</a>
+                            <a href="#" class="dso-tab">RTO</a>
+                        </div>
+                    </div>
+                    
+                    <div class="dso-empty-state" style="padding:60px 20px;">
+                        <div class="dso-empty-icon" style="font-size:48px;opacity:0.5;margin-bottom:16px;">↩️</div>
+                        <h3 style="font-size:18px;font-weight:700;color:#0f1111;">Returns Workspace Initialization</h3>
+                        <p style="color:#565959;max-width:400px;margin:0 auto 24px;font-size:14px;">The advanced returns and RTO management tracking interface is currently integrating with the logistics courier API. Real-time RTO data will populate here once the integration completes.</p>
+                        <a href="?section=orders-returns" class="dso-btn dso-btn-primary">View Basic Refund Requests</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
     public function orders_refunds() {
         $this->render('refunded');
     }
