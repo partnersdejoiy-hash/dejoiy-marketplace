@@ -290,7 +290,11 @@ function dejoiy_amazon_compete_skip_sticky_cart_widget( $should_render, $widget 
 	if ( ! $should_render || ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) ) {
 		return $should_render;
 	}
-	if ( 'woocommerce-product-etheme_sticky_cart' === $widget->get_name() ) {
+	$name = $widget->get_name();
+	if ( 'woocommerce-product-etheme_sticky_cart' === $name ) {
+		return false;
+	}
+	if ( 'woocommerce-archive-etheme_dynamic_categories' === $name ) {
 		return false;
 	}
 	return $should_render;

@@ -113,6 +113,19 @@ body.dejoiy-mobile-product-view {
 	}
 }
 
+/* Shop / category archives: hide XStore Spotlight category circles (All, New, Sale…). */
+.elementor-widget-woocommerce-archive-etheme_dynamic_categories,
+.etheme-dynamic-categories-wrapper,
+.etheme-category-grid,
+.etheme-category-slider,
+.swiper-entry.etheme-category-slider {
+	display: none !important;
+	height: 0 !important;
+	overflow: hidden !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
 /* Product description: readable layout for seller-entered text (any product). */
 body.single-product .woocommerce-Tabs-panel--description,
 body.single-product #tab-description,
