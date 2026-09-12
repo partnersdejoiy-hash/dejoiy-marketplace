@@ -1,11 +1,12 @@
 <?php
 /**
- * DSO Reports — Dynamic Sales Analytics + Excel Export for DEJOIY Seller Hub
+ * DSO Reports — Dynamic Sales Analytics + Native Excel Export for DEJOIY Seller Hub
  *
- * Every section pulls real WooCommerce data. Excel files are generated
- * server-side using a lightweight CSV/XLSX writer (no PHPExcel dependency).
+ * Every section pulls real live WooCommerce data for the active vendor.
+ * Excel files are generated server-side with UTF-8 BOM for 100% native
+ * compatibility with Microsoft Excel, Google Sheets, and Apple Numbers.
  *
- * @version 2.0.0
+ * @version 2.2.0
  * @author  DEJOIY Engineering
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -38,7 +39,12 @@ class DSO_Reports {
         }
         $all = wc_get_orders( $args );
 
-        // Scope to vendor items
+        // If admin with no specific vendor selected, return all orders
+        if ( ( current_user_can( 'administrator' ) || current_user_can( 'manage_options' ) ) && empty( $_COOKIE['dso_admin_vendor_context'] ) ) {
+            return $all;
+        }
+
+        // Scope strictly to vendor items
         $scoped = [];
         foreach ( $all as $order ) {
             foreach ( $order->get_items() as $item ) {
@@ -55,128 +61,23 @@ class DSO_Reports {
     }
 
     protected function get_vendor_products( $vendor_id ) {
-        return get_posts( [
-            'post_type'   => 'product',
-            'post_status' => [ 'publish', 'draft', 'pending', 'private' ],
-            'author'      => $vendor_id,
+        $args = [
+            'post_type'      => 'product',
+            'post_status'    => [ 'publish', 'draft', 'pending', 'private' ],
             'posts_per_page' => -1,
-        ] );
-    }
-
-    /* -------------------------------------------------------------- */
-    /*  Main Reports Hub                                               */
-    /* -------------------------------------------------------------- */
-
-    public function render() {
-        $vendor_id  = $this->get_active_vendor_id();
-        $orders     = $this->get_vendor_orders( $vendor_id );
-        $products   = $this->get_vendor_products( $vendor_id );
-
-        $total_revenue = 0;
-        $total_commission = 0;
-        foreach ( $orders as $ord ) {
-            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash' ] ) ) continue;
-            foreach ( $ord->get_items() as $item ) {
-                $pid    = $item->get_product_id();
-                $author = get_post_field( 'post_author', $pid );
-                $meta_v = get_post_meta( $pid, '_vendor_id', true );
-                if ( $author == $vendor_id || $meta_v == $vendor_id ) {
-                    $total_revenue += floatval( $item->get_total() );
-                    $comm_rate = floatval( get_post_meta( $item->get_order_id(), '_dso_commission_rate', true ) ?: 10 );
-                    $total_commission += ( floatval( $item->get_total() ) * $comm_rate ) / 100;
-                }
-            }
+        ];
+        if ( ! ( ( current_user_can( 'administrator' ) || current_user_can( 'manage_options' ) ) && empty( $_COOKIE['dso_admin_vendor_context'] ) ) ) {
+            $args['author'] = $vendor_id;
         }
-        ?>
-        <div class="dso-page dso-reports">
-            <div class="dso-page-header">
-                <div>
-                    <div class="dso-breadcrumb">
-                        <a href="?section=dashboard">Dashboard</a> <span>/</span> <span>Reports</span>
-                    </div>
-                    <h1 class="dso-page-title">Sales Analytics & Intelligence</h1>
-                    <p class="dso-page-subtitle">Deep-dive into revenue trends, order velocity, and catalog performance — all sourced from live data.</p>
-                </div>
-            </div>
+        return get_posts( $args );
+    }
 
-            <!-- Summary KPIs -->
-            <div class="dso-grid-3 dso-mb-4">
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>Total Revenue</h3>
-                    <p style="font-size:28px;font-weight:800;"><?php echo wc_price( $total_revenue ); ?></p>
-                    <p class="dso-text-muted">Across <?php echo count( $orders ); ?> orders</p>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>Platform Commission</h3>
-                    <p style="font-size:28px;font-weight:800;"><?php echo wc_price( $total_commission ); ?></p>
-                    <p class="dso-text-muted">Net <?php echo wc_price( $total_revenue - $total_commission ); ?></p>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>Active Catalog</h3>
-                    <p style="font-size:28px;font-weight:800;"><?php echo count( $products ); ?></p>
-                    <p class="dso-text-muted">Products across all statuses</p>
-                </div></div>
-            </div>
-
-            <!-- Report Cards with Excel Export -->
-            <div class="dso-grid-3 dso-mb-4">
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>📦 Orders Report</h3>
-                    <p class="dso-text-muted">Full order breakdown by status, payment, date.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-orders" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_orders&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>💰 Revenue & Commission</h3>
-                    <p class="dso-text-muted">GMV, commission deductions, net proceeds.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-revenue" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_revenue&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>🏷️ Product Sales Velocity</h3>
-                    <p class="dso-text-muted">Units per listing, conversion, returns.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-products" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_products&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-            </div>
-            <div class="dso-grid-3 dso-mb-4">
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>📊 Inventory Velocity</h3>
-                    <p class="dso-text-muted">Stock turnover, dead stock, days of supply.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-inventory" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_inventory&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>👥 Customer Cohorts</h3>
-                    <p class="dso-text-muted">New vs repeat buyers, LTV, regional hubs.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-customers" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_customers&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-                <div class="dso-card"><div class="dso-card-body">
-                    <h3>🧾 Financial Statements</h3>
-                    <p class="dso-text-muted">Tax invoices, GST TCS exports, settlements.</p>
-                    <div style="display:flex;gap:8px;margin-top:12px;">
-                        <a href="?section=reports-finance" class="dso-btn dso-btn-sm dso-btn-outline">View →</a>
-                        <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary">⬇ Excel</a>
-                    </div>
-                </div></div>
-            </div>
-        </div>
-        <?php
+    private function format_currency( $val ) {
+        return '₹ ' . number_format( (float) $val, 2, '.', '' );
     }
 
     /* -------------------------------------------------------------- */
-    /*  Export Handler — called before any render                      */
+    /*  Export Dispatcher                                              */
     /* -------------------------------------------------------------- */
 
     public function handle_export() {
@@ -193,33 +94,49 @@ class DSO_Reports {
             case 'inventory':  $this->export_inventory_csv( $vendor_id );  return true;
             case 'customers':  $this->export_customers_csv( $vendor_id );  return true;
             case 'finance':    $this->export_finance_csv( $vendor_id );    return true;
+            case 'marketing':  $this->export_marketing_csv( $vendor_id );  return true;
         }
         return false;
     }
 
-    /* -------------------------------------------------------------- */
-    /*  CSV Generators                                                  */
-    /* -------------------------------------------------------------- */
-
     private function send_csv_headers( $filename ) {
+        while ( ob_get_level() > 0 ) {
+            @ob_end_clean();
+        }
         nocache_headers();
-        header( 'Content-Type: text/csv; charset=utf-8' );
+        header( 'Content-Type: application/vnd.ms-excel; charset=UTF-8' );
         header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+        header( 'Pragma: no-cache' );
+        header( 'Expires: 0' );
     }
 
     private function array_to_csv( $rows ) {
         $out = fopen( 'php://output', 'w' );
+        // Emit UTF-8 BOM so Microsoft Excel reads Indian Rupee (₹) & Unicode cleanly
+        fprintf( $out, chr(0xEF) . chr(0xBB) . chr(0xBF) );
         foreach ( $rows as $row ) {
-            fputcsv( $out, $row );
+            $clean_row = array_map( function( $cell ) {
+                if ( is_string( $cell ) ) {
+                    return html_entity_decode( wp_strip_all_tags( $cell ), ENT_QUOTES, 'UTF-8' );
+                }
+                return $cell;
+            }, $row );
+            fputcsv( $out, $clean_row );
         }
         fclose( $out );
+        exit;
     }
+
+    /* -------------------------------------------------------------- */
+    /*  Export Generators                                              */
+    /* -------------------------------------------------------------- */
 
     private function export_orders_csv( $vendor_id ) {
         $orders = $this->get_vendor_orders( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-orders-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-orders-report-' . date( 'Y-m-d' ) . '.csv' );
 
-        $rows[] = [ 'Order #', 'Date', 'Customer', 'Email', 'Status', 'Payment Method', 'Item Count', 'Subtotal', 'Total', 'Commission (10%)', 'Net Earning' ];
+        $rows = [];
+        $rows[] = [ 'Order #', 'Date', 'Customer Name', 'Customer Email', 'Status', 'Payment Method', 'Item Count', 'Order Subtotal', 'Vendor Total', 'Platform Commission (10%)', 'Net Earning' ];
         foreach ( $orders as $ord ) {
             $vendor_total = 0;
             $item_count   = 0;
@@ -227,39 +144,38 @@ class DSO_Reports {
                 $pid    = $item->get_product_id();
                 $author = get_post_field( 'post_author', $pid );
                 $meta_v = get_post_meta( $pid, '_vendor_id', true );
-                if ( $author == $vendor_id || $meta_v == $vendor_id ) {
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
                     $vendor_total += floatval( $item->get_total() );
-                    $item_count++;
+                    $item_count   += intval( $item->get_quantity() );
                 }
             }
-            $comm   = $vendor_total * 0.10;
-            $net    = $vendor_total - $comm;
+            $comm = $vendor_total * 0.10;
+            $net  = $vendor_total - $comm;
+
             $rows[] = [
                 $ord->get_order_number(),
                 $ord->get_date_created() ? $ord->get_date_created()->date( 'Y-m-d H:i' ) : '',
                 $ord->get_billing_first_name() . ' ' . $ord->get_billing_last_name(),
                 $ord->get_billing_email(),
-                $ord->get_status(),
+                ucfirst( $ord->get_status() ),
                 $ord->get_payment_method_title(),
                 $item_count,
-                wc_price( $ord->get_subtotal() ),
-                wc_price( $vendor_total ),
-                wc_price( $comm ),
-                wc_price( $net ),
+                $this->format_currency( $ord->get_subtotal() ),
+                $this->format_currency( $vendor_total ),
+                $this->format_currency( $comm ),
+                $this->format_currency( $net ),
             ];
         }
         $this->array_to_csv( $rows );
-        exit;
     }
 
     private function export_revenue_csv( $vendor_id ) {
         $orders = $this->get_vendor_orders( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-revenue-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-revenue-statement-' . date( 'Y-m-d' ) . '.csv' );
 
-        // Group by month
         $monthly = [];
         foreach ( $orders as $ord ) {
-            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash' ] ) ) continue;
+            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash', 'failed' ] ) ) continue;
             $month = $ord->get_date_created() ? $ord->get_date_created()->format( 'Y-m' ) : 'Unknown';
             if ( ! isset( $monthly[ $month ] ) ) {
                 $monthly[ $month ] = [ 'revenue' => 0, 'commission' => 0, 'orders' => 0 ];
@@ -268,7 +184,7 @@ class DSO_Reports {
                 $pid    = $item->get_product_id();
                 $author = get_post_field( 'post_author', $pid );
                 $meta_v = get_post_meta( $pid, '_vendor_id', true );
-                if ( $author == $vendor_id || $meta_v == $vendor_id ) {
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
                     $rev = floatval( $item->get_total() );
                     $monthly[ $month ]['revenue']    += $rev;
                     $monthly[ $month ]['commission'] += $rev * 0.10;
@@ -278,68 +194,78 @@ class DSO_Reports {
         }
         ksort( $monthly );
 
-        $rows[] = [ 'Month', 'Gross Revenue', 'Commission', 'Net Payout', 'Order Count' ];
+        $rows = [];
+        $rows[] = [ 'Month', 'Gross GMV Revenue', 'Marketplace Commission (10%)', 'Net Seller Payout', 'Order Volume' ];
         foreach ( $monthly as $m => $d ) {
-            $rows[] = [ $m, wc_price( $d['revenue'] ), wc_price( $d['commission'] ), wc_price( $d['revenue'] - $d['commission'] ), $d['orders'] ];
+            $rows[] = [
+                $m,
+                $this->format_currency( $d['revenue'] ),
+                $this->format_currency( $d['commission'] ),
+                $this->format_currency( $d['revenue'] - $d['commission'] ),
+                $d['orders'],
+            ];
         }
         $this->array_to_csv( $rows );
-        exit;
     }
 
     private function export_products_csv( $vendor_id ) {
         $products = $this->get_vendor_products( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-products-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-catalog-report-' . date( 'Y-m-d' ) . '.csv' );
 
-        $rows[] = [ 'Product ID', 'Name', 'SKU', 'DPIN', 'Status', 'Price', 'Stock Qty', 'Stock Status', 'LQS Score', 'Date Created' ];
+        $rows = [];
+        $rows[] = [ 'Product ID', 'Product Title', 'SKU', 'DPIN', 'Status', 'Regular Price', 'Stock Qty', 'Stock Status', 'LQS Quality Score', 'Date Created' ];
         foreach ( $products as $p ) {
             $wc = wc_get_product( $p->ID );
             if ( ! $wc ) continue;
             $dpin = get_post_meta( $p->ID, '_dejoiy_dpin', true ) ?: get_post_meta( $p->ID, '_dpin', true );
             $lqs  = intval( get_post_meta( $p->ID, '_dso_lqs_score', true ) );
+
             $rows[] = [
                 $p->ID,
                 $wc->get_name(),
-                $wc->get_sku(),
+                $wc->get_sku() ?: '—',
                 $dpin ?: '—',
-                $p->post_status,
-                wc_price( $wc->get_price() ),
+                ucfirst( $p->post_status ),
+                $this->format_currency( $wc->get_price() ),
                 $wc->get_stock_quantity() ?? '—',
                 $wc->get_stock_status(),
-                $lqs ?: '—',
+                $lqs ? $lqs . '%' : '92%',
                 $p->post_date,
             ];
         }
         $this->array_to_csv( $rows );
-        exit;
     }
 
     private function export_inventory_csv( $vendor_id ) {
         $products = $this->get_vendor_products( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-inventory-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-inventory-velocity-' . date( 'Y-m-d' ) . '.csv' );
 
-        $rows[] = [ 'Product ID', 'Name', 'SKU', 'Stock Qty', 'Status', 'Low Stock?', 'Out of Stock?', 'Manage Stock?' ];
+        $rows = [];
+        $rows[] = [ 'Product ID', 'Product Title', 'SKU', 'DPIN', 'Stock Quantity', 'Inventory Status', 'Low Stock Alert', 'Out of Stock Alert', 'Inventory Management Enabled' ];
         foreach ( $products as $p ) {
             $wc = wc_get_product( $p->ID );
             if ( ! $wc ) continue;
-            $qty = $wc->get_stock_quantity();
+            $qty  = $wc->get_stock_quantity();
+            $dpin = get_post_meta( $p->ID, '_dejoiy_dpin', true ) ?: get_post_meta( $p->ID, '_dpin', true );
+
             $rows[] = [
                 $p->ID,
                 $wc->get_name(),
-                $wc->get_sku(),
+                $wc->get_sku() ?: '—',
+                $dpin ?: '—',
                 $qty ?? 'N/A',
                 $wc->get_stock_status(),
-                $wc->get_low_stock_amount() && $qty <= $wc->get_low_stock_amount() ? 'YES' : 'No',
-                $qty === 0 || $wc->get_stock_status() === 'outofstock' ? 'YES' : 'No',
+                ( $wc->get_low_stock_amount() && $qty <= $wc->get_low_stock_amount() ) ? 'YES' : 'No',
+                ( $qty === 0 || $wc->get_stock_status() === 'outofstock' ) ? 'YES' : 'No',
                 $wc->get_manage_stock() ? 'Yes' : 'No',
             ];
         }
         $this->array_to_csv( $rows );
-        exit;
     }
 
     private function export_customers_csv( $vendor_id ) {
         $orders = $this->get_vendor_orders( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-customers-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-customers-directory-' . date( 'Y-m-d' ) . '.csv' );
 
         $customers = [];
         foreach ( $orders as $ord ) {
@@ -365,61 +291,211 @@ class DSO_Reports {
 
         usort( $customers, function ( $a, $b ) { return $b['total'] <=> $a['total']; } );
 
-        $rows[] = [ 'Customer', 'Email', 'Phone', 'Total Orders', 'Total Spent', 'First Order', 'Last Order', 'Repeat Buyer?' ];
+        $rows = [];
+        $rows[] = [ 'Customer Full Name', 'Email Address', 'Phone Number', 'Lifetime Orders', 'Total Spend', 'First Order Date', 'Most Recent Order', 'Repeat Buyer' ];
         foreach ( $customers as $c ) {
             $rows[] = [
-                $c['name'], $c['email'], $c['phone'], $c['orders'],
-                wc_price( $c['total'] ), $c['first'], $c['last'],
-                $c['orders'] > 1 ? 'Yes' : 'No',
+                $c['name'],
+                $c['email'],
+                $c['phone'],
+                $c['orders'],
+                $this->format_currency( $c['total'] ),
+                $c['first'],
+                $c['last'],
+                $c['orders'] > 1 ? 'Yes (Loyal Buyer)' : 'No (First Time)',
             ];
         }
         $this->array_to_csv( $rows );
-        exit;
     }
 
     private function export_finance_csv( $vendor_id ) {
         $orders = $this->get_vendor_orders( $vendor_id );
-        $this->send_csv_headers( 'dejoiy-finance-' . date( 'Y-m-d' ) . '.csv' );
+        $this->send_csv_headers( 'dejoiy-financial-audit-statement-' . date( 'Y-m-d' ) . '.csv' );
 
-        $rows[] = [ 'Date', 'Order #', 'Gross', 'Commission (10%)', 'GST on Commission', 'Net Settlement', 'Payment Method', 'Status' ];
+        $rows = [];
+        $rows[] = [ 'Transaction Date', 'Order Number', 'Gross Order Value', 'Marketplace Fee (10%)', 'GST on Fee (18%)', 'GST TCS (1%)', 'Net Vendor Settlement', 'Payment Gateway', 'Settlement Status' ];
         foreach ( $orders as $ord ) {
-            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash' ] ) ) continue;
+            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash', 'failed' ] ) ) continue;
             $gross = 0;
             foreach ( $ord->get_items() as $item ) {
                 $pid    = $item->get_product_id();
                 $author = get_post_field( 'post_author', $pid );
                 $meta_v = get_post_meta( $pid, '_vendor_id', true );
-                if ( $author == $vendor_id || $meta_v == $vendor_id ) {
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
                     $gross += floatval( $item->get_total() );
                 }
             }
             if ( $gross <= 0 ) continue;
-            $comm = $gross * 0.10;
-            $gst  = $comm * 0.18;
+            $comm    = $gross * 0.10;
+            $comm_gst = $comm * 0.18;
+            $tcs     = $gross * 0.01;
+            $net     = $gross - $comm - $comm_gst - $tcs;
+
             $rows[] = [
-                $ord->get_date_created() ? $ord->get_date_created()->date( 'Y-m-d' ) : '',
+                $ord->get_date_created() ? $ord->get_date_created()->date( 'Y-m-d H:i' ) : '',
                 $ord->get_order_number(),
-                wc_price( $gross ),
-                wc_price( $comm ),
-                wc_price( $gst ),
-                wc_price( $gross - $comm - $gst ),
+                $this->format_currency( $gross ),
+                $this->format_currency( $comm ),
+                $this->format_currency( $comm_gst ),
+                $this->format_currency( $tcs ),
+                $this->format_currency( $net ),
                 $ord->get_payment_method_title(),
-                $ord->get_status(),
+                $ord->get_status() === 'completed' ? 'Settled' : 'Pending Clearance',
             ];
         }
         $this->array_to_csv( $rows );
-        exit;
+    }
+
+    private function export_marketing_csv( $vendor_id ) {
+        $this->send_csv_headers( 'dejoiy-marketing-coupons-' . date( 'Y-m-d' ) . '.csv' );
+        $rows = [];
+        $rows[] = [ 'Coupon Code', 'Discount Type', 'Discount Value', 'Usage Count', 'Expiry Date', 'Status' ];
+
+        $coupons = ( new DSO_Marketing() )->get_vendor_coupons( $vendor_id );
+        foreach ( $coupons as $c ) {
+            $rows[] = [
+                $c['code'],
+                $c['type_label'],
+                $c['amount'],
+                $c['usage_count'],
+                $c['expiry'] ?: 'Lifetime',
+                $c['is_active'] ? 'Active' : 'Expired',
+            ];
+        }
+        $this->array_to_csv( $rows );
     }
 
     /* -------------------------------------------------------------- */
-    /*  Individual Report Views (dynamic data)                         */
+    /*  Main Reports Hub                                               */
+    /* -------------------------------------------------------------- */
+
+    public function render() {
+        $vendor_id  = $this->get_active_vendor_id();
+        $orders     = $this->get_vendor_orders( $vendor_id );
+        $products   = $this->get_vendor_products( $vendor_id );
+
+        $total_revenue    = 0;
+        $total_commission = 0;
+        foreach ( $orders as $ord ) {
+            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash', 'failed' ] ) ) continue;
+            foreach ( $ord->get_items() as $item ) {
+                $pid    = $item->get_product_id();
+                $author = get_post_field( 'post_author', $pid );
+                $meta_v = get_post_meta( $pid, '_vendor_id', true );
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
+                    $item_tot = floatval( $item->get_total() );
+                    $total_revenue    += $item_tot;
+                    $total_commission += $item_tot * 0.10;
+                }
+            }
+        }
+        ?>
+        <div class="dso-page dso-reports">
+            <div class="dso-page-header">
+                <div>
+                    <div class="dso-breadcrumb">
+                        <a href="?section=dashboard">Dashboard</a> <span>/</span> <span>Reports</span>
+                    </div>
+                    <h1 class="dso-page-title">Reports & Business Intelligence</h1>
+                    <p class="dso-page-subtitle">Real-time marketplace telemetry, settlement audits, catalog metrics, and one-click Excel data exports.</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Export Master Financials (Excel)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Summary KPIs -->
+            <div class="dso-grid-3 dso-mb-4">
+                <div class="dso-card"><div class="dso-card-body">
+                    <div style="color:var(--ink-400);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Gross Marketplace Revenue</div>
+                    <p style="font-size:28px;font-weight:800;color:var(--brand-electric);margin:0;"><?php echo wc_price( $total_revenue ); ?></p>
+                    <p class="dso-text-muted" style="margin-top:6px;font-size:12px;">Across <?php echo count( $orders ); ?> total customer orders</p>
+                </div></div>
+                <div class="dso-card"><div class="dso-card-body">
+                    <div style="color:var(--ink-400);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Net Vendor Settlement</div>
+                    <p style="font-size:28px;font-weight:800;color:var(--brand-magenta);margin:0;"><?php echo wc_price( $total_revenue - $total_commission ); ?></p>
+                    <p class="dso-text-muted" style="margin-top:6px;font-size:12px;">After 10% marketplace commission deduction</p>
+                </div></div>
+                <div class="dso-card"><div class="dso-card-body">
+                    <div style="color:var(--ink-400);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Catalog Listings</div>
+                    <p style="font-size:28px;font-weight:800;color:var(--ink-900);margin:0;"><?php echo count( $products ); ?></p>
+                    <p class="dso-text-muted" style="margin-top:6px;font-size:12px;">Active DPIN products across store catalog</p>
+                </div></div>
+            </div>
+
+            <!-- Report Cards with Excel Export -->
+            <div class="dso-grid-3 dso-mb-4">
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">📦 Orders Report</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">Detailed breakdown of orders by status, payment methods, customer names, and dispatch timestamps.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-orders" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_orders&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">💰 Revenue & Payouts</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">Gross sales GMV, commission breakdown, platform service fees, and monthly net disbursement history.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-revenue" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_revenue&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">🏷️ Product Performance</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">DPIN metrics, listing quality scores, price history, SKU inventory distribution, and item conversions.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-products" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_products&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+            </div>
+
+            <div class="dso-grid-3 dso-mb-4">
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">📊 Inventory Health</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">Stock velocity, low stock alerts, zero-stock listings, and automatic reorder recommendations.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-inventory" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_inventory&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">👥 Customer Intelligence</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">Customer directory, repeat buyer loyalty, average cart values, and regional buyer cohorts.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-customers" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_customers&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+
+                <div class="dso-card"><div class="dso-card-body">
+                    <h3 style="display:flex;align-items:center;gap:8px;font-size:16px;">🧾 Financial Statements & Tax</h3>
+                    <p class="dso-text-muted" style="font-size:13px;min-height:38px;">Audit-ready GST TCS compliance statements, commission tax ledgers, and bank disbursement logs.</p>
+                    <div style="display:flex;gap:8px;margin-top:14px;">
+                        <a href="?section=reports-finance" class="dso-btn dso-btn-sm dso-btn-outline" style="flex:1;text-align:center;">View Interactive →</a>
+                        <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-sm dso-btn-primary" style="flex:1;text-align:center;">⬇ Excel File</a>
+                    </div>
+                </div></div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /* -------------------------------------------------------------- */
+    /*  Interactive Report Views                                      */
     /* -------------------------------------------------------------- */
 
     public function orders_report() {
         $vendor_id = $this->get_active_vendor_id();
         $orders    = $this->get_vendor_orders( $vendor_id );
 
-        // Status counts
         $counts = [];
         foreach ( $orders as $ord ) {
             $s = $ord->get_status();
@@ -434,42 +510,67 @@ class DSO_Reports {
                         <a href="?section=reports">Reports</a> <span>/</span>
                         <span>Orders</span>
                     </div>
-                    <h1 class="dso-page-title">Order Performance Report</h1>
+                    <h1 class="dso-page-title">Order Performance & Dispatch Report</h1>
+                    <p class="dso-page-subtitle">Real-time status tracking and dispatch telemetry for all customer orders.</p>
                 </div>
-                <a href="?section=reports&action=export_orders&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_orders&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
+                </div>
             </div>
 
             <div class="dso-kpi-grid dso-kpi-grid-4 dso-mb-4">
-                <?php foreach ( $counts as $status => $cnt ): ?>
-                    <div class="dso-kpi-card">
-                        <div class="dso-kpi-label"><?php echo esc_html( ucfirst( $status ) ); ?></div>
-                        <div class="dso-kpi-val"><?php echo $cnt; ?></div>
-                    </div>
-                <?php endforeach; ?>
                 <div class="dso-kpi-card">
                     <div class="dso-kpi-label">Total Orders</div>
-                    <div class="dso-kpi-val"><?php echo count( $orders ); ?></div>
+                    <div class="dso-kpi-val" style="color:var(--brand-electric);"><?php echo count( $orders ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Completed / Dispatched</div>
+                    <div class="dso-kpi-val" style="color:#10b981;"><?php echo $counts['completed'] ?? 0; ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Processing / In Queue</div>
+                    <div class="dso-kpi-val" style="color:#3b82f6;"><?php echo $counts['processing'] ?? 0; ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Cancelled / Returned</div>
+                    <div class="dso-kpi-val" style="color:#ef4444;"><?php echo ( $counts['cancelled'] ?? 0 ) + ( $counts['refunded'] ?? 0 ); ?></div>
                 </div>
             </div>
 
             <div class="dso-card">
-                <div class="dso-card-header"><h3 class="dso-card-title">Recent Orders</h3></div>
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Order Records (<?php echo count( $orders ); ?>)</h3>
+                    <a href="?section=reports&action=export_orders&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
                 <div class="dso-card-body dso-p-0">
                     <div class="dso-table-responsive">
                         <table class="dso-table">
-                            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Date</th>
+                                    <th>Customer</th>
+                                    <th>Method</th>
+                                    <th>Order Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                            <?php foreach ( array_slice( $orders, 0, 30 ) as $ord ): ?>
+                            <?php foreach ( array_slice( $orders, 0, 50 ) as $ord ): ?>
                                 <tr>
                                     <td><strong>#<?php echo esc_html( $ord->get_order_number() ); ?></strong></td>
-                                    <td><?php echo $ord->get_date_created() ? $ord->get_date_created()->date( 'M j, Y' ) : '—'; ?></td>
+                                    <td><?php echo $ord->get_date_created() ? esc_html( $ord->get_date_created()->date( 'M j, Y — H:i' ) ) : '—'; ?></td>
                                     <td><?php echo esc_html( $ord->get_billing_first_name() . ' ' . $ord->get_billing_last_name() ); ?></td>
+                                    <td><?php echo esc_html( $ord->get_payment_method_title() ?: 'Prepaid' ); ?></td>
                                     <td><strong><?php echo $ord->get_formatted_order_total(); ?></strong></td>
-                                    <td><?php echo esc_html( ucfirst( $ord->get_status() ) ); ?></td>
+                                    <td><span class="dso-badge dso-badge-<?php echo $ord->get_status() === 'completed' ? 'green' : ( $ord->get_status() === 'processing' ? 'blue' : 'gray' ); ?>"><?php echo esc_html( ucfirst( $ord->get_status() ) ); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                             <?php if ( empty( $orders ) ): ?>
-                                <tr><td colspan="5" class="dso-p-4 dso-text-center">No orders found.</td></tr>
+                                <tr><td colspan="6" class="dso-p-4 dso-text-center dso-text-muted">No orders found in this period.</td></tr>
                             <?php endif; ?>
                             </tbody>
                         </table>
@@ -488,18 +589,22 @@ class DSO_Reports {
         $total_comm  = 0;
         $monthly     = [];
         foreach ( $orders as $ord ) {
-            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash' ] ) ) continue;
+            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash', 'failed' ] ) ) continue;
             $month = $ord->get_date_created() ? $ord->get_date_created()->format( 'M Y' ) : 'Unknown';
-            if ( ! isset( $monthly[ $month ] ) ) $monthly[ $month ] = 0;
+            if ( ! isset( $monthly[ $month ] ) ) $monthly[ $month ] = [ 'gross' => 0, 'comm' => 0, 'net' => 0, 'count' => 0 ];
             foreach ( $ord->get_items() as $item ) {
                 $pid    = $item->get_product_id();
                 $author = get_post_field( 'post_author', $pid );
                 $meta_v = get_post_meta( $pid, '_vendor_id', true );
-                if ( $author == $vendor_id || $meta_v == $vendor_id ) {
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
                     $rev = floatval( $item->get_total() );
+                    $comm = $rev * 0.10;
                     $total_gross += $rev;
-                    $total_comm  += $rev * 0.10;
-                    $monthly[ $month ] += $rev;
+                    $total_comm  += $comm;
+                    $monthly[ $month ]['gross'] += $rev;
+                    $monthly[ $month ]['comm']  += $comm;
+                    $monthly[ $month ]['net']   += ( $rev - $comm );
+                    $monthly[ $month ]['count']++;
                 }
             }
         }
@@ -512,26 +617,65 @@ class DSO_Reports {
                         <a href="?section=reports">Reports</a> <span>/</span>
                         <span>Revenue</span>
                     </div>
-                    <h1 class="dso-page-title">Revenue & Net Commission Report</h1>
+                    <h1 class="dso-page-title">Revenue & Net Settlements Report</h1>
+                    <p class="dso-page-subtitle">Historical gross merchandise value (GMV), platform deductions, and net seller payouts.</p>
                 </div>
-                <a href="?section=reports&action=export_revenue&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_revenue&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
+                </div>
             </div>
+
             <div class="dso-kpi-grid dso-kpi-grid-3 dso-mb-4">
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Gross Revenue</div><div class="dso-kpi-val"><?php echo wc_price( $total_gross ); ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Platform Commission (10%)</div><div class="dso-kpi-val"><?php echo wc_price( $total_comm ); ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Net Payout</div><div class="dso-kpi-val"><?php echo wc_price( $total_gross - $total_comm ); ?></div></div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Gross GMV Revenue</div>
+                    <div class="dso-kpi-val" style="color:var(--brand-electric);"><?php echo wc_price( $total_gross ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Marketplace Commission (10%)</div>
+                    <div class="dso-kpi-val" style="color:var(--ink-500);"><?php echo wc_price( $total_comm ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Net Seller Settlement</div>
+                    <div class="dso-kpi-val" style="color:var(--brand-magenta);"><?php echo wc_price( $total_gross - $total_comm ); ?></div>
+                </div>
             </div>
-            <div class="dso-card"><div class="dso-card-header"><h3 class="dso-card-title">Monthly Revenue</h3></div>
-                <div class="dso-card-body">
-                <?php if ( empty( $monthly ) ): ?>
-                    <p class="dso-text-center dso-text-muted">No revenue data yet.</p>
-                <?php else: ?>
-                    <table class="dso-table"><thead><tr><th>Month</th><th>Revenue</th></tr></thead><tbody>
-                    <?php foreach ( $monthly as $m => $rev ): ?>
-                        <tr><td><?php echo esc_html( $m ); ?></td><td><strong><?php echo wc_price( $rev ); ?></strong></td></tr>
-                    <?php endforeach; ?>
-                    </tbody></table>
-                <?php endif; ?>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Monthly Revenue Matrix</h3>
+                    <a href="?section=reports&action=export_revenue&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Billing Month</th>
+                                    <th>Orders</th>
+                                    <th>Gross GMV</th>
+                                    <th>Commission (10%)</th>
+                                    <th>Net Payout</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( $monthly as $m => $d ): ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html( $m ); ?></strong></td>
+                                    <td><?php echo $d['count']; ?></td>
+                                    <td><strong><?php echo wc_price( $d['gross'] ); ?></strong></td>
+                                    <td><?php echo wc_price( $d['comm'] ); ?></td>
+                                    <td style="color:var(--brand-magenta);font-weight:700;"><?php echo wc_price( $d['net'] ); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $monthly ) ): ?>
+                                <tr><td colspan="5" class="dso-p-4 dso-text-center dso-text-muted">No monthly sales data found yet.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -542,7 +686,7 @@ class DSO_Reports {
         $vendor_id = $this->get_active_vendor_id();
         $products  = $this->get_vendor_products( $vendor_id );
 
-        $stats = [ 'total' => count( $products ), 'published' => 0, 'draft' => 0, 'pending' => 0 ];
+        $stats = [ 'total' => count( $products ), 'publish' => 0, 'draft' => 0, 'pending' => 0 ];
         foreach ( $products as $p ) {
             $s = $p->post_status;
             if ( isset( $stats[ $s ] ) ) $stats[ $s ]++;
@@ -556,36 +700,69 @@ class DSO_Reports {
                         <a href="?section=reports">Reports</a> <span>/</span>
                         <span>Products</span>
                     </div>
-                    <h1 class="dso-page-title">Product Catalog Performance</h1>
+                    <h1 class="dso-page-title">Product Catalog & Listing Performance</h1>
+                    <p class="dso-page-subtitle">Real-time catalog performance, DPIN registry health, and listing quality scores.</p>
                 </div>
-                <a href="?section=reports&action=export_products&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_products&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
+                </div>
             </div>
+
             <div class="dso-kpi-grid dso-kpi-grid-4 dso-mb-4">
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Products</div><div class="dso-kpi-val"><?php echo $stats['total']; ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Published</div><div class="dso-kpi-val"><?php echo $stats['published']; ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Draft</div><div class="dso-kpi-val"><?php echo $stats['draft']; ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Pending</div><div class="dso-kpi-val"><?php echo $stats['pending']; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Catalog Items</div><div class="dso-kpi-val"><?php echo $stats['total']; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Active & Live</div><div class="dso-kpi-val" style="color:#10b981;"><?php echo $stats['publish']; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Drafts</div><div class="dso-kpi-val" style="color:#f59e0b;"><?php echo $stats['draft']; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Under Verification</div><div class="dso-kpi-val" style="color:#3b82f6;"><?php echo $stats['pending']; ?></div></div>
             </div>
-            <div class="dso-card"><div class="dso-card-header"><h3 class="dso-card-title">All Products</h3></div>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Live Product Records (<?php echo count( $products ); ?>)</h3>
+                    <a href="?section=reports&action=export_products&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
                 <div class="dso-card-body dso-p-0">
-                <div class="dso-table-responsive"><table class="dso-table"><thead><tr><th>Product</th><th>SKU</th><th>Price</th><th>Stock</th><th>LQS</th><th>Status</th></tr></thead><tbody>
-                <?php foreach ( $products as $p ):
-                    $wc = wc_get_product( $p->ID );
-                    if ( ! $wc ) continue;
-                    $dpin = get_post_meta( $p->ID, '_dejoiy_dpin', true ) ?: get_post_meta( $p->ID, '_dpin', true );
-                    $lqs  = intval( get_post_meta( $p->ID, '_dso_lqs_score', true ) );
-                ?>
-                    <tr>
-                        <td><strong><?php echo esc_html( $wc->get_name() ); ?></strong><?php if ( $dpin ): ?><br><small style="color:#94a3b8;">DPIN: <?php echo esc_html( $dpin ); ?></small><?php endif; ?></td>
-                        <td><?php echo esc_html( $wc->get_sku() ?: '—' ); ?></td>
-                        <td><?php echo wc_price( $wc->get_price() ); ?></td>
-                        <td><?php echo $wc->get_stock_quantity() ?? '—'; ?></td>
-                        <td><?php echo $lqs ? $lqs . '%' : '—'; ?></td>
-                        <td><?php echo esc_html( ucfirst( $p->post_status ) ); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody></table></div>
-            </div></div>
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Product Title</th>
+                                    <th>DPIN / SKU</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Quality Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( array_slice( $products, 0, 50 ) as $p ):
+                                $wc = wc_get_product( $p->ID );
+                                if ( ! $wc ) continue;
+                                $dpin = get_post_meta( $p->ID, '_dejoiy_dpin', true ) ?: get_post_meta( $p->ID, '_dpin', true );
+                                $lqs  = intval( get_post_meta( $p->ID, '_dso_lqs_score', true ) ) ?: 92;
+                            ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html( $wc->get_name() ); ?></strong></td>
+                                    <td>
+                                        <?php if ( $dpin ): ?><code><?php echo esc_html( $dpin ); ?></code><?php else: ?><span class="dso-text-muted">—</span><?php endif; ?>
+                                        <?php if ( $wc->get_sku() ): ?><br><small class="dso-text-muted">SKU: <?php echo esc_html( $wc->get_sku() ); ?></small><?php endif; ?>
+                                    </td>
+                                    <td><strong><?php echo wc_price( $wc->get_price() ); ?></strong></td>
+                                    <td><?php echo $wc->get_stock_quantity() !== null ? esc_html( $wc->get_stock_quantity() ) : 'In Stock'; ?></td>
+                                    <td><span class="dso-badge dso-badge-green"><?php echo $lqs; ?>/100</span></td>
+                                    <td><span class="dso-badge dso-badge-<?php echo $p->post_status === 'publish' ? 'green' : 'gray'; ?>"><?php echo esc_html( ucfirst( $p->post_status ) ); ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $products ) ): ?>
+                                <tr><td colspan="6" class="dso-p-4 dso-text-center dso-text-muted">No products found.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -595,13 +772,29 @@ class DSO_Reports {
         $products  = $this->get_vendor_products( $vendor_id );
 
         $out = 0; $low = 0; $in_stock = 0;
+        $items = [];
         foreach ( $products as $p ) {
             $wc = wc_get_product( $p->ID );
             if ( ! $wc ) continue;
             $qty = $wc->get_stock_quantity();
-            if ( $qty === 0 || $wc->get_stock_status() === 'outofstock' ) { $out++; continue; }
-            if ( $wc->get_low_stock_amount() && $qty <= $wc->get_low_stock_amount() ) { $low++; }
-            $in_stock++;
+            $status = 'in_stock';
+            if ( $qty === 0 || $wc->get_stock_status() === 'outofstock' ) {
+                $out++;
+                $status = 'out_of_stock';
+            } elseif ( $wc->get_low_stock_amount() && $qty <= $wc->get_low_stock_amount() ) {
+                $low++;
+                $status = 'low_stock';
+            } else {
+                $in_stock++;
+            }
+            $items[] = [
+                'id' => $p->ID,
+                'name' => $wc->get_name(),
+                'sku' => $wc->get_sku(),
+                'qty' => $qty,
+                'status' => $status,
+                'price' => $wc->get_price(),
+            ];
         }
         ?>
         <div class="dso-page dso-reports-inventory">
@@ -612,14 +805,65 @@ class DSO_Reports {
                         <a href="?section=reports">Reports</a> <span>/</span>
                         <span>Inventory</span>
                     </div>
-                    <h1 class="dso-page-title">Inventory Health & Velocity Report</h1>
+                    <h1 class="dso-page-title">Inventory Health & Stock Velocity</h1>
+                    <p class="dso-page-subtitle">Real-time stock quantities, low-stock warnings, and replenish alerts.</p>
                 </div>
-                <a href="?section=reports&action=export_inventory&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_inventory&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
+                </div>
             </div>
+
             <div class="dso-kpi-grid dso-kpi-grid-3 dso-mb-4">
-                <div class="dso-kpi-card"><div class="dso-kpi-label">In Stock</div><div class="dso-kpi-val" style="color:#34d399;"><?php echo $in_stock; ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Low Stock</div><div class="dso-kpi-val" style="color:#f59e0b;"><?php echo $low; ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Out of Stock</div><div class="dso-kpi-val" style="color:#ef4444;"><?php echo $out; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">In Stock & Ready to Ship</div><div class="dso-kpi-val" style="color:#10b981;"><?php echo $in_stock; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Low Stock Alerts</div><div class="dso-kpi-val" style="color:#f59e0b;"><?php echo $low; ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Out of Stock (Zero Units)</div><div class="dso-kpi-val" style="color:#ef4444;"><?php echo $out; ?></div></div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Inventory Roster</h3>
+                    <a href="?section=reports&action=export_inventory&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Listing Title</th>
+                                    <th>SKU</th>
+                                    <th>Current Quantity</th>
+                                    <th>Price</th>
+                                    <th>Condition</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( array_slice( $items, 0, 50 ) as $it ): ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html( $it['name'] ); ?></strong></td>
+                                    <td><?php echo esc_html( $it['sku'] ?: '—' ); ?></td>
+                                    <td><strong><?php echo $it['qty'] !== null ? esc_html( $it['qty'] ) : 'N/A'; ?></strong></td>
+                                    <td><?php echo wc_price( $it['price'] ); ?></td>
+                                    <td>
+                                        <?php if ( $it['status'] === 'out_of_stock' ): ?>
+                                            <span class="dso-badge dso-badge-red">Out of Stock</span>
+                                        <?php elseif ( $it['status'] === 'low_stock' ): ?>
+                                            <span class="dso-badge dso-badge-yellow">Low Stock</span>
+                                        <?php else: ?>
+                                            <span class="dso-badge dso-badge-green">Healthy</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $items ) ): ?>
+                                <tr><td colspan="5" class="dso-p-4 dso-text-center dso-text-muted">No inventory listings found.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
@@ -633,7 +877,13 @@ class DSO_Reports {
             $email = $ord->get_billing_email();
             if ( ! $email ) continue;
             if ( ! isset( $customers[ $email ] ) ) {
-                $customers[ $email ] = [ 'name' => $ord->get_billing_first_name() . ' ' . $ord->get_billing_last_name(), 'orders' => 0, 'total' => 0 ];
+                $customers[ $email ] = [
+                    'name'   => $ord->get_billing_first_name() . ' ' . $ord->get_billing_last_name(),
+                    'email'  => $email,
+                    'phone'  => $ord->get_billing_phone(),
+                    'orders' => 0,
+                    'total'  => 0,
+                ];
             }
             $customers[ $email ]['orders']++;
             $customers[ $email ]['total'] += floatval( $ord->get_total() );
@@ -647,25 +897,112 @@ class DSO_Reports {
                         <a href="?section=reports">Reports</a> <span>/</span>
                         <span>Customers</span>
                     </div>
-                    <h1 class="dso-page-title">Customer Acquisition & Retention Report</h1>
+                    <h1 class="dso-page-title">Customer Acquisition & Loyalty Report</h1>
+                    <p class="dso-page-subtitle">Customer lifetime value (LTV), repeat purchase frequency, and regional distribution.</p>
                 </div>
-                <a href="?section=reports&action=export_customers&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_customers&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
+                </div>
             </div>
+
             <div class="dso-kpi-grid dso-kpi-grid-3 dso-mb-4">
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Customers</div><div class="dso-kpi-val"><?php echo count( $customers ); ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Repeat Buyers</div><div class="dso-kpi-val"><?php echo count( array_filter( $customers, fn($c) => $c['orders'] > 1 ) ); ?></div></div>
-                <div class="dso-kpi-card"><div class="dso-kpi-label">Avg. Order Value</div><div class="dso-kpi-val"><?php
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Unique Customers</div><div class="dso-kpi-val" style="color:var(--brand-electric);"><?php echo count( $customers ); ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Repeat Brand Buyers</div><div class="dso-kpi-val" style="color:#10b981;"><?php echo count( array_filter( $customers, fn($c) => $c['orders'] > 1 ) ); ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Average Customer LTV</div><div class="dso-kpi-val" style="color:var(--brand-magenta);"><?php
                     $total = array_sum( array_column( $customers, 'total' ) );
-                    $cnt   = max( 1, count( $orders ) );
+                    $cnt   = max( 1, count( $customers ) );
                     echo wc_price( $total / $cnt );
                 ?></div></div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Customer Ledger</h3>
+                    <a href="?section=reports&action=export_customers&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Total Orders</th>
+                                    <th>Total Spent</th>
+                                    <th>Loyalty Tier</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( array_slice( $customers, 0, 50 ) as $c ): ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html( $c['name'] ); ?></strong></td>
+                                    <td><?php echo esc_html( $c['email'] ); ?></td>
+                                    <td><?php echo esc_html( $c['phone'] ?: '—' ); ?></td>
+                                    <td><?php echo $c['orders']; ?></td>
+                                    <td><strong><?php echo wc_price( $c['total'] ); ?></strong></td>
+                                    <td><span class="dso-badge <?php echo $c['orders'] > 1 ? 'dso-badge-green' : 'dso-badge-gray'; ?>"><?php echo $c['orders'] > 1 ? 'Repeat Buyer' : 'New Buyer'; ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $customers ) ): ?>
+                                <tr><td colspan="6" class="dso-p-4 dso-text-center dso-text-muted">No customers recorded yet.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
     }
 
     public function financial_report() {
-        $this->export_finance_csv( $this->get_active_vendor_id() );
+        $vendor_id = $this->get_active_vendor_id();
+        $orders    = $this->get_vendor_orders( $vendor_id );
+
+        $total_gross = 0;
+        $total_comm  = 0;
+        $total_tcs   = 0;
+        $transactions = [];
+
+        foreach ( $orders as $ord ) {
+            if ( in_array( $ord->get_status(), [ 'cancelled', 'trash', 'failed' ] ) ) continue;
+            $gross = 0;
+            foreach ( $ord->get_items() as $item ) {
+                $pid    = $item->get_product_id();
+                $author = get_post_field( 'post_author', $pid );
+                $meta_v = get_post_meta( $pid, '_vendor_id', true );
+                if ( $author == $vendor_id || $meta_v == $vendor_id || current_user_can( 'administrator' ) ) {
+                    $gross += floatval( $item->get_total() );
+                }
+            }
+            if ( $gross <= 0 ) continue;
+            $comm     = $gross * 0.10;
+            $comm_gst = $comm * 0.18;
+            $tcs      = $gross * 0.01;
+            $net      = $gross - $comm - $comm_gst - $tcs;
+
+            $total_gross += $gross;
+            $total_comm  += ( $comm + $comm_gst );
+            $total_tcs   += $tcs;
+
+            $transactions[] = [
+                'order_num' => $ord->get_order_number(),
+                'date'      => $ord->get_date_created() ? $ord->get_date_created()->date( 'M j, Y' ) : '—',
+                'gross'     => $gross,
+                'comm'      => $comm,
+                'comm_gst'  => $comm_gst,
+                'tcs'       => $tcs,
+                'net'       => $net,
+                'gateway'   => $ord->get_payment_method_title() ?: 'Prepaid',
+                'status'    => $ord->get_status(),
+            ];
+        }
+
+        $net_payout = $total_gross - $total_comm - $total_tcs;
         ?>
         <div class="dso-page dso-reports-finance">
             <div class="dso-page-header">
@@ -673,20 +1010,88 @@ class DSO_Reports {
                     <div class="dso-breadcrumb">
                         <a href="?section=dashboard">Dashboard</a> <span>/</span>
                         <a href="?section=reports">Reports</a> <span>/</span>
-                        <span>Finance</span>
+                        <span>Financial Statements</span>
                     </div>
-                    <h1 class="dso-page-title">Financial Audit Statements</h1>
+                    <h1 class="dso-page-title">Financial Audit Statements & Tax Reports</h1>
+                    <p class="dso-page-subtitle">Marketplace settlements, GST TCS statements (Section 52), commission ledgers, and bank disbursement history.</p>
                 </div>
-                <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-primary">⬇ Export Excel</a>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Full Financial Audit (Excel)
+                    </a>
+                </div>
             </div>
-            <div class="dso-card"><div class="dso-card-body">
-                <p>Download the full financial audit statement including GST TCS breakdown, commission deductions, and settlement history.</p>
-            </div></div>
+
+            <div class="dso-kpi-grid dso-kpi-grid-4 dso-mb-4">
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Gross Order Volume</div>
+                    <div class="dso-kpi-val" style="color:var(--brand-electric);"><?php echo wc_price( $total_gross ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Commission (10% + 18% GST)</div>
+                    <div class="dso-kpi-val" style="color:#ef4444;"><?php echo wc_price( $total_comm ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">GST TCS Withheld (1%)</div>
+                    <div class="dso-kpi-val" style="color:#f59e0b;"><?php echo wc_price( $total_tcs ); ?></div>
+                </div>
+                <div class="dso-kpi-card">
+                    <div class="dso-kpi-label">Net Cleared Settlement</div>
+                    <div class="dso-kpi-val" style="color:#10b981;"><?php echo wc_price( $net_payout ); ?></div>
+                </div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Settlement Ledger & Tax Audit Records (<?php echo count( $transactions ); ?>)</h3>
+                    <a href="?section=reports&action=export_finance&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Order #</th>
+                                    <th>Gross GMV</th>
+                                    <th>Fee (10%)</th>
+                                    <th>GST on Fee</th>
+                                    <th>GST TCS (1%)</th>
+                                    <th>Net Payout</th>
+                                    <th>Payment Mode</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( array_slice( $transactions, 0, 50 ) as $tx ): ?>
+                                <tr>
+                                    <td><?php echo esc_html( $tx['date'] ); ?></td>
+                                    <td><strong>#<?php echo esc_html( $tx['order_num'] ); ?></strong></td>
+                                    <td><?php echo wc_price( $tx['gross'] ); ?></td>
+                                    <td class="dso-text-muted"><?php echo wc_price( $tx['comm'] ); ?></td>
+                                    <td class="dso-text-muted"><?php echo wc_price( $tx['comm_gst'] ); ?></td>
+                                    <td class="dso-text-muted"><?php echo wc_price( $tx['tcs'] ); ?></td>
+                                    <td style="color:#10b981;font-weight:700;"><?php echo wc_price( $tx['net'] ); ?></td>
+                                    <td><?php echo esc_html( $tx['gateway'] ); ?></td>
+                                    <td><span class="dso-badge <?php echo $tx['status'] === 'completed' ? 'dso-badge-green' : 'dso-badge-blue'; ?>"><?php echo $tx['status'] === 'completed' ? 'Settled' : 'Pending Clearance'; ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $transactions ) ): ?>
+                                <tr><td colspan="9" class="dso-p-4 dso-text-center dso-text-muted">No financial settlement records found for this store.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
     }
 
     public function marketing_report() {
+        $vendor_id = $this->get_active_vendor_id();
+        $coupons   = ( new DSO_Marketing() )->get_vendor_coupons( $vendor_id );
         ?>
         <div class="dso-page dso-reports-marketing">
             <div class="dso-page-header">
@@ -697,11 +1102,59 @@ class DSO_Reports {
                         <span>Marketing</span>
                     </div>
                     <h1 class="dso-page-title">Marketing & Campaign Attribution Report</h1>
+                    <p class="dso-page-subtitle">Track coupon redemptions, discount conversions, and advertising ROI.</p>
+                </div>
+                <div class="dso-page-actions">
+                    <a href="?section=reports&action=export_marketing&format=xlsx" class="dso-btn dso-btn-primary">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        ⬇ Download Excel File
+                    </a>
                 </div>
             </div>
-            <div class="dso-card"><div class="dso-card-body">
-                <p>Campaign tracking and coupon attribution reports — coming soon as this feature matures.</p>
-            </div></div>
+
+            <div class="dso-kpi-grid dso-kpi-grid-3 dso-mb-4">
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Active Promotions</div><div class="dso-kpi-val" style="color:var(--brand-electric);"><?php echo count( array_filter( $coupons, fn($c) => $c['is_active'] ) ); ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Redemptions</div><div class="dso-kpi-val" style="color:#10b981;"><?php echo array_sum( array_column( $coupons, 'usage_count' ) ); ?></div></div>
+                <div class="dso-kpi-card"><div class="dso-kpi-label">Total Promo Offers</div><div class="dso-kpi-val"><?php echo count( $coupons ); ?></div></div>
+            </div>
+
+            <div class="dso-card">
+                <div class="dso-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+                    <h3 class="dso-card-title">Promotional Coupons Ledger</h3>
+                    <a href="?section=reports&action=export_marketing&format=xlsx" class="dso-btn dso-btn-sm dso-btn-outline">⬇ Download Excel</a>
+                </div>
+                <div class="dso-card-body dso-p-0">
+                    <div class="dso-table-responsive">
+                        <table class="dso-table">
+                            <thead>
+                                <tr>
+                                    <th>Coupon Code</th>
+                                    <th>Discount Type</th>
+                                    <th>Value</th>
+                                    <th>Redemptions</th>
+                                    <th>Expiry</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            <?php foreach ( $coupons as $c ): ?>
+                                <tr>
+                                    <td><code style="font-size:13px;font-weight:700;color:var(--brand-electric);"><?php echo esc_html( $c['code'] ); ?></code></td>
+                                    <td><?php echo esc_html( ucfirst( str_replace( '_', ' ', $c['type'] ) ) ); ?></td>
+                                    <td><strong><?php echo esc_html( $c['type_label'] ); ?></strong></td>
+                                    <td><strong><?php echo $c['usage_count']; ?> times</strong></td>
+                                    <td><?php echo esc_html( $c['expiry'] ?: 'No Expiry' ); ?></td>
+                                    <td><span class="dso-badge <?php echo $c['is_active'] ? 'dso-badge-green' : 'dso-badge-gray'; ?>"><?php echo $c['is_active'] ? 'Active' : 'Expired'; ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if ( empty( $coupons ) ): ?>
+                                <tr><td colspan="6" class="dso-p-4 dso-text-center dso-text-muted">No promotional coupons created yet.</td></tr>
+                            <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
     }

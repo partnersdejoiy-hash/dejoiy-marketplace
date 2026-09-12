@@ -288,16 +288,21 @@ add_action( 'wp_head', 'dejoiy_cart_xp_hide_legacy', 3 );
  * @return string
  */
 function dejoiy_cart_xp_gettext( $translated, $text, $domain ) {
-	if ( ! dejoiy_cart_xp_is_active() ) {
+	static $in_filter = false;
+	if ( $in_filter || 'woocommerce' !== $domain ) {
 		return $translated;
 	}
-	if ( 'woocommerce' === $domain && 'Proceed to checkout' === $text ) {
-		return __( 'Proceed to Buy', 'dejoiy' );
+	if ( 'Proceed to checkout' !== $text && 'Update cart' !== $text ) {
+		return $translated;
 	}
-	if ( 'woocommerce' === $domain && 'Update cart' === $text ) {
-		return __( 'Update Bag', 'dejoiy' );
+	$in_filter = true;
+	if ( ! dejoiy_cart_xp_is_active() ) {
+		$in_filter = false;
+		return $translated;
 	}
-	return $translated;
+	$out = ( 'Proceed to checkout' === $text ) ? __( 'Proceed to Buy', 'dejoiy' ) : __( 'Update Bag', 'dejoiy' );
+	$in_filter = false;
+	return $out;
 }
 add_filter( 'gettext', 'dejoiy_cart_xp_gettext', 25, 3 );
 

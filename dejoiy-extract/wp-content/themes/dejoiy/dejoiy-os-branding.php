@@ -13,7 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @return bool
  */
 function dejoiy_os_branding_should_run() {
-	if ( function_exists( 'dejoiy_library_is_dashboard_request' ) && dejoiy_library_is_dashboard_request() ) {
+	if ( is_admin() ) {
+		return false;
+	}
+	if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
+		return false;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 		return false;
 	}
 	return true;
@@ -50,9 +56,11 @@ function dejoiy_os_branding_scrub_vendors( $translated ) {
  * @return string
  */
 function dejoiy_os_branding_gettext( $translated, $text, $domain ) {
-	if ( ! dejoiy_os_branding_should_run() ) {
+	static $in_filter = false;
+	if ( $in_filter || ! dejoiy_os_branding_should_run() ) {
 		return $translated;
 	}
+	$in_filter = true;
 
 	$map = array(
 		'My account'       => 'DEJOIY Space',
@@ -69,12 +77,15 @@ function dejoiy_os_branding_gettext( $translated, $text, $domain ) {
 	);
 
 	if ( isset( $map[ $text ] ) ) {
+		$in_filter = false;
 		return $map[ $text ];
 	}
 
 	$domains = array( 'xstore', 'xstore-core', 'et-core-plugin', 'woocommerce', 'default' );
 	if ( in_array( $domain, $domains, true ) || '' === $domain ) {
-		return dejoiy_os_branding_scrub_vendors( $translated );
+		$out = dejoiy_os_branding_scrub_vendors( $translated );
+		$in_filter = false;
+		return $out;
 	}
 
 	$lower = strtolower( $text );
@@ -89,10 +100,13 @@ function dejoiy_os_branding_gettext( $translated, $text, $domain ) {
 
 	foreach ( $sub as $needle => $replace ) {
 		if ( false !== strpos( $lower, $needle ) ) {
-			return dejoiy_os_branding_scrub_vendors( str_ireplace( $needle, $replace, $translated ) );
+			$out = dejoiy_os_branding_scrub_vendors( str_ireplace( $needle, $replace, $translated ) );
+			$in_filter = false;
+			return $out;
 		}
 	}
 
+	$in_filter = false;
 	return $translated;
 }
 add_filter( 'gettext', 'dejoiy_os_branding_gettext', 20, 3 );
