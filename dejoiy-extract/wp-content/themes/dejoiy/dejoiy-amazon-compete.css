@@ -15,6 +15,33 @@ body.dejoiy-gh .gh-m-bottom a {
 		width: 100%;
 		max-width: none;
 	}
+
+	html {
+		--dejoiy-header-h: calc(62px + env(safe-area-inset-top, 0px));
+	}
+
+	body.dejoiy-gh {
+		padding-top: var(--dejoiy-header-h) !important;
+	}
+
+	.mph-apps {
+		scroll-margin-top: calc(var(--dejoiy-header-h) + 8px);
+		padding-top: 10px;
+	}
+}
+
+@media (min-width: 768px) {
+	.mph-apps__scroller {
+		flex-wrap: wrap;
+		overflow: visible;
+		row-gap: 16px;
+		column-gap: 14px;
+		justify-content: flex-start;
+	}
+
+	.mph-app {
+		width: 72px;
+	}
 }
 
 /* Shop: keep WOOF filters usable, Amazon-like rail */
@@ -42,7 +69,6 @@ body.dejoiy-gh .gh-m-bottom a {
 	display: none;
 }
 
-/* Honest empty-state for zero-review products */
 .djy-amazon-rating-line.is-empty {
 	color: #64748b;
 	font-size: 13px;

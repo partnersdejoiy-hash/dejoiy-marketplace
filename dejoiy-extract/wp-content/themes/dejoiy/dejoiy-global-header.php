@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'DEJOIY_GH_VERSION' ) ) {
-	define( 'DEJOIY_GH_VERSION', '2.2.0' );
+	define( 'DEJOIY_GH_VERSION', '2.3.0' );
 }
 
 /* ---------------------------------------------------------------
@@ -212,11 +212,11 @@ function dejoiy_gh_main_categories() {
 	}
 	$terms = get_terms( array(
 		'taxonomy'   => 'product_cat',
-		'hide_empty' => true,
+		'hide_empty' => false,
 		'parent'     => 0,
 		'orderby'    => 'name',
 		'order'      => 'ASC',
-		'number'     => 24,
+		'number'     => 80,
 	) );
 	if ( is_wp_error( $terms ) || empty( $terms ) ) {
 		return $cached;
@@ -230,15 +230,11 @@ function dejoiy_gh_main_categories() {
 		if ( is_wp_error( $link ) ) {
 			continue;
 		}
-		$count = (int) $term->count;
-		if ( $count < 1 ) {
-			continue;
-		}
 		$cached[] = array(
 			'slug'  => $term->slug,
 			'label' => $term->name,
 			'url'   => $link,
-			'count' => $count,
+			'count' => (int) $term->count,
 		);
 	}
 	return $cached;
@@ -311,7 +307,7 @@ function dejoiy_global_header_enqueue() {
 			'nav'          => dejoiy_gh_nav_items(),
 			'worldColors'  => dejoiy_gh_world_colors(),
 			'accountMenu'  => dejoiy_gh_account_menu(),
-			'categories'   => array_slice( dejoiy_gh_main_categories(), 0, 16 ),
+			'categories'   => dejoiy_gh_main_categories(),
 			'i18n'         => array(
 				'searchPlaceholder' => __( 'Search products, brands, and more…', 'dejoiy' ),
 				'noResults'         => __( 'No results found', 'dejoiy' ),
@@ -602,7 +598,7 @@ function dejoiy_gh_desktop_header_html() {
 					</div>
 					<div class="gh-m-drawer__section">
 						<h3 class="gh-m-drawer__heading"><?php esc_html_e( 'Categories', 'dejoiy' ); ?></h3>
-						<?php foreach ( array_slice( dejoiy_gh_main_categories(), 0, 12 ) as $cat ) : ?>
+						<?php foreach ( dejoiy_gh_main_categories() as $cat ) : ?>
 							<a class="gh-m-drawer__cat" href="<?php echo esc_url( $cat['url'] ); ?>"><?php echo esc_html( $cat['label'] ); ?></a>
 						<?php endforeach; ?>
 					</div>

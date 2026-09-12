@@ -458,7 +458,23 @@
 			var expanded = mobile.classList.toggle('is-expanded');
 			btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 			document.body.classList.toggle('gh-m-expanded-gh', expanded);
+			window.requestAnimationFrame(syncHeaderOffset);
 		});
+	}
+
+	function syncHeaderOffset() {
+		if (!isMobile.matches) {
+			document.documentElement.style.removeProperty('--dejoiy-header-h');
+			return;
+		}
+		var mobile = qs('.gh-mobile', header);
+		if (!mobile) {
+			return;
+		}
+		var h = Math.ceil(mobile.getBoundingClientRect().height);
+		if (h > 40) {
+			document.documentElement.style.setProperty('--dejoiy-header-h', h + 'px');
+		}
 	}
 
 	/* ---------------------------------------------------------------
@@ -639,6 +655,11 @@
 	setupDesktopCanvas();
 	setupMobileChips();
 	syncCartBadge();
+	syncHeaderOffset();
+	window.addEventListener('resize', debounce(syncHeaderOffset, 120));
+	window.addEventListener('orientationchange', function () {
+		window.setTimeout(syncHeaderOffset, 80);
+	});
 
 	// Single-h1 SEO: hide generic theme page title on crafted landing pages.
 	var craftedPages = ['page-id-5413', 'page-id-36', 'page-id-5426', 'page-id-4445', 'error404'];

@@ -378,7 +378,7 @@ function dejoiy_mph_categories() {
 		$got = get_terms(
 			array(
 				'taxonomy'   => 'product_cat',
-				'hide_empty' => true,
+				'hide_empty' => false,
 				'number'     => 0,
 			)
 		);
@@ -395,9 +395,6 @@ function dejoiy_mph_categories() {
 		}
 		foreach ( $terms as $term ) {
 			if ( isset( $seen[ $term->slug ] ) ) {
-				continue;
-			}
-			if ( (int) $term->count < 1 ) {
 				continue;
 			}
 			$seen[ $term->slug ] = true;
@@ -425,50 +422,7 @@ function dejoiy_mph_categories() {
 			$out[] = $cat;
 		}
 	}
-
-	$filtered = array();
-	foreach ( $out as $cat ) {
-		if ( dejoiy_mph_category_is_shoppable( $cat ) ) {
-			$filtered[] = $cat;
-		}
-	}
-	if ( empty( $filtered ) ) {
-		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
-		$filtered[] = array(
-			'slug' => 'shop',
-			'name' => __( 'Shop all', 'dejoiy' ),
-			'icon' => 'box',
-			'url'  => $shop,
-			'bg'   => 'linear-gradient(135deg,#2563eb,#7c3aed)',
-		);
-	}
-	return $filtered;
-}
-
-/**
- * Keep destination worlds; drop empty product-category tiles.
- *
- * @param array<string, mixed> $cat Tile.
- * @return bool
- */
-function dejoiy_mph_category_is_shoppable( $cat ) {
-	$slug = isset( $cat['slug'] ) ? (string) $cat['slug'] : '';
-	$url  = isset( $cat['url'] ) ? (string) $cat['url'] : '';
-	$keep = array( 'studio', 'custom-studio', 'nexus', 'library', 'services', 'quickmart', 'renew', 'hire', 'shop' );
-	if ( in_array( $slug, $keep, true ) ) {
-		return true;
-	}
-	if ( $url && preg_match( '#dejoiy-(custom-studio|library|quick-mart|refurbished|services)|internships|sell-on#', $url ) ) {
-		return true;
-	}
-	if ( ! taxonomy_exists( 'product_cat' ) ) {
-		return true;
-	}
-	$term = get_term_by( 'slug', $slug, 'product_cat' );
-	if ( $term && ! is_wp_error( $term ) ) {
-		return (int) $term->count > 0;
-	}
-	return false;
+	return $out;
 }
 
 /**
