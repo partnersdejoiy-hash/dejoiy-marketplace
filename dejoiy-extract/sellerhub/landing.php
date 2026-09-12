@@ -62,10 +62,17 @@ $faq_4_a      = get_option('dso_landing_faq_4_a',       'Seller Hub powers your 
 $footer_copy   = get_option('dso_landing_footer_copy',   '© 2026 DEJOIY Marketplace Private Limited. All rights reserved.');
 $footer_email  = get_option('dso_landing_footer_email',  'partners@dejoiy.com');
 
-// Vendor store count for social proof
-$vendor_count    = class_exists('DSO_Marketplace') ? DSO_Marketplace::get_active_vendor_count() : 0;
-$product_count   = class_exists('DSO_Marketplace') ? DSO_Marketplace::get_total_product_count() : 0;
-$processed_qty   = class_exists('DSO_Marketplace') ? DSO_Marketplace::get_total_fulfilled_orders() : 0;
+// Vendor store count for social proof (safe — methods may not exist yet)
+$vendor_count  = 0;
+$product_count = 0;
+$processed_qty = 0;
+try {
+    if (class_exists('DSO_Marketplace')) {
+        if (method_exists('DSO_Marketplace', 'get_active_vendor_count'))  $vendor_count  = DSO_Marketplace::get_active_vendor_count();
+        if (method_exists('DSO_Marketplace', 'get_total_product_count')) $product_count = DSO_Marketplace::get_total_product_count();
+        if (method_exists('DSO_Marketplace', 'get_total_fulfilled_orders')) $processed_qty = DSO_Marketplace::get_total_fulfilled_orders();
+    }
+} catch (\Throwable $e) { /* fallback defaults below */ }
 if ($vendor_count <= 0)      $vendor_count    = 2400;
 if ($product_count <= 0)     $product_count   = 18500;
 if ($processed_qty <= 0)     $processed_qty   = 96000;

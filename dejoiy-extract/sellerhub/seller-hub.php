@@ -626,6 +626,16 @@ ob_start();
         </div>
     <?php endif; ?>
 
+    <?php
+    // ── Report Export Handler ──
+    if (isset($_GET['action']) && strpos($_GET['action'], 'export_') === 0 && class_exists('DSO_Reports')) {
+        $reports = new DSO_Reports();
+        if ($reports->handle_export()) {
+            exit; // CSV sent, no HTML
+        }
+    }
+    ?>
+
     <!-- Main Content -->
     <main class="dso-main" id="dso-main">
         <?php
