@@ -29,9 +29,24 @@ class DejoiyBusinessCoreEngine {
     }
 
     public function handle_cors_headers() {
-        header("Access-Control-Allow-Origin: *");
-        header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-        header("Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-WP-Nonce");
+        $uri = (string) ( $_SERVER['REQUEST_URI'] ?? '' );
+        $is_rest = ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || false !== strpos( $uri, '/wp-json/' );
+        if ( ! $is_rest ) {
+            return;
+        }
+        $origin  = isset( $_SERVER['HTTP_ORIGIN'] ) ? esc_url_raw( wp_unslash( $_SERVER['HTTP_ORIGIN'] ) ) : '';
+        $allowed = array(
+            'https://dejoiy.com',
+            'https://www.dejoiy.com',
+            'https://sellerhub.dejoiy.com',
+        );
+        if ( $origin && in_array( $origin, $allowed, true ) ) {
+            header( 'Access-Control-Allow-Origin: ' . $origin );
+            header( 'Vary: Origin' );
+            header( 'Access-Control-Allow-Credentials: true' );
+        }
+        header( 'Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS' );
+        header( 'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-WP-Nonce' );
     }
 
     public function register_routes() {

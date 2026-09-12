@@ -10,6 +10,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+add_filter( 'allowed_redirect_hosts', function( $hosts ) {
+	$hosts[] = 'sellerhub.dejoiy.com';
+	return array_values( array_unique( array_filter( $hosts ) ) );
+} );
+
 /**
  * 1. STRICT FRONTEND ADMIN BAR RESTRICTION
  * The user requirement: "wo sirf wordpress admin tk restricted rahe no where else"
@@ -49,7 +54,9 @@ add_action( 'admin_init', function() {
 	// If logged-in user is NOT an administrator, kick them out of wp-admin
 	if ( ! current_user_can( 'administrator' ) ) {
 		if ( function_exists( 'wcfm_is_vendor' ) && wcfm_is_vendor() ) {
-			wp_safe_redirect( 'https://sellerhub.dejoiy.com/' );
+			wp_safe_redirect( 'https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard' );
+		} elseif ( in_array( 'seller', (array) wp_get_current_user()->roles, true ) ) {
+			wp_safe_redirect( 'https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard' );
 		} else {
 			$account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
 			wp_safe_redirect( ! empty( $account_url ) ? $account_url : home_url( '/' ) );

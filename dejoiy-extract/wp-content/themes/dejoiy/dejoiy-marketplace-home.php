@@ -378,7 +378,7 @@ function dejoiy_mph_categories() {
 		$got = get_terms(
 			array(
 				'taxonomy'   => 'product_cat',
-				'hide_empty' => true,
+				'hide_empty' => false,
 				'number'     => 0,
 			)
 		);
@@ -509,26 +509,18 @@ function dejoiy_mph_price( $product ) {
 }
 
 /**
- * Rating payload (deterministic fallback when no reviews exist).
+ * Rating payload — live WooCommerce reviews only (never invented).
  *
  * @param WC_Product $product Product.
  * @return array{rating:float,reviews:int}
  */
 function dejoiy_mph_rating( $product ) {
-	$id      = $product instanceof WC_Product ? (int) $product->get_id() : 0;
 	$rating  = $product && is_callable( array( $product, 'get_average_rating' ) ) ? (float) $product->get_average_rating() : 0.0;
 	$reviews = $product && is_callable( array( $product, 'get_review_count' ) ) ? (int) $product->get_review_count() : 0;
 
-	if ( $rating <= 0 ) {
-		$rating = 3.0 + ( ( $id * 7 ) % 19 ) / 10.0; // 3.0 – 4.9
-		$rating = min( 4.9, $rating );
-	}
-	if ( $reviews <= 0 ) {
-		$reviews = 8 + ( ( $id * 13 ) % 240 );
-	}
 	return array(
-		'rating'  => round( $rating * 2 ) / 2,
-		'reviews' => $reviews,
+		'rating'  => $rating > 0 ? round( $rating * 2 ) / 2 : 0.0,
+		'reviews' => max( 0, $reviews ),
 	);
 }
 
@@ -715,13 +707,16 @@ function dejoiy_mph_card( $post, $opts = array() ) {
 	}
 	$price_html .= '</p>';
 
-	$stars = '';
-	for ( $i = 1; $i <= 5; $i++ ) {
+	$rating_html = '';
+	if ( ! empty( $rating['reviews'] ) && $rating['rating'] > 0 ) {
+		$stars = '';
 		$frac  = (int) floor( $rating['rating'] );
-		$stars .= ( $i <= $frac ) ? dejoiy_mph_icon( 'star' ) : dejoiy_mph_icon( 'star-o' );
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$stars .= ( $i <= $frac ) ? dejoiy_mph_icon( 'star' ) : dejoiy_mph_icon( 'star-o' );
+		}
+		$rating_html = '<div class="mph-card__stars" title="' . esc_attr( (string) $rating['rating'] ) . '">' . $stars
+			. '<span class="mph-card__reviews">(' . esc_html( (string) $rating['reviews'] ) . ')</span></div>';
 	}
-	$rating_html = '<div class="mph-card__stars" title="' . esc_attr( (string) $rating['rating'] ) . '">' . $stars
-		. '<span class="mph-card__reviews">(' . esc_html( (string) $rating['reviews'] ) . ')</span></div>';
 
 	$delivery_html = '<p class="mph-card__delivery">' . dejoiy_mph_icon( 'truck' ) . '<span>' . esc_html__( 'Free Delivery by', 'dejoiy' ) . ' <b>' . esc_html( $eta ) . '</b></span></p>';
 
@@ -835,16 +830,6 @@ function dejoiy_mph_hero_slides() {
 			'chip2'  => __( 'UPI · Cards · COD', 'dejoiy' ),
 		),
 		array(
-			'id'     => 'internships',
-			'type'   => 'intern',
-			'kicker' => __( 'DEJOIY INTERNSHIPS', 'dejoiy' ),
-		),
-		array(
-			'id'     => 'sell',
-			'type'   => 'sell',
-			'kicker' => __( 'SELL ON DEJOIY', 'dejoiy' ),
-		),
-		array(
 			'id'     => 'studio',
 			'kicker' => __( 'DEJOIY CUSTOM STUDIO', 'dejoiy' ),
 			'title'  => __( 'Design it. Create it. Own it.', 'dejoiy' ),
@@ -869,6 +854,16 @@ function dejoiy_mph_hero_slides() {
 			'img'    => $nexus_img,
 			'chip1'  => __( 'FREE CLASSICS', 'dejoiy' ),
 			'chip2'  => __( 'COURSES INSIDE', 'dejoiy' ),
+		),
+		array(
+			'id'     => 'internships',
+			'type'   => 'intern',
+			'kicker' => __( 'DEJOIY INTERNSHIPS', 'dejoiy' ),
+		),
+		array(
+			'id'     => 'sell',
+			'type'   => 'sell',
+			'kicker' => __( 'SELL ON DEJOIY', 'dejoiy' ),
 		),
 	);
 }
@@ -1051,8 +1046,8 @@ function dejoiy_marketplace_home_html() {
 
 	$shop     = wc_get_page_permalink( 'shop' );
 	$deals    = home_url( '/dejoiy-festival-sale/' );
-	$seller   = home_url( '/sell-on-dejoiy/' );
-	$vreg     = home_url( '/vendor-register/' );
+	$seller   = function_exists( 'dejoiy_sell_url' ) ? dejoiy_sell_url() : home_url( '/vendor-register/' );
+	$vreg     = 'https://sellerhub.dejoiy.com/';
 	$services = home_url( '/dejoiy-services/' );
 	$author   = home_url( '/dejoiy-library/?dejoiy_library=1' );
 	$studio   = home_url( '/dejoiy-custom-studio/' );
@@ -1114,7 +1109,7 @@ function dejoiy_marketplace_home_html() {
 	?>
 	<div class="mph" data-mph>
 		<?php
-		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
+		/* ============ QUICK CATEGORIES (single-row horizontal scroller) ============ */
 		?>
 		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
 			<div class="mph-apps__head">

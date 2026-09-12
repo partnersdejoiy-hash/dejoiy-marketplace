@@ -160,6 +160,8 @@ function dejoiy_product_detail_header_html() {
 	$rendered_hdr[ $pid ] = true;
 
 	$seller = dejoiy_get_pdp_seller_info( $product );
+	$rating = (float) $product->get_average_rating();
+	$count  = (int) $product->get_review_count();
 	ob_start();
 	?>
 	<div class="djy-amazon-pdp-header">
@@ -167,22 +169,25 @@ function dejoiy_product_detail_header_html() {
 			<a href="<?php echo esc_url( $seller['url'] ); ?>" class="djy-amazon-store-link">
 				<?php echo esc_html( sprintf( __( 'Visit the %s Store', 'dejoiy' ), $seller['name'] ) ); ?>
 			</a>
-			<span class="djy-amazon-verified-badge">✓ <?php esc_html_e( 'Verified Merchant', 'dejoiy' ); ?></span>
+			<span class="djy-amazon-verified-badge">✓ <?php esc_html_e( 'Sold on DEJOIY', 'dejoiy' ); ?></span>
 		</div>
+		<?php if ( $count > 0 && $rating > 0 ) : ?>
 		<div class="djy-amazon-rating-line">
-			<div class="djy-amazon-stars" aria-label="4.8 out of 5 stars">
-				<span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span>
-				<span class="djy-rating-num">4.8</span>
+			<div class="djy-amazon-stars" aria-label="<?php echo esc_attr( sprintf( __( '%s out of 5 stars', 'dejoiy' ), $rating ) ); ?>">
+				<?php
+				$full = (int) round( $rating );
+				for ( $i = 1; $i <= 5; $i++ ) {
+					echo '<span class="djy-star">' . ( $i <= $full ? '★' : '☆' ) . '</span>';
+				}
+				?>
+				<span class="djy-rating-num"><?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?></span>
 			</div>
 			<span class="djy-rating-sep">|</span>
-			<a href="#reviews" class="djy-rating-count">86 ratings</a>
-			<span class="djy-rating-sep">|</span>
-			<span class="djy-qa-count">14 answered questions</span>
+			<a href="#reviews" class="djy-rating-count"><?php echo esc_html( sprintf( _n( '%s rating', '%s ratings', $count, 'dejoiy' ), number_format_i18n( $count ) ) ); ?></a>
 		</div>
-		<div class="djy-amazon-choice-badge">
-			<span class="djy-choice-tag">DEJOIY's <span class="djy-choice-gold">Choice</span></span>
-			<span class="djy-choice-for">for "handmade ceramic mug"</span>
-		</div>
+		<?php else : ?>
+		<div class="djy-amazon-rating-line is-empty"><?php esc_html_e( 'No customer reviews yet', 'dejoiy' ); ?></div>
+		<?php endif; ?>
 	</div>
 	<?php
 	return (string) ob_get_clean();
@@ -408,36 +413,21 @@ add_shortcode( 'djy_product_trust', 'dejoiy_product_detail_trust_html' );
 add_shortcode( 'djy_product_buynow', 'dejoiy_product_detail_buy_now_html' );
 
 /**
- * Single product mobile floating sticky conversion bar
+ * Former mobile sticky conversion bar — unused. PDP already has Add to Cart / Buy Now.
  */
 function dejoiy_product_detail_mobile_bar() {
-	if ( ! is_product() ) {
-		return;
-	}
-	$product = dejoiy_product_detail_current();
-	if ( ! $product || ! $product->is_in_stock() ) {
-		return;
-	}
-	$thumb_html = $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'djy-sticky-thumb' ) );
-	$price_html = $product->get_price_html();
-	$buy_url    = add_query_arg( array( 'add-to-cart' => $product->get_id() ), wc_get_checkout_url() );
-	?>
-	<div class="djy-pdp-mobile-sticky" id="djy-pdp-mobile-sticky">
-		<div class="djy-pdp-mobile-sticky__product">
-			<?php echo $thumb_html; // phpcs:ignore ?>
-			<div class="djy-pdp-mobile-sticky__info">
-				<span class="djy-pdp-mobile-sticky__title"><?php echo esc_html( wp_trim_words( $product->get_name(), 4 ) ); ?></span>
-				<span class="djy-pdp-mobile-sticky__price"><?php echo wp_kses_post( $price_html ); ?></span>
-			</div>
-		</div>
-		<div class="djy-pdp-mobile-sticky__buttons">
-			<button type="button" class="djy-pdp-mobile-sticky__cart-btn" onclick="var b=document.querySelector('.single_add_to_cart_button');if(b){b.click();}"><?php esc_html_e( 'Add to Cart', 'dejoiy' ); ?></button>
-			<a href="<?php echo esc_url( $buy_url ); ?>" class="djy-pdp-mobile-sticky__buy-btn"><?php esc_html_e( 'Buy Now', 'dejoiy' ); ?></a>
-		</div>
-	</div>
-	<?php
 }
-add_action( 'wp_footer', 'dejoiy_product_detail_mobile_bar', 30 );
+
+/**
+ * Bottom "Select Options" / sticky cart is redundant — PDP already has Add to Cart + Buy Now.
+ */
+function dejoiy_disable_pdp_sticky_select_options() {
+	remove_action( 'after_page_wrapper', 'etheme_sticky_add_to_cart', 1 );
+	remove_action( 'wp_footer', 'dejoiy_product_detail_mobile_bar', 30 );
+}
+add_action( 'wp', 'dejoiy_disable_pdp_sticky_select_options', 40 );
+add_filter( 'theme_mod_sticky_add_to_cart_et-desktop', '__return_false', 99 );
+add_filter( 'theme_mod_sticky_add_to_cart_et-mobile', '__return_false', 99 );
 
 /**
  * "You may also like" rail — real products sharing a category, falling back

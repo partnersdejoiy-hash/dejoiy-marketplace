@@ -318,9 +318,9 @@
 		display: none !important;
 	}
 
-	/* Page scroll room above fixed sticky bar (qty | cart | Buy Now) */
+	/* No extra page offset for removed sticky Select Options bar */
 	body.dejoiy-mobile-product-view {
-		padding-bottom: calc(5.25rem + env(safe-area-inset-bottom, 0)) !important;
+		padding-bottom: calc(56px + env(safe-area-inset-bottom, 0)) !important;
 	}
 
 	body.dejoiy-mobile-product-view .dejoiy-mobile-product-reco.is-placed {
@@ -332,28 +332,16 @@
 		margin-bottom: 0.5rem !important;
 	}
 
-	/* XStore sticky bar — single row, no price */
-	body.dejoiy-mobile-product-view .etheme-sticky-cart.etheme-sticky-panel {
-		position: fixed !important;
-		left: 0 !important;
-		right: 0 !important;
-		bottom: 0 !important;
-		z-index: 220 !important;
-		width: 100% !important;
-		max-width: 100vw !important;
-		margin: 0 !important;
-		padding: 0.55rem 0.65rem calc(0.55rem + env(safe-area-inset-bottom, 0)) !important;
-		background: #fff !important;
-		border-top: 1px solid #e2e8f0 !important;
-		box-shadow: 0 -10px 28px rgba(15, 23, 42, 0.12) !important;
-		display: flex !important;
-		flex-direction: row !important;
-		flex-wrap: nowrap !important;
-		align-items: center !important;
-		justify-content: stretch !important;
-		gap: 0.5rem !important;
-		box-sizing: border-box !important;
-		overflow: visible !important;
+	/* XStore sticky "Select Options" bar — removed; PDP already has ATC + Buy Now */
+	body.dejoiy-mobile-product-view .etheme-sticky-cart.etheme-sticky-panel,
+	body.dejoiy-mobile-product-view .etheme-sticky-cart,
+	body.dejoiy-mobile-product-view .elementor-widget-woocommerce-product-etheme_sticky_cart,
+	body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle {
+		display: none !important;
+		visibility: hidden !important;
+		pointer-events: none !important;
+		height: 0 !important;
+		overflow: hidden !important;
 	}
 
 	body.dejoiy-mobile-product-view .etheme-sticky-cart .et-row-container,

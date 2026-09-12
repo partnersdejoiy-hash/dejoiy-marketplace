@@ -12,6 +12,21 @@ $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? 'localhost:8080';
 define('ABSPATH', __DIR__ . '/');
 require_once ABSPATH . 'wp-load.php';
 
+// One-time token from marketplace vendor-register (cookie may not be visible yet).
+if (!empty($_GET['dso_login']) && is_string($_GET['dso_login'])) {
+    $tok = preg_replace('/[^a-f0-9]/i', '', $_GET['dso_login']);
+    if (strlen($tok) === 32) {
+        $uid = (int) get_transient('dso_hub_login_' . $tok);
+        if ($uid > 0) {
+            delete_transient('dso_hub_login_' . $tok);
+            wp_set_current_user($uid);
+            wp_set_auth_cookie($uid, true, is_ssl());
+            wp_redirect('https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard&registered=1');
+            exit;
+        }
+    }
+}
+
 // Override URLs after WP loads
 $host = $_SERVER['HTTP_HOST'];
 $site_url = 'https://' . $host;
@@ -26,6 +41,17 @@ $request_uri    = rtrim($request_uri, '/');
 $is_root        = ($request_uri === '' || $request_uri === '/');
 $is_logged_in   = is_user_logged_in();
 $is_rest        = (bool) preg_match('#^/wp-json(/.*)?$#', $_SERVER['REQUEST_URI'] ?? '', $wp_rest_matches);
+
+if ($request_uri === '/robots.txt' || $request_uri === 'robots.txt') {
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "User-agent: *\nAllow: /\nDisallow: /wp-admin/\nDisallow: /seller-hub.php\n";
+    exit;
+}
+
+if (!$is_logged_in && preg_match('#register|signup|get-started#i', $request_uri)) {
+    wp_safe_redirect('https://dejoiy.com/vendor-register/', 302);
+    exit;
+}
 
 if ($is_root && !$is_logged_in && !$is_rest) {
     // Serve marketing landing page and exit clean

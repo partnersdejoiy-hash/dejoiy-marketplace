@@ -1,0 +1,378 @@
+/**
+ * DEJOIY Amazon-compete — global header + shop + PDP polish.
+ * Scoped tightly so existing worlds (Studio, Nexus, Seller Hub) stay intact.
+ */
+
+body.dejoiy-gh .gh-action__btn,
+body.dejoiy-gh .gh-search__btn,
+body.dejoiy-gh .gh-m-bottom a {
+	min-height: 44px;
+	min-width: 44px;
+}
+
+@media (max-width: 1024px) {
+	body.dejoiy-gh .gh-search {
+		width: 100%;
+		max-width: none;
+	}
+
+	body.dejoiy-gh {
+		padding-top: var(--dejoiy-header-h, calc(62px + env(safe-area-inset-top, 0px))) !important;
+		transition: padding-top 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+	}
+
+	body.dejoiy-gh.gh-m-expanded-gh {
+		padding-top: var(--dejoiy-header-h, calc(222px + env(safe-area-inset-top, 0px))) !important;
+	}
+
+	.mph-apps {
+		scroll-margin-top: calc(var(--dejoiy-header-h, 62px) + 8px);
+		padding-top: 10px;
+	}
+}
+
+/* Shop by Category: one horizontal row (scroll), never a wrapped grid. */
+.dejoiy-mph .mph-apps__scroller,
+.mph-apps__scroller {
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	overflow-x: auto !important;
+	overflow-y: hidden !important;
+	row-gap: 0 !important;
+	-webkit-overflow-scrolling: touch;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
+}
+
+.dejoiy-mph .mph-app,
+.mph-apps__scroller .mph-app {
+	flex: 0 0 auto !important;
+}
+
+/* Shop: keep WOOF filters usable, Amazon-like rail */
+@media (min-width: 993px) {
+	.archive.woocommerce .sidebar-widget.woof_widget,
+	.archive.woocommerce .widget.woof_widget {
+		position: sticky;
+		top: 120px;
+	}
+}
+
+.djy-pay-strip {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border-radius: 12px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #334155;
+}
+
+.djy-amazon-pdp-header .djy-amazon-rating-line:empty,
+.djy-amazon-choice-badge.is-hidden {
+	display: none;
+}
+
+.djy-amazon-rating-line.is-empty {
+	color: #64748b;
+	font-size: 13px;
+}
+
+/* Product page: keep in-content Add to cart / Buy now. Hide XStore sticky
+   "Select options" bar (Elementor widget + toggle + DEJOIY mobile footer). */
+body.single-product .elementor-widget-woocommerce-product-etheme_sticky_cart,
+body.single-product .etheme-sticky-cart,
+body.single-product .etheme-sticky-cart.etheme-sticky-panel,
+body.single-product .etheme-sticky-cart.flex,
+body.single-product .etheme_custom_add_to_cart_toggle,
+body.single-product #djy-pdp-mobile-sticky,
+body.single-product .djy-pdp-mobile-sticky,
+body.dejoiy-mobile-product-view .elementor-widget-woocommerce-product-etheme_sticky_cart,
+body.dejoiy-mobile-product-view .etheme-sticky-cart,
+body.dejoiy-mobile-product-view .etheme-sticky-cart.etheme-sticky-panel,
+body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle {
+	display: none !important;
+	visibility: hidden !important;
+	pointer-events: none !important;
+	height: 0 !important;
+	max-height: 0 !important;
+	min-height: 0 !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	transform: none !important;
+}
+
+body.dejoiy-mobile-product-view {
+	padding-bottom: calc(56px + env(safe-area-inset-bottom, 0)) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.dejoiy-gh * {
+		scroll-behavior: auto;
+	}
+}
+
+/* Shop / category archives: hide XStore Spotlight category circles (All, New, Sale…). */
+.elementor-widget-woocommerce-archive-etheme_dynamic_categories,
+.etheme-dynamic-categories-wrapper,
+.etheme-category-grid,
+.etheme-category-slider,
+.swiper-entry.etheme-category-slider {
+	display: none !important;
+	height: 0 !important;
+	overflow: hidden !important;
+	margin: 0 !important;
+	padding: 0 !important;
+}
+
+/* Blog sidebar column (All Category / Top News / Newsletter) — not on shop/PDP/home. */
+body.woocommerce #categories-1,
+body.woocommerce #etheme-recent-posts-2,
+body.woocommerce #etheme-static-block-3,
+body.single-product #categories-1,
+body.single-product #etheme-recent-posts-2,
+body.single-product #etheme-static-block-3,
+body.home #categories-1,
+body.home #etheme-recent-posts-2,
+body.home #etheme-static-block-3,
+body.woocommerce .widget_categories,
+body.home .widget_categories,
+body.woocommerce .etheme-recent-posts,
+body.home .etheme-recent-posts {
+	display: none !important;
+}
+
+/* Product description: readable layout for seller-entered text (any product). */
+body.single-product .woocommerce-Tabs-panel--description,
+body.single-product #tab-description,
+body.single-product .elementor-widget-woocommerce-product-content,
+body.single-product .woocommerce-product-details__short-description {
+	font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	color: #1e293b;
+	font-size: 15px;
+	line-height: 1.7;
+	font-weight: 400;
+	max-width: 42rem;
+}
+
+body.single-product .woocommerce-product-details__short-description {
+	margin: 0 0 1rem;
+	color: #334155;
+	font-size: 0.95rem;
+	line-height: 1.65;
+}
+
+body.single-product #tab-description > h2,
+body.single-product .woocommerce-Tabs-panel--description > h2:first-child {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+}
+
+.djy-desc {
+	display: grid;
+	gap: 0.15rem;
+}
+
+.djy-desc__p {
+	margin: 0 0 0.9rem;
+	font-weight: 400;
+	color: #334155;
+}
+
+.djy-desc__p:first-of-type {
+	font-size: 1.02rem;
+	color: #0f172a;
+}
+
+.djy-desc__h {
+	margin: 1.15rem 0 0.55rem;
+	padding-bottom: 0.35rem;
+	border-bottom: 1px solid #e2e8f0;
+	font-size: 0.78rem;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #0f172a;
+	line-height: 1.3;
+}
+
+.djy-desc__h:first-child {
+	margin-top: 0;
+}
+
+.djy-desc__list {
+	margin: 0 0 0.85rem;
+	padding: 0;
+	list-style: none;
+	border: 1px solid #eef2f7;
+	border-radius: 12px;
+	background: #f8fafc;
+	overflow: hidden;
+}
+
+.djy-desc__list li {
+	position: relative;
+	margin: 0;
+	padding: 0.65rem 0.9rem 0.65rem 1.85rem;
+	border-bottom: 1px solid #eef2f7;
+	color: #334155;
+	font-weight: 500;
+	line-height: 1.45;
+}
+
+.djy-desc__list li:last-child {
+	border-bottom: none;
+}
+
+.djy-desc__list li::before {
+	content: "";
+	position: absolute;
+	left: 0.85rem;
+	top: 1rem;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #2563eb;
+}
+
+.djy-desc__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 1rem;
+}
+
+.djy-desc__chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.32rem 0.75rem;
+	border-radius: 999px;
+	background: #eff6ff;
+	border: 1px solid #dbeafe;
+	color: #1e3a8a;
+	font-size: 0.82rem;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+body.single-product #tab-description ul:not(.djy-desc__list),
+body.single-product .woocommerce-Tabs-panel--description ul:not(.djy-desc__list) {
+	margin: 0 0 1rem;
+	padding-left: 1.15rem;
+}
+
+body.single-product #tab-description li {
+	margin: 0.35rem 0;
+	line-height: 1.5;
+}
+
+body.dejoiy-mobile-product-view .woocommerce-Tabs-panel--description,
+body.dejoiy-mobile-product-view #tab-description {
+	font-size: 0.95rem;
+	max-width: none;
+}
+
+/* Vendor registration: center the form and drop the empty sidebar column */
+body.page-vendor-register .content-page .row,
+body.page-id-4342 .content-page .row {
+	display: flex;
+	justify-content: center;
+}
+
+body.page-vendor-register .content-page .content,
+body.page-id-4342 .content-page .content {
+	float: none !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	max-width: 720px;
+	width: 100%;
+	flex: 0 0 auto;
+}
+
+body.page-vendor-register .sidebar,
+body.page-vendor-register .sidebar-container,
+body.page-id-4342 .sidebar,
+body.page-id-4342 .sidebar-container {
+	display: none !important;
+}
+
+body.page-vendor-register .dso-reg-container,
+body.page-id-4342 .dso-reg-container {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+body.page-id-581 .page-heading,
+body.page-id-581 .title-banner,
+body.page-news .page-heading {
+	display: none !important;
+}
+
+.djy-news-page__inner {
+	max-width: 760px;
+	margin: 0 auto;
+}
+
+.djy-news-page__h {
+	margin: 0 0 8px;
+	font-size: 1.75rem;
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.djy-news__lede {
+	margin: 0 0 1.25rem;
+	color: #64748b;
+	font-size: 0.95rem;
+}
+
+.djy-news__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 14px;
+}
+
+.djy-news__item {
+	padding: 16px 18px;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.djy-news__date {
+	display: block;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #64748b;
+	margin-bottom: 6px;
+}
+
+.djy-news__title {
+	margin: 0 0 8px;
+	font-size: 1.15rem;
+	line-height: 1.35;
+}
+
+.djy-news__title a {
+	color: #0f172a;
+	text-decoration: none;
+}
+
+.djy-news__title a:hover {
+	color: #2563eb;
+}
+
+.djy-news__excerpt {
+	margin: 0;
+	color: #334155;
+	font-size: 0.92rem;
+	line-height: 1.55;
+}

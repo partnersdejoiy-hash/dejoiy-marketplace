@@ -72,10 +72,10 @@ try {
         if (method_exists('DSO_Marketplace', 'get_total_product_count')) $product_count = DSO_Marketplace::get_total_product_count();
         if (method_exists('DSO_Marketplace', 'get_total_fulfilled_orders')) $processed_qty = DSO_Marketplace::get_total_fulfilled_orders();
     }
-} catch (\Throwable $e) { /* fallback defaults below */ }
-if ($vendor_count <= 0)      $vendor_count    = 2400;
-if ($product_count <= 0)     $product_count   = 18500;
-if ($processed_qty <= 0)     $processed_qty   = 96000;
+} catch (\Throwable $e) { /* keep zeros */ }
+if ($vendor_count < 0)  $vendor_count  = 0;
+if ($product_count < 0) $product_count = 0;
+if ($processed_qty < 0) $processed_qty = 0;
 
 // Featured categories (static DEMO content — replace with dynamic DB query later)
 $hero_features = [
