@@ -74,6 +74,20 @@ body.dejoiy-gh .gh-m-bottom a {
 	font-size: 13px;
 }
 
+/* Hide bottom sticky "Select Options" / duplicate cart bar on product pages */
+body.single-product .etheme-sticky-cart,
+body.single-product .etheme-sticky-panel,
+body.single-product .djy-pdp-mobile-sticky,
+#djy-pdp-mobile-sticky {
+	display: none !important;
+	visibility: hidden !important;
+	pointer-events: none !important;
+}
+
+body.dejoiy-mobile-product-view {
+	padding-bottom: calc(56px + env(safe-area-inset-bottom, 0)) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	body.dejoiy-gh * {
 		scroll-behavior: auto;

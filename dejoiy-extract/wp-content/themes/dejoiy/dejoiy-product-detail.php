@@ -442,7 +442,16 @@ function dejoiy_product_detail_mobile_bar() {
 	</div>
 	<?php
 }
-add_action( 'wp_footer', 'dejoiy_product_detail_mobile_bar', 30 );
+
+/**
+ * Bottom "Select Options" / sticky cart is redundant — PDP already has Add to Cart + Buy Now.
+ */
+function dejoiy_disable_pdp_sticky_select_options() {
+	remove_action( 'after_page_wrapper', 'etheme_sticky_add_to_cart', 1 );
+	remove_action( 'wp_footer', 'dejoiy_product_detail_mobile_bar', 30 );
+}
+add_action( 'wp', 'dejoiy_disable_pdp_sticky_select_options', 40 );
+add_filter( 'theme_mod_sticky_add_to_cart_et-desktop', '__return_false', 99 );
 
 /**
  * "You may also like" rail — real products sharing a category, falling back
