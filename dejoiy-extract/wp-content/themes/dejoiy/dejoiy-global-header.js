@@ -451,6 +451,7 @@
 	function setupMobileExpand() {
 		var mobile = header ? qs('.gh-mobile', header) : null;
 		var btn = header ? qs('[data-gh-m-expand]', header) : null;
+		var panel = header ? qs('[data-gh-m-panel]', header) : null;
 		if (!mobile || !btn) {
 			return;
 		}
@@ -458,8 +459,26 @@
 			var expanded = mobile.classList.toggle('is-expanded');
 			btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
 			document.body.classList.toggle('gh-m-expanded-gh', expanded);
-			window.requestAnimationFrame(syncHeaderOffset);
+			syncHeaderOffset();
+			window.requestAnimationFrame(function () {
+				syncHeaderOffset();
+				window.requestAnimationFrame(syncHeaderOffset);
+			});
+			window.setTimeout(syncHeaderOffset, 80);
+			window.setTimeout(syncHeaderOffset, 450);
 		});
+		if (panel) {
+			panel.addEventListener('transitionend', function (e) {
+				if (!e.propertyName || e.propertyName === 'max-height') {
+					syncHeaderOffset();
+				}
+			});
+		}
+		if (typeof ResizeObserver !== 'undefined') {
+			new ResizeObserver(function () {
+				syncHeaderOffset();
+			}).observe(mobile);
+		}
 	}
 
 	function syncHeaderOffset() {
@@ -472,6 +491,9 @@
 			return;
 		}
 		var h = Math.ceil(mobile.getBoundingClientRect().height);
+		if (mobile.classList.contains('is-expanded')) {
+			h = Math.max(h, 210);
+		}
 		if (h > 40) {
 			document.documentElement.style.setProperty('--dejoiy-header-h', h + 'px');
 		}

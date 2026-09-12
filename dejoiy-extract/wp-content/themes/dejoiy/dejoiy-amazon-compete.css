@@ -16,32 +16,37 @@ body.dejoiy-gh .gh-m-bottom a {
 		max-width: none;
 	}
 
-	html {
-		--dejoiy-header-h: calc(62px + env(safe-area-inset-top, 0px));
+	body.dejoiy-gh {
+		padding-top: var(--dejoiy-header-h, calc(62px + env(safe-area-inset-top, 0px))) !important;
+		transition: padding-top 0.42s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
-	body.dejoiy-gh {
-		padding-top: var(--dejoiy-header-h) !important;
+	body.dejoiy-gh.gh-m-expanded-gh {
+		padding-top: var(--dejoiy-header-h, calc(222px + env(safe-area-inset-top, 0px))) !important;
 	}
 
 	.mph-apps {
-		scroll-margin-top: calc(var(--dejoiy-header-h) + 8px);
+		scroll-margin-top: calc(var(--dejoiy-header-h, 62px) + 8px);
 		padding-top: 10px;
 	}
 }
 
-@media (min-width: 768px) {
-	.mph-apps__scroller {
-		flex-wrap: wrap;
-		overflow: visible;
-		row-gap: 16px;
-		column-gap: 14px;
-		justify-content: flex-start;
-	}
+/* Shop by Category: one horizontal row (scroll), never a wrapped grid. */
+.dejoiy-mph .mph-apps__scroller,
+.mph-apps__scroller {
+	display: flex !important;
+	flex-wrap: nowrap !important;
+	overflow-x: auto !important;
+	overflow-y: hidden !important;
+	row-gap: 0 !important;
+	-webkit-overflow-scrolling: touch;
+	scroll-snap-type: x proximity;
+	scrollbar-width: none;
+}
 
-	.mph-app {
-		width: 72px;
-	}
+.dejoiy-mph .mph-app,
+.mph-apps__scroller .mph-app {
+	flex: 0 0 auto !important;
 }
 
 /* Shop: keep WOOF filters usable, Amazon-like rail */

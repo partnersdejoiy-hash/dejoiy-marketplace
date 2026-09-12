@@ -959,9 +959,10 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 	/* Body spacer so fixed header never covers Shop by Category */
 	body.dejoiy-gh {
 		padding-top: var(--dejoiy-header-h, calc(62px + env(safe-area-inset-top, 0px)));
+		transition: padding-top 0.42s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	body.dejoiy-gh.gh-m-expanded-gh {
-		padding-top: var(--dejoiy-header-h, calc(172px + env(safe-area-inset-top, 0px)));
+		padding-top: var(--dejoiy-header-h, calc(222px + env(safe-area-inset-top, 0px)));
 	}
 
 	.gh-m-browse {

@@ -1109,7 +1109,7 @@ function dejoiy_marketplace_home_html() {
 	?>
 	<div class="mph" data-mph>
 		<?php
-		/* ============ QUICK CATEGORIES (app bubbles, also grid on desktop) ============ */
+		/* ============ QUICK CATEGORIES (single-row horizontal scroller) ============ */
 		?>
 		<section class="mph-section mph-apps" aria-label="<?php esc_attr_e( 'Shop by category', 'dejoiy' ); ?>">
 			<div class="mph-apps__head">
