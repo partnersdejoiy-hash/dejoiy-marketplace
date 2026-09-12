@@ -97,6 +97,16 @@
 				btn.setAttribute('aria-expanded', 'false');
 			}
 		});
+		qsa('[data-gh-nav-menu]', header).forEach(function (el) {
+			if (el !== except) {
+				el.hidden = true;
+			}
+		});
+		qsa('[data-gh-nav-toggle]', header).forEach(function (btn) {
+			if (!except || !except.contains(btn)) {
+				btn.setAttribute('aria-expanded', 'false');
+			}
+		});
 	}
 
 	document.addEventListener('click', function (e) {
@@ -130,6 +140,24 @@
 			closeAllDropdowns(open ? menu : null);
 			menu.hidden = !open;
 			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		});
+	}
+
+	function setupNavDropdowns() {
+		qsa('[data-gh-nav-toggle]', header).forEach(function (toggle) {
+			var wrap = toggle.closest('[data-gh-dropdown-wrap]');
+			var menu = wrap ? qs('[data-gh-nav-menu]', wrap) : null;
+			if (!menu) {
+				return;
+			}
+			toggle.addEventListener('click', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var open = menu.hidden;
+				closeAllDropdowns(open ? menu : null);
+				menu.hidden = !open;
+				toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			});
 		});
 	}
 
@@ -668,6 +696,7 @@
 	   --------------------------------------------------------------- */
 
 	setupAccountDropdown();
+	setupNavDropdowns();
 	setupMegaMenu();
 	setupDesktopSearch();
 	setupMobileDrawer();

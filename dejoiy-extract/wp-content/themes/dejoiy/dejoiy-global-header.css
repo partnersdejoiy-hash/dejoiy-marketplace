@@ -741,6 +741,9 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 		white-space: nowrap;
 		transition: all var(--gh-ease);
 		border: 1px solid transparent;
+		background: transparent;
+		cursor: pointer;
+		font-family: inherit;
 	}
 
 	.gh-nav__link svg {
@@ -763,6 +766,17 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 	.gh-nav__link.is-active svg {
 		opacity: 1;
 		color: var(--gh-blue);
+	}
+
+	.gh-nav__drop {
+		position: relative;
+		flex: 0 0 auto;
+	}
+
+	.gh-dropdown--nav {
+		right: auto;
+		left: 0;
+		min-width: 188px;
 	}
 }
 

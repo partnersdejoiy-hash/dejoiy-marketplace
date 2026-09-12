@@ -60,6 +60,7 @@ function dejoiy_gh_icon( $name ) {
 		'palette'    => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>',
 		'recycle'    => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/><path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.293 13.596 7.196 9.5 3.1 10.598"/><path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843"/><path d="m13.378 9.633 4.096 1.098 1.097-4.096"/></svg>',
 		'briefcase'  => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>',
+		'megaphone'  => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
 		'joi'        => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4c0 2 1 3 1 5h6c0-2 1-3 1-5a4 4 0 0 0-4-4z"/><path d="M10 14h4"/><path d="M10 18h4"/><path d="M11 21h2"/></svg>',
 		'arrow-right'=> '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
 	);
@@ -69,6 +70,29 @@ function dejoiy_gh_icon( $name ) {
 /* ---------------------------------------------------------------
    NAVIGATION DATA
    --------------------------------------------------------------- */
+
+function dejoiy_gh_updates_links() {
+	$ann = home_url( '/category/dejoiy-announcements/' );
+	$term = get_term_by( 'slug', 'dejoiy-announcements', 'category' );
+	if ( $term && ! is_wp_error( $term ) ) {
+		$link = get_term_link( $term );
+		if ( ! is_wp_error( $link ) ) {
+			$ann = $link;
+		}
+	}
+	$news_page = get_page_by_path( 'news' );
+	$news      = $news_page ? get_permalink( $news_page ) : home_url( '/news/' );
+	return array(
+		array(
+			'label' => __( 'Announcements', 'dejoiy' ),
+			'url'   => $ann,
+		),
+		array(
+			'label' => __( 'News', 'dejoiy' ),
+			'url'   => $news,
+		),
+	);
+}
 
 function dejoiy_gh_nav_items() {
 	$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
@@ -109,6 +133,13 @@ function dejoiy_gh_nav_items() {
 			'url'   => home_url( '/dejoiy-services/' ),
 			'icon'  => 'briefcase',
 		),
+		array(
+			'id'       => 'updates',
+			'label'    => __( 'Updates', 'dejoiy' ),
+			'url'      => home_url( '/news/' ),
+			'icon'     => 'megaphone',
+			'children' => dejoiy_gh_updates_links(),
+		),
 	);
 }
 
@@ -120,6 +151,7 @@ function dejoiy_gh_world_colors() {
 		'quickmart'=> '#16A34A',
 		'renew'    => '#0D9488',
 		'hire'     => '#EA580C',
+		'updates'  => '#4F46E5',
 	);
 }
 
@@ -261,6 +293,11 @@ function dejoiy_gh_is_active( $id ) {
 			return false !== strpos( $uri, 'dejoiy-refurbished' );
 		case 'hire':
 			return false !== strpos( $uri, 'dejoiy-services' );
+		case 'updates':
+			return false !== strpos( $uri, '/news' )
+				|| false !== strpos( $uri, 'dejoiy-announcements' )
+				|| ( function_exists( 'is_home' ) && is_home() )
+				|| ( function_exists( 'is_singular' ) && is_singular( 'post' ) );
 	}
 	return false;
 }
@@ -470,7 +507,20 @@ function dejoiy_gh_desktop_header_html() {
 								<!-- Worlds column -->
 								<div class="gh-mega__worlds">
 									<h3 class="gh-mega__heading"><?php esc_html_e( 'DEJOIY Worlds', 'dejoiy' ); ?></h3>
-									<?php foreach ( dejoiy_gh_nav_items() as $item ) : ?>
+									<?php foreach ( dejoiy_gh_nav_items() as $item ) :
+										if ( ! empty( $item['children'] ) ) {
+											foreach ( $item['children'] as $child ) :
+												?>
+										<a class="gh-mega__world" href="<?php echo esc_url( $child['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#4F46E5' ); ?>">
+											<span class="gh-mega__world-icon"><?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?></span>
+											<span class="gh-mega__world-label"><?php echo esc_html( $child['label'] ); ?></span>
+											<span class="gh-mega__world-arrow"><?php echo dejoiy_gh_icon( 'chevron-r' ); // phpcs:ignore ?></span>
+										</a>
+												<?php
+											endforeach;
+											continue;
+										}
+										?>
 										<a class="gh-mega__world" href="<?php echo esc_url( $item['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#2563EB' ); ?>">
 											<span class="gh-mega__world-icon"><?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?></span>
 											<span class="gh-mega__world-label"><?php echo esc_html( $item['label'] ); ?></span>
@@ -494,6 +544,23 @@ function dejoiy_gh_desktop_header_html() {
 					<div class="gh-nav__links">
 						<?php foreach ( $nav as $item ) :
 							$active = dejoiy_gh_is_active( $item['id'] );
+							if ( ! empty( $item['children'] ) ) :
+								?>
+							<div class="gh-nav__drop" data-gh-dropdown-wrap>
+								<button type="button" class="gh-nav__link gh-nav__link--drop<?php echo $active ? ' is-active' : ''; ?>" data-gh-nav-toggle aria-expanded="false" aria-haspopup="true">
+									<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
+									<span><?php echo esc_html( $item['label'] ); ?></span>
+									<?php echo dejoiy_gh_icon( 'chevron' ); // phpcs:ignore ?>
+								</button>
+								<div class="gh-dropdown gh-dropdown--nav" data-gh-nav-menu hidden>
+									<?php foreach ( $item['children'] as $child ) : ?>
+										<a class="gh-dropdown__item" href="<?php echo esc_url( $child['url'] ); ?>"><?php echo esc_html( $child['label'] ); ?></a>
+									<?php endforeach; ?>
+								</div>
+							</div>
+								<?php
+								continue;
+							endif;
 						?>
 							<a class="gh-nav__link<?php echo $active ? ' is-active' : ''; ?>" href="<?php echo esc_url( $item['url'] ); ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>>
 								<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
@@ -543,6 +610,17 @@ function dejoiy_gh_desktop_header_html() {
 				<div class="gh-m-chips" data-gh-m-chips>
 				<?php foreach ( dejoiy_gh_nav_items() as $item ) :
 					$active = dejoiy_gh_is_active( $item['id'] );
+					if ( ! empty( $item['children'] ) ) {
+						foreach ( $item['children'] as $child ) :
+							?>
+					<a class="gh-m-chip<?php echo $active ? ' is-active' : ''; ?>" href="<?php echo esc_url( $child['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#4F46E5' ); ?>">
+						<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
+						<span><?php echo esc_html( $child['label'] ); ?></span>
+					</a>
+							<?php
+						endforeach;
+						continue;
+					}
 				?>
 					<a class="gh-m-chip<?php echo $active ? ' is-active' : ''; ?>" href="<?php echo esc_url( $item['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#2563EB' ); ?>">
 						<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
@@ -588,7 +666,20 @@ function dejoiy_gh_desktop_header_html() {
 				<div class="gh-m-drawer__body">
 					<div class="gh-m-drawer__section">
 						<h3 class="gh-m-drawer__heading"><?php esc_html_e( 'Worlds', 'dejoiy' ); ?></h3>
-						<?php foreach ( dejoiy_gh_nav_items() as $item ) : ?>
+						<?php foreach ( dejoiy_gh_nav_items() as $item ) :
+							if ( ! empty( $item['children'] ) ) {
+								foreach ( $item['children'] as $child ) :
+									?>
+							<a class="gh-m-drawer__link" href="<?php echo esc_url( $child['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#4F46E5' ); ?>">
+								<span class="gh-m-drawer__link-icon"><?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?></span>
+								<span class="gh-m-drawer__link-label"><?php echo esc_html( $child['label'] ); ?></span>
+								<span class="gh-m-drawer__link-arrow"><?php echo dejoiy_gh_icon( 'chevron-r' ); // phpcs:ignore ?></span>
+							</a>
+									<?php
+								endforeach;
+								continue;
+							}
+							?>
 							<a class="gh-m-drawer__link" href="<?php echo esc_url( $item['url'] ); ?>" style="--gh-world:<?php echo esc_attr( dejoiy_gh_world_colors()[ $item['id'] ] ?? '#2563EB' ); ?>">
 								<span class="gh-m-drawer__link-icon"><?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?></span>
 								<span class="gh-m-drawer__link-label"><?php echo esc_html( $item['label'] ); ?></span>

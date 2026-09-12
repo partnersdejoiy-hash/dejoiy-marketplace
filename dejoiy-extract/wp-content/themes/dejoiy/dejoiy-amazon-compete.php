@@ -434,3 +434,40 @@ function dejoiy_amazon_compete_filter_short_description( $content ) {
 	return '<p class="djy-desc__p">' . esc_html( $plain ) . '</p>';
 }
 add_filter( 'woocommerce_short_description', 'dejoiy_amazon_compete_filter_short_description', 20 );
+
+/**
+ * Blog sidebar (All Category / Top News / Newsletter) stays on news + announcements only.
+ *
+ * @return bool
+ */
+function dejoiy_amazon_compete_is_updates_surface() {
+	if ( is_admin() ) {
+		return true;
+	}
+	if ( function_exists( 'is_singular' ) && is_singular( 'post' ) ) {
+		return true;
+	}
+	if ( function_exists( 'is_home' ) && is_home() && ! is_front_page() ) {
+		return true;
+	}
+	if ( function_exists( 'is_category' ) && is_category() ) {
+		return true;
+	}
+	if ( function_exists( 'is_page' ) && ( is_page( 'news' ) || is_page( 'blog' ) ) ) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @param array<string, array<int, string>> $sidebars Widgets.
+ * @return array<string, array<int, string>>
+ */
+function dejoiy_amazon_compete_trim_blog_sidebar( $sidebars ) {
+	if ( is_admin() || dejoiy_amazon_compete_is_updates_surface() || ! is_array( $sidebars ) ) {
+		return $sidebars;
+	}
+	$sidebars['main-sidebar'] = array();
+	return $sidebars;
+}
+add_filter( 'sidebars_widgets', 'dejoiy_amazon_compete_trim_blog_sidebar', 99 );

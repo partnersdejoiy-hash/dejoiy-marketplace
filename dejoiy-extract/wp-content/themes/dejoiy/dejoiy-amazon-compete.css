@@ -126,6 +126,23 @@ body.dejoiy-mobile-product-view {
 	padding: 0 !important;
 }
 
+/* Blog sidebar column (All Category / Top News / Newsletter) — not on shop/PDP/home. */
+body.woocommerce #categories-1,
+body.woocommerce #etheme-recent-posts-2,
+body.woocommerce #etheme-static-block-3,
+body.single-product #categories-1,
+body.single-product #etheme-recent-posts-2,
+body.single-product #etheme-static-block-3,
+body.home #categories-1,
+body.home #etheme-recent-posts-2,
+body.home #etheme-static-block-3,
+body.woocommerce .widget_categories,
+body.home .widget_categories,
+body.woocommerce .etheme-recent-posts,
+body.home .etheme-recent-posts {
+	display: none !important;
+}
+
 /* Product description: readable layout for seller-entered text (any product). */
 body.single-product .woocommerce-Tabs-panel--description,
 body.single-product #tab-description,
