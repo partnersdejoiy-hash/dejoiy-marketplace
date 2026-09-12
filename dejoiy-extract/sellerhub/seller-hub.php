@@ -27,6 +27,17 @@ $is_root        = ($request_uri === '' || $request_uri === '/');
 $is_logged_in   = is_user_logged_in();
 $is_rest        = (bool) preg_match('#^/wp-json(/.*)?$#', $_SERVER['REQUEST_URI'] ?? '', $wp_rest_matches);
 
+if ($request_uri === '/robots.txt' || $request_uri === 'robots.txt') {
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "User-agent: *\nAllow: /\nDisallow: /wp-admin/\nDisallow: /seller-hub.php\n";
+    exit;
+}
+
+if (!$is_logged_in && preg_match('#register|signup|get-started#i', $request_uri)) {
+    wp_safe_redirect('https://dejoiy.com/vendor-register/', 302);
+    exit;
+}
+
 if ($is_root && !$is_logged_in && !$is_rest) {
     // Serve marketing landing page and exit clean
     require_once __DIR__ . '/landing.php';

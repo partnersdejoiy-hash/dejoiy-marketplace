@@ -263,6 +263,12 @@ if ( is_readable( $pd_path ) ) {
 	require_once $pd_path;
 }
 
+// Amazon-compete: aliases, honest ratings schema, copy-listing hide, HSTS
+$amz_path = get_stylesheet_directory() . '/dejoiy-amazon-compete.php';
+if ( is_readable( $amz_path ) ) {
+	require_once $amz_path;
+}
+
 // DEJOIY Header OS V4 — Elementor header ecosystem navigation (legacy, disabled when global header active)
 if ( ! defined( 'DEJOIY_GH_DISABLED' ) || ! DEJOIY_GH_DISABLED ) {
 	// Header OS V4 is superseded by Global Header OS

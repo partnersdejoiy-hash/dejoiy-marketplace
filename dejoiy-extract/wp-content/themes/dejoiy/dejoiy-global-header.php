@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 if ( ! defined( 'DEJOIY_GH_VERSION' ) ) {
-	define( 'DEJOIY_GH_VERSION', '2.1.0' );
+	define( 'DEJOIY_GH_VERSION', '2.2.0' );
 }
 
 /* ---------------------------------------------------------------
@@ -129,7 +129,7 @@ function dejoiy_gh_account_menu() {
 		array( 'key' => 'account', 'label' => __( 'My Account', 'dejoiy' ), 'url' => $account ),
 		array( 'key' => 'orders',  'label' => __( 'My Orders', 'dejoiy' ),  'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : $account ),
 		array( 'key' => 'messages','label' => __( 'Contact Seller', 'dejoiy' ),'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'messages' ) : home_url( '/my-account/messages/' ) ),
-		array( 'key' => 'wishlist','label' => __( 'Wishlist', 'dejoiy' ),    'url' => home_url( '/my-account/?et-wishlist-page' ) ),
+		array( 'key' => 'wishlist','label' => __( 'Wishlist', 'dejoiy' ),    'url' => home_url( '/wishlist/' ) ),
 		array( 'key' => 'settings','label' => __( 'Settings', 'dejoiy' ),    'url' => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'edit-account' ) : $account ),
 	);
 	if ( is_user_logged_in() ) {
@@ -212,7 +212,7 @@ function dejoiy_gh_main_categories() {
 	}
 	$terms = get_terms( array(
 		'taxonomy'   => 'product_cat',
-		'hide_empty' => false,
+		'hide_empty' => true,
 		'parent'     => 0,
 		'orderby'    => 'name',
 		'order'      => 'ASC',
@@ -230,11 +230,15 @@ function dejoiy_gh_main_categories() {
 		if ( is_wp_error( $link ) ) {
 			continue;
 		}
+		$count = (int) $term->count;
+		if ( $count < 1 ) {
+			continue;
+		}
 		$cached[] = array(
 			'slug'  => $term->slug,
 			'label' => $term->name,
 			'url'   => $link,
-			'count' => (int) $term->count,
+			'count' => $count,
 		);
 	}
 	return $cached;
@@ -435,7 +439,7 @@ function dejoiy_gh_desktop_header_html() {
 							</div>
 						</div>
 						<!-- Wishlist -->
-						<a class="gh-action" href="<?php echo esc_url( home_url( '/my-account/?et-wishlist-page' ) ); ?>" aria-label="<?php esc_attr_e( 'Wishlist', 'dejoiy' ); ?>">
+						<a class="gh-action" href="<?php echo esc_url( home_url( '/wishlist/' ) ); ?>" aria-label="<?php esc_attr_e( 'Wishlist', 'dejoiy' ); ?>">
 							<?php echo dejoiy_gh_icon( 'heart' ); // phpcs:ignore ?>
 							<span class="gh-action__label"><?php esc_html_e( 'Wishlist', 'dejoiy' ); ?></span>
 						</a>
@@ -566,7 +570,7 @@ function dejoiy_gh_desktop_header_html() {
 				<span class="gh-m-bottom__icon"><?php echo dejoiy_gh_icon( 'book' ); // phpcs:ignore ?></span>
 				<small><?php esc_html_e( 'Nexus', 'dejoiy' ); ?></small>
 			</a>
-			<a href="<?php echo esc_url( home_url( '/my-account/?et-wishlist-page' ) ); ?>" class="gh-m-bottom__item">
+			<a href="<?php echo esc_url( home_url( '/wishlist/' ) ); ?>" class="gh-m-bottom__item">
 				<span class="gh-m-bottom__icon"><?php echo dejoiy_gh_icon( 'heart' ); // phpcs:ignore ?></span>
 				<small><?php esc_html_e( 'Wishlist', 'dejoiy' ); ?></small>
 			</a>

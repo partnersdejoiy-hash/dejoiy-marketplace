@@ -1181,4 +1181,42 @@ class DSO_Marketplace {
         </div>
         <?php
     }
+
+    /**
+     * Honest landing-page social proof (no inflated placeholders).
+     */
+    public static function get_active_vendor_count() {
+        $vendors = self::get_all_vendors();
+        $n = 0;
+        if ( is_array( $vendors ) ) {
+            foreach ( $vendors as $v ) {
+                if ( empty( $v['is_active'] ) ) {
+                    continue;
+                }
+                $n++;
+            }
+        }
+        return $n;
+    }
+
+    public static function get_total_product_count() {
+        $counts = wp_count_posts( 'product' );
+        return isset( $counts->publish ) ? (int) $counts->publish : 0;
+    }
+
+    public static function get_total_fulfilled_orders() {
+        if ( function_exists( 'wc_orders_count' ) ) {
+            return (int) wc_orders_count( 'completed' ) + (int) wc_orders_count( 'processing' );
+        }
+        $counts = wp_count_posts( 'shop_order' );
+        $n = 0;
+        if ( $counts ) {
+            foreach ( array( 'wc-completed', 'completed', 'wc-processing', 'processing' ) as $st ) {
+                if ( isset( $counts->$st ) ) {
+                    $n += (int) $counts->$st;
+                }
+            }
+        }
+        return $n;
+    }
 }

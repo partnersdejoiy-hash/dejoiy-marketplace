@@ -160,6 +160,8 @@ function dejoiy_product_detail_header_html() {
 	$rendered_hdr[ $pid ] = true;
 
 	$seller = dejoiy_get_pdp_seller_info( $product );
+	$rating = (float) $product->get_average_rating();
+	$count  = (int) $product->get_review_count();
 	ob_start();
 	?>
 	<div class="djy-amazon-pdp-header">
@@ -167,22 +169,25 @@ function dejoiy_product_detail_header_html() {
 			<a href="<?php echo esc_url( $seller['url'] ); ?>" class="djy-amazon-store-link">
 				<?php echo esc_html( sprintf( __( 'Visit the %s Store', 'dejoiy' ), $seller['name'] ) ); ?>
 			</a>
-			<span class="djy-amazon-verified-badge">✓ <?php esc_html_e( 'Verified Merchant', 'dejoiy' ); ?></span>
+			<span class="djy-amazon-verified-badge">✓ <?php esc_html_e( 'Sold on DEJOIY', 'dejoiy' ); ?></span>
 		</div>
+		<?php if ( $count > 0 && $rating > 0 ) : ?>
 		<div class="djy-amazon-rating-line">
-			<div class="djy-amazon-stars" aria-label="4.8 out of 5 stars">
-				<span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span><span class="djy-star">★</span>
-				<span class="djy-rating-num">4.8</span>
+			<div class="djy-amazon-stars" aria-label="<?php echo esc_attr( sprintf( __( '%s out of 5 stars', 'dejoiy' ), $rating ) ); ?>">
+				<?php
+				$full = (int) round( $rating );
+				for ( $i = 1; $i <= 5; $i++ ) {
+					echo '<span class="djy-star">' . ( $i <= $full ? '★' : '☆' ) . '</span>';
+				}
+				?>
+				<span class="djy-rating-num"><?php echo esc_html( number_format_i18n( $rating, 1 ) ); ?></span>
 			</div>
 			<span class="djy-rating-sep">|</span>
-			<a href="#reviews" class="djy-rating-count">86 ratings</a>
-			<span class="djy-rating-sep">|</span>
-			<span class="djy-qa-count">14 answered questions</span>
+			<a href="#reviews" class="djy-rating-count"><?php echo esc_html( sprintf( _n( '%s rating', '%s ratings', $count, 'dejoiy' ), number_format_i18n( $count ) ) ); ?></a>
 		</div>
-		<div class="djy-amazon-choice-badge">
-			<span class="djy-choice-tag">DEJOIY's <span class="djy-choice-gold">Choice</span></span>
-			<span class="djy-choice-for">for "handmade ceramic mug"</span>
-		</div>
+		<?php else : ?>
+		<div class="djy-amazon-rating-line is-empty"><?php esc_html_e( 'No customer reviews yet', 'dejoiy' ); ?></div>
+		<?php endif; ?>
 	</div>
 	<?php
 	return (string) ob_get_clean();

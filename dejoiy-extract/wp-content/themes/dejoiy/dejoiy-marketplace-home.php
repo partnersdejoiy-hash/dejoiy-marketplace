@@ -397,6 +397,9 @@ function dejoiy_mph_categories() {
 			if ( isset( $seen[ $term->slug ] ) ) {
 				continue;
 			}
+			if ( (int) $term->count < 1 ) {
+				continue;
+			}
 			$seen[ $term->slug ] = true;
 			$link                = get_term_link( $term );
 			if ( is_wp_error( $link ) ) {
@@ -422,7 +425,50 @@ function dejoiy_mph_categories() {
 			$out[] = $cat;
 		}
 	}
-	return $out;
+
+	$filtered = array();
+	foreach ( $out as $cat ) {
+		if ( dejoiy_mph_category_is_shoppable( $cat ) ) {
+			$filtered[] = $cat;
+		}
+	}
+	if ( empty( $filtered ) ) {
+		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+		$filtered[] = array(
+			'slug' => 'shop',
+			'name' => __( 'Shop all', 'dejoiy' ),
+			'icon' => 'box',
+			'url'  => $shop,
+			'bg'   => 'linear-gradient(135deg,#2563eb,#7c3aed)',
+		);
+	}
+	return $filtered;
+}
+
+/**
+ * Keep destination worlds; drop empty product-category tiles.
+ *
+ * @param array<string, mixed> $cat Tile.
+ * @return bool
+ */
+function dejoiy_mph_category_is_shoppable( $cat ) {
+	$slug = isset( $cat['slug'] ) ? (string) $cat['slug'] : '';
+	$url  = isset( $cat['url'] ) ? (string) $cat['url'] : '';
+	$keep = array( 'studio', 'custom-studio', 'nexus', 'library', 'services', 'quickmart', 'renew', 'hire', 'shop' );
+	if ( in_array( $slug, $keep, true ) ) {
+		return true;
+	}
+	if ( $url && preg_match( '#dejoiy-(custom-studio|library|quick-mart|refurbished|services)|internships|sell-on#', $url ) ) {
+		return true;
+	}
+	if ( ! taxonomy_exists( 'product_cat' ) ) {
+		return true;
+	}
+	$term = get_term_by( 'slug', $slug, 'product_cat' );
+	if ( $term && ! is_wp_error( $term ) ) {
+		return (int) $term->count > 0;
+	}
+	return false;
 }
 
 /**
@@ -509,26 +555,18 @@ function dejoiy_mph_price( $product ) {
 }
 
 /**
- * Rating payload (deterministic fallback when no reviews exist).
+ * Rating payload — live WooCommerce reviews only (never invented).
  *
  * @param WC_Product $product Product.
  * @return array{rating:float,reviews:int}
  */
 function dejoiy_mph_rating( $product ) {
-	$id      = $product instanceof WC_Product ? (int) $product->get_id() : 0;
 	$rating  = $product && is_callable( array( $product, 'get_average_rating' ) ) ? (float) $product->get_average_rating() : 0.0;
 	$reviews = $product && is_callable( array( $product, 'get_review_count' ) ) ? (int) $product->get_review_count() : 0;
 
-	if ( $rating <= 0 ) {
-		$rating = 3.0 + ( ( $id * 7 ) % 19 ) / 10.0; // 3.0 – 4.9
-		$rating = min( 4.9, $rating );
-	}
-	if ( $reviews <= 0 ) {
-		$reviews = 8 + ( ( $id * 13 ) % 240 );
-	}
 	return array(
-		'rating'  => round( $rating * 2 ) / 2,
-		'reviews' => $reviews,
+		'rating'  => $rating > 0 ? round( $rating * 2 ) / 2 : 0.0,
+		'reviews' => max( 0, $reviews ),
 	);
 }
 
@@ -715,13 +753,16 @@ function dejoiy_mph_card( $post, $opts = array() ) {
 	}
 	$price_html .= '</p>';
 
-	$stars = '';
-	for ( $i = 1; $i <= 5; $i++ ) {
+	$rating_html = '';
+	if ( ! empty( $rating['reviews'] ) && $rating['rating'] > 0 ) {
+		$stars = '';
 		$frac  = (int) floor( $rating['rating'] );
-		$stars .= ( $i <= $frac ) ? dejoiy_mph_icon( 'star' ) : dejoiy_mph_icon( 'star-o' );
+		for ( $i = 1; $i <= 5; $i++ ) {
+			$stars .= ( $i <= $frac ) ? dejoiy_mph_icon( 'star' ) : dejoiy_mph_icon( 'star-o' );
+		}
+		$rating_html = '<div class="mph-card__stars" title="' . esc_attr( (string) $rating['rating'] ) . '">' . $stars
+			. '<span class="mph-card__reviews">(' . esc_html( (string) $rating['reviews'] ) . ')</span></div>';
 	}
-	$rating_html = '<div class="mph-card__stars" title="' . esc_attr( (string) $rating['rating'] ) . '">' . $stars
-		. '<span class="mph-card__reviews">(' . esc_html( (string) $rating['reviews'] ) . ')</span></div>';
 
 	$delivery_html = '<p class="mph-card__delivery">' . dejoiy_mph_icon( 'truck' ) . '<span>' . esc_html__( 'Free Delivery by', 'dejoiy' ) . ' <b>' . esc_html( $eta ) . '</b></span></p>';
 
@@ -835,16 +876,6 @@ function dejoiy_mph_hero_slides() {
 			'chip2'  => __( 'UPI · Cards · COD', 'dejoiy' ),
 		),
 		array(
-			'id'     => 'internships',
-			'type'   => 'intern',
-			'kicker' => __( 'DEJOIY INTERNSHIPS', 'dejoiy' ),
-		),
-		array(
-			'id'     => 'sell',
-			'type'   => 'sell',
-			'kicker' => __( 'SELL ON DEJOIY', 'dejoiy' ),
-		),
-		array(
 			'id'     => 'studio',
 			'kicker' => __( 'DEJOIY CUSTOM STUDIO', 'dejoiy' ),
 			'title'  => __( 'Design it. Create it. Own it.', 'dejoiy' ),
@@ -869,6 +900,16 @@ function dejoiy_mph_hero_slides() {
 			'img'    => $nexus_img,
 			'chip1'  => __( 'FREE CLASSICS', 'dejoiy' ),
 			'chip2'  => __( 'COURSES INSIDE', 'dejoiy' ),
+		),
+		array(
+			'id'     => 'internships',
+			'type'   => 'intern',
+			'kicker' => __( 'DEJOIY INTERNSHIPS', 'dejoiy' ),
+		),
+		array(
+			'id'     => 'sell',
+			'type'   => 'sell',
+			'kicker' => __( 'SELL ON DEJOIY', 'dejoiy' ),
 		),
 	);
 }

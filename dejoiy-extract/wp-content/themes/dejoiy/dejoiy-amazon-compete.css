@@ -1,0 +1,55 @@
+/**
+ * DEJOIY Amazon-compete — global header + shop + PDP polish.
+ * Scoped tightly so existing worlds (Studio, Nexus, Seller Hub) stay intact.
+ */
+
+body.dejoiy-gh .gh-action__btn,
+body.dejoiy-gh .gh-search__btn,
+body.dejoiy-gh .gh-m-bottom a {
+	min-height: 44px;
+	min-width: 44px;
+}
+
+@media (max-width: 1024px) {
+	body.dejoiy-gh .gh-search {
+		width: 100%;
+		max-width: none;
+	}
+}
+
+/* Shop: keep WOOF filters usable, Amazon-like rail */
+@media (min-width: 993px) {
+	.archive.woocommerce .sidebar-widget.woof_widget,
+	.archive.woocommerce .widget.woof_widget {
+		position: sticky;
+		top: 120px;
+	}
+}
+
+.djy-pay-strip {
+	margin: 0 0 16px;
+	padding: 12px 14px;
+	border-radius: 12px;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #334155;
+}
+
+.djy-amazon-pdp-header .djy-amazon-rating-line:empty,
+.djy-amazon-choice-badge.is-hidden {
+	display: none;
+}
+
+/* Honest empty-state for zero-review products */
+.djy-amazon-rating-line.is-empty {
+	color: #64748b;
+	font-size: 13px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	body.dejoiy-gh * {
+		scroll-behavior: auto;
+	}
+}
