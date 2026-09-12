@@ -196,7 +196,7 @@ class DSO_Registration {
             <div style="text-align:center;margin-bottom:28px;">
                 <div style="display:inline-flex;align-items:center;justify-content:center;width:56px;height:56px;background:#eef2ff;color:#001553;border-radius:14px;font-size:26px;margin-bottom:12px;">🏪</div>
                 <h2 style="font-size:24px;font-weight:800;color:#0f172a;margin:0 0 6px;">Open Your DEJOIY Store</h2>
-                <p style="font-size:14px;color:#64748b;margin:0;">Join hundreds of verified merchants selling to thousands of buyers nationwide.</p>
+                <p style="font-size:14px;color:#64748b;margin:0;">Create a Seller Hub account to list products, manage orders, and get paid on DEJOIY.</p>
             </div>
 
             <?php if (!empty($errors)): ?>
