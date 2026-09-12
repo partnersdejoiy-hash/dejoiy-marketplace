@@ -97,100 +97,146 @@ class DSO_Orders {
             <!-- Orders Table Container -->
             <div class="dso-card">
                 <div class="dso-card-body dso-p-0">
-                    <div class="dso-toolbar">
-                        <div class="dso-tabs">
-                            <a href="?section=orders" class="dso-tab <?php echo $current_status === 'all' ? 'active' : ''; ?>">All (<?php echo $stats['total']; ?>)</a>
-                            <a href="?section=orders-pending" class="dso-tab <?php echo $current_status === 'pending' ? 'active' : ''; ?>">Pending (<?php echo $stats['pending']; ?>)</a>
-                            <a href="?section=orders-processing" class="dso-tab <?php echo $current_status === 'processing' ? 'active' : ''; ?>">Processing (<?php echo $stats['processing']; ?>)</a>
-                            <a href="?section=orders-shipped" class="dso-tab <?php echo $current_status === 'shipped' ? 'active' : ''; ?>">Shipped</a>
-                            <a href="?section=orders-delivered" class="dso-tab <?php echo $current_status === 'completed' ? 'active' : ''; ?>">Delivered (<?php echo $stats['completed']; ?>)</a>
-                            <a href="?section=orders-cancelled" class="dso-tab <?php echo $current_status === 'cancelled' ? 'active' : ''; ?>">Cancelled (<?php echo $stats['cancelled']; ?>)</a>
+                    <div class="dso-toolbar" style="display:flex;flex-direction:column;gap:12px;padding:16px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                            <div class="dso-tabs" style="margin:0;">
+                                <a href="?section=orders" class="dso-tab <?php echo $current_status === 'all' ? 'active' : ''; ?>">All Orders (<?php echo $stats['total']; ?>)</a>
+                                <a href="?section=orders-pending" class="dso-tab <?php echo $current_status === 'pending' ? 'active' : ''; ?>">Pending Payment (<?php echo $stats['pending']; ?>)</a>
+                                <a href="?section=orders-processing" class="dso-tab <?php echo $current_status === 'processing' ? 'active' : ''; ?>">Ready to Ship <span class="dso-badge dso-badge-danger" style="margin-left:4px;"><?php echo $stats['processing']; ?></span></a>
+                                <a href="?section=orders-shipped" class="dso-tab <?php echo $current_status === 'shipped' ? 'active' : ''; ?>">In Transit</a>
+                                <a href="?section=orders-delivered" class="dso-tab <?php echo $current_status === 'completed' ? 'active' : ''; ?>">Delivered</a>
+                            </div>
+                            <div class="dso-bulk-actions" style="display:flex;align-items:center;gap:8px;">
+                                <select class="dso-select" style="min-width:180px;height:36px;padding:0 12px;">
+                                    <option value="">Bulk Actions</option>
+                                    <option value="print_labels">Print Shipping Labels</option>
+                                    <option value="print_invoices">Print GST Invoices</option>
+                                    <option value="mark_shipped">Mark as Shipped</option>
+                                    <option value="export_csv">Export Order CSV</option>
+                                </select>
+                                <button type="button" class="dso-btn dso-btn-outline dso-btn-sm" style="height:36px;">Apply</button>
+                            </div>
                         </div>
 
-                        <form method="get" class="dso-filters-row">
+                        <form method="get" class="dso-filters-row" style="display:flex;gap:12px;align-items:center;background:#f8fafc;padding:12px;border-radius:8px;">
                             <input type="hidden" name="section" value="<?php echo esc_attr($_GET['section'] ?? 'orders'); ?>" />
-                            <div class="dso-search-box">
+                            <div class="dso-search-box" style="flex:1;">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                <input type="text" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search by order #, customer name, email..." class="dso-input" />
+                                <input type="text" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Search by Order ID, DPIN, SKU, Customer Name, or AWB..." class="dso-input" style="width:100%;border:none;background:transparent;box-shadow:none;padding-left:36px;" />
                             </div>
+                            <div class="dso-filter-separator" style="width:1px;height:24px;background:#e2e8f0;"></div>
+                            <select name="date_filter" class="dso-select dso-select-sm" style="border:none;background:transparent;">
+                                <option value="30">Last 30 Days</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="all">All Time</option>
+                            </select>
+                            <select name="fulfillment" class="dso-select dso-select-sm" style="border:none;background:transparent;">
+                                <option value="">Fulfillment</option>
+                                <option value="easy_ship">DEJOIY Easy Ship</option>
+                                <option value="self_ship">Self Ship</option>
+                            </select>
+                            <button type="submit" class="dso-btn dso-btn-primary dso-btn-sm">Filter</button>
                             <?php if ($search): ?>
-                                <a href="?section=<?php echo esc_attr($_GET['section'] ?? 'orders'); ?>" class="dso-btn dso-btn-outline dso-btn-sm">Reset</a>
+                                <a href="?section=<?php echo esc_attr($_GET['section'] ?? 'orders'); ?>" class="dso-btn dso-btn-outline dso-btn-sm" style="border:none;">Clear</a>
                             <?php endif; ?>
                         </form>
                     </div>
 
                     <div class="dso-table-responsive">
-                        <table class="dso-table dso-table-orders">
+                        <table class="dso-table dso-table-orders" style="border-top:1px solid var(--dso-border-light);">
                             <thead>
                                 <tr>
-                                    <th>Order #</th>
-                                    <th>Date</th>
-                                    <th>Customer</th>
-                                    <th>Items</th>
-                                    <th>Total (₹)</th>
-                                    <th>Payment</th>
-                                    <th>Fulfillment Status</th>
+                                    <th style="width:40px;text-align:center;"><input type="checkbox" class="dso-checkbox-all" aria-label="Select all orders" /></th>
+                                    <th>Order Details</th>
+                                    <th>Product Information</th>
+                                    <th>Fulfillment SLA</th>
+                                    <th>Payment & Total</th>
+                                    <th>Status</th>
                                     <th class="dso-text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($orders)): ?>
                                     <tr>
-                                        <td colspan="8">
-                                            <div class="dso-empty-state">
-                                                <div class="dso-empty-icon">🛒</div>
-                                                <h3>No orders found</h3>
-                                                <p><?php echo $search ? 'No orders match your search keyword.' : 'New orders placed on DEJOIY marketplace will appear here immediately.'; ?></p>
+                                        <td colspan="7">
+                                            <div class="dso-empty-state" style="padding:60px 20px;">
+                                                <div class="dso-empty-icon" style="font-size:48px;opacity:0.5;margin-bottom:16px;">📦</div>
+                                                <h3 style="font-size:18px;font-weight:700;color:#0f1111;">No orders to fulfill right now</h3>
+                                                <p style="color:#565959;max-width:400px;margin:0 auto 24px;font-size:14px;"><?php echo $search ? 'We couldn\'t find any orders matching your search filters.' : 'When customers purchase your items on the DEJOIY marketplace, their orders will appear here for you to fulfill.'; ?></p>
+                                                <?php if (!$search): ?>
+                                                    <a href="?section=products&action=new" class="dso-btn dso-btn-primary">Add a Product to Start Selling</a>
+                                                <?php else: ?>
+                                                    <a href="?section=orders" class="dso-btn dso-btn-outline">Clear Search Filters</a>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($orders as $o): ?>
                                         <tr class="dso-order-row" data-id="<?php echo $o['id']; ?>">
-                                            <td>
-                                                <a href="?section=order-detail&id=<?php echo $o['id']; ?>" class="dso-order-number-link">
+                                            <td style="text-align:center;vertical-align:top;padding-top:20px;">
+                                                <input type="checkbox" class="dso-checkbox-item" value="<?php echo $o['id']; ?>" aria-label="Select order <?php echo esc_attr($o['number']); ?>" />
+                                            </td>
+                                            <td style="vertical-align:top;">
+                                                <a href="?section=order-detail&id=<?php echo $o['id']; ?>" class="dso-order-number-link" style="display:block;font-size:14px;margin-bottom:4px;">
                                                     <strong>#<?php echo esc_html($o['number']); ?></strong>
                                                 </a>
-                                            </td>
-                                            <td>
-                                                <span class="dso-date-display"><?php echo esc_html($o['date']); ?></span>
-                                                <span class="dso-time-sub"><?php echo esc_html($o['time']); ?></span>
-                                            </td>
-                                            <td>
-                                                <div class="dso-cust-meta">
-                                                    <span class="dso-cust-name"><?php echo esc_html($o['customer']); ?></span>
-                                                    <span class="dso-cust-sub"><?php echo esc_html($o['city']); ?><?php echo $o['state'] ? ', ' . esc_html($o['state']) : ''; ?></span>
+                                                <span class="dso-date-display" style="font-size:12px;color:#565959;display:block;"><?php echo esc_html($o['date']); ?> <?php echo esc_html($o['time']); ?></span>
+                                                <div class="dso-cust-meta" style="margin-top:8px;font-size:12px;color:#0f1111;">
+                                                    <span class="dso-cust-name" style="font-weight:600;display:block;"><?php echo esc_html($o['customer']); ?></span>
+                                                    <span class="dso-cust-sub" style="color:#565959;"><?php echo esc_html($o['city']); ?><?php echo $o['state'] ? ', ' . esc_html($o['state']) : ''; ?></span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <span class="dso-items-count"><?php echo intval($o['item_count']); ?> item<?php echo $o['item_count'] > 1 ? 's' : ''; ?></span>
-                                                <span class="dso-items-preview"><?php echo esc_html($o['items_preview']); ?></span>
+                                            <td style="vertical-align:top;">
+                                                <div style="display:flex;align-items:flex-start;gap:12px;max-width:280px;">
+                                                    <div style="width:48px;height:48px;background:#f8fafc;border-radius:4px;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🛍️</div>
+                                                    <div>
+                                                        <span class="dso-items-count" style="font-size:13px;font-weight:700;color:#0f1111;display:block;margin-bottom:2px;"><?php echo intval($o['item_count']); ?> unit<?php echo $o['item_count'] > 1 ? 's' : ''; ?></span>
+                                                        <span class="dso-items-preview" style="font-size:12px;color:#565959;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;"><?php echo esc_html($o['items_preview']); ?></span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td>
-                                                <strong class="dso-order-total"><?php echo $o['total_html']; ?></strong>
+                                            <td style="vertical-align:top;">
+                                                <?php if ($o['status'] === 'processing'): ?>
+                                                    <div style="background:#fefce8;border:1px solid #fef08a;padding:6px 10px;border-radius:4px;display:inline-block;">
+                                                        <span style="font-size:11px;font-weight:700;color:#854d0e;display:block;text-transform:uppercase;margin-bottom:2px;">Dispatch SLA</span>
+                                                        <span style="font-size:12px;color:#a16207;font-weight:600;display:flex;align-items:center;gap:4px;">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                                            <?php echo date('M d, 4:00 PM', strtotime($o['date'] . ' + 1 day')); ?>
+                                                        </span>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <span style="font-size:12px;color:#94a3b8;">—</span>
+                                                <?php endif; ?>
                                             </td>
-                                            <td>
-                                                <span class="dso-badge <?php echo $o['is_paid'] ? 'dso-badge-green' : 'dso-badge-gray'; ?>">
+                                            <td style="vertical-align:top;">
+                                                <strong class="dso-order-total" style="font-size:15px;color:#0f1111;display:block;margin-bottom:4px;"><?php echo $o['total_html']; ?></strong>
+                                                <span class="dso-badge <?php echo $o['is_paid'] ? 'dso-badge-green' : 'dso-badge-gray'; ?>" style="font-size:10px;">
                                                     <?php echo esc_html($o['payment_method'] ?: ($o['is_paid'] ? 'Prepaid' : 'COD / Pending')); ?>
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td style="vertical-align:top;">
                                                 <?php echo $this->status_badge($o['status']); ?>
                                             </td>
-                                            <td class="dso-text-right">
-                                                <div class="dso-row-actions" style="display:flex;gap:4px;justify-content:flex-end;">
-                                                    <a href="?section=messages&order_id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Chat with Customer">
-                                                        💬 Message
+                                            <td class="dso-text-right" style="vertical-align:top;">
+                                                <div class="dso-row-actions" style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                                                    <a href="?section=order-detail&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-primary" style="width:120px;justify-content:center;">
+                                                        Manage Order
                                                     </a>
-                                                    <a href="?section=order-detail&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Manage Order">
-                                                        View
-                                                    </a>
-                                                    <a href="?section=print-label&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="4×6 Thermal Label" target="_blank">
-                                                        🏷️ Label
-                                                    </a>
-                                                    <a href="?section=print-invoice&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="GST Tax Invoice" target="_blank">
-                                                        📄 Invoice
-                                                    </a>
+                                                    <?php if ($o['status'] === 'processing'): ?>
+                                                        <a href="?section=print-label&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" style="width:120px;justify-content:center;" target="_blank">
+                                                            Print Label
+                                                        </a>
+                                                    <?php endif; ?>
+                                                    <div style="display:flex;gap:4px;">
+                                                        <a href="?section=messages&order_id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Chat with Customer" style="padding:4px 8px;">
+                                                            💬
+                                                        </a>
+                                                        <a href="?section=print-invoice&id=<?php echo $o['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="GST Tax Invoice" target="_blank" style="padding:4px 8px;">
+                                                            📄
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -270,38 +316,96 @@ class DSO_Orders {
         $carrier = get_post_meta($order_id, '_dso_tracking_carrier', true) ?: 'Shiprocket';
         ?>
         <div class="dso-page dso-order-detail">
-            <div class="dso-page-header">
-                <div>
-                    <div class="dso-breadcrumb">
-                        <a href="?section=dashboard">Dashboard</a>
-                        <span>/</span>
-                        <a href="?section=orders">Orders</a>
-                        <span>/</span>
-                        <span>Order #<?php echo $order->get_order_number(); ?></span>
+            <div class="dso-page-header dso-sticky-header" style="background:#fff;padding:16px 24px;border-bottom:1px solid #e2e8f0;margin:-24px -24px 24px -24px;position:sticky;top:0;z-index:50;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+                    <div>
+                        <div class="dso-breadcrumb" style="margin-bottom:8px;">
+                            <a href="?section=dashboard">Dashboard</a>
+                            <span>/</span>
+                            <a href="?section=orders">Orders</a>
+                            <span>/</span>
+                            <span>#<?php echo $order->get_order_number(); ?></span>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <h1 class="dso-page-title" style="margin:0;font-size:24px;">Order #<?php echo $order->get_order_number(); ?></h1>
+                            <?php echo $this->status_badge($order->get_status()); ?>
+                        </div>
+                        <p class="dso-page-subtitle" style="margin:4px 0 0;font-size:13px;">Placed on <?php echo $order->get_date_created() ? $order->get_date_created()->format('F j, Y \a\t g:i A') : '—'; ?> • Customer: <?php echo esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?></p>
                     </div>
-                    <h1 class="dso-page-title">Order #<?php echo $order->get_order_number(); ?></h1>
-                    <p class="dso-page-subtitle">Placed on <?php echo $order->get_date_created() ? $order->get_date_created()->format('F j, Y \a\t g:i A') : '—'; ?> • Customer: <?php echo esc_html($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?></p>
-                </div>
-                <div class="dso-page-actions">
-                    <a href="?section=orders" class="dso-btn dso-btn-outline">← Back to Orders</a>
-                    <a href="?section=messages&order_id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" title="Chat with Customer">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        Message Customer
-                    </a>
-                    <a href="?section=print-label&id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" target="_blank">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-                        Print 4×6 Thermal Label
-                    </a>
-                    <a href="?section=print-invoice&id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-primary" target="_blank">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                        GST Tax Invoice
-                    </a>
+                    <div class="dso-page-actions" style="display:flex;gap:8px;">
+                        <a href="?section=messages&order_id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" title="Chat with Customer">
+                            💬 Message
+                        </a>
+                        <?php if ($order->get_status() === 'processing'): ?>
+                            <a href="?section=print-label&id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-outline" target="_blank">
+                                🏷️ Print Label
+                            </a>
+                        <?php endif; ?>
+                        <a href="?section=print-invoice&id=<?php echo $order->get_id(); ?>" class="dso-btn dso-btn-primary" target="_blank">
+                            📄 Download Invoice
+                        </a>
+                    </div>
                 </div>
             </div>
 
             <?php if (isset($_GET['notice'])): ?>
-                <div class="dso-alert dso-alert-success">Order information updated successfully!</div>
+                <div class="dso-alert dso-alert-success" style="margin-bottom:24px;">Order information updated successfully!</div>
             <?php endif; ?>
+
+            <?php if ($order->get_status() === 'processing'): ?>
+                <div style="background:#fefce8;border:1px solid #fef08a;padding:12px 16px;border-radius:8px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:24px;">⏰</span>
+                        <div>
+                            <strong style="color:#854d0e;display:block;font-size:14px;">Dispatch SLA Deadline</strong>
+                            <span style="color:#a16207;font-size:13px;">Ship by <?php echo date('F j, Y \a\t 4:00 PM', strtotime($order->get_date_created() ? $order->get_date_created()->format('Y-m-d H:i:s') : 'now' . ' + 1 day')); ?> to avoid late dispatch penalties.</span>
+                        </div>
+                    </div>
+                    <form method="post" style="margin:0;">
+                        <?php wp_nonce_field('dso_order_detail_action'); ?>
+                        <input type="hidden" name="dso_update_detail_status" value="1" />
+                        <input type="hidden" name="order_status" value="completed" />
+                        <button type="submit" class="dso-btn dso-btn-success dso-btn-sm" style="background:#10b981;border:none;color:#fff;">Mark as Dispatched ✓</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+
+            <!-- Visual Chronological Timeline -->
+            <div class="dso-card dso-mb-4" style="background:#f8fafc;border:none;">
+                <div class="dso-card-body">
+                    <div style="display:flex;justify-content:space-between;position:relative;padding:0 20px;">
+                        <div style="position:absolute;top:14px;left:40px;right:40px;height:4px;background:#e2e8f0;z-index:1;"></div>
+                        <?php 
+                        $st = $order->get_status();
+                        $steps = [
+                            ['id' => 'pending', 'label' => 'Order Placed', 'date' => $order->get_date_created() ? $order->get_date_created()->format('M j, g:i A') : ''],
+                            ['id' => 'processing', 'label' => 'Payment Confirmed', 'date' => $order->get_date_paid() ? $order->get_date_paid()->format('M j, g:i A') : 'Pending'],
+                            ['id' => 'shipped', 'label' => 'Dispatched', 'date' => $tracking_no ? 'Tracking added' : 'Pending'],
+                            ['id' => 'completed', 'label' => 'Delivered', 'date' => $st === 'completed' ? ($order->get_date_completed() ? $order->get_date_completed()->format('M j') : 'Done') : 'Pending']
+                        ];
+                        
+                        $active_idx = 0;
+                        if ($st === 'processing') $active_idx = 1;
+                        if ($st === 'completed' && $tracking_no) $active_idx = 2; // Approximated
+                        if ($st === 'completed') $active_idx = 3;
+                        if (in_array($st, ['cancelled', 'refunded', 'failed'])) $active_idx = -1;
+                        
+                        foreach ($steps as $idx => $s):
+                            $is_done = $active_idx >= $idx;
+                            $is_current = $active_idx === $idx;
+                            $color = $is_done ? '#10b981' : '#cbd5e1';
+                        ?>
+                            <div style="display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;width:120px;text-align:center;">
+                                <div style="width:32px;height:32px;border-radius:50%;background:<?php echo $is_done ? '#10b981' : '#fff'; ?>;border:4px solid <?php echo $is_done ? '#d1fae5' : '#e2e8f0'; ?>;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;margin-bottom:8px;transition:all 0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                                    <?php echo $is_done ? '✓' : ''; ?>
+                                </div>
+                                <strong style="font-size:13px;color:<?php echo $is_current ? '#0f1111' : ($is_done ? '#334155' : '#94a3b8'); ?>;"><?php echo $s['label']; ?></strong>
+                                <span style="font-size:11px;color:#64748b;margin-top:4px;"><?php echo $s['date']; ?></span>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
 
             <div class="dso-grid-2-1">
                 <!-- Left: Order Items & Financials -->
@@ -309,7 +413,6 @@ class DSO_Orders {
                     <div class="dso-card dso-mb-4">
                         <div class="dso-card-header">
                             <h3 class="dso-card-title">Order Items (<?php echo $order->get_item_count(); ?>)</h3>
-                            <?php echo $this->status_badge($order->get_status()); ?>
                         </div>
                         <div class="dso-card-body dso-p-0">
                             <div class="dso-table-responsive">
@@ -333,40 +436,43 @@ class DSO_Orders {
                                                     <div class="dso-product-cell">
                                                         <div class="dso-product-thumb"><?php echo $img_html; ?></div>
                                                         <div>
-                                                            <strong><?php echo esc_html($item->get_name()); ?></strong>
+                                                            <strong style="color:#0f1111;"><?php echo esc_html($item->get_name()); ?></strong>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td><code><?php echo esc_html($prod ? $prod->get_sku() : '—'); ?></code></td>
                                                 <td><?php echo wc_price($order->get_item_subtotal($item, false, true)); ?></td>
                                                 <td><?php echo $item->get_quantity(); ?></td>
-                                                <td class="dso-text-right"><strong><?php echo wc_price($item->get_total()); ?></strong></td>
+                                                <td class="dso-text-right"><strong style="font-size:15px;color:#0f1111;"><?php echo wc_price($item->get_total()); ?></strong></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div class="dso-order-totals-box">
-                                <div class="dso-totals-row">
-                                    <span>Subtotal:</span>
-                                    <span><?php echo wc_price($order->get_subtotal()); ?></span>
-                                </div>
-                                <?php if ($order->get_shipping_total() > 0): ?>
-                                    <div class="dso-totals-row">
-                                        <span>Shipping:</span>
-                                        <span><?php echo wc_price($order->get_shipping_total()); ?></span>
+                            <div class="dso-order-totals-box" style="background:#f8fafc;padding:24px;border-top:1px solid #e2e8f0;">
+                                <div style="max-width:300px;margin-left:auto;">
+                                    <div class="dso-totals-row" style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#334155;">
+                                        <span>Subtotal:</span>
+                                        <span><?php echo wc_price($order->get_subtotal()); ?></span>
                                     </div>
-                                <?php endif; ?>
-                                <?php if ($order->get_total_tax() > 0): ?>
-                                    <div class="dso-totals-row">
-                                        <span>GST / Taxes:</span>
-                                        <span><?php echo wc_price($order->get_total_tax()); ?></span>
+                                    <?php if ($order->get_shipping_total() > 0): ?>
+                                        <div class="dso-totals-row" style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#334155;">
+                                            <span>Shipping:</span>
+                                            <span><?php echo wc_price($order->get_shipping_total()); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($order->get_total_tax() > 0): ?>
+                                        <div class="dso-totals-row" style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px;color:#334155;">
+                                            <span>GST / Taxes:</span>
+                                            <span><?php echo wc_price($order->get_total_tax()); ?></span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="dso-totals-row dso-totals-grand" style="display:flex;justify-content:space-between;margin-top:16px;padding-top:16px;border-top:1px solid #cbd5e1;font-size:18px;font-weight:700;color:#0f1111;">
+                                        <span>Grand Total:</span>
+                                        <span><?php echo wc_price($order->get_total()); ?></span>
                                     </div>
-                                <?php endif; ?>
-                                <div class="dso-totals-row dso-totals-grand">
-                                    <span>Grand Total:</span>
-                                    <span><?php echo wc_price($order->get_total()); ?></span>
+                                    <div style="text-align:right;margin-top:8px;font-size:12px;color:#64748b;">Paid via <?php echo esc_html($order->get_payment_method_title() ?: 'Unknown'); ?></div>
                                 </div>
                             </div>
                         </div>
@@ -384,7 +490,7 @@ class DSO_Orders {
 
                                 <div class="dso-form-row dso-grid-3">
                                     <div class="dso-form-group">
-                                        <label class="dso-label">Change Status</label>
+                                        <label class="dso-label" style="font-weight:600;color:#0f1111;">Update Status</label>
                                         <select name="order_status" class="dso-select">
                                             <option value="pending" <?php selected($order->get_status(), 'pending'); ?>>Pending Payment</option>
                                             <option value="processing" <?php selected($order->get_status(), 'processing'); ?>>Processing (Ready to Ship)</option>
@@ -394,7 +500,7 @@ class DSO_Orders {
                                         </select>
                                     </div>
                                     <div class="dso-form-group">
-                                        <label class="dso-label">Courier Carrier</label>
+                                        <label class="dso-label" style="font-weight:600;color:#0f1111;">Courier Carrier</label>
                                         <select name="tracking_carrier" class="dso-select">
                                             <option value="Shiprocket" <?php selected($carrier, 'Shiprocket'); ?>>Shiprocket</option>
                                             <option value="Delhivery" <?php selected($carrier, 'Delhivery'); ?>>Delhivery</option>
