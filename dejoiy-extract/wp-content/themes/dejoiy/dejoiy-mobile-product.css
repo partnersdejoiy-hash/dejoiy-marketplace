@@ -334,15 +334,14 @@
 
 	/* XStore sticky "Select Options" bar — removed; PDP already has ATC + Buy Now */
 	body.dejoiy-mobile-product-view .etheme-sticky-cart.etheme-sticky-panel,
-	body.dejoiy-mobile-product-view .etheme-sticky-cart {
+	body.dejoiy-mobile-product-view .etheme-sticky-cart,
+	body.dejoiy-mobile-product-view .elementor-widget-woocommerce-product-etheme_sticky_cart,
+	body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle {
 		display: none !important;
 		visibility: hidden !important;
 		pointer-events: none !important;
 		height: 0 !important;
 		overflow: hidden !important;
-	}
-		box-sizing: border-box !important;
-		overflow: visible !important;
 	}
 
 	body.dejoiy-mobile-product-view .etheme-sticky-cart .et-row-container,

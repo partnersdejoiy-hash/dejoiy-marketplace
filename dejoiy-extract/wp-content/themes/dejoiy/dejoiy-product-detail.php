@@ -413,34 +413,9 @@ add_shortcode( 'djy_product_trust', 'dejoiy_product_detail_trust_html' );
 add_shortcode( 'djy_product_buynow', 'dejoiy_product_detail_buy_now_html' );
 
 /**
- * Single product mobile floating sticky conversion bar
+ * Former mobile sticky conversion bar — unused. PDP already has Add to Cart / Buy Now.
  */
 function dejoiy_product_detail_mobile_bar() {
-	if ( ! is_product() ) {
-		return;
-	}
-	$product = dejoiy_product_detail_current();
-	if ( ! $product || ! $product->is_in_stock() ) {
-		return;
-	}
-	$thumb_html = $product->get_image( 'woocommerce_thumbnail', array( 'class' => 'djy-sticky-thumb' ) );
-	$price_html = $product->get_price_html();
-	$buy_url    = add_query_arg( array( 'add-to-cart' => $product->get_id() ), wc_get_checkout_url() );
-	?>
-	<div class="djy-pdp-mobile-sticky" id="djy-pdp-mobile-sticky">
-		<div class="djy-pdp-mobile-sticky__product">
-			<?php echo $thumb_html; // phpcs:ignore ?>
-			<div class="djy-pdp-mobile-sticky__info">
-				<span class="djy-pdp-mobile-sticky__title"><?php echo esc_html( wp_trim_words( $product->get_name(), 4 ) ); ?></span>
-				<span class="djy-pdp-mobile-sticky__price"><?php echo wp_kses_post( $price_html ); ?></span>
-			</div>
-		</div>
-		<div class="djy-pdp-mobile-sticky__buttons">
-			<button type="button" class="djy-pdp-mobile-sticky__cart-btn" onclick="var b=document.querySelector('.single_add_to_cart_button');if(b){b.click();}"><?php esc_html_e( 'Add to Cart', 'dejoiy' ); ?></button>
-			<a href="<?php echo esc_url( $buy_url ); ?>" class="djy-pdp-mobile-sticky__buy-btn"><?php esc_html_e( 'Buy Now', 'dejoiy' ); ?></a>
-		</div>
-	</div>
-	<?php
 }
 
 /**
@@ -452,6 +427,7 @@ function dejoiy_disable_pdp_sticky_select_options() {
 }
 add_action( 'wp', 'dejoiy_disable_pdp_sticky_select_options', 40 );
 add_filter( 'theme_mod_sticky_add_to_cart_et-desktop', '__return_false', 99 );
+add_filter( 'theme_mod_sticky_add_to_cart_et-mobile', '__return_false', 99 );
 
 /**
  * "You may also like" rail — real products sharing a category, falling back

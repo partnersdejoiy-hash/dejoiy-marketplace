@@ -74,14 +74,28 @@ body.dejoiy-gh .gh-m-bottom a {
 	font-size: 13px;
 }
 
-/* Hide bottom sticky "Select Options" / duplicate cart bar on product pages */
+/* Product page: keep in-content Add to cart / Buy now. Hide XStore sticky
+   "Select options" bar (Elementor widget + toggle + DEJOIY mobile footer). */
+body.single-product .elementor-widget-woocommerce-product-etheme_sticky_cart,
 body.single-product .etheme-sticky-cart,
-body.single-product .etheme-sticky-panel,
+body.single-product .etheme-sticky-cart.etheme-sticky-panel,
+body.single-product .etheme-sticky-cart.flex,
+body.single-product .etheme_custom_add_to_cart_toggle,
+body.single-product #djy-pdp-mobile-sticky,
 body.single-product .djy-pdp-mobile-sticky,
-#djy-pdp-mobile-sticky {
+body.dejoiy-mobile-product-view .elementor-widget-woocommerce-product-etheme_sticky_cart,
+body.dejoiy-mobile-product-view .etheme-sticky-cart,
+body.dejoiy-mobile-product-view .etheme-sticky-cart.etheme-sticky-panel,
+body.dejoiy-mobile-product-view .etheme_custom_add_to_cart_toggle {
 	display: none !important;
 	visibility: hidden !important;
 	pointer-events: none !important;
+	height: 0 !important;
+	max-height: 0 !important;
+	min-height: 0 !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	transform: none !important;
 }
 
 body.dejoiy-mobile-product-view {

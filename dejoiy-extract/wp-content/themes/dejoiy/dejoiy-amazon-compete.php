@@ -277,3 +277,22 @@ function dejoiy_amazon_compete_og_desc( $desc ) {
 }
 add_filter( 'aioseo_description', 'dejoiy_amazon_compete_og_desc', 20 );
 add_filter( 'rank_math/frontend/description', 'dejoiy_amazon_compete_og_desc', 20 );
+
+/**
+ * Do not render XStore Elementor sticky cart (bottom "Select options" bar).
+ * PDP already has Add to cart and Buy now in the product summary.
+ *
+ * @param bool                 $should_render Whether to render.
+ * @param \Elementor\Widget_Base $widget Widget.
+ * @return bool
+ */
+function dejoiy_amazon_compete_skip_sticky_cart_widget( $should_render, $widget ) {
+	if ( ! $should_render || ! is_object( $widget ) || ! method_exists( $widget, 'get_name' ) ) {
+		return $should_render;
+	}
+	if ( 'woocommerce-product-etheme_sticky_cart' === $widget->get_name() ) {
+		return false;
+	}
+	return $should_render;
+}
+add_filter( 'elementor/frontend/widget/should_render', 'dejoiy_amazon_compete_skip_sticky_cart_widget', 10, 2 );
