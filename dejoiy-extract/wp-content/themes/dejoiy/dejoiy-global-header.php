@@ -411,10 +411,10 @@ function dejoiy_gh_desktop_header_html() {
 						<a class="gh-util__link" href="<?php echo esc_url( $delivery ); ?>"><?php echo dejoiy_gh_icon( 'map-pin' ); ?> <span><?php echo esc_html( dejoiy_gh_delivery_label() ); ?></span></a>
 					</div>
 					<div class="gh-util__right">
-						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/sell-on-dejoiy/' ) ); ?>"><?php esc_html_e( 'Sell on DEJOIY', 'dejoiy' ); ?></a>
+						<a class="gh-util__link" href="<?php echo esc_url( function_exists( 'dejoiy_sell_url' ) ? dejoiy_sell_url() : home_url( '/vendor-register/' ) ); ?>"><?php esc_html_e( 'Sell on DEJOIY', 'dejoiy' ); ?></a>
 						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/dejoiy-festival-sale/' ) ); ?>"><?php esc_html_e( 'Deals', 'dejoiy' ); ?></a>
 						<a class="gh-util__link" href="<?php echo esc_url( $orders ); ?>"><?php esc_html_e( 'Track Order', 'dejoiy' ); ?></a>
-						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php esc_html_e( 'Support', 'dejoiy' ); ?></a>
+						<a class="gh-util__link" href="<?php echo esc_url( home_url( '/contact-us/' ) ); ?>"><?php esc_html_e( 'Support', 'dejoiy' ); ?></a>
 					</div>
 				</div>
 			</div>

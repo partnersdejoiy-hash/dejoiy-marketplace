@@ -95,16 +95,17 @@ function dejoiy_global_footer_links() {
 		'deals'   => $base . 'dejoiy-festival-sale/',
 		'library' => $base . 'dejoiy-library/',
 		'services' => $base . 'dejoiy-services/',
-		'sell'    => $base . 'sell-on-dejoiy/',
-		'seller'  => $base . 'seller-center/',
+		'sell'    => $base . 'vendor-register/',
+		'seller'  => 'https://sellerhub.dejoiy.com/',
 		'vendor'  => $base . 'vendor-register/',
-		'vmember' => $base . 'vendor-membership/',
+		'vmember' => $base . 'vendor-register/',
 		'contact' => $base . 'contact-us/',
 		'support' => $base . 'support-page/',
 		'about'   => $base . 'about-us/',
 		'terms'   => $base . 'terms-and-conditions/',
 		'privacy' => $base . 'privacy-policy/',
 		'returns' => $base . 'returns-and-refunds/',
+		'news'    => $base . 'news/',
 		'account' => $base . 'my-account/',
 		'orders'  => $base . 'my-account/orders/',
 		'addresses' => $base . 'my-account/edit-address/',
@@ -166,7 +167,7 @@ function dejoiy_global_footer_render() {
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['library'] ); ?>">DEJOIY Library</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['services'] ); ?>">DEJOIY Services</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['sell'] ); ?>">Sell on DEJOIY</a></li>
-						<li><a class="dgf__link" href="<?php echo esc_url( $L['seller'] ); ?>">Seller Center</a></li>
+						<li><a class="dgf__link" href="<?php echo esc_url( $L['seller'] ); ?>">Seller Hub login</a></li>
 					</ul>
 				</nav>
 
@@ -177,7 +178,7 @@ function dejoiy_global_footer_render() {
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['orders'] ); ?>">My Orders</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['orders'] ); ?>">Track Order</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['addresses'] ); ?>">Addresses</a></li>
-						<li><a class="dgf__link" href="<?php echo esc_url( $L['vendor'] ); ?>">Sell on DEJOIY (Seller Central)</a></li>
+						<li><a class="dgf__link" href="<?php echo esc_url( $L['vendor'] ); ?>">Open a store</a></li>
 					</ul>
 				</nav>
 
@@ -187,9 +188,9 @@ function dejoiy_global_footer_render() {
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['contact'] ); ?>">Contact Us</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['support'] ); ?>">Support Page</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['about'] ); ?>">About Us</a></li>
+						<li><a class="dgf__link" href="<?php echo esc_url( $L['news'] ?? home_url( '/news/' ) ); ?>">News &amp; announcements</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['returns'] ); ?>">Returns &amp; Refunds</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['privacy'] ); ?>">Privacy Policy</a></li>
-						<li><a class="dgf__link" href="<?php echo esc_url( $L['vmember'] ); ?>">Vendor Membership</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['terms'] ); ?>">Terms &amp; Conditions</a></li>
 					</ul>
 				</nav>

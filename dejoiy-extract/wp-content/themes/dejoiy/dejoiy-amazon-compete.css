@@ -305,3 +305,74 @@ body.page-id-4342 .dso-reg-container {
 	margin-left: auto;
 	margin-right: auto;
 }
+
+body.page-id-581 .page-heading,
+body.page-id-581 .title-banner,
+body.page-news .page-heading {
+	display: none !important;
+}
+
+.djy-news-page__inner {
+	max-width: 760px;
+	margin: 0 auto;
+}
+
+.djy-news-page__h {
+	margin: 0 0 8px;
+	font-size: 1.75rem;
+	font-weight: 800;
+	color: #0f172a;
+}
+
+.djy-news__lede {
+	margin: 0 0 1.25rem;
+	color: #64748b;
+	font-size: 0.95rem;
+}
+
+.djy-news__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 14px;
+}
+
+.djy-news__item {
+	padding: 16px 18px;
+	border: 1px solid #e2e8f0;
+	border-radius: 12px;
+	background: #fff;
+}
+
+.djy-news__date {
+	display: block;
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #64748b;
+	margin-bottom: 6px;
+}
+
+.djy-news__title {
+	margin: 0 0 8px;
+	font-size: 1.15rem;
+	line-height: 1.35;
+}
+
+.djy-news__title a {
+	color: #0f172a;
+	text-decoration: none;
+}
+
+.djy-news__title a:hover {
+	color: #2563eb;
+}
+
+.djy-news__excerpt {
+	margin: 0;
+	color: #334155;
+	font-size: 0.92rem;
+	line-height: 1.55;
+}

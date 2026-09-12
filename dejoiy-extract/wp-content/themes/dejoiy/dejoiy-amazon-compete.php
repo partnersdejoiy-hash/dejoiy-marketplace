@@ -67,18 +67,37 @@ function dejoiy_amazon_compete_aliases() {
 		return;
 	}
 
+	if ( in_array( $path, array( 'audit-download', 'dejoiy-promo-deck' ), true ) && ! current_user_can( 'manage_options' ) ) {
+		wp_safe_redirect( home_url( '/' ), 301 );
+		exit;
+	}
+
+	if ( 'search' === $path ) {
+		$s    = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/shop/' );
+		wp_safe_redirect( add_query_arg( array_filter( array( 's' => $s, 'post_type' => 'product' ) ), $shop ), 301 );
+		exit;
+	}
+
+	$sell = function_exists( 'dejoiy_sell_url' ) ? dejoiy_sell_url() : home_url( '/vendor-register/' );
+
 	$map = array(
-		'wishlist'     => home_url( '/my-account/?et-wishlist-page' ),
-		'favorites'    => home_url( '/my-account/?et-wishlist-page' ),
-		'nexus'        => home_url( '/dejoiy-library/?dejoiy_library=1' ),
-		'library'      => home_url( '/dejoiy-library/' ),
-		'track-order'  => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
-		'track'        => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
-		'orders'       => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
-		'become-a-seller' => home_url( '/sell-on-dejoiy/' ),
-		'seller'       => 'https://sellerhub.dejoiy.com/',
-		'custom-studio'=> home_url( '/dejoiy-custom-studio/' ),
-		'studio'       => home_url( '/dejoiy-custom-studio/' ),
+		'wishlist'            => home_url( '/my-account/?et-wishlist-page' ),
+		'favorites'           => home_url( '/my-account/?et-wishlist-page' ),
+		'nexus'               => home_url( '/dejoiy-library/?dejoiy_library=1' ),
+		'library'             => home_url( '/dejoiy-library/' ),
+		'track-order'         => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
+		'track'               => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
+		'orders'              => function_exists( 'wc_get_account_endpoint_url' ) ? wc_get_account_endpoint_url( 'orders' ) : home_url( '/my-account/orders/' ),
+		'become-a-seller'     => $sell,
+		'sell-on-dejoiy'      => $sell,
+		'seller-center'       => $sell,
+		'vendor-membership'   => $sell,
+		'start-selling'       => $sell,
+		'seller'              => 'https://sellerhub.dejoiy.com/',
+		'custom-studio'       => home_url( '/dejoiy-custom-studio/' ),
+		'studio'              => home_url( '/dejoiy-custom-studio/' ),
+		'contact'             => home_url( '/contact-us/' ),
 	);
 
 	if ( isset( $map[ $path ] ) ) {
@@ -471,3 +490,176 @@ function dejoiy_amazon_compete_trim_blog_sidebar( $sidebars ) {
 	return $sidebars;
 }
 add_filter( 'sidebars_widgets', 'dejoiy_amazon_compete_trim_blog_sidebar', 99 );
+
+/**
+ * Canonical seller onboarding URL (Seller Hub account, not WCFM).
+ *
+ * @return string
+ */
+function dejoiy_sell_url() {
+	return home_url( '/vendor-register/' );
+}
+
+add_filter( 'woocommerce_redirect_single_search_result', '__return_false', 99 );
+
+/**
+ * Marketplace search always looks at products (Amazon-style catalog search).
+ *
+ * @param WP_Query $query Query.
+ */
+function dejoiy_amazon_compete_force_product_search( $query ) {
+	if ( is_admin() || ! $query->is_main_query() ) {
+		return;
+	}
+	$s = $query->get( 's' );
+	if ( ! is_string( $s ) || '' === trim( $s ) ) {
+		return;
+	}
+	if ( $query->is_search() || $query->is_post_type_archive( 'product' ) || ( function_exists( 'is_shop' ) && is_shop() ) ) {
+		$query->set( 'post_type', 'product' );
+		$query->set( 'post_status', 'publish' );
+	}
+}
+add_action( 'pre_get_posts', 'dejoiy_amazon_compete_force_product_search', 5 );
+
+/**
+ * Seed honest News / Announcements posts once.
+ */
+function dejoiy_amazon_compete_ensure_news_posts() {
+	if ( get_option( 'dejoiy_news_seed_v2' ) ) {
+		dejoiy_amazon_compete_clean_news_page_seo();
+		return;
+	}
+	if ( ! function_exists( 'wp_insert_post' ) ) {
+		return;
+	}
+
+	$cat_id = 0;
+	$term   = get_term_by( 'slug', 'dejoiy-announcements', 'category' );
+	if ( $term && ! is_wp_error( $term ) ) {
+		$cat_id = (int) $term->term_id;
+	} else {
+		$created = wp_insert_term( 'Dejoiy Announcements', 'category', array( 'slug' => 'dejoiy-announcements' ) );
+		if ( ! is_wp_error( $created ) ) {
+			$cat_id = (int) $created['term_id'];
+		}
+	}
+
+	$posts = array(
+		array(
+			'name'    => 'seller-hub-is-open',
+			'title'   => 'Seller Hub is open — list products from one dashboard',
+			'content' => '<p>DEJOIY sellers manage listings, orders, and payouts in Seller Hub at sellerhub.dejoiy.com — not WordPress admin, and not a separate WCFM vendor desk.</p><p>To open a store, use <a href="' . esc_url( dejoiy_sell_url() ) . '">Sell on DEJOIY</a>. After you submit, you land in Seller Hub signed in as a seller.</p><p>Existing sellers can sign in directly at <a href="https://sellerhub.dejoiy.com/">sellerhub.dejoiy.com</a>.</p>',
+		),
+		array(
+			'name'    => 'how-shopping-works-on-dejoiy',
+			'title'   => 'How shopping works on DEJOIY',
+			'content' => '<p>Search from the header looks through live products on the shop. Results stay on a list so you can compare — we do not jump you to a single SKU when more than one match exists.</p><p>Add items to cart, then checkout over HTTPS. UPI, cards, net banking, and COD appear where the seller and gateway allow them. Track orders from My Account.</p><p>The catalog is still small and growing. If a search is empty, that means we do not have that product yet — not a broken page.</p>',
+		),
+		array(
+			'name'    => 'dejoiy-updates-what-is-live',
+			'title'   => 'What is live on DEJOIY today',
+			'content' => '<p>The customer store at dejoiy.com and Seller Hub share one catalog. When a seller publishes a product in Seller Hub, shoppers can find it on DEJOIY.</p><p>Worlds such as Nexus, Custom Studio, QuickMart, Renew, and Hire are in the header as they launch. Shop is the place to buy what is in stock now.</p><p>Questions: <a href="' . esc_url( home_url( '/contact-us/' ) ) . '">Contact us</a> or support-care@dejoiy.com.</p>',
+		),
+	);
+
+	$author = 1;
+	foreach ( $posts as $item ) {
+		if ( get_page_by_path( $item['name'], OBJECT, 'post' ) ) {
+			continue;
+		}
+		$pid = wp_insert_post(
+			array(
+				'post_type'    => 'post',
+				'post_status'  => 'publish',
+				'post_name'    => $item['name'],
+				'post_title'   => $item['title'],
+				'post_content' => $item['content'],
+				'post_author'  => $author,
+				'post_excerpt' => wp_trim_words( wp_strip_all_tags( $item['content'] ), 28, '…' ),
+			),
+			true
+		);
+		if ( ! is_wp_error( $pid ) && $pid && $cat_id ) {
+			wp_set_post_categories( (int) $pid, array( $cat_id ), false );
+		}
+	}
+
+	update_option( 'dejoiy_news_seed_v2', 1, false );
+	dejoiy_amazon_compete_clean_news_page_seo();
+}
+
+/**
+ * Strip XStore demo SEO copy from the News page.
+ */
+function dejoiy_amazon_compete_clean_news_page_seo() {
+	if ( get_option( 'dejoiy_news_page_seo_v1' ) ) {
+		return;
+	}
+	$page = get_page_by_path( 'news' );
+	if ( $page && ! is_wp_error( $page ) ) {
+		wp_update_post(
+			array(
+				'ID'           => (int) $page->ID,
+				'post_excerpt' => 'Official DEJOIY updates from the marketplace.',
+				'post_content' => 'Official DEJOIY updates.',
+			)
+		);
+		delete_post_meta( (int) $page->ID, 'rank_math_description' );
+		delete_post_meta( (int) $page->ID, 'rank_math_title' );
+		delete_post_meta( (int) $page->ID, '_yoast_wpseo_metadesc' );
+	}
+	update_option( 'dejoiy_news_page_seo_v1', 1, false );
+}
+add_action( 'init', 'dejoiy_amazon_compete_ensure_news_posts', 30 );
+
+/**
+ * @return string
+ */
+function dejoiy_amazon_compete_news_feed_html() {
+	$q = new WP_Query(
+		array(
+			'post_type'           => 'post',
+			'post_status'         => 'publish',
+			'posts_per_page'      => 12,
+			'ignore_sticky_posts' => true,
+			'no_found_rows'       => true,
+		)
+	);
+
+	$html  = '<div class="djy-news">';
+	$html .= '<p class="djy-news__lede">Official DEJOIY updates. No demo posts, no placeholder magazines.</p>';
+	if ( ! $q->have_posts() ) {
+		$html .= '<p class="djy-news__empty">No updates published yet.</p></div>';
+		return $html;
+	}
+	$html .= '<ol class="djy-news__list">';
+	while ( $q->have_posts() ) {
+		$q->the_post();
+		$html .= '<li class="djy-news__item">';
+		$html .= '<time class="djy-news__date" datetime="' . esc_attr( get_the_date( 'c' ) ) . '">' . esc_html( get_the_date() ) . '</time>';
+		$html .= '<h2 class="djy-news__title"><a href="' . esc_url( get_permalink() ) . '">' . esc_html( get_the_title() ) . '</a></h2>';
+		$html .= '<p class="djy-news__excerpt">' . esc_html( wp_trim_words( wp_strip_all_tags( get_the_excerpt() . ' ' . get_the_content() ), 36, '…' ) ) . '</p>';
+		$html .= '</li>';
+	}
+	wp_reset_postdata();
+	$html .= '</ol></div>';
+	return $html;
+}
+
+/**
+ * Bypass Elementor demo markup on /news/.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function dejoiy_amazon_compete_news_template( $template ) {
+	if ( function_exists( 'is_page' ) && is_page( 'news' ) ) {
+		$custom = get_stylesheet_directory() . '/page-news.php';
+		if ( is_readable( $custom ) ) {
+			return $custom;
+		}
+	}
+	return $template;
+}
+add_filter( 'template_include', 'dejoiy_amazon_compete_news_template', 99999 );

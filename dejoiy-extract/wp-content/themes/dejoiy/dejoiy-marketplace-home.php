@@ -1046,8 +1046,8 @@ function dejoiy_marketplace_home_html() {
 
 	$shop     = wc_get_page_permalink( 'shop' );
 	$deals    = home_url( '/dejoiy-festival-sale/' );
-	$seller   = home_url( '/sell-on-dejoiy/' );
-	$vreg     = home_url( '/vendor-register/' );
+	$seller   = function_exists( 'dejoiy_sell_url' ) ? dejoiy_sell_url() : home_url( '/vendor-register/' );
+	$vreg     = 'https://sellerhub.dejoiy.com/';
 	$services = home_url( '/dejoiy-services/' );
 	$author   = home_url( '/dejoiy-library/?dejoiy_library=1' );
 	$studio   = home_url( '/dejoiy-custom-studio/' );
