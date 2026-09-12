@@ -104,6 +104,9 @@ body {
   font-family: var(--dso-font);
   color: var(--dso-gray-800);
   background: #F5F7FC;
+  background-image: 
+    radial-gradient(circle at 2px 2px, rgba(46, 95, 208, 0.05) 1px, transparent 0);
+  background-size: 24px 24px;
   line-height: 1.5;
   min-height: 100vh;
   overflow-x: hidden;
@@ -113,6 +116,29 @@ a { color: var(--dso-primary); text-decoration: none; transition: color var(--ds
 a:hover { color: var(--dso-primary-dark); }
 
 img { max-width: 100%; height: auto; }
+
+.dso-glass {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Skeleton Loading State */
+.dso-skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: dso-loading 1.5s infinite;
+  border-radius: 4px;
+  display: inline-block;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+@keyframes dso-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
 
 .dso-app {
   display: flex;
@@ -569,10 +595,11 @@ button.dso-bottom-nav-item {
   justify-content: space-between;
   gap: 12px;
   min-height: 140px;
-  transition: all var(--dso-transition, 0.2s ease);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  will-change: transform, box-shadow;
 }
 
 .dso-kpi-header {
@@ -613,8 +640,9 @@ button.dso-bottom-nav-item {
 }
 
 .dso-kpi-card:hover {
-  box-shadow: var(--dso-shadow-md);
-  transform: translateY(-1px);
+  box-shadow: 0 12px 24px -8px rgba(46, 95, 208, 0.15);
+  transform: translateY(-4px);
+  border-color: rgba(46, 95, 208, 0.3);
 }
 
 .dso-kpi-green::before { background: var(--dso-success); }
