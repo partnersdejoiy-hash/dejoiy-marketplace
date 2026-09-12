@@ -91,6 +91,7 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 	position: sticky;
 	top: 0;
 	z-index: 960;
+	overflow: visible;
 }
 
 /* Brand orb canvas behind the desktop header — same color/motion as the mobile header */
@@ -661,6 +662,9 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 		backdrop-filter: blur(var(--gh-glass-blur)) saturate(1.1);
 		-webkit-backdrop-filter: blur(var(--gh-glass-blur)) saturate(1.1);
 		border-bottom: 1px solid var(--gh-glass-border);
+		overflow: visible;
+		position: relative;
+		z-index: 5;
 	}
 
 	.gh-nav__in {
@@ -671,6 +675,7 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 		gap: 0.15rem;
 		padding: 0 1.5rem;
 		min-height: var(--gh-nav-h);
+		overflow: visible;
 	}
 
 	/* Browse All */
@@ -771,12 +776,14 @@ body.dejoiy-gh .etheme-elementor-header-sticky {
 	.gh-nav__drop {
 		position: relative;
 		flex: 0 0 auto;
+		z-index: 30;
 	}
 
 	.gh-dropdown--nav {
-		right: auto;
-		left: 0;
-		min-width: 188px;
+		right: 0;
+		left: auto;
+		min-width: 200px;
+		z-index: 2000;
 	}
 }
 

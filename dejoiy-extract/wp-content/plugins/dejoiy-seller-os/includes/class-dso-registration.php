@@ -84,55 +84,46 @@ class DSO_Registration {
             'user_email'   => $email,
             'display_name' => $store_name,
             'first_name'   => $full_name,
-            'role'         => 'wcfm_vendor',
+            'role'         => 'seller',
         ]);
 
         if (is_wp_error($user_id)) {
             self::redirect_with_errors([$user_id->get_error_message()]);
         }
 
-        // Assign secondary role if needed
+        // Seller Hub only — never create a WCFM vendor from this form.
         $user_obj = get_user_by('id', $user_id);
         if ($user_obj) {
-            $user_obj->add_role('seller');
+            $user_obj->set_role('seller');
+            $user_obj->remove_role('wcfm_vendor');
+            $user_obj->remove_role('vendor');
         }
 
-        // Format Merchant Code
         $merchant_code = sprintf('DJY-SLR-%06d', $user_id);
 
-        // Store Usermeta
         update_user_meta($user_id, 'store_name', $store_name);
-        update_user_meta($user_id, 'wcfmmp_store_name', $store_name);
         update_user_meta($user_id, '_dejoiy_seller_id', $merchant_code);
+        update_user_meta($user_id, '_dso_hub_seller', 'yes');
         update_user_meta($user_id, 'phone', $phone);
         update_user_meta($user_id, 'dso_store_phone', $phone);
         update_user_meta($user_id, 'billing_phone', $phone);
+        update_user_meta($user_id, 'dso_store_city', $city);
+        update_user_meta($user_id, 'dso_store_state', $state);
 
         if (!empty($gstin)) {
             update_user_meta($user_id, '_dejoiy_seller_gst', ['gstin' => $gstin]);
             update_user_meta($user_id, 'dso_gstin', $gstin);
         }
 
-        $wcfm_profile = [
-            'store_name'       => $store_name,
-            'phone'            => $phone,
-            'address'          => ['city' => $city, 'state' => $state],
-            'customer_support' => ['email' => $email, 'phone' => $phone],
-        ];
-        update_user_meta($user_id, 'wcfmmp_profile_settings', $wcfm_profile);
-
-        // Check platform auto-approval
         $settings = DSO_Marketplace::get_marketplace_settings();
         $auto_approve = ($settings['auto_approve_vendors'] ?? 'yes') === 'yes';
         if ($auto_approve) {
             update_user_meta($user_id, 'dso_verified_seller', 'yes');
-            update_user_meta($user_id, '_wcfm_email_verified', 'yes');
             update_user_meta($user_id, 'dso_store_suspended', 'no');
         } else {
             update_user_meta($user_id, 'dso_store_suspended', 'yes');
         }
 
-        update_user_meta($user_id, 'wcfm_register_member', 'yes');
         update_user_meta($user_id, 'show_admin_bar_front', 'false');
 
         // Auto login on marketplace domain, plus a one-time hub token in case

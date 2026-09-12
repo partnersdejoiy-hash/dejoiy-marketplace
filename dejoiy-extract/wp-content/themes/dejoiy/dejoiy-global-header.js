@@ -150,13 +150,37 @@
 			if (!menu) {
 				return;
 			}
+
+			function openMenu() {
+				closeAllDropdowns(menu);
+				menu.hidden = false;
+				toggle.setAttribute('aria-expanded', 'true');
+			}
+
+			function closeMenu() {
+				menu.hidden = true;
+				toggle.setAttribute('aria-expanded', 'false');
+			}
+
 			toggle.addEventListener('click', function (e) {
 				e.preventDefault();
 				e.stopPropagation();
-				var open = menu.hidden;
-				closeAllDropdowns(open ? menu : null);
-				menu.hidden = !open;
-				toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+				if (menu.hidden) {
+					openMenu();
+				} else {
+					closeMenu();
+				}
+			});
+
+			wrap.addEventListener('mouseenter', function () {
+				if (isDesktop.matches) {
+					openMenu();
+				}
+			});
+			wrap.addEventListener('mouseleave', function () {
+				if (isDesktop.matches) {
+					closeMenu();
+				}
 			});
 		});
 	}

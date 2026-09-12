@@ -55,6 +55,8 @@ add_action( 'admin_init', function() {
 	if ( ! current_user_can( 'administrator' ) ) {
 		if ( function_exists( 'wcfm_is_vendor' ) && wcfm_is_vendor() ) {
 			wp_safe_redirect( 'https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard' );
+		} elseif ( in_array( 'seller', (array) wp_get_current_user()->roles, true ) ) {
+			wp_safe_redirect( 'https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard' );
 		} else {
 			$account_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/my-account/' );
 			wp_safe_redirect( ! empty( $account_url ) ? $account_url : home_url( '/' ) );

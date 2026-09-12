@@ -540,34 +540,39 @@ function dejoiy_gh_desktop_header_html() {
 							</div>
 						</div>
 					</div>
-					<!-- Nav links -->
+					<!-- Nav links (scroll) + pinned dropdowns (Updates) so menus are not clipped -->
 					<div class="gh-nav__links">
 						<?php foreach ( $nav as $item ) :
-							$active = dejoiy_gh_is_active( $item['id'] );
-							if ( ! empty( $item['children'] ) ) :
-								?>
-							<div class="gh-nav__drop" data-gh-dropdown-wrap>
-								<button type="button" class="gh-nav__link gh-nav__link--drop<?php echo $active ? ' is-active' : ''; ?>" data-gh-nav-toggle aria-expanded="false" aria-haspopup="true">
-									<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
-									<span><?php echo esc_html( $item['label'] ); ?></span>
-									<?php echo dejoiy_gh_icon( 'chevron' ); // phpcs:ignore ?>
-								</button>
-								<div class="gh-dropdown gh-dropdown--nav" data-gh-nav-menu hidden>
-									<?php foreach ( $item['children'] as $child ) : ?>
-										<a class="gh-dropdown__item" href="<?php echo esc_url( $child['url'] ); ?>"><?php echo esc_html( $child['label'] ); ?></a>
-									<?php endforeach; ?>
-								</div>
-							</div>
-								<?php
+							if ( ! empty( $item['children'] ) ) {
 								continue;
-							endif;
-						?>
+							}
+							$active = dejoiy_gh_is_active( $item['id'] );
+							?>
 							<a class="gh-nav__link<?php echo $active ? ' is-active' : ''; ?>" href="<?php echo esc_url( $item['url'] ); ?>"<?php echo $active ? ' aria-current="page"' : ''; ?>>
 								<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
 								<span><?php echo esc_html( $item['label'] ); ?></span>
 							</a>
 						<?php endforeach; ?>
 					</div>
+					<?php foreach ( $nav as $item ) :
+						if ( empty( $item['children'] ) ) {
+							continue;
+						}
+						$active = dejoiy_gh_is_active( $item['id'] );
+						?>
+					<div class="gh-nav__drop" data-gh-dropdown-wrap>
+						<button type="button" class="gh-nav__link gh-nav__link--drop<?php echo $active ? ' is-active' : ''; ?>" data-gh-nav-toggle aria-expanded="false" aria-haspopup="true">
+							<?php echo dejoiy_gh_icon( $item['icon'] ); // phpcs:ignore ?>
+							<span><?php echo esc_html( $item['label'] ); ?></span>
+							<?php echo dejoiy_gh_icon( 'chevron' ); // phpcs:ignore ?>
+						</button>
+						<div class="gh-dropdown gh-dropdown--nav" data-gh-nav-menu hidden>
+							<?php foreach ( $item['children'] as $child ) : ?>
+								<a class="gh-dropdown__item" href="<?php echo esc_url( $child['url'] ); ?>"><?php echo esc_html( $child['label'] ); ?></a>
+							<?php endforeach; ?>
+						</div>
+					</div>
+					<?php endforeach; ?>
 				</div>
 			</nav>
 		</div>
