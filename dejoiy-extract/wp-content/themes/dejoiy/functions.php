@@ -355,7 +355,10 @@ function dejoiy_harden_rest_users( $endpoints ) {
 add_action( 'template_redirect', 'dejoiy_block_author_archives' );
 function dejoiy_block_author_archives() {
 	if ( is_author() ) {
-		wp_safe_redirect( home_url( '/' ), 301 );
-		exit;
+	        wp_safe_redirect( home_url( '/' ), 301 );
+	        exit;
 	}
-}
+	}
+
+	// Load custom Order Tracking UI
+	require_once get_stylesheet_directory() . '/dejoiy-order-tracking.php';
