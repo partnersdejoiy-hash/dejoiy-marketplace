@@ -1276,6 +1276,26 @@ button.dso-bottom-nav-item {
   gap: 20px;
 }
 
+.dso-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.dso-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.dso-mb-4 {
+  margin-bottom: 24px;
+}
+
+.dso-p-0 {
+  padding: 0 !important;
+}
+
 .dso-snapshot-list {
   display: flex;
   flex-direction: column;

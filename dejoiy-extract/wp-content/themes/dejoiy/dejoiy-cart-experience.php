@@ -531,7 +531,7 @@ function dejoiy_cart_xp_cart_item_name( $name, $cart_item, $cart_item_key ) {
 					<span class="dcart-mrp-label"><?php esc_html_e( 'M.R.P.:', 'dejoiy' ); ?></span>
 					<del class="dcart-mrp-price"><?php echo wp_kses_post( wc_price( $regular ) ); ?></del>
 				</div>
-				<div class="dcart-item__savings"><?php echo esc_html( sprintf( __( 'Save %s', 'dejoiy' ), wc_price( ( $regular - $price ) * $qty ) ) ); ?></div>
+				<div class="dcart-item__savings"><?php echo wp_kses_post( sprintf( __( 'Save %s', 'dejoiy' ), wc_price( ( $regular - $price ) * $qty ) ) ); ?></div>
 			<?php endif; ?>
 		</div>
 	</div>

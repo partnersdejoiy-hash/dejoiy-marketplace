@@ -87,6 +87,7 @@ require_once DSO_PATH . 'includes/class-dso-advertising.php';
 require_once DSO_PATH . 'includes/class-dso-growth.php';
 require_once DSO_PATH . 'includes/class-dso-reports.php';
 require_once DSO_PATH . 'includes/class-dso-performance.php';
+require_once DSO_PATH . 'includes/class-dso-login.php';
 require_once DSO_PATH . 'includes/class-dso-apps.php';
 require_once DSO_PATH . 'includes/class-dso-b2b.php';
 require_once DSO_PATH . 'includes/class-dso-brands.php';
