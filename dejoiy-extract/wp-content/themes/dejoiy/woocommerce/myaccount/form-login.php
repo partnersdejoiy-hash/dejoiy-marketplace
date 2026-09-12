@@ -35,27 +35,47 @@ do_action('woocommerce_before_customer_login_form');
 </div>
 
 <style>
-    /* Ensure clean container alignment on WooCommerce My Account */
+    /* Ensure exact center alignment on WooCommerce My Account */
     body.woocommerce-account:not(.logged-in) .content-layout-wrapper,
-    body.woocommerce-account:not(.logged-in) .page-wrapper {
+    body.woocommerce-account:not(.logged-in) .page-wrapper,
+    body.woocommerce-account:not(.logged-in) .page-content {
         background-color: #f8fafc;
         padding-top: 20px;
         padding-bottom: 40px;
+        width: 100% !important;
+    }
+    body.woocommerce-account:not(.logged-in) .content.col-md-12 {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        float: none !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
     }
     body.woocommerce-account:not(.logged-in) .woocommerce {
-        display: flex;
-        justify-content: center;
-        width: 100%;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        padding: 0 16px !important;
     }
     body.woocommerce-account:not(.logged-in) .woocommerce-notices-wrapper {
-        width: 100%;
-        max-width: 410px;
-        margin: 0 auto 12px;
+        width: 100% !important;
+        max-width: 440px !important;
+        margin: 0 auto 12px !important;
     }
     .dejoiy-customer-login-page {
-        width: 100%;
-        max-width: 410px;
-        margin: 0 auto;
+        width: 100% !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        justify-content: center !important;
     }
     /* Hide theme default column wrappers on login page */
     body.woocommerce-account:not(.logged-in) .col2-set {

@@ -37,11 +37,20 @@ class DSO_Settings {
             update_user_meta($user_id, 'dso_email_orders', isset($_POST['email_orders']) ? 1 : 0);
             update_user_meta($user_id, 'dso_email_reviews', isset($_POST['email_reviews']) ? 1 : 0);
             update_user_meta($user_id, 'dso_email_payments', isset($_POST['email_payments']) ? 1 : 0);
+
+            // Update 2-Step Verification preference
+            $two_fa_enabled = isset($_POST['dso_2fa_enabled']) && $_POST['dso_2fa_enabled'] === 'yes' ? 'yes' : 'no';
+            update_user_meta($user_id, 'dso_2fa_enabled', $two_fa_enabled);
+
+            if (empty($error)) {
+                $success = !empty($new_password) ? 'Password and security settings updated successfully.' : 'Security settings updated successfully.';
+            }
         }
 
         $email_orders = get_user_meta($user_id, 'dso_email_orders', true) !== '0';
         $email_reviews = get_user_meta($user_id, 'dso_email_reviews', true) !== '0';
         $email_payments = get_user_meta($user_id, 'dso_email_payments', true) !== '0';
+        $is_2fa_enabled = class_exists('DSO_Login') ? DSO_Login::is_2fa_enabled($user_id) : (get_user_meta($user_id, 'dso_2fa_enabled', true) !== 'no');
 
         ?>
         <div class="dso-page dso-settings">
@@ -79,6 +88,17 @@ class DSO_Settings {
                                 <label for="confirm_password">Confirm Password</label>
                                 <input type="password" id="confirm_password" name="confirm_password" class="dso-input" />
                             </div>
+                        </div>
+                        <div class="dso-form-group" style="margin-top: 18px; padding-top: 18px; border-top: 1px solid #e2e8f0;">
+                            <label class="dso-checkbox-label" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="dso_2fa_enabled" value="yes" <?php echo $is_2fa_enabled ? 'checked' : ''; ?> style="margin-top: 3px; width: 17px; height: 17px; accent-color: #004bbf;" />
+                                <div>
+                                    <strong style="display: block; font-size: 14px; color: #0f172a;">Enable Two-Step Verification (OTP)</strong>
+                                    <span style="display: block; font-size: 13px; color: #64748b; margin-top: 3px; line-height: 1.4;">
+                                        Compulsory verification code sent to your email or phone when signing into DEJOIY Seller Hub.
+                                    </span>
+                                </div>
+                            </label>
                         </div>
                     </div>
                 </div>

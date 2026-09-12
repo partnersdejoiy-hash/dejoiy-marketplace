@@ -30,6 +30,91 @@ class DSO_Login {
         add_action('wp_ajax_dso_auth_password', [__CLASS__, 'handle_password_login']);
         add_action('wp_ajax_dso_auth_send_otp', [__CLASS__, 'handle_send_otp']);
         add_action('wp_ajax_dso_auth_verify_otp', [__CLASS__, 'handle_verify_otp']);
+
+        // Two-Step Verification account settings hooks (WooCommerce & WordPress Profile)
+        add_action('woocommerce_edit_account_form', [__CLASS__, 'render_wc_account_2fa_field']);
+        add_action('woocommerce_save_account_details', [__CLASS__, 'save_wc_account_2fa_field']);
+        add_action('show_user_profile', [__CLASS__, 'render_wp_profile_2fa_field']);
+        add_action('edit_user_profile', [__CLASS__, 'render_wp_profile_2fa_field']);
+        add_action('personal_options_update', [__CLASS__, 'save_wp_profile_2fa_field']);
+        add_action('edit_user_profile_update', [__CLASS__, 'save_wp_profile_2fa_field']);
+    }
+
+    /**
+     * Check whether 2-step verification is active for a user.
+     * Compulsory by default (true), unless user explicitly disabled it ('no', '0', 'disabled').
+     */
+    public static function is_2fa_enabled($user_id) {
+        $meta = get_user_meta($user_id, 'dso_2fa_enabled', true);
+        if ($meta === 'no' || $meta === '0' || $meta === 'disabled') {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Render 2-Step Verification field in WooCommerce Account Details (Customer Settings)
+     */
+    public static function render_wc_account_2fa_field() {
+        $user_id = get_current_user_id();
+        $is_enabled = self::is_2fa_enabled($user_id);
+        ?>
+        <fieldset class="dso-2fa-settings-card" style="margin: 28px 0; padding: 22px 24px; border: 1.5px solid #e2e8f0; border-radius: 14px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <legend style="font-weight: 700; font-size: 16px; color: #0f172a; padding: 0 10px;">Security & Two-Step Verification</legend>
+            <div style="margin-top: 8px;">
+                <label style="display: flex; align-items: flex-start; gap: 14px; cursor: pointer;">
+                    <input type="checkbox" name="dso_2fa_enabled" value="yes" <?php checked($is_enabled, true); ?> style="margin-top: 3px; width: 18px; height: 18px; accent-color: #004bbf; cursor: pointer;" />
+                    <span>
+                        <strong style="display: block; font-size: 14.5px; color: #0f172a;">Enable Two-Step Verification (OTP)</strong>
+                        <span style="display: block; font-size: 13.5px; color: #64748b; margin-top: 4px; line-height: 1.45;">
+                            When enabled, DEJOIY will require a 6-digit one-time passcode sent to your registered email or phone whenever you sign in with your password.
+                        </span>
+                    </span>
+                </label>
+            </div>
+        </fieldset>
+        <?php
+    }
+
+    /**
+     * Save 2-Step Verification field in WooCommerce Account Details
+     */
+    public static function save_wc_account_2fa_field($user_id) {
+        $enabled = isset($_POST['dso_2fa_enabled']) && $_POST['dso_2fa_enabled'] === 'yes' ? 'yes' : 'no';
+        update_user_meta($user_id, 'dso_2fa_enabled', $enabled);
+    }
+
+    /**
+     * Render 2-Step Verification in WordPress User Profile
+     */
+    public static function render_wp_profile_2fa_field($user) {
+        $is_enabled = self::is_2fa_enabled($user->ID);
+        ?>
+        <h3>DEJOIY Account Security</h3>
+        <table class="form-table">
+            <tr>
+                <th><label for="dso_2fa_enabled">Two-Step Verification</label></th>
+                <td>
+                    <label>
+                        <input type="checkbox" name="dso_2fa_enabled" id="dso_2fa_enabled" value="yes" <?php checked($is_enabled, true); ?> />
+                        Require 6-digit OTP verification code after password sign-in
+                    </label>
+                    <p class="description">Compulsory two-factor authentication for logging into DEJOIY and Seller Central.</p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Save 2-Step Verification in WordPress User Profile
+     */
+    public static function save_wp_profile_2fa_field($user_id) {
+        if (!current_user_can('edit_user', $user_id)) {
+            return;
+        }
+        $enabled = isset($_POST['dso_2fa_enabled']) && $_POST['dso_2fa_enabled'] === 'yes' ? 'yes' : 'no';
+        update_user_meta($user_id, 'dso_2fa_enabled', $enabled);
     }
 
     /**
@@ -261,7 +346,65 @@ class DSO_Login {
             }
         }
 
-        // Log user in and issue official auth cookies
+        // Two-Step Verification Check:
+        // Compulsory by default unless explicitly disabled in user account settings
+        if (self::is_2fa_enabled($user->ID)) {
+            $otp = sprintf("%06d", wp_rand(100000, 999999));
+
+            set_transient('dso_otp_code_' . $user->ID, [
+                'hash' => wp_hash_password($otp),
+                'raw_dev' => (defined('WP_DEBUG') && WP_DEBUG) ? $otp : '',
+                'expires' => time() + self::OTP_EXPIRY_SECONDS,
+                'attempts' => 0
+            ], self::OTP_EXPIRY_SECONDS);
+
+            set_transient('dso_otp_rate_' . $user->ID, 1, self::OTP_COOLDOWN_SECONDS);
+
+            if (!$token) {
+                $token = wp_generate_password(32, false);
+            }
+            set_transient('dso_auth_flow_' . $token, [
+                'user_id' => $user->ID,
+                'identifier' => $flow['identifier'] ?? $user->user_email,
+                'method' => 'password_2fa',
+                'password_verified' => true,
+                'remember' => $remember,
+                'redirect_to' => $custom_redirect,
+                'created' => time()
+            ], 15 * MINUTE_IN_SECONDS);
+
+            // Dispatch via email
+            $site_name = get_bloginfo('name');
+            $subject = "Your {$site_name} Two-Step Verification Code: {$otp}";
+            $message = "Hello {$user->display_name},\n\n"
+                     . "Your two-step verification code is: {$otp}\n\n"
+                     . "This code is valid for 5 minutes. Never share this code with anyone.\n\n"
+                     . "If you did not request this login, please secure your account immediately.\n\n"
+                     . "Warm regards,\n"
+                     . "DEJOIY Trust & Safety Team\n"
+                     . "https://dejoiy.com\n";
+
+            $headers = ['Content-Type: text/plain; charset=UTF-8'];
+            wp_mail($user->user_email, $subject, $message, $headers);
+
+            // Trigger SMS action hook if SMS gateway is integrated
+            $user_phone = get_user_meta($user->ID, 'billing_phone', true) ?: get_user_meta($user->ID, 'phone', true);
+            if ($user_phone) {
+                do_action('dso_send_otp_sms', $user_phone, $otp, $user);
+            }
+
+            $masked = self::mask_recipient($flow['identifier'] ?? $user->user_email, $user);
+
+            wp_send_json_success([
+                'requires_2fa' => true,
+                'message' => 'Please enter the 6-digit verification code sent to your registered contact.',
+                'token' => $token,
+                'masked_recipient' => $masked,
+                'cooldown' => self::OTP_COOLDOWN_SECONDS
+            ]);
+        }
+
+        // If 2FA is disabled, proceed directly with sign in
         wp_clear_auth_cookie();
         wp_set_current_user($user->ID);
         wp_set_auth_cookie($user->ID, $remember, is_ssl());
@@ -365,6 +508,12 @@ class DSO_Login {
 
         if ($flow && !empty($flow['user_id'])) {
             $user = get_userdata(intval($flow['user_id']));
+            if (!empty($flow['remember'])) {
+                $remember = true;
+            }
+            if (empty($custom_redirect) && !empty($flow['redirect_to'])) {
+                $custom_redirect = $flow['redirect_to'];
+            }
         } elseif (!empty($_POST['identifier'])) {
             $user = self::find_user_by_identifier($_POST['identifier']);
         }
@@ -1221,11 +1370,19 @@ class DSO_Login {
                 var timerCountdown = document.getElementById('dso-timer-countdown');
                 var timerMsg = document.getElementById('dso-timer-msg');
                 var btnResend = document.getElementById('dso-btn-resend');
+                var btnSwitchPassword = document.getElementById('dso-btn-switch-password');
+
+                // Header Titles
+                var authTitle = document.getElementById('dso-auth-title');
+                var authSub = document.getElementById('dso-auth-sub');
+                var defaultTitle = authTitle ? authTitle.textContent : '';
+                var defaultSub = authSub ? authSub.textContent : '';
 
                 // State
                 var currentToken = '';
                 var currentIdentifier = '';
                 var currentMasked = '';
+                var isTwoStep = false;
                 var countdownInterval = null;
 
                 function setAlert(msg) {
@@ -1258,15 +1415,21 @@ class DSO_Login {
                     });
 
                     if (viewName === 'step1') {
+                        isTwoStep = false;
                         viewStep1.style.display = 'block';
                         viewStep1.classList.add('active');
                         identifierPill.style.display = 'none';
+                        if (authTitle) authTitle.textContent = defaultTitle;
+                        if (authSub) authSub.textContent = defaultSub;
                         setTimeout(function() { inputIdentifier.focus(); }, 50);
                     } else if (viewName === 'password') {
+                        isTwoStep = false;
                         viewPassword.style.display = 'block';
                         viewPassword.classList.add('active');
                         identifierPill.style.display = 'flex';
                         pillVal.textContent = currentIdentifier;
+                        if (authTitle) authTitle.textContent = defaultTitle;
+                        if (authSub) authSub.textContent = defaultSub;
                         setTimeout(function() { inputPassword.focus(); }, 50);
                     } else if (viewName === 'otp') {
                         viewOtp.style.display = 'block';
@@ -1274,6 +1437,15 @@ class DSO_Login {
                         identifierPill.style.display = 'flex';
                         pillVal.textContent = currentIdentifier;
                         otpTarget.textContent = currentMasked || currentIdentifier;
+                        if (isTwoStep) {
+                            if (authTitle) authTitle.textContent = 'Two-Step Verification';
+                            if (authSub) authSub.textContent = 'Enter the 6-digit verification code sent to your registered contact.';
+                            if (btnSwitchPassword) btnSwitchPassword.style.display = 'none';
+                        } else {
+                            if (authTitle) authTitle.textContent = defaultTitle;
+                            if (authSub) authSub.textContent = defaultSub;
+                            if (btnSwitchPassword) btnSwitchPassword.style.display = 'inline-block';
+                        }
                         resetOtpInputs();
                         setTimeout(function() { otpCells[0].focus(); }, 50);
                     } else if (viewName === 'success') {
@@ -1390,6 +1562,14 @@ class DSO_Login {
                             .then(function(resp) {
                                 setBtnLoading(btn, false);
                                 if (resp && resp.success && resp.data) {
+                                    if (resp.data.requires_2fa) {
+                                        isTwoStep = true;
+                                        if (resp.data.token) currentToken = resp.data.token;
+                                        if (resp.data.masked_recipient) currentMasked = resp.data.masked_recipient;
+                                        switchView('otp');
+                                        startCountdown(resp.data.cooldown || 30);
+                                        return;
+                                    }
                                     switchView('success');
                                     setTimeout(function() {
                                         window.location.href = resp.data.redirect_url;
@@ -1412,12 +1592,12 @@ class DSO_Login {
                 if (btnTriggerOtp) {
                     btnTriggerOtp.addEventListener('click', function(e) {
                         e.preventDefault();
-                        sendOtpRequest();
+                        isTwoStep = false;
+                        sendOtpRequest(btnTriggerOtp);
                     });
                 }
 
                 // Switch to Password from OTP view
-                var btnSwitchPassword = document.getElementById('dso-btn-switch-password');
                 if (btnSwitchPassword) {
                     btnSwitchPassword.addEventListener('click', function(e) {
                         e.preventDefault();
@@ -1449,9 +1629,9 @@ class DSO_Login {
                     }, 1000);
                 }
 
-                function sendOtpRequest() {
+                function sendOtpRequest(triggerBtn) {
                     clearErrors();
-                    var btn = btnTriggerOtp;
+                    var btn = triggerBtn || btnTriggerOtp;
                     setBtnLoading(btn, true);
 
                     var fd = new FormData();
@@ -1485,7 +1665,7 @@ class DSO_Login {
                 if (btnResend) {
                     btnResend.addEventListener('click', function(e) {
                         e.preventDefault();
-                        sendOtpRequest();
+                        sendOtpRequest(btnResend);
                     });
                 }
 
