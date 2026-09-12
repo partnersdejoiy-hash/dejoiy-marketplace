@@ -12,6 +12,21 @@ $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_HOST'] ?? 'localhost:8080';
 define('ABSPATH', __DIR__ . '/');
 require_once ABSPATH . 'wp-load.php';
 
+// One-time token from marketplace vendor-register (cookie may not be visible yet).
+if (!empty($_GET['dso_login']) && is_string($_GET['dso_login'])) {
+    $tok = preg_replace('/[^a-f0-9]/i', '', $_GET['dso_login']);
+    if (strlen($tok) === 32) {
+        $uid = (int) get_transient('dso_hub_login_' . $tok);
+        if ($uid > 0) {
+            delete_transient('dso_hub_login_' . $tok);
+            wp_set_current_user($uid);
+            wp_set_auth_cookie($uid, true, is_ssl());
+            wp_redirect('https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard&registered=1');
+            exit;
+        }
+    }
+}
+
 // Override URLs after WP loads
 $host = $_SERVER['HTTP_HOST'];
 $site_url = 'https://' . $host;

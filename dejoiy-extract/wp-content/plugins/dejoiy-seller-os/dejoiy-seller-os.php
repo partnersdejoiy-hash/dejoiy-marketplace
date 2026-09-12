@@ -138,6 +138,17 @@ class Dejoiy_Seller_OS {
         // WooCommerce endpoint integration
         add_filter('woocommerce_account_menu_items', [$this, 'add_seller_hub_menu_item']);
         add_action('woocommerce_account_seller-hub_endpoint', [$this, 'render_seller_hub']);
+
+        add_filter('allowed_redirect_hosts', [$this, 'allow_sellerhub_redirect_host']);
+
+        if (class_exists('DSO_Registration')) {
+            DSO_Registration::init();
+        }
+    }
+
+    public function allow_sellerhub_redirect_host($hosts) {
+        $hosts[] = 'sellerhub.dejoiy.com';
+        return array_values(array_unique(array_filter($hosts)));
     }
 
     public function init() {

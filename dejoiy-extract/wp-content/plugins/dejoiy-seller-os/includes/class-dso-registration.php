@@ -8,9 +8,18 @@ if (!defined('ABSPATH')) exit;
 class DSO_Registration {
 
     public static function init() {
+        static $booted = false;
+        if ($booted) {
+            return;
+        }
+        $booted = true;
+
         add_shortcode('wcfm_vendor_registration', [__CLASS__, 'render_registration_form']);
         add_shortcode('dejoiy_seller_registration', [__CLASS__, 'render_registration_form']);
-        add_action('init', [__CLASS__, 'handle_registration_post']);
+        // Register on `init` from plugin bootstrap (not from inside `init`), so the POST handler actually runs.
+        add_action('init', [__CLASS__, 'handle_registration_post'], 1);
+        add_action('template_redirect', [__CLASS__, 'handle_registration_post'], 1);
+        add_action('wp', [__CLASS__, 'force_centered_layout'], 999);
 
         add_filter('the_title', function($title, $id = 0) {
             if (!is_admin() && (is_page('vendor-register') || is_page('become-a-vendor'))) {
@@ -65,9 +74,7 @@ class DSO_Registration {
         }
 
         if (!empty($errors)) {
-            set_transient('dso_reg_errors_' . md5($email), $errors, 60);
-            wp_safe_redirect(add_query_arg(['reg_error' => 1], wp_get_referer() ?: home_url('/vendor-register/')));
-            exit;
+            self::redirect_with_errors($errors);
         }
 
         // Create user
@@ -81,9 +88,7 @@ class DSO_Registration {
         ]);
 
         if (is_wp_error($user_id)) {
-            set_transient('dso_reg_errors_' . md5($email), [$user_id->get_error_message()], 60);
-            wp_safe_redirect(add_query_arg(['reg_error' => 1], wp_get_referer() ?: home_url('/vendor-register/')));
-            exit;
+            self::redirect_with_errors([$user_id->get_error_message()]);
         }
 
         // Assign secondary role if needed
@@ -127,13 +132,53 @@ class DSO_Registration {
             update_user_meta($user_id, 'dso_store_suspended', 'yes');
         }
 
-        // Auto login
+        update_user_meta($user_id, 'wcfm_register_member', 'yes');
+        update_user_meta($user_id, 'show_admin_bar_front', 'false');
+
+        // Auto login on marketplace domain, plus a one-time hub token in case
+        // the .dejoiy.com cookie is not yet visible on sellerhub.dejoiy.com.
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id, true, is_ssl());
 
-        // Redirect directly to seller hub onboarding
-        wp_safe_redirect('https://sellerhub.dejoiy.com/?registered=1');
+        $token = bin2hex(random_bytes(16));
+        set_transient('dso_hub_login_' . $token, (int) $user_id, 5 * MINUTE_IN_SECONDS);
+
+        $hub = 'https://sellerhub.dejoiy.com/seller-hub.php?section=dashboard&registered=1&dso_login=' . $token;
+        wp_safe_redirect($hub);
         exit;
+    }
+
+    public static function force_centered_layout() {
+        if (is_admin() || (!is_page('vendor-register') && !is_page('become-a-vendor'))) {
+            return;
+        }
+        set_query_var('et_sidebar', 'without');
+        set_query_var('et_sidebar-class', '');
+        set_query_var('et_content-class', 'col-md-12');
+    }
+
+    private static function redirect_with_errors($errors) {
+        $key = wp_generate_password(12, false, false);
+        set_transient('dso_reg_errors_' . $key, $errors, 5 * MINUTE_IN_SECONDS);
+        $secure = is_ssl();
+        $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+        setcookie('dso_reg_err', $key, time() + 300, '/', $cookie_domain, $secure, true);
+        $_COOKIE['dso_reg_err'] = $key;
+        wp_safe_redirect(add_query_arg(['reg_error' => 1], wp_get_referer() ?: home_url('/vendor-register/')));
+        exit;
+    }
+
+    private static function consume_errors() {
+        $key = isset($_COOKIE['dso_reg_err']) ? preg_replace('/[^A-Za-z0-9]/', '', (string) $_COOKIE['dso_reg_err']) : '';
+        if ($key === '') {
+            return [];
+        }
+        $errors = get_transient('dso_reg_errors_' . $key);
+        delete_transient('dso_reg_errors_' . $key);
+        $cookie_domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
+        setcookie('dso_reg_err', '', time() - 3600, '/', $cookie_domain, is_ssl(), true);
+        unset($_COOKIE['dso_reg_err']);
+        return is_array($errors) ? $errors : [];
     }
 
     public static function render_registration_form() {
@@ -149,9 +194,8 @@ class DSO_Registration {
             }
         }
 
-        $errors = [];
-        if (isset($_GET['reg_error'])) {
-            // Find any transient errors
+        $errors = self::consume_errors();
+        if (isset($_GET['reg_error']) && empty($errors)) {
             $errors = ['Please check all fields and ensure your email is valid and unique.'];
         }
 

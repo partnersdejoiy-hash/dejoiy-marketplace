@@ -275,3 +275,33 @@ body.dejoiy-mobile-product-view #tab-description {
 	font-size: 0.95rem;
 	max-width: none;
 }
+
+/* Vendor registration: center the form and drop the empty sidebar column */
+body.page-vendor-register .content-page .row,
+body.page-id-4342 .content-page .row {
+	display: flex;
+	justify-content: center;
+}
+
+body.page-vendor-register .content-page .content,
+body.page-id-4342 .content-page .content {
+	float: none !important;
+	margin-left: auto !important;
+	margin-right: auto !important;
+	max-width: 720px;
+	width: 100%;
+	flex: 0 0 auto;
+}
+
+body.page-vendor-register .sidebar,
+body.page-vendor-register .sidebar-container,
+body.page-id-4342 .sidebar,
+body.page-id-4342 .sidebar-container {
+	display: none !important;
+}
+
+body.page-vendor-register .dso-reg-container,
+body.page-id-4342 .dso-reg-container {
+	margin-left: auto;
+	margin-right: auto;
+}
