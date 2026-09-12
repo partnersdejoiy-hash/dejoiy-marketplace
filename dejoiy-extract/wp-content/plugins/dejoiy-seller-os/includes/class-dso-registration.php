@@ -11,6 +11,20 @@ class DSO_Registration {
         add_shortcode('wcfm_vendor_registration', [__CLASS__, 'render_registration_form']);
         add_shortcode('dejoiy_seller_registration', [__CLASS__, 'render_registration_form']);
         add_action('init', [__CLASS__, 'handle_registration_post']);
+
+        add_filter('the_title', function($title, $id = 0) {
+            if (!is_admin() && (is_page('vendor-register') || is_page('become-a-vendor'))) {
+                return 'Sell on DEJOIY — Partner Onboarding';
+            }
+            return $title;
+        }, 20, 2);
+
+        add_filter('pre_get_document_title', function($title) {
+            if (!is_admin() && (is_page('vendor-register') || is_page('become-a-vendor'))) {
+                return 'Sell on DEJOIY — Merchant & Partner Onboarding';
+            }
+            return $title;
+        }, 20);
     }
 
     public static function handle_registration_post() {

@@ -784,7 +784,7 @@ function dejoiy_v3_render_footer() {
                 <div class="djv3-footer__col">
                     <h4>Business</h4>
                     <a href="<?php echo esc_url(home_url('/sell-on-dejoiy/')); ?>">Become a Seller</a>
-                    <a href="<?php echo esc_url(home_url('/vendor-register/')); ?>">Vendor Registration</a>
+                    <a href="<?php echo esc_url(home_url('/vendor-register/')); ?>">Sell on DEJOIY</a>
                     <a href="<?php echo esc_url(home_url('/dejoiy-services/')); ?>">Offer Services</a>
                 </div>
             </div>

@@ -177,7 +177,7 @@ function dejoiy_global_footer_render() {
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['orders'] ); ?>">My Orders</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['orders'] ); ?>">Track Order</a></li>
 						<li><a class="dgf__link" href="<?php echo esc_url( $L['addresses'] ); ?>">Addresses</a></li>
-						<li><a class="dgf__link" href="<?php echo esc_url( $L['vendor'] ); ?>">Vendor Registration</a></li>
+						<li><a class="dgf__link" href="<?php echo esc_url( $L['vendor'] ); ?>">Sell on DEJOIY (Seller Central)</a></li>
 					</ul>
 				</nav>
 

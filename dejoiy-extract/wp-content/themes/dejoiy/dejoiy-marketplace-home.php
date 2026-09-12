@@ -1307,7 +1307,7 @@ function dejoiy_marketplace_home_html() {
 				<p class="mph-sell__sub"><?php esc_html_e( 'Sell products, offer services or publish books — grow with India’s next-gen marketplace.', 'dejoiy' ); ?></p>
 				<div class="mph-sell__actions">
 					<a class="mph-btn mph-btn--light" href="<?php echo esc_url( $seller ); ?>"><?php esc_html_e( 'Become a Seller', 'dejoiy' ); ?></a>
-					<a class="mph-btn mph-btn--outline" href="<?php echo esc_url( $vreg ); ?>"><?php esc_html_e( 'Vendor Registration', 'dejoiy' ); ?></a>
+					<a class="mph-btn mph-btn--outline" href="<?php echo esc_url( $vreg ); ?>"><?php esc_html_e( 'Seller Central Hub', 'dejoiy' ); ?></a>
 					<a class="mph-btn mph-btn--outline" href="<?php echo esc_url( $services ); ?>"><?php esc_html_e( 'Offer Services', 'dejoiy' ); ?></a>
 					<a class="mph-btn mph-btn--outline" href="<?php echo esc_url( $author ); ?>"><?php esc_html_e( 'Become an Author', 'dejoiy' ); ?></a>
 				</div>
