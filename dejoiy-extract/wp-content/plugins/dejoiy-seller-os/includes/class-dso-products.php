@@ -1391,7 +1391,11 @@ class DSO_Products {
                                         $referral_fee = round($price * 0.12, 2);
                                         $net_payout = round($price - $referral_fee, 2);
                                         $qty = intval($p['stock_quantity']);
-                                        $lqs = min(100, max(40, (strlen($p['name']) > 20 ? 30 : 10) + (!empty($p['image_html']) ? 30 : 0) + ($price > 0 ? 20 : 0) + ($qty > 0 ? 20 : 0)));
+                                        $lqs = intval($p['lqs_score']);
+                                        
+                                        // Stock Risk Indicator
+                                        $avg_daily_sales = max(0.2, round($p['total_sales'] / 30, 1));
+                                        $est_stockout_days = $avg_daily_sales > 0 ? ceil($qty / $avg_daily_sales) : 0;
                                     ?>
                                         <tr>
                                             <td>
@@ -1399,11 +1403,17 @@ class DSO_Products {
                                             </td>
                                             <td>
                                                 <?php if ($qty > 5): ?>
-                                                    <span class="dso-badge dso-badge-green">● Active</span>
+                                                    <span class="dso-badge dso-badge-green">● Healthy</span>
                                                 <?php elseif ($qty > 0): ?>
-                                                    <span class="dso-badge dso-badge-amber">⚠️ Low (<?php echo $qty; ?>)</span>
+                                                    <span class="dso-badge dso-badge-amber">⚠️ Low Stock</span>
                                                 <?php else: ?>
                                                     <span class="dso-badge dso-badge-red">✕ Out of Stock</span>
+                                                <?php endif; ?>
+                                                
+                                                <?php if ($qty > 0 && $est_stockout_days < 10): ?>
+                                                    <div style="font-size:10px;color:<?php echo $est_stockout_days < 3 ? '#ef4444' : '#f59e0b'; ?>;font-weight:700;margin-top:4px;text-transform:uppercase;">
+                                                        Est. Stockout: <?php echo $est_stockout_days; ?> days
+                                                    </div>
                                                 <?php endif; ?>
                                             </td>
                                             <td>
@@ -1432,6 +1442,7 @@ class DSO_Products {
                                                     <input type="number" id="stock-input-<?php echo $p['id']; ?>" class="dso-inline-input" value="<?php echo $qty; ?>" min="0" />
                                                     <button type="button" class="dso-inline-save-btn" onclick="DSO.saveStockQuick(<?php echo $p['id']; ?>);" title="Save Stock">✓</button>
                                                 </div>
+                                                <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Sales Vel: <?php echo $avg_daily_sales; ?>/day</div>
                                             </td>
                                             <td>
                                                 <div class="dso-inv-editable-cell">
@@ -1439,19 +1450,22 @@ class DSO_Products {
                                                     <input type="number" id="price-input-<?php echo $p['id']; ?>" class="dso-inline-input" value="<?php echo $price; ?>" step="0.5" min="0" />
                                                     <button type="button" class="dso-inline-save-btn" onclick="DSO.savePriceQuick(<?php echo $p['id']; ?>);" title="Save Price">✓</button>
                                                 </div>
-                                                <div class="dso-fee-preview" id="fee-preview-<?php echo $p['id']; ?>">
-                                                    Fee: ₹<?php echo number_format($referral_fee, 2); ?> (12%) • <span class="dso-net">Net: ₹<?php echo number_format($net_payout, 2); ?></span>
+                                                <div class="dso-fee-preview" id="fee-preview-<?php echo $p['id']; ?>" style="font-size:10px;line-height:1.4;margin-top:4px;">
+                                                    Ref. Fee: ₹<?php echo number_format($referral_fee, 2); ?><br>
+                                                    <strong style="color:#10b981;">Net: ₹<?php echo number_format($net_payout, 2); ?></strong>
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="dso-lqs-pill <?php echo $lqs >= 80 ? 'dso-lqs-high' : ($lqs >= 60 ? 'dso-lqs-med' : 'dso-lqs-low'); ?>">
-                                                    <?php echo $lqs; ?>% Quality
-                                                </span>
+                                                <div class="dso-lqs-cell" style="display:flex;flex-direction:column;gap:4px;">
+                                                    <div class="dso-lqs-bar" style="width:60px;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden;">
+                                                        <div class="dso-lqs-fill" style="width:<?php echo $lqs; ?>%;height:100%;background:<?php echo $lqs >= 80 ? '#10b981' : ($lqs >= 55 ? '#f59e0b' : '#ef4444'); ?>;"></div>
+                                                    </div>
+                                                    <span style="font-size:11px;font-weight:600;color:<?php echo $lqs >= 80 ? '#059669' : ($lqs >= 55 ? '#d97706' : '#dc2626'); ?>;"><?php echo $lqs; ?>%</span>
+                                                </div>
                                             </td>
                                             <td class="dso-text-right">
                                                 <div style="display:flex;gap:6px;justify-content:flex-end;">
                                                     <a href="?section=edit-product&id=<?php echo $p['id']; ?>" class="dso-btn dso-btn-sm dso-btn-outline" title="Full Editor">Edit</a>
-                                                    <button type="button" class="dso-btn dso-btn-sm dso-btn-primary" onclick="DSO.saveInlineInventory(<?php echo $p['id']; ?>);" title="Save Price & Stock">Save Both</button>
                                                 </div>
                                             </td>
                                         </tr>
