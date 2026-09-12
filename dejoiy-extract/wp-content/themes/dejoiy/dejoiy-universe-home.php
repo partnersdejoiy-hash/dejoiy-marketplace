@@ -517,11 +517,45 @@ function dejoiy_universe_home_html() {
 					<p class="du-joi__badge"><?php esc_html_e( 'Powered by DEJOIY intelligence', 'dejoiy' ); ?></p>
 					<h2 id="du-joi-title" class="du-joi__title"><?php esc_html_e( 'Ask JOI', 'dejoiy' ); ?></h2>
 				</div>
+				<?php
+				$searched_terms = function_exists( 'dejoiy_universe_get_searched_terms' ) ? dejoiy_universe_get_searched_terms() : array();
+				?>
 				<form class="du-joi__form" action="<?php echo esc_url( $shop_url ); ?>" method="get" role="search" data-du-joi-form>
 					<input type="hidden" name="post_type" value="product" />
 					<label class="screen-reader-text" for="du-joi-input"><?php esc_html_e( 'Ask JOI', 'dejoiy' ); ?></label>
 					<input id="du-joi-input" class="du-joi__input" type="text" name="s" inputmode="search" enterkeyhint="search" placeholder="<?php esc_attr_e( 'Ask JOI anything…', 'dejoiy' ); ?>" autocomplete="off" data-du-joi-input />
 					<button type="submit" class="du-joi__submit" data-du-joi-submit><?php esc_html_e( 'Discover', 'dejoiy' ); ?></button>
+
+					<!-- JOI Real-Time Autocomplete & Recent Searches Panel -->
+					<div class="du-joi__autocomplete" id="du-joi-autocomplete" hidden>
+						<div class="du-joi__autocomplete-in">
+							<div class="du-joi__ac-section du-joi__ac-recent" id="du-joi-ac-recent" <?php echo empty( $searched_terms ) ? 'style="display:none;"' : ''; ?>>
+								<div class="du-joi__ac-head">
+									<span class="du-joi__ac-label">
+										<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+										<?php esc_html_e( 'Recent Searches', 'dejoiy' ); ?>
+									</span>
+								</div>
+								<div class="du-joi__ac-tags" id="du-joi-recent-tags">
+									<?php foreach ( $searched_terms as $sterm ) : ?>
+										<button type="button" class="du-joi__ac-tag" data-recent-query="<?php echo esc_attr( $sterm ); ?>">
+											<span><?php echo esc_html( $sterm ); ?></span>
+										</button>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
+							<div class="du-joi__ac-section du-joi__ac-suggestions" id="du-joi-ac-suggestions" style="display:none;">
+								<div class="du-joi__ac-head">
+									<span class="du-joi__ac-label">
+										<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+										<?php esc_html_e( 'Instant Suggestions', 'dejoiy' ); ?>
+									</span>
+								</div>
+								<div class="du-joi__ac-list" id="du-joi-ac-list"></div>
+							</div>
+						</div>
+					</div>
 				</form>
 				<div class="du-joi__panel" id="du-joi-panel" hidden>
 					<div class="du-joi__panel-bar">

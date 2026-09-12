@@ -60,6 +60,60 @@
 	var joiBusy = false;
 	var joiCloseBtn = root.querySelector('[data-du-joi-close]');
 	var joiDesktopMq = window.matchMedia('(min-width: 1025px)');
+	var joiAutocomplete = document.getElementById('du-joi-autocomplete');
+	var joiAcRecent = document.getElementById('du-joi-ac-recent');
+	var joiAcSuggestions = document.getElementById('du-joi-ac-suggestions');
+	var joiAcList = document.getElementById('du-joi-ac-list');
+
+	function joiShowAutocomplete() {
+		if (joiAutocomplete) {
+			joiAutocomplete.hidden = false;
+		}
+	}
+
+	function joiHideAutocomplete() {
+		if (joiAutocomplete) {
+			joiAutocomplete.hidden = true;
+		}
+	}
+
+	function joiRenderSuggestions(items) {
+		if (!joiAcSuggestions || !joiAcList) {
+			return;
+		}
+		if (!items || !items.length) {
+			joiAcSuggestions.style.display = 'none';
+			joiAcList.innerHTML = '';
+			return;
+		}
+		joiAcList.innerHTML = items
+			.slice(0, 5)
+			.map(function (item) {
+				var thumb = item.thumb
+					? '<img src="' + item.thumb + '" class="du-joi__ac-thumb" alt="" />'
+					: '<div class="du-joi__ac-thumb" style="display:grid;place-items:center;">📦</div>';
+				var meta = item.meta ? '<span>' + item.meta + '</span>' : '';
+				var price = item.price ? '<span class="du-joi__ac-price">' + item.price + '</span>' : '';
+				return (
+					'<a class="du-joi__ac-item" href="' +
+					item.url +
+					'">' +
+					thumb +
+					'<div class="du-joi__ac-meta">' +
+					'<div class="du-joi__ac-title">' +
+					item.title +
+					'</div>' +
+					'<div class="du-joi__ac-sub">' +
+					price +
+					meta +
+					'</div>' +
+					'</div></a>'
+				);
+			})
+			.join('');
+		joiAcSuggestions.style.display = 'block';
+		joiShowAutocomplete();
+	}
 
 	function joiLabel(key, fallback) {
 		return joiCfg.i18n && joiCfg.i18n[key] ? joiCfg.i18n[key] : fallback;
@@ -254,31 +308,55 @@
 		if (q.length < 2) {
 			return;
 		}
+		joiHideAutocomplete();
 		joiHandleQuery(q, true);
 	}
 
 	if (joiInput) {
+		joiInput.addEventListener('focus', function () {
+			var q = joiInput.value.trim();
+			if (q.length >= 2) {
+				joiSearchProducts(q).then(joiRenderSuggestions);
+			} else {
+				if (joiAcRecent && joiAcRecent.querySelectorAll('.du-joi__ac-tag').length > 0) {
+					joiAcRecent.style.display = 'block';
+					joiShowAutocomplete();
+				}
+			}
+		});
+
 		joiInput.addEventListener('keydown', function (e) {
 			if (e.key === 'Enter') {
 				e.preventDefault();
 				e.stopPropagation();
+				joiHideAutocomplete();
 				joiSendFromInput();
+			} else if (e.key === 'Escape') {
+				joiHideAutocomplete();
 			}
 		});
+
 		joiInput.addEventListener('input', function () {
 			var q = joiInput.value.trim();
 			clearTimeout(joiTimer);
 			if (q.length < 2) {
-				if (joiResults) {
-					joiResults.hidden = true;
-					joiResults.innerHTML = '';
+				if (joiAcSuggestions) {
+					joiAcSuggestions.style.display = 'none';
+					joiAcList.innerHTML = '';
+				}
+				if (joiAcRecent && joiAcRecent.querySelectorAll('.du-joi__ac-tag').length > 0) {
+					joiAcRecent.style.display = 'block';
+					joiShowAutocomplete();
+				} else {
+					joiHideAutocomplete();
 				}
 				return;
 			}
 			joiTimer = setTimeout(function () {
-				joiShowPanel();
-				joiSearchProducts(q).then(joiRenderProducts);
-			}, 320);
+				joiSearchProducts(q).then(function (items) {
+					joiRenderSuggestions(items);
+				});
+			}, 250);
 		});
 	}
 
@@ -286,9 +364,30 @@
 		joiForm.addEventListener('submit', function (e) {
 			e.preventDefault();
 			e.stopPropagation();
+			joiHideAutocomplete();
 			joiSendFromInput();
 		});
 	}
+
+	if (joiAutocomplete) {
+		joiAutocomplete.addEventListener('click', function (e) {
+			var tag = e.target.closest('[data-recent-query]');
+			if (tag) {
+				var q = tag.getAttribute('data-recent-query');
+				if (q && joiInput) {
+					joiInput.value = q;
+					joiHideAutocomplete();
+					joiHandleQuery(q, false);
+				}
+			}
+		});
+	}
+
+	document.addEventListener('click', function (e) {
+		if (joiForm && !joiForm.contains(e.target)) {
+			joiHideAutocomplete();
+		}
+	});
 
 	root.querySelectorAll('.du-joi__chip').forEach(function (chip) {
 		chip.addEventListener('click', function (e) {
@@ -504,6 +603,14 @@
 		if (!id) {
 			return;
 		}
+
+		// Trigger heart burst micro-interaction
+		btn.classList.remove('du-heart-burst');
+		void btn.offsetWidth; // Force layout reflow
+		btn.classList.add('du-heart-burst');
+		setTimeout(function () {
+			btn.classList.remove('du-heart-burst');
+		}, 460);
 
 		var meta = getCardMeta(btn);
 		var usedXstore = triggerXstoreWishlist(id);

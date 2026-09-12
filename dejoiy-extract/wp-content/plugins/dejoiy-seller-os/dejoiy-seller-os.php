@@ -148,6 +148,11 @@ class Dejoiy_Seller_OS {
         if (class_exists('DSO_Registration')) {
             DSO_Registration::init();
         }
+
+        // Initialize automated notification event listeners
+        if (class_exists('DSO_Notifications')) {
+            DSO_Notifications::init();
+        }
     }
 
     public function register_query_vars($vars) {

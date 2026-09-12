@@ -42,6 +42,135 @@ class DSO_Notifications {
         return $instance->create($vendor_id, $type, $title, $message, $action_url);
     }
 
+    /**
+     * Bootstrap automated notification hooks
+     */
+    public static function init() {
+        // Order lifecycle updates
+        add_action('woocommerce_order_status_changed', [__CLASS__, 'on_order_status_changed'], 20, 4);
+
+        // Product approval and status transitions
+        add_action('transition_post_status', [__CLASS__, 'on_product_status_transition'], 20, 3);
+
+        // Low stock & out-of-stock inventory alerts
+        add_action('woocommerce_low_stock', [__CLASS__, 'on_low_stock'], 20, 1);
+        add_action('woocommerce_no_stock', [__CLASS__, 'on_no_stock'], 20, 1);
+    }
+
+    /**
+     * Trigger notification on order status change
+     */
+    public static function on_order_status_changed($order_id, $old_status, $new_status, $order = null) {
+        if (!$order && function_exists('wc_get_order')) {
+            $order = wc_get_order($order_id);
+        }
+        if (!$order) {
+            return;
+        }
+
+        // Find vendors for items in order
+        $vendors = [];
+        foreach ($order->get_items() as $item) {
+            $product_id = $item->get_product_id();
+            if (!$product_id) continue;
+
+            $vendor_id = get_post_field('post_author', $product_id);
+            if (empty($vendor_id)) {
+                $vendor_id = get_post_meta($product_id, '_vendor_id', true);
+            }
+            if ($vendor_id) {
+                $vendors[intval($vendor_id)] = true;
+            }
+        }
+
+        if (empty($vendors)) {
+            $order_vendor = get_post_meta($order_id, '_vendor_id', true);
+            if ($order_vendor) {
+                $vendors[intval($order_vendor)] = true;
+            }
+        }
+
+        $formatted_old = ucfirst(str_replace('-', ' ', $old_status));
+        $formatted_new = ucfirst(str_replace('-', ' ', $new_status));
+        $action_url = '?section=orders&s=' . $order_id;
+
+        foreach (array_keys($vendors) as $vendor_id) {
+            $title = "Order #{$order_id}: {$formatted_new}";
+            $message = "Order #{$order_id} moved from {$formatted_old} to {$formatted_new}. Check order details for fulfillment.";
+            self::create_notification($vendor_id, 'order', $title, $message, $action_url);
+        }
+    }
+
+    /**
+     * Trigger notification on product status transition
+     */
+    public static function on_product_status_transition($new_status, $old_status, $post) {
+        if (!$post || $post->post_type !== 'product' || $new_status === $old_status) {
+            return;
+        }
+
+        $vendor_id = intval($post->post_author);
+        if (empty($vendor_id)) {
+            $vendor_id = intval(get_post_meta($post->ID, '_vendor_id', true));
+        }
+        if (!$vendor_id) {
+            return;
+        }
+
+        $product_title = get_the_title($post->ID) ?: "Product #{$post->ID}";
+
+        if ($old_status !== 'publish' && $new_status === 'publish') {
+            $title = "Listing Approved: " . wp_trim_words($product_title, 6);
+            $message = "Your product listing '{$product_title}' has been reviewed, approved, and is now live on DEJOIY.";
+            $action_url = '?section=products&tab=publish&s=' . urlencode($product_title);
+            self::create_notification($vendor_id, 'product', $title, $message, $action_url);
+        } elseif ($new_status === 'pending') {
+            $title = "Product In Review: " . wp_trim_words($product_title, 6);
+            $message = "Your product listing '{$product_title}' has been submitted for catalog verification.";
+            $action_url = '?section=products&tab=all';
+            self::create_notification($vendor_id, 'product', $title, $message, $action_url);
+        }
+    }
+
+    /**
+     * Trigger notification on low stock
+     */
+    public static function on_low_stock($product) {
+        if (!is_object($product)) return;
+        $product_id = $product->get_id();
+        $vendor_id = intval(get_post_field('post_author', $product_id));
+        if (empty($vendor_id)) {
+            $vendor_id = intval(get_post_meta($product_id, '_vendor_id', true));
+        }
+        if (!$vendor_id) return;
+
+        $name = $product->get_name();
+        $stock = $product->get_stock_quantity();
+        $title = "⚠️ Low Stock: " . wp_trim_words($name, 6);
+        $message = "Inventory for '{$name}' is running low ({$stock} units remaining). Restock soon to prevent listing pause.";
+        $action_url = '?section=inventory-bulk&s=' . urlencode($product->get_sku() ?: $name);
+        self::create_notification($vendor_id, 'alert', $title, $message, $action_url);
+    }
+
+    /**
+     * Trigger notification on zero stock
+     */
+    public static function on_no_stock($product) {
+        if (!is_object($product)) return;
+        $product_id = $product->get_id();
+        $vendor_id = intval(get_post_field('post_author', $product_id));
+        if (empty($vendor_id)) {
+            $vendor_id = intval(get_post_meta($product_id, '_vendor_id', true));
+        }
+        if (!$vendor_id) return;
+
+        $name = $product->get_name();
+        $title = "🚨 Out of Stock: " . wp_trim_words($name, 6);
+        $message = "Listing '{$name}' has reached 0 units and has been automatically paused from shopper checkout.";
+        $action_url = '?section=inventory-bulk&s=' . urlencode($product->get_sku() ?: $name);
+        self::create_notification($vendor_id, 'alert', $title, $message, $action_url);
+    }
+
     public function render() {
         $user_id = get_current_user_id();
         $plugin = Dejoiy_Seller_OS::instance();

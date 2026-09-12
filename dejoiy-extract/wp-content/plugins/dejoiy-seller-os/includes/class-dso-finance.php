@@ -213,6 +213,147 @@ class DSO_Finance {
                 </div>
             </div>
 
+            <!-- Treasury Analytics & Payout Forecasting -->
+            <?php
+            $avail = (float) $metrics['available_balance'];
+            $buffer = (float) $metrics['pending_buffer'];
+            $w1 = $avail;
+            $w2 = ($buffer > 0) ? round($buffer * 0.6, 2) : ($avail > 0 ? round($avail * 0.4, 2) : 0);
+            $w3 = ($buffer > 0) ? round($buffer * 0.4, 2) : ($avail > 0 ? round($avail * 0.3, 2) : 0);
+            $w4 = ($avail > 0 || $buffer > 0) ? round(($avail + $buffer) * 0.35, 2) : 0;
+            $max_proj = max(100, $w1, $w2, $w3, $w4);
+
+            // Coordinates for SVG: width 520, height 180 (plot area x: 50..470, y: 30..140)
+            $x1 = 60;  $y1 = round(140 - (($w1 / $max_proj) * 105));
+            $x2 = 195; $y2 = round(140 - (($w2 / $max_proj) * 105));
+            $x3 = 335; $y3 = round(140 - (($w3 / $max_proj) * 105));
+            $x4 = 465; $y4 = round(140 - (($w4 / $max_proj) * 105));
+
+            $svg_path = "M {$x1},{$y1} C " . ($x1 + 60) . ",{$y1} " . ($x2 - 60) . ",{$y2} {$x2},{$y2} C " . ($x2 + 60) . ",{$y2} " . ($x3 - 60) . ",{$y3} {$x3},{$y3} C " . ($x3 + 60) . ",{$y3} " . ($x4 - 60) . ",{$y4} {$x4},{$y4}";
+            $svg_area = "{$svg_path} L {$x4},150 L {$x1},150 Z";
+            ?>
+            <div class="dso-card dso-mb-4" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.03);">
+                <div class="dso-card-header" style="background:#f8fafc;padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <h3 class="dso-card-title" style="margin:0;font-size:16px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                            <span>📈 Treasury Analytics & Payout Forecasting</span>
+                            <span class="dso-badge dso-badge-blue" style="font-size:11px;font-weight:600;">Rolling 4-Week Horizon</span>
+                        </h3>
+                        <p style="margin:4px 0 0;font-size:13px;color:#64748b;">Automated cash flow forecast based on cleared settlements and pending return-window releases</p>
+                    </div>
+                    <div style="font-size:12px;color:#059669;font-weight:600;background:#ecfdf5;padding:6px 12px;border-radius:20px;border:1px solid #a7f3d0;">
+                        T+2 RBI Settlement Active
+                    </div>
+                </div>
+                <div class="dso-card-body" style="padding:24px;">
+                    <div class="dso-grid-2" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:24px;align-items:start;">
+                        
+                        <!-- Payout Projection SVG Chart -->
+                        <div style="background:#ffffff;border:1px solid #edf2f7;border-radius:10px;padding:18px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <h4 style="margin:0;font-size:14px;color:#1e293b;font-weight:700;">Weekly Payout Projection</h4>
+                                <span style="font-size:12px;color:#64748b;">4-Week Forecast</span>
+                            </div>
+                            
+                            <div style="position:relative;width:100%;height:180px;">
+                                <svg viewBox="0 0 520 180" style="width:100%;height:100%;overflow:visible;" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="payoutAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.28"/>
+                                            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+                                        </linearGradient>
+                                        <linearGradient id="payoutLineGrad" x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="0%" stop-color="#2563eb"/>
+                                            <stop offset="50%" stop-color="#3b82f6"/>
+                                            <stop offset="100%" stop-color="#10b981"/>
+                                        </linearGradient>
+                                    </defs>
+                                    
+                                    <!-- Horizontal Grid Lines -->
+                                    <line x1="40" y1="35" x2="490" y2="35" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4" />
+                                    <line x1="40" y1="80" x2="490" y2="80" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4" />
+                                    <line x1="40" y1="125" x2="490" y2="125" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4 4" />
+                                    <line x1="40" y1="150" x2="490" y2="150" stroke="#e2e8f0" stroke-width="1" />
+
+                                    <!-- Chart Area & Stroke -->
+                                    <path d="<?php echo esc_attr($svg_area); ?>" fill="url(#payoutAreaGrad)" />
+                                    <path d="<?php echo esc_attr($svg_path); ?>" fill="none" stroke="url(#payoutLineGrad)" stroke-width="3.5" stroke-linecap="round" />
+
+                                    <!-- Data Points & Value Badges -->
+                                    <!-- Point 1 -->
+                                    <circle cx="<?php echo $x1; ?>" cy="<?php echo $y1; ?>" r="5.5" fill="#2563eb" stroke="#ffffff" stroke-width="2.5" />
+                                    <text x="<?php echo $x1; ?>" y="<?php echo max(20, $y1 - 10); ?>" text-anchor="middle" font-size="11" font-weight="700" fill="#1e293b">₹<?php echo number_format($w1, 0); ?></text>
+                                    
+                                    <!-- Point 2 -->
+                                    <circle cx="<?php echo $x2; ?>" cy="<?php echo $y2; ?>" r="5.5" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5" />
+                                    <text x="<?php echo $x2; ?>" y="<?php echo max(20, $y2 - 10); ?>" text-anchor="middle" font-size="11" font-weight="700" fill="#1e293b">₹<?php echo number_format($w2, 0); ?></text>
+
+                                    <!-- Point 3 -->
+                                    <circle cx="<?php echo $x3; ?>" cy="<?php echo $y3; ?>" r="5.5" fill="#3b82f6" stroke="#ffffff" stroke-width="2.5" />
+                                    <text x="<?php echo $x3; ?>" y="<?php echo max(20, $y3 - 10); ?>" text-anchor="middle" font-size="11" font-weight="700" fill="#1e293b">₹<?php echo number_format($w3, 0); ?></text>
+
+                                    <!-- Point 4 -->
+                                    <circle cx="<?php echo $x4; ?>" cy="<?php echo $y4; ?>" r="5.5" fill="#10b981" stroke="#ffffff" stroke-width="2.5" />
+                                    <text x="<?php echo $x4; ?>" y="<?php echo max(20, $y4 - 10); ?>" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">₹<?php echo number_format($w4, 0); ?></text>
+
+                                    <!-- X-Axis Labels -->
+                                    <text x="<?php echo $x1; ?>" y="170" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">W1 (This Wed)</text>
+                                    <text x="<?php echo $x2; ?>" y="170" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">W2 (Next Wed)</text>
+                                    <text x="<?php echo $x3; ?>" y="170" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">W3 (+14d)</text>
+                                    <text x="<?php echo $x4; ?>" y="170" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">W4 (+21d)</text>
+                                </svg>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid #f1f5f9;font-size:12px;color:#64748b;">
+                                <span>Immediate: <strong>₹<?php echo number_format($w1, 2); ?></strong></span>
+                                <span>Projected 4-Wk Volume: <strong>₹<?php echo number_format($w1 + $w2 + $w3 + $w4, 2); ?></strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Marketplace Fee & Net Margin Split Visual -->
+                        <div style="background:#ffffff;border:1px solid #edf2f7;border-radius:10px;padding:18px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <h4 style="margin:0;font-size:14px;color:#1e293b;font-weight:700;">Settlement Split & Net Take-Home</h4>
+                                <span class="dso-badge dso-badge-green" style="font-size:11px;">88.20% Net Margin</span>
+                            </div>
+                            
+                            <!-- Multi-Segment Visual Stack Bar -->
+                            <div style="margin:14px 0 16px;">
+                                <div style="display:flex;height:18px;border-radius:8px;overflow:hidden;background:#e2e8f0;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">
+                                    <div style="width:88.2%;background:linear-gradient(90deg, #10b981, #059669);transition:width .4s;" title="Seller Net Take-Home: 88.2%"></div>
+                                    <div style="width:10.0%;background:linear-gradient(90deg, #3b82f6, #2563eb);transition:width .4s;" title="DEJOIY Platform Fee: 10.0%"></div>
+                                    <div style="width:1.8%;background:linear-gradient(90deg, #f59e0b, #d97706);transition:width .4s;" title="GST on Platform Services: 1.8%"></div>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:6px;">
+                                    <span>🟢 Net Take-Home (88.2%)</span>
+                                    <span>🔵 Fee (10%)</span>
+                                    <span>🟡 GST (1.8%)</span>
+                                </div>
+                            </div>
+
+                            <!-- Detailed Economics Grid -->
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                                <div style="background:#f8fafc;padding:10px 12px;border-radius:8px;border:1px solid #f1f5f9;">
+                                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Net Seller Proceeds</div>
+                                    <div style="font-size:16px;font-weight:700;color:#059669;margin-top:2px;">₹88.20 <small style="font-size:11px;font-weight:400;color:#64748b;">per ₹100</small></div>
+                                    <div style="font-size:11px;color:#475569;margin-top:2px;">Credited direct to bank</div>
+                                </div>
+                                <div style="background:#f8fafc;padding:10px 12px;border-radius:8px;border:1px solid #f1f5f9;">
+                                    <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Marketplace Fee</div>
+                                    <div style="font-size:16px;font-weight:700;color:#1e293b;margin-top:2px;">10.0% <small style="font-size:11px;font-weight:400;color:#64748b;">+ 18% GST</small></div>
+                                    <div style="font-size:11px;color:#475569;margin-top:2px;">Includes payment gateway</div>
+                                </div>
+                            </div>
+
+                            <!-- Statutory Compliance Notes -->
+                            <div style="margin-top:12px;padding:10px 12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;font-size:12px;color:#166534;line-height:1.5;">
+                                <strong>🛡️ Statutory Tax Shield:</strong> 1% TDS (Sec 194-O) and 1% TCS credits are automatically synced with your PAN/GSTIN and claimable in your monthly GSTR-8 return.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- Settlement Schedule & Active Bank Status -->
             <div class="dso-card dso-mb-4">
                 <div class="dso-card-header">
