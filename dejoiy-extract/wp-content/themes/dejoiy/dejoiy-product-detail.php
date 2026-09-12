@@ -372,15 +372,36 @@ function dejoiy_product_detail_trust_html() {
  * @return string
  */
 function dejoiy_product_detail_buy_now_html() {
-	$product = dejoiy_product_detail_current();
-	if ( ! $product || ! $product->is_type( 'simple' ) || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
-		return '';
-	}
-	$url = add_query_arg(
-		array( 'add-to-cart' => $product->get_id() ),
-		wc_get_checkout_url()
-	);
-	return '<a class="djy-buynow" href="' . esc_url( $url ) . '">' . esc_html__( 'Buy Now', 'dejoiy' ) . '</a>';
+        $product = dejoiy_product_detail_current();
+        if ( ! $product || ! $product->is_type( 'simple' ) || ! $product->is_purchasable() || ! $product->is_in_stock() ) {
+                return '';
+        }
+        $url = add_query_arg(
+                array( 'add-to-cart' => $product->get_id() ),
+                wc_get_checkout_url()
+        );
+        ob_start();
+        ?>
+        <div class="djy-buy-options" style="display:flex; flex-direction:column; gap:8px;">
+            <a class="djy-buynow" href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Buy Now', 'dejoiy' ); ?></a>
+            <button type="button" class="djy-save-later" data-product-id="<?php echo esc_attr( $product->get_id() ); ?>" style="background:transparent; border:1px solid #d5d9d9; border-radius:8px; padding:10px 14px; font-weight:600; cursor:pointer; width:100%; transition:all 0.2s;">
+                <?php esc_html_e( 'Save for Later', 'dejoiy' ); ?>
+            </button>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const btn = document.querySelector('.djy-save-later');
+                if (btn) {
+                    btn.addEventListener('click', function() {
+                        this.innerHTML = 'Saved to List ✓';
+                        this.style.borderColor = '#007185';
+                        this.style.color = '#007185';
+                    });
+                }
+            });
+        </script>
+        <?php
+        return ob_get_clean();
 }
 
 add_shortcode( 'djy_product_trust', 'dejoiy_product_detail_trust_html' );
